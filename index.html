@@ -449,103 +449,106 @@ section{animation:none}
 @media (prefers-reduced-motion:reduce){.brand::before{animation:none}}
 </style>
 <style id="zelda">
-/* NES overworld palette: sand ground, black menu windows with brick borders, forest-green buttons, gold + heart red. */
+/* Retro game skin. Every color comes from a variable so each unlockable theme can repaint the whole site.
+   Defaults are the "Overworld" palette (sand ground, black windows, brick frame, forest green, gold). */
 :root:root:root:root{
-  --bg:#fcd8a8; --ink:#2b1a00; --muted:#6b4410; --label:#005800; --line:#c84c0c;
-  --surface:#000; --sunk:#141008; --win:#000; --win2:#000; --frame:#c84c0c; --frame-dark:#000;
-  --accent:#00a800; --accent2:#d82800; --accent-ink:#ffffff; --accent-soft:#0d3a0d;
-  --good:#80d010; --good-soft:#1a3808; --bad:#ff5a3c; --bad-soft:#3c0c00; --warn:#fca044; --warn-soft:#3a2200;
-  --gold:#fcb800; --gold-soft:#3a2c00; --shadow:6px 6px 0 rgba(43,26,0,.35);
+  --bg:#fcd8a8; --dot:#e2b47c; --ink:#2b1a00; --muted:#6b4410; --label:#005800; --title-shadow:#fff2d8;
+  --hud:#000; --hud-line:#c84c0c;
+  --win:#000; --frame:#c84c0c; --inner:#fcd8a8; --tile:#141008;
+  --win-ink:#ffffff; --win-muted:#fcd8a8; --win-label:#fcb800; --win-line:#7c4a1a;
+  --accent:#00a800; --accent-hover:#18c018; --accent-text:#ffffff; --accent-shadow:#004000;
+  --accent2:#d82800; --gold:#fcb800; --good:#80d010; --bad:#ff5a3c; --warn:#fca044;
+  --bar1:#80d010; --bar2:#00a800; --hp1:#d82800; --hp2:#8c1800;
+  --surface:var(--win); --sunk:var(--tile); --line:var(--win-line); --accent-ink:var(--accent-text);
+  --accent-soft:color-mix(in srgb,var(--accent) 24%,var(--tile));
+  --good-soft:color-mix(in srgb,var(--good) 20%,var(--tile)); --bad-soft:color-mix(in srgb,var(--bad) 22%,var(--tile));
+  --warn-soft:color-mix(in srgb,var(--warn) 22%,var(--tile)); --gold-soft:color-mix(in srgb,var(--gold) 20%,var(--tile));
+  --shadow:6px 6px 0 rgba(0,0,0,.35);
 }
-/* inside black windows and the HUD, text flips to light */
 .bar,.panel,.qcard,.stat,.gamecard,.notice,.homecard,.songcard,.duelmid,.duelpad,.bossarena,.startbar,.badge,.themebtn,.bosscard,.toast{
-  --ink:#ffffff; --muted:#fcd8a8; --label:#fcb800; --line:#7c4a1a; color:var(--ink)}
+  --ink:var(--win-ink); --muted:var(--win-muted); --label:var(--win-label); --line:var(--win-line); color:var(--ink)}
+.bar{--win:var(--hud)}
 body{background-color:var(--bg)!important;
-  background-image:radial-gradient(#e2b47c 2px,transparent 2.5px),radial-gradient(#e2b47c 2px,transparent 2.5px)!important;
-  background-size:32px 32px!important;background-position:0 0,16px 16px!important;color:var(--ink)}
+  background-image:radial-gradient(var(--dot) 2px,transparent 2.5px),radial-gradient(var(--dot) 2px,transparent 2.5px)!important;
+  background-size:32px 32px!important;background-position:0 0,16px 16px!important;color:var(--ink);transition:background-color .3s}
 h1,h2,h3{text-shadow:none}
 .panel h2,.panel h3,.qcard h2,.qcard h3,.memhead h3{text-shadow:3px 3px 0 #000}
 section > div > h2, section > h2{color:var(--ink)}
 .label,table th{color:var(--label)}
 .x{color:var(--label)}
 
-/* windows: black with a brick-orange frame and tan inner line */
 .panel,.qcard,.stat,.gamecard,.notice,.homecard,.songcard,.duelmid,.duelpad,.bossarena,.startbar,.badge.on,.themebtn,.bosscard,.toast{
-  background:#000!important;border:4px solid var(--frame)!important;
-  box-shadow:0 0 0 4px #000,inset 0 0 0 3px #000,inset 0 0 0 5px #fcd8a8,var(--shadow)!important}
-.qcard.is-right{border-color:var(--good)!important;box-shadow:0 0 0 4px #000,inset 0 0 0 3px #000,inset 0 0 0 5px var(--good),0 0 0 8px var(--good),var(--shadow)!important}
-.qcard.is-wrong{border-color:var(--bad)!important;box-shadow:0 0 0 4px #000,inset 0 0 0 3px #000,inset 0 0 0 5px var(--bad),0 0 0 8px var(--bad),var(--shadow)!important}
+  background:var(--win)!important;border:4px solid var(--frame)!important;
+  box-shadow:0 0 0 4px #000,inset 0 0 0 3px var(--win),inset 0 0 0 5px var(--inner),var(--shadow)!important}
+.qcard.is-right{border-color:var(--good)!important;box-shadow:0 0 0 4px #000,inset 0 0 0 3px var(--win),inset 0 0 0 5px var(--good),0 0 0 8px var(--good),var(--shadow)!important}
+.qcard.is-wrong{border-color:var(--bad)!important;box-shadow:0 0 0 4px #000,inset 0 0 0 3px var(--win),inset 0 0 0 5px var(--bad),0 0 0 8px var(--bad),var(--shadow)!important}
 
-/* top HUD */
-.bar{background:#000!important;border-bottom:4px solid var(--frame)}
+.bar{background:var(--hud)!important;border-bottom:4px solid var(--hud-line)}
 .brand::before{background:var(--accent2)}
-.tabs{background:#000;box-shadow:inset 0 0 0 2px #3a2400}
-.tabs button[aria-selected="true"]{background:var(--accent);color:#fff;border-color:#000}
-.who button,.sndbtn,.daypill{background:#000!important;border-color:var(--frame)!important;color:#fff!important}
+.tabs{background:var(--hud);box-shadow:inset 0 0 0 2px var(--win-line)}
+.tabs button{color:var(--win-muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-text);border-color:#000}
+.who button,.sndbtn,.daypill{background:var(--hud)!important;border-color:var(--hud-line)!important;color:var(--win-ink)!important}
 .lvlchip{background:var(--gold)!important;color:#000!important}
 
-/* buttons */
-.btn{background:var(--accent);color:#fff;text-shadow:2px 2px 0 #004000}
-.btn:hover{background:#18c018}
-.btn.ghost{background:#000;color:#fff;border-color:var(--frame);text-shadow:none}
-.btn.ghost:hover{background:#2a1600}
-.nextbtn{background:var(--accent)!important;color:#fff!important}
-.nextbtn:hover{background:#18c018!important}
+.btn{background:var(--accent);color:var(--accent-text);text-shadow:2px 2px 0 var(--accent-shadow)}
+.btn:hover{background:var(--accent-hover)}
+.btn.ghost{background:var(--tile);color:var(--win-ink);border-color:var(--frame);text-shadow:none}
+.btn.ghost:hover{background:color-mix(in srgb,var(--frame) 30%,var(--tile))}
+section > .row .btn.ghost, .signin .btn.ghost{box-shadow:4px 4px 0 #000}
+.nextbtn{background:var(--accent)!important;color:var(--accent-text)!important}
+.nextbtn:hover{background:var(--accent-hover)!important}
 #selfright,#gright,#vright,#dright{background:var(--good)!important;color:#000!important;text-shadow:none}
-#selfwrong,#gwrong,#vwrong,#dwrong{background:var(--accent2)!important;color:#fff!important}
-.signin .btn{text-shadow:2px 2px 0 #004000}
+#selfwrong,#gwrong,#vwrong,#dwrong{background:var(--bad)!important;color:#000!important;text-shadow:none}
 
-/* fields */
-input[type=text],textarea,select{background:#000!important;border-color:var(--frame)!important;color:#fff!important}
+input[type=text],textarea,select{background:var(--tile)!important;border-color:var(--frame)!important;color:var(--win-ink)!important}
 input[type=text]:focus,textarea:focus{border-color:var(--gold)!important}
-input::placeholder,textarea::placeholder{color:#8a6a40}
-.signin input[type=text]{box-shadow:4px 4px 0 rgba(43,26,0,.35)!important}
+input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--win-muted) 55%,var(--tile))}
+.signin input[type=text]{box-shadow:4px 4px 0 rgba(0,0,0,.35)!important}
 
-/* pills, chips, tiles */
-.seg button,.names button{background:#000;border-color:var(--line);color:#fcd8a8}
-.seg button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:#000}
-.names button{border-color:var(--frame)}
-.ch,.v,.mv,.printlink,.bosscard{border-color:var(--line)!important;background:#141008!important}
-.ch.all,.v.on{background:var(--accent)!important;color:#fff}
+.seg button,.names button{background:var(--tile);border-color:var(--win-line);color:var(--win-muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-text);border-color:#000}
+.names button{border-color:var(--frame);color:var(--win-ink)}
+.ch,.v,.mv,.printlink,.bosscard{border-color:var(--win-line)!important;background:var(--tile)!important}
+.ch.all,.v.on{background:var(--accent)!important;color:var(--accent-text)}
 .ch.some{background:var(--accent-soft)!important;border-color:var(--accent)!important}
 .ch.open{box-shadow:0 0 0 3px var(--gold),3px 3px 0 #000}
 .mv.on{background:var(--gold-soft)!important;border-color:var(--gold)!important;color:var(--gold)}
-.printlink{color:#fff}
+.printlink{color:var(--win-ink)}
 .printlink.sel{background:var(--accent-soft)!important;border-color:var(--accent)!important}
 .bosscard.won{border-color:var(--gold)!important;background:var(--gold-soft)!important}
 
-/* question + feedback */
-.ref{background:#000;color:var(--gold);border-color:var(--frame)}
+.ref{background:var(--hud);color:var(--gold);border-color:var(--frame)}
 .qtext .qref{color:var(--gold)}
-.qtext .opt-words,.qtext .more{color:#c9a477}
-.fb{background:#141008;border-color:var(--line)}
+.qtext .opt-words,.qtext .more{color:color-mix(in srgb,var(--win-muted) 75%,var(--win))}
+.fb{background:var(--tile);border-color:var(--win-line)}
 .fb.good{background:var(--good-soft);border-color:var(--good)}
 .fb.bad{background:var(--bad-soft);border-color:var(--bad)}
 .fb.close{background:var(--warn-soft);border-color:var(--warn)}
 .lvlbig{background:var(--gold)!important;color:#000!important}
 .streak{background:var(--accent2);color:#fff}
 
-/* gauges: green stamina, red hearts, gold rupee-style memory */
 .prog,.goldbar,.meter,.hpbar,.timer .tbar{background:#000!important;border-color:var(--frame)}
-.prog i,.timer .tbar i{background:repeating-linear-gradient(90deg,#80d010 0 10px,#00a800 10px 12px)!important}
-.goldbar i{background:repeating-linear-gradient(90deg,#fcb800 0 10px,#c88400 10px 12px)!important}
-.hpbar i,.timer.warn .tbar i{background:repeating-linear-gradient(90deg,#d82800 0 10px,#8c1800 10px 12px)!important}
-.days14 i{background:#3a2400}
+.prog i,.timer .tbar i{background:repeating-linear-gradient(90deg,var(--bar1) 0 10px,var(--bar2) 10px 12px)!important}
+.goldbar i{background:repeating-linear-gradient(90deg,var(--gold) 0 10px,color-mix(in srgb,var(--gold) 70%,#000) 10px 12px)!important}
+.hpbar i,.timer.warn .tbar i{background:repeating-linear-gradient(90deg,var(--hp1) 0 10px,var(--hp2) 10px 12px)!important}
+.days14 i{background:color-mix(in srgb,var(--win-line) 50%,#000)}
 .days14 i.hit{background:var(--good)}
-.days14 i.some{background:#7c4a1a}
-.days14 i.today{outline-color:#000}
+.days14 i.some{background:var(--win-line)}
+.days14 i.today{outline-color:var(--gold)}
 
-/* games */
 .buzz{background:var(--accent2)!important}
 .duelpad.p0 .buzz{background:var(--accent)!important}
 .listen i{background:var(--good)}
-.badge{background:#141008;border-color:var(--line)}
+.badge{background:var(--tile);border-color:var(--win-line)}
 
-/* sign in on the sand */
-.signin h1{color:var(--ink);text-shadow:3px 3px 0 #fff2d8}
-.signin h1 em{color:var(--accent)}
+.signin h1{color:var(--ink);text-shadow:3px 3px 0 var(--title-shadow)}
+.signin h1 em{color:var(--label)}
 .signin p,.signin .hint{color:var(--muted)}
-.flash{box-shadow:inset 0 0 0 12px var(--accent2)}
+.flash{box-shadow:inset 0 0 0 12px var(--bad)}
+.themebtn .sw{height:34px;display:grid;grid-template-columns:2fr 1fr 1fr;border:3px solid #000;overflow:hidden}
+.themebtn .sw i{display:block}
+.themebtn.cur{border-color:var(--gold)!important}
 </style>
 
 <div id="app"></div>
@@ -1116,7 +1119,7 @@ function progressView(){
       <ul class="missed">${weak.map(id=>{const q=Q[id],st=U.stats[id];return `<li><span class="r">${q.c}:${q.v}</span><span class="qq">${fmtQ(q.q)}? <span class="hint">(${st[1]}/${st[0]})</span></span></li>`}).join('')}</ul></div>`:''}
     ${badgesPanel()}
     <div class="panel" style="display:grid;gap:10px"><span class="label">Themes</span>
-      <div class="themes">${THEMES.map(t=>{const open=themeOpen(t),cur=(U.theme||'classic')===t.id;return `<button class="themebtn ${cur?'cur':''}" data-themeid="${t.id}" ${open?'':'disabled'}><span class="sw" style="background:linear-gradient(135deg,${t.l[0]},${t.l[1]})"></span><b>${t.name}</b><small>${open?(cur?'In use':'Tap to use'):'🔒 '+themeNeedText(t)}</small></button>`}).join('')}</div></div>
+      <div class="themes">${THEMES.map(t=>{const open=themeOpen(t),cur=(THEMES.find(x=>x.id===U.theme&&themeOpen(x))||THEMES[0]).id===t.id;return `<button class="themebtn ${cur?'cur':''}" data-themeid="${t.id}" ${open?'':'disabled'}>${themeSwatch(t)}<b>${esc(t.name)}</b><small>${open?(cur?'▶ In use':esc(t.hint)):'🔒 '+themeNeedText(t)}</small></button>`}).join('')}</div></div>
     <div class="panel" style="display:grid;gap:8px"><span class="label">Recent sessions</span>
       ${U.sessions.length?`<div class="tbl-wrap"><table><tbody>${U.sessions.slice(0,12).map(s=>`<tr><td class="mono" style="white-space:nowrap">${new Date(s.d).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</td><td>${esc(s.label)}</td><td class="n">${s.r}/${s.n}</td><td class="n"><span class="pill ${pct(s.r,s.n)>=85?'g':pct(s.r,s.n)>=65?'w':'b'}">${pct(s.r,s.n)}%</span></td></tr>`).join('')}</tbody></table></div>`:'<span class="muted">Finish a practice session and it shows up here.</span>'}
     </div>
@@ -1605,24 +1608,63 @@ function gainXP(n){ if(!U||!n) return; const before=levelOf(U.xp).level; U.xp=(U
 function lvlChip(){ if(!U) return ''; const l=levelOf(U.xp); return `<span class="lvlchip" title="${esc(l.title)} · ${U.xp||0} XP">Lv ${l.level}</span>`; }
 
 /* ---------- themes ---------- */
+// Full-site color themes inspired by classic 8-bit games. Each one repaints page, windows, buttons and bars.
 const THEMES=[
-  {id:'classic', name:'Classic',       need:null,            l:['#5B3DF5','#E93D8F'], d:['#8B73FF','#FF5FA8']},
-  {id:'galilee', name:'Galilee Blue',  need:{level:3},       l:['#0A66C9','#0E9E9A'], d:['#56AEFF','#3FE0D0']},
-  {id:'sunset',  name:'Sunset',        need:{level:5},       l:['#D2481A','#C81E6E'], d:['#FF8A4C','#FF5F9E']},
-  {id:'forest',  name:'Forest',        need:{badges:8},      l:['#127A45','#5E8A0A'], d:['#3FD889','#B5E043']},
-  {id:'royal',   name:'Royal',         need:{bosses:5},      l:['#5A1FA8','#A87800'], d:['#B98CFF','#FFD25E']},
-  {id:'midnight',name:'Midnight Gold', need:{level:10},      l:['#7A5000','#B07800'], d:['#FFC94D','#FFE08A']},
+ {id:'overworld',name:'Overworld',hint:'Adventure field',need:null,v:{}},
+ {id:'dungeon',name:'Dungeon',hint:'Blue stone labyrinth',need:{level:3},v:{
+  '--bg':'#1c2e5c','--dot':'#29407a','--ink':'#e0f0ff','--muted':'#9ab4e0','--label':'#64e0e0','--title-shadow':'#000',
+  '--hud':'#000','--hud-line':'#5c94fc','--win':'#0a1430','--frame':'#5c94fc','--inner':'#a4e4fc','--tile':'#101c44',
+  '--win-ink':'#ffffff','--win-muted':'#a4e4fc','--win-label':'#fcd800','--win-line':'#2c4a9c',
+  '--accent':'#00a8a8','--accent-hover':'#20cccc','--accent-text':'#001818','--accent-shadow':'#7ff0f0',
+  '--accent2':'#d82800','--gold':'#fcd800','--good':'#58f898','--bad':'#ff6040','--warn':'#fca044',
+  '--bar1':'#3cbcfc','--bar2':'#0078f8','--hp1':'#d82800','--hp2':'#8c1800'}},
+ {id:'brick',name:'Brick Kingdom',hint:'Sky, bricks and coins',need:{level:5},v:{
+  '--bg':'#5c94fc','--dot':'#78aafc','--ink':'#000000','--muted':'#0c2460','--label':'#000000','--title-shadow':'#fcfcfc',
+  '--hud':'#000','--hud-line':'#fca044','--win':'#8c3000','--frame':'#fca044','--inner':'#fcfcfc','--tile':'#5c1c00',
+  '--win-ink':'#ffffff','--win-muted':'#fcd8a8','--win-label':'#fcd800','--win-line':'#c84c0c',
+  '--accent':'#00a800','--accent-hover':'#20c820','--accent-text':'#ffffff','--accent-shadow':'#004000',
+  '--accent2':'#d82800','--gold':'#fcd800','--good':'#80d010','--bad':'#ff6b6b','--warn':'#fca044',
+  '--bar1':'#fcd800','--bar2':'#c88400','--hp1':'#d82800','--hp2':'#8c1800'}},
+ {id:'robot',name:'Robot Lab',hint:'Cyan steel and energy bars',need:{badges:8},v:{
+  '--bg':'#a4e4fc','--dot':'#7ccaf0','--ink':'#001850','--muted':'#00407c','--label':'#0040b0','--title-shadow':'#fcfcfc',
+  '--hud':'#001850','--hud-line':'#3cbcfc','--win':'#002878','--frame':'#3cbcfc','--inner':'#fcfcfc','--tile':'#001a50',
+  '--win-ink':'#ffffff','--win-muted':'#a4e4fc','--win-label':'#fcd800','--win-line':'#0058c8',
+  '--accent':'#fcd800','--accent-hover':'#ffe94a','--accent-text':'#001850','--accent-shadow':'#fff7b0',
+  '--accent2':'#f83800','--gold':'#fcd800','--good':'#58f898','--bad':'#ff6048','--warn':'#fca044',
+  '--bar1':'#fcfcfc','--bar2':'#fcd800','--hp1':'#f83800','--hp2':'#a01800'}},
+ {id:'space',name:'Deep Space',hint:'Alien caverns and energy tanks',need:{bosses:5},v:{
+  '--bg':'#05020f','--dot':'#2a2058','--ink':'#ece8ff','--muted':'#a8a0d8','--label':'#58d854','--title-shadow':'#6844fc',
+  '--hud':'#000','--hud-line':'#f87800','--win':'#0c0420','--frame':'#6844fc','--inner':'#58d854','--tile':'#160a36',
+  '--win-ink':'#ffffff','--win-muted':'#c0b8f0','--win-label':'#58d854','--win-line':'#3c2890',
+  '--accent':'#f87800','--accent-hover':'#ff9a30','--accent-text':'#000000','--accent-shadow':'#ffc890',
+  '--accent2':'#e40058','--gold':'#fca044','--good':'#58d854','--bad':'#ff4060','--warn':'#fca044',
+  '--bar1':'#58d854','--bar2':'#00a800','--hp1':'#e40058','--hp2':'#80002c'}},
+ {id:'castle',name:'Haunted Castle',hint:'Crimson night and candlelight',need:{level:8},v:{
+  '--bg':'#1c000c','--dot':'#3a0820','--ink':'#f4e6d4','--muted':'#c8a090','--label':'#fca044','--title-shadow':'#a80020',
+  '--hud':'#000','--hud-line':'#a80020','--win':'#0e0006','--frame':'#a80020','--inner':'#f0d0a0','--tile':'#26000f',
+  '--win-ink':'#f8f0e0','--win-muted':'#e0b8a0','--win-label':'#fca044','--win-line':'#5c0018',
+  '--accent':'#a80020','--accent-hover':'#d01030','--accent-text':'#ffffff','--accent-shadow':'#400008',
+  '--accent2':'#8800c8','--gold':'#fca044','--good':'#9ce060','--bad':'#ff5050','--warn':'#fca044',
+  '--bar1':'#fc4040','--bar2':'#a80020','--hp1':'#8800c8','--hp2':'#480070'}},
+ {id:'pocket',name:'Pocket Classic',hint:'Four shades of handheld green',need:{streak:7},v:{
+  '--bg':'#9bbc0f','--dot':'#8bac0f','--ink':'#0f380f','--muted':'#306230','--label':'#0f380f','--title-shadow':'#c8e070',
+  '--hud':'#0f380f','--hud-line':'#306230','--win':'#0f380f','--frame':'#306230','--inner':'#9bbc0f','--tile':'#1a461a',
+  '--win-ink':'#c8e070','--win-muted':'#9bbc0f','--win-label':'#e0f088','--win-line':'#306230',
+  '--accent':'#8bac0f','--accent-hover':'#a8c830','--accent-text':'#0f380f','--accent-shadow':'#c8e070',
+  '--accent2':'#306230','--gold':'#e0f088','--good':'#c8e070','--bad':'#e8806a','--warn':'#e0f088',
+  '--bar1':'#9bbc0f','--bar2':'#306230','--hp1':'#e8806a','--hp2':'#904030'}},
 ];
+const THEME_VARS=[...new Set(THEMES.flatMap(t=>Object.keys(t.v)))];
 function themeOpen(t){ if(!t.need) return true; if(!U) return false; const n=t.need;
-  if(n.level) return levelOf(U.xp).level>=n.level; if(n.badges) return Object.keys(U.badges||{}).length>=n.badges; if(n.bosses) return Object.keys(U.bosses||{}).length>=n.bosses; return false; }
-function themeNeedText(t){ const n=t.need||{}; return n.level?`Reach level ${n.level}`:n.badges?`Earn ${n.badges} badges`:n.bosses?`Defeat ${n.bosses} bosses`:''; }
+  if(n.level) return levelOf(U.xp).level>=n.level; if(n.badges) return Object.keys(U.badges||{}).length>=n.badges;
+  if(n.bosses) return Object.keys(U.bosses||{}).length>=n.bosses; if(n.streak) return streakFrom(goalDaysOf(U.days)).best>=n.streak; return false; }
+function themeNeedText(t){ const n=t.need||{}; return n.level?`Reach level ${n.level}`:n.badges?`Earn ${n.badges} badges`:n.bosses?`Defeat ${n.bosses} bosses`:n.streak?`Get a ${n.streak}-day streak`:''; }
 function themeUnlockedAt(L){ const t=THEMES.find(x=>x.need&&x.need.level===L); return t?` New theme unlocked: ${t.name}!`:''; }
-function isDarkNow(){ return true; const r=document.documentElement.getAttribute('data-theme'); if(r) return r==='dark'; try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false} }
-function applyTheme(){ const st=document.documentElement.style, t=U&&THEMES.find(x=>x.id===U.theme&&themeOpen(x));
-  ['--accent','--accent2','--accent-soft','--accent-ink'].forEach(p=>st.removeProperty(p));
-  if(!t||t.id==='classic') return; const dark=isDarkNow(), [a,b]=dark?t.d:t.l;
-  st.setProperty('--accent',a); st.setProperty('--accent2',b); st.setProperty('--accent-soft',`color-mix(in srgb, ${a} 18%, var(--surface))`); st.setProperty('--accent-ink','#ffffff'); }
-try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme); new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); }catch(e){}
+function themeSwatch(t){ const g=k=>t.v[k]||({'--bg':'#fcd8a8','--win':'#000','--accent':'#00a800','--frame':'#c84c0c'})[k]; return `<span class="sw"><i style="background:${g('--bg')}"></i><i style="background:${g('--win')};box-shadow:inset 0 0 0 3px ${g('--frame')}"></i><i style="background:${g('--accent')}"></i></span>`; }
+function applyTheme(){ const st=document.documentElement.style; THEME_VARS.forEach(p=>st.removeProperty(p));
+  let t=U&&THEMES.find(x=>x.id===U.theme); if(!t||!themeOpen(t)) t=THEMES[0];
+  Object.entries(t.v).forEach(([k,v])=>st.setProperty(k,v));
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content',t.v['--hud']||'#000000'); }
 
 /* ---------- streak freezes ---------- */
 function applyFreezes(){
