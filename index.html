@@ -1641,7 +1641,7 @@ function wireGames(){
 }
 
 /* ---------- teacher progress sheet (Google Sheets) ---------- */
-const SHEET_URL='', SHEET_KEY='jq-maas-2026';
+const SHEET_URL='https://script.google.com/macros/s/AKfycbwuMn5RzT0fGVk5vt8qmWUsuFYjrGUe87ytVAD1qodJ0XC2qfY4BIpIEGdtcleGAvYf/exec', SHEET_KEY='jq-maas-2026';
 let sheetTimer=null, sheetLast='';
 function sheetSummary(){ const r=summary(me,U), {streak,best}=streakFrom(goalDaysOf(U.days)), td=U.daily&&U.daily[dayKey()];
   return {key:SHEET_KEY,name:me,mem:r.mem,goal:U.goal||'',goalN:r.goalN,goalMem:r.goalMem,att:r.att,right:r.right,solid:r.solid,streak,best,today:todayCount(),
