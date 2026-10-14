@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#14152b">
+<meta name="theme-color" content="#000000">
 <meta name="description" content="Bible quiz practice for the Gospel of John: questions, verse cards, games and memory tracking.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -447,6 +447,105 @@ table th{font-family:var(--f-display);font-weight:400;font-size:8px;color:var(--
 .board tr.mine td{background:var(--accent-soft)}
 section{animation:none}
 @media (prefers-reduced-motion:reduce){.brand::before{animation:none}}
+</style>
+<style id="zelda">
+/* NES overworld palette: sand ground, black menu windows with brick borders, forest-green buttons, gold + heart red. */
+:root:root:root:root{
+  --bg:#fcd8a8; --ink:#2b1a00; --muted:#6b4410; --label:#005800; --line:#c84c0c;
+  --surface:#000; --sunk:#141008; --win:#000; --win2:#000; --frame:#c84c0c; --frame-dark:#000;
+  --accent:#00a800; --accent2:#d82800; --accent-ink:#ffffff; --accent-soft:#0d3a0d;
+  --good:#80d010; --good-soft:#1a3808; --bad:#ff5a3c; --bad-soft:#3c0c00; --warn:#fca044; --warn-soft:#3a2200;
+  --gold:#fcb800; --gold-soft:#3a2c00; --shadow:6px 6px 0 rgba(43,26,0,.35);
+}
+/* inside black windows and the HUD, text flips to light */
+.bar,.panel,.qcard,.stat,.gamecard,.notice,.homecard,.songcard,.duelmid,.duelpad,.bossarena,.startbar,.badge,.themebtn,.bosscard,.toast{
+  --ink:#ffffff; --muted:#fcd8a8; --label:#fcb800; --line:#7c4a1a; color:var(--ink)}
+body{background-color:var(--bg)!important;
+  background-image:radial-gradient(#e2b47c 2px,transparent 2.5px),radial-gradient(#e2b47c 2px,transparent 2.5px)!important;
+  background-size:32px 32px!important;background-position:0 0,16px 16px!important;color:var(--ink)}
+h1,h2,h3{text-shadow:none}
+.panel h2,.panel h3,.qcard h2,.qcard h3,.memhead h3{text-shadow:3px 3px 0 #000}
+section > div > h2, section > h2{color:var(--ink)}
+.label,table th{color:var(--label)}
+.x{color:var(--label)}
+
+/* windows: black with a brick-orange frame and tan inner line */
+.panel,.qcard,.stat,.gamecard,.notice,.homecard,.songcard,.duelmid,.duelpad,.bossarena,.startbar,.badge.on,.themebtn,.bosscard,.toast{
+  background:#000!important;border:4px solid var(--frame)!important;
+  box-shadow:0 0 0 4px #000,inset 0 0 0 3px #000,inset 0 0 0 5px #fcd8a8,var(--shadow)!important}
+.qcard.is-right{border-color:var(--good)!important;box-shadow:0 0 0 4px #000,inset 0 0 0 3px #000,inset 0 0 0 5px var(--good),0 0 0 8px var(--good),var(--shadow)!important}
+.qcard.is-wrong{border-color:var(--bad)!important;box-shadow:0 0 0 4px #000,inset 0 0 0 3px #000,inset 0 0 0 5px var(--bad),0 0 0 8px var(--bad),var(--shadow)!important}
+
+/* top HUD */
+.bar{background:#000!important;border-bottom:4px solid var(--frame)}
+.brand::before{background:var(--accent2)}
+.tabs{background:#000;box-shadow:inset 0 0 0 2px #3a2400}
+.tabs button[aria-selected="true"]{background:var(--accent);color:#fff;border-color:#000}
+.who button,.sndbtn,.daypill{background:#000!important;border-color:var(--frame)!important;color:#fff!important}
+.lvlchip{background:var(--gold)!important;color:#000!important}
+
+/* buttons */
+.btn{background:var(--accent);color:#fff;text-shadow:2px 2px 0 #004000}
+.btn:hover{background:#18c018}
+.btn.ghost{background:#000;color:#fff;border-color:var(--frame);text-shadow:none}
+.btn.ghost:hover{background:#2a1600}
+.nextbtn{background:var(--accent)!important;color:#fff!important}
+.nextbtn:hover{background:#18c018!important}
+#selfright,#gright,#vright,#dright{background:var(--good)!important;color:#000!important;text-shadow:none}
+#selfwrong,#gwrong,#vwrong,#dwrong{background:var(--accent2)!important;color:#fff!important}
+.signin .btn{text-shadow:2px 2px 0 #004000}
+
+/* fields */
+input[type=text],textarea,select{background:#000!important;border-color:var(--frame)!important;color:#fff!important}
+input[type=text]:focus,textarea:focus{border-color:var(--gold)!important}
+input::placeholder,textarea::placeholder{color:#8a6a40}
+.signin input[type=text]{box-shadow:4px 4px 0 rgba(43,26,0,.35)!important}
+
+/* pills, chips, tiles */
+.seg button,.names button{background:#000;border-color:var(--line);color:#fcd8a8}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:#000}
+.names button{border-color:var(--frame)}
+.ch,.v,.mv,.printlink,.bosscard{border-color:var(--line)!important;background:#141008!important}
+.ch.all,.v.on{background:var(--accent)!important;color:#fff}
+.ch.some{background:var(--accent-soft)!important;border-color:var(--accent)!important}
+.ch.open{box-shadow:0 0 0 3px var(--gold),3px 3px 0 #000}
+.mv.on{background:var(--gold-soft)!important;border-color:var(--gold)!important;color:var(--gold)}
+.printlink{color:#fff}
+.printlink.sel{background:var(--accent-soft)!important;border-color:var(--accent)!important}
+.bosscard.won{border-color:var(--gold)!important;background:var(--gold-soft)!important}
+
+/* question + feedback */
+.ref{background:#000;color:var(--gold);border-color:var(--frame)}
+.qtext .qref{color:var(--gold)}
+.qtext .opt-words,.qtext .more{color:#c9a477}
+.fb{background:#141008;border-color:var(--line)}
+.fb.good{background:var(--good-soft);border-color:var(--good)}
+.fb.bad{background:var(--bad-soft);border-color:var(--bad)}
+.fb.close{background:var(--warn-soft);border-color:var(--warn)}
+.lvlbig{background:var(--gold)!important;color:#000!important}
+.streak{background:var(--accent2);color:#fff}
+
+/* gauges: green stamina, red hearts, gold rupee-style memory */
+.prog,.goldbar,.meter,.hpbar,.timer .tbar{background:#000!important;border-color:var(--frame)}
+.prog i,.timer .tbar i{background:repeating-linear-gradient(90deg,#80d010 0 10px,#00a800 10px 12px)!important}
+.goldbar i{background:repeating-linear-gradient(90deg,#fcb800 0 10px,#c88400 10px 12px)!important}
+.hpbar i,.timer.warn .tbar i{background:repeating-linear-gradient(90deg,#d82800 0 10px,#8c1800 10px 12px)!important}
+.days14 i{background:#3a2400}
+.days14 i.hit{background:var(--good)}
+.days14 i.some{background:#7c4a1a}
+.days14 i.today{outline-color:#000}
+
+/* games */
+.buzz{background:var(--accent2)!important}
+.duelpad.p0 .buzz{background:var(--accent)!important}
+.listen i{background:var(--good)}
+.badge{background:#141008;border-color:var(--line)}
+
+/* sign in on the sand */
+.signin h1{color:var(--ink);text-shadow:3px 3px 0 #fff2d8}
+.signin h1 em{color:var(--accent)}
+.signin p,.signin .hint{color:var(--muted)}
+.flash{box-shadow:inset 0 0 0 12px var(--accent2)}
 </style>
 
 <div id="app"></div>
@@ -1522,7 +1621,7 @@ function isDarkNow(){ return true; const r=document.documentElement.getAttribute
 function applyTheme(){ const st=document.documentElement.style, t=U&&THEMES.find(x=>x.id===U.theme&&themeOpen(x));
   ['--accent','--accent2','--accent-soft','--accent-ink'].forEach(p=>st.removeProperty(p));
   if(!t||t.id==='classic') return; const dark=isDarkNow(), [a,b]=dark?t.d:t.l;
-  st.setProperty('--accent',a); st.setProperty('--accent2',b); st.setProperty('--accent-soft',`color-mix(in srgb, ${a} 18%, var(--surface))`); st.setProperty('--accent-ink','#1d1405'); }
+  st.setProperty('--accent',a); st.setProperty('--accent2',b); st.setProperty('--accent-soft',`color-mix(in srgb, ${a} 18%, var(--surface))`); st.setProperty('--accent-ink','#ffffff'); }
 try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme); new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); }catch(e){}
 
 /* ---------- streak freezes ---------- */
