@@ -449,6 +449,14 @@ section{animation:none}
 @media (prefers-reduced-motion:reduce){.brand::before{animation:none}}
 </style>
 <style id="zelda">
+.tracks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.trackbtn{border:3px solid var(--win-line);background:var(--tile);color:var(--win-ink);padding:10px;display:grid;gap:3px;justify-items:start;text-align:left;box-shadow:3px 3px 0 #000}
+.trackbtn .ti{font-size:20px;color:var(--gold)}
+.trackbtn b{font-family:var(--f-body);font-size:15px}
+.trackbtn small{font-size:13px;color:var(--win-muted)}
+.trackbtn.cur{border-color:var(--gold);background:var(--gold-soft)}
+.trackbtn:disabled{opacity:.5;cursor:not-allowed}
+
 .lbtabs{display:grid!important;grid-template-columns:repeat(2,1fr);gap:6px}
 .lbtabs button{text-align:left}
 @media (min-width:560px){.lbtabs{grid-template-columns:repeat(4,1fr)}}
@@ -589,7 +597,7 @@ function lsSet(k,v){try{localStorage.setItem(K+k,JSON.stringify(v));return true}
 function blankUser(){return {stats:{},mem:{},sessions:[],sel:['1:'+qVerses[1].join(',1:')].join('').split(','),opts:{order:'order',limit:'all',pool:'all',memOnly:false,mix:false,words:'all',answer:'type',timer:'off'},vopts:{from:'goal',order:'shuffle',limit:'25',mode:'type',vsel:[],kind:'ref'},vstats:{},rstats:{},counts:{},badges:{}}}
 let users = lsGet('users',[]);
 let me = null, U = null;
-function loadUser(name){ me=name; U=Object.assign(blankUser(),lsGet('u:'+name,{})); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{});if(U.vopts.chs){U.vopts.vsel=[...new Set([...(U.vopts.vsel||[]),...U.vopts.chs.flatMap(c=>allVerses(c).map(v=>c+':'+v))])];delete U.vopts.chs} U.vstats=U.vstats||{};U.rstats=U.rstats||{};U.counts=U.counts||{};U.badges=U.badges||{}; if(!users.includes(name)){users.push(name);lsSet('users',users)} lsSet('last',name); pullCloud(); applyTheme(); setTimeout(applyFreezes,300); sheetLast=''; scheduleSheet(); }
+function loadUser(name){ me=name; U=Object.assign(blankUser(),lsGet('u:'+name,{})); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{});if(U.vopts.chs){U.vopts.vsel=[...new Set([...(U.vopts.vsel||[]),...U.vopts.chs.flatMap(c=>allVerses(c).map(v=>c+':'+v))])];delete U.vopts.chs} U.vstats=U.vstats||{};U.rstats=U.rstats||{};U.counts=U.counts||{};U.badges=U.badges||{}; if(!users.includes(name)){users.push(name);lsSet('users',users)} lsSet('last',name); pullCloud(); applyTheme(); if(mus.timer) musicStart(); setTimeout(applyFreezes,300); sheetLast=''; scheduleSheet(); }
 function save(){ if(!me) return; U.saved=Date.now(); lsSet('u:'+me,U); scheduleSync(); scheduleSheet(); }
 
 /* ---------- grading ---------- */
@@ -707,7 +715,7 @@ function checkDailyGoal(){ if(!goalJustHit) return; goalJustHit=false; const {st
 function dayPill(){ if(!U) return ''; const {streak}=streakFrom(goalDaysOf(U.days)), t=todayCount(), done=t>=DAILY;
   return `<span class="daypill ${done?'done':''}" title="Days in a row with at least ${DAILY} questions"><i aria-hidden="true">🔥</i>${streak}<span class="daytoday">${done?'✓':Math.min(t,DAILY)+'/'+DAILY}</span></span>`; }
 const canSpeak=(()=>{try{return 'speechSynthesis' in window && typeof SpeechSynthesisUtterance!=='undefined'}catch(e){return false}})();
-function speak(text){ if(!canSpeak||!text) return; try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text.replace(/[()]/g,'')); u.lang='en-US'; u.rate=.95; speechSynthesis.speak(u);}catch(e){} }
+function speak(text){ if(!canSpeak||!text) return; try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text.replace(/[()]/g,'')); u.lang='en-US'; u.rate=.95; u.onstart=()=>duckMusic(true); u.onend=u.onerror=()=>duckMusic(false); speechSynthesis.speak(u);}catch(e){} }
 function sayBtn(id,label){ return canSpeak?`<button class="btn ghost small saybtn" id="${id}" aria-label="${label}"><span aria-hidden="true">🔊</span> ${label}</button>`:''; }
 
 /* ---------- state ---------- */
@@ -721,7 +729,7 @@ function render(){
     <div class="tabs" role="tablist">
       ${['practice','games','verses','progress','memory','materials'].map(t=>`<button role="tab" data-tab="${t}" aria-selected="${tab===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}
     </div>
-    <div class="who">${dayPill()}${lvlChip()}<button class="sndbtn" id="sndbtn" aria-label="${soundOn()?'Turn sound off':'Turn sound on'}" title="Sound ${soundOn()?'on':'off'}">${soundOn()?'🔊':'🔇'}</button>${esc(me)} <button id="switch">Switch</button></div>
+    <div class="who">${dayPill()}${lvlChip()}<button class="sndbtn" id="musbtn" aria-label="${musicOn()&&mus.timer?'Stop music':'Play music'}" title="Music ${musicOn()&&mus.timer?'on':'off'}" style="${musicOn()&&mus.timer?'':'opacity:.55'}">🎵</button><button class="sndbtn" id="sndbtn" aria-label="${soundOn()?'Turn sound off':'Turn sound on'}" title="Sound ${soundOn()?'on':'off'}">${soundOn()?'🔊':'🔇'}</button>${esc(me)} <button id="switch">Switch</button></div>
   </div></header>`));
   const w=document.createElement('main'); w.className='wrap'; app.append(w);
   if(tab==='practice') w.append(quiz ? (quiz.done? resultsView() : quizView()) : setupView());
@@ -733,7 +741,7 @@ function render(){
   if(tab==='verses') w.append(vc ? (vc.done? vResultsView() : vCardView()) : vSetupView());
   {const sel=app.querySelector('.tabs [aria-selected="true"]'); if(sel&&sel.scrollIntoView) try{sel.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}}
   app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(game&&game.type==='duel'&&game.phase==='reading'){stopVoice();game.phase='ready'}if(quiz&&tab==='practice')quiz.deadline=null;tab=b.dataset.tab;confirmReset=false;render()});
-  $('#switch').onclick=()=>{me=null;U=null;quiz=null;vc=null;game=null;goalEdit=false;goalDraft=null;applyTheme();render()};
+  $('#switch').onclick=()=>{musicStop();me=null;U=null;quiz=null;vc=null;game=null;goalEdit=false;goalDraft=null;applyTheme();render()};
   $('#sndbtn').onclick=()=>{lsSet('sound',!soundOn());if(soundOn())sfx('ding');renderKeep()};
   wire();
 }
@@ -1131,6 +1139,7 @@ function progressView(){
     ${badgesPanel()}
     <div class="panel" style="display:grid;gap:10px"><span class="label">Themes</span>
       <div class="themes">${THEMES.map(t=>{const open=themeOpen(t),cur=(THEMES.find(x=>x.id===U.theme&&themeOpen(x))||THEMES[0]).id===t.id;return `<button class="themebtn ${cur?'cur':''}" data-themeid="${t.id}" ${open?'':'disabled'}>${themeSwatch(t)}<b>${esc(t.name)}</b><small>${open?(cur?'▶ In use':esc(t.hint)):'🔒 '+themeNeedText(t)}</small></button>`}).join('')}</div></div>
+    ${musicPanel()}
     <div class="panel" style="display:grid;gap:8px"><span class="label">Recent sessions</span>
       ${U.sessions.length?`<div class="tbl-wrap"><table><tbody>${U.sessions.slice(0,12).map(s=>`<tr><td class="mono" style="white-space:nowrap">${new Date(s.d).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</td><td>${esc(s.label)}</td><td class="n">${s.r}/${s.n}</td><td class="n"><span class="pill ${pct(s.r,s.n)>=85?'g':pct(s.r,s.n)>=65?'w':'b'}">${pct(s.r,s.n)}%</span></td></tr>`).join('')}</tbody></table></div>`:'<span class="muted">Finish a practice session and it shows up here.</span>'}
     </div>
@@ -1609,13 +1618,96 @@ const SFX={
 const soundOn=()=>lsGet('sound',true)!==false;
 function sfx(n){ if(!soundOn()) return; try{ SFX[n]&&SFX[n](); }catch(e){} }
 
+/* ---------- chiptune music (original tracks, synthesized live; no audio files) ---------- */
+// Notation: one token = one eighth note. "C5" plays a note, "-" holds the previous note, "." is a rest, "|" is just a bar line.
+// Drums: k = kick, s = snare, h = hi-hat, . = rest.
+const TRACKS=[
+ {id:'study',name:'Quiet Study',hint:'Calm and gentle',need:null,bpm:84,lw:'triangle',lv:.5,
+  lead:'E5 - G5 - C6 - B5 - | A5 - - - G5 - - - | F5 - A5 - C6 - A5 - | G5 - - - - - . . | E5 - G5 - C6 - D6 - | E6 - D6 - C6 - A5 - | G5 - F5 - E5 - D5 - | C5 - - - - - . .',
+  bass:'C3 - - - - - - - | A2 - - - - - - - | F2 - - - - - - - | G2 - - - - - - - | C3 - - - - - - - | A2 - - - - - - - | F2 - - - G2 - - - | C3 - - - - - - -',drum:''},
+ {id:'march',name:'Adventure March',hint:'Heroic and upbeat',need:null,bpm:132,lw:'square',lv:.32,
+  lead:'G4 - D5 - . D5 E5 F#5 | G5 - - - D5 - B4 - | C5 - E5 - . E5 D5 C5 | B4 - - - . . . . | G4 - D5 - . D5 E5 F#5 | G5 - - - B5 - A5 - | G5 - F#5 - E5 - F#5 - | G5 - - - . . . .',
+  bass:'G2 . G2 . G2 . G2 . | G2 . G2 . G2 . G2 . | C3 . C3 . C3 . C3 . | G2 . G2 . D3 . D3 . | G2 . G2 . G2 . G2 . | E2 . E2 . E2 . E2 . | C3 . C3 . D3 . D3 . | G2 . D3 . G2 . . .',drum:'k . h . s . h . k . k h s . h .'},
+ {id:'dungeon',name:'Dungeon Echo',hint:'Mysterious and sparse',need:{level:3},bpm:96,lw:'square',lv:.26,
+  lead:'A4 . . C5 . . E5 . | D5 - - - . . . . | A4 . . C5 . . F5 . | E5 - - - . . . . | G4 . . B4 . . D5 . | C5 - B4 - A4 - G#4 - | A4 - - - . . . . | . . . . . . . .',
+  bass:'A2 - - - - - - - | F2 - - - - - - - | D2 - - - - - - - | E2 - - - - - - - | G2 - - - - - - - | C3 - - - E2 - - - | A2 - - - - - - - | E2 - - - - - - -',drum:'k . . . h . . .'},
+ {id:'stars',name:'Starfield Drift',hint:'Floating space arpeggios',need:{level:6},bpm:100,lw:'square',lv:.2,
+  lead:'E5 B5 E6 B5 G5 B5 E6 B5 | D5 A5 D6 A5 F#5 A5 D6 A5 | C5 G5 C6 G5 E5 G5 C6 G5 | B4 F#5 B5 F#5 D#5 F#5 B5 F#5',
+  bass:'E2 - - - - - - - | D2 - - - - - - - | C2 - - - - - - - | B1 - - - - - - -',drum:'h . . . h . h .'},
+ {id:'speed',name:'Speed Run',hint:'Fast and frantic',need:{speed:15},bpm:168,lw:'square',lv:.28,
+  lead:'E5 E5 G5 E5 A5 G5 E5 D5 | C5 D5 E5 G5 D5 - . . | E5 E5 G5 E5 B5 A5 G5 E5 | D5 E5 C5 D5 E5 - . .',
+  bass:'C3 C3 C4 C3 C3 C3 C4 C3 | A2 A2 A3 A2 G2 G2 G3 G2 | C3 C3 C4 C3 C3 C3 C4 C3 | F2 F2 F3 F2 G2 G2 G3 G2',drum:'k h s h k k s h'},
+ {id:'boss',name:'Boss Battle',hint:'Dark, driving, dangerous',need:{bosses:1},bpm:150,lw:'square',lv:.27,
+  lead:'D5 . D5 F5 . E5 . D5 | C#5 - - - A4 - - - | D5 . D5 F5 . G5 . A5 | A#5 - - - A5 - - - | D6 . C6 A#5 . A5 . G5 | F5 - E5 - D5 - C#5 - | D5 - - - . . . . | A4 . A4 . A4 . A4 .',
+  bass:'D2 D2 D3 D2 D2 D2 D3 D2 | A1 A1 A2 A1 A1 A1 A2 A1 | D2 D2 D3 D2 D2 D2 D3 D2 | A#1 A#1 A#2 A#1 A1 A1 A2 A1 | G1 G1 G2 G1 G1 G1 G2 G1 | A1 A1 A2 A1 A1 A1 A2 A1 | D2 D2 D3 D2 D2 D2 D3 D2 | A1 A1 A2 A1 A1 A1 A2 A1',drum:'k h s h k k s s'},
+ {id:'waltz',name:'Castle Waltz',hint:'A spooky-elegant three-step',need:{level:9},bpm:120,lw:'square',lv:.24,
+  lead:'E5 - - - G5 - | F#5 - E5 - D#5 - | E5 - - - B4 - | C5 - - - - - | A4 - C5 - E5 - | D#5 - - - B4 - | E5 - - - - - | . . . . . .',
+  bass:'E2 . B2 . B2 . | B1 . A2 . A2 . | E2 . B2 . B2 . | A1 . E2 . E2 . | A1 . E2 . E2 . | B1 . F#2 . F#2 . | E2 . B2 . B2 . | E2 . . . . .',drum:'k . h . h .'},
+ {id:'victory',name:'Victory Lap',hint:'Bright and triumphant',need:{level:12},bpm:140,lw:'square',lv:.28,
+  lead:'C5 - F5 - A5 - C6 - | A5 - - C6 - - F6 - | E6 - D6 - C6 - A#5 - | A5 - - - - - . . | A#5 - A5 - G5 - A5 - | C6 - - A5 - - F5 - | G5 - A5 - G5 - E5 - | F5 - - - - - . .',
+  bass:'F2 . C3 . F2 . C3 . | F2 . C3 . F2 . C3 . | A#1 . F2 . A#1 . F2 . | F2 . C3 . F2 . C3 . | A#1 . F2 . A#1 . F2 . | F2 . C3 . D2 . A2 . | C2 . G2 . C2 . G2 . | F2 . C3 . F2 . . .',drum:'k h s h k h s k'},
+ {id:'hymn',name:'Golden Hymn',hint:'Slow and majestic',need:{level:20},bpm:72,lw:'triangle',lv:.55,
+  lead:'G4 - - - C5 - - - | E5 - - - D5 - C5 - | A4 - - - D5 - - - | B4 - - - - - - - | G4 - - - C5 - - - | E5 - - - G5 - F5 - | E5 - D5 - C5 - D5 - | C5 - - - - - - -',
+  bass:'C3 - - - - - - - | A2 - - - - - - - | F2 - - - - - - - | G2 - - - - - - - | C3 - - - - - - - | E2 - - - - - - - | F2 - - - G2 - - - | C2 - - - - - - -',drum:'k . . . . . . .'},
+];
+const NOTE_IX={C:0,'C#':1,D:2,'D#':3,E:4,F:5,'F#':6,G:7,'G#':8,A:9,'A#':10,B:11};
+function parseVoice(str){ const toks=(str||'').split(/\s+/).filter(t=>t&&t!=='|'), ev=new Array(toks.length).fill(null); let last=-1;
+  toks.forEach((t,i)=>{ const m=t.match(/^([A-G]#?)(\d)$/); if(m){ const midi=(+m[2]+1)*12+NOTE_IX[m[1]]; ev[i]={f:440*Math.pow(2,(midi-69)/12),len:1}; last=i; }
+    else if(t==='-'&&last>=0) ev[last].len++; else last=-1; });
+  return {ev,n:toks.length}; }
+const MUSIC_VOL={low:.05,med:.1,high:.16};
+const mus={timer:null,gain:null,track:null,step:0,next:0,parsed:null};
+const musicOn=()=>lsGet('music',false)===true;
+const musicVol=()=>MUSIC_VOL[lsGet('musicvol','med')]||.1;
+function musicOpen(t){ if(!t.need) return true; if(!U) return false; const n=t.need;
+  if(n.level) return levelOf(U.xp).level>=n.level; if(n.bosses) return Object.keys(U.bosses||{}).length>=n.bosses; if(n.speed) return ((U.hs&&U.hs.speed)||0)>=n.speed; return false; }
+function musicNeedText(t){ const n=t.need||{}; return n.level?`Reach level ${n.level}`:n.bosses?'Defeat your first boss':n.speed?`Score ${n.speed} in a Speed Round`:''; }
+function currentTrack(){ const t=U&&TRACKS.find(x=>x.id===U.music); return (t&&musicOpen(t))?t:TRACKS[0]; }
+function musicStop(){ clearInterval(mus.timer); mus.timer=null; if(mus.gain){ try{ const a=ac(); mus.gain.gain.setTargetAtTime(0,a.currentTime,.05); const g=mus.gain; setTimeout(()=>{try{g.disconnect()}catch(e){}},400);}catch(e){} mus.gain=null; } }
+function musicStart(){ const a=ac(); if(!a||!U) return; musicStop(); const t=currentTrack(); mus.track=t;
+  mus.parsed={lead:parseVoice(t.lead),bass:parseVoice(t.bass),drum:(t.drum||'').split(/\s+/).filter(x=>x&&x!=='|')};
+  mus.gain=a.createGain(); mus.gain.gain.value=musicVol(); mus.gain.connect(a.destination); mus.step=0; mus.next=a.currentTime+.08;
+  mus.timer=setInterval(musicTick,25); }
+function musicTick(){ const a=ac(); if(!a||!mus.gain) return; const sd=60/mus.track.bpm/2;
+  while(mus.next<a.currentTime+.15){ musicStep(mus.step,mus.next,sd); mus.next+=sd; mus.step++; } }
+function musicStep(i,t,sd){ const a=ac(), P=mus.parsed, T=mus.track, out=mus.gain;
+  const play=(f,len,type,vol)=>{ const o=a.createOscillator(), g=a.createGain(), end=t+len*sd*.92; o.type=type; o.frequency.value=f;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.008); g.gain.setValueAtTime(vol,Math.max(t+.01,end-.04)); g.gain.linearRampToValueAtTime(0,end);
+    o.connect(g); g.connect(out); o.start(t); o.stop(end+.02); };
+  const L=P.lead.ev[i%P.lead.n]; if(L) play(L.f,L.len,T.lw,T.lv);
+  const B=P.bass.ev[i%P.bass.n]; if(B) play(B.f,B.len,'triangle',.55);
+  const d=P.drum.length?P.drum[i%P.drum.length]:'.';
+  if(d==='k'){ const o=a.createOscillator(), g=a.createGain(); o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(45,t+.12); g.gain.setValueAtTime(.7,t); g.gain.exponentialRampToValueAtTime(.001,t+.14); o.connect(g); g.connect(out); o.start(t); o.stop(t+.16); }
+  else if(d==='s'||d==='h'){ const dur=d==='s'?.12:.035, b=a.createBuffer(1,Math.floor(a.sampleRate*dur),a.sampleRate), x=b.getChannelData(0); for(let k=0;k<x.length;k++) x[k]=Math.random()*2-1;
+    const s=a.createBufferSource(); s.buffer=b; const f=a.createBiquadFilter(); f.type=d==='s'?'bandpass':'highpass'; f.frequency.value=d==='s'?1800:7000; const g=a.createGain(); g.gain.setValueAtTime(d==='s'?.35:.12,t); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    s.connect(f); f.connect(g); g.connect(out); s.start(t); } }
+function duckMusic(on){ try{ if(mus.gain){ const a=ac(); mus.gain.gain.setTargetAtTime(on?musicVol()*.2:musicVol(),a.currentTime,.08); } }catch(e){} }
+function setMusic(on){ lsSet('music',!!on); if(on) musicStart(); else musicStop(); }
+// browsers only allow sound after a tap, so a saved "music on" starts at the first tap or key
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ if(musicOn()&&U&&!mus.timer&&document.visibilityState==='visible') musicStart(); },{passive:true}));
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') musicStop(); });
+function musicPanel(){
+  const cur=currentTrack(), on=musicOn()&&!!mus.timer;
+  return `<div class="panel" style="display:grid;gap:10px"><div class="row" style="justify-content:space-between"><span class="label">🎵 Music</span>
+      <button class="btn small ${on?'':'ghost'}" id="mustoggle">${on?'■ Stop music':'▶ Play music'}</button></div>
+    <div class="row" style="justify-content:space-between"><span class="hint">Volume</span><div class="seg">${[['low','Quiet'],['med','Medium'],['high','Loud']].map(([k,l])=>`<button data-musvol="${k}" aria-pressed="${lsGet('musicvol','med')===k}">${l}</button>`).join('')}</div></div>
+    <div class="tracks">${TRACKS.map(t=>{const open=musicOpen(t),isCur=cur.id===t.id;return `<button class="trackbtn ${isCur?'cur':''}" data-track="${t.id}" ${open?'':'disabled'}><span class="ti" aria-hidden="true">${open?(isCur&&on?'♫':'♪'):'🔒'}</span><b>${esc(t.name)}</b><small>${open?(isCur?(on?'▶ Now playing':'Selected'):esc(t.hint)):musicNeedText(t)}</small></button>`}).join('')}</div>
+    <span class="hint">Original 8-bit tracks. Music gets quieter while questions are read aloud. On iPhone, turn off the silent switch to hear it.</span></div>`;
+}
+function wireMusic(){
+  const t=$('#mustoggle'); if(t) t.onclick=()=>{ setMusic(!(musicOn()&&mus.timer)); renderKeep(); };
+  document.querySelectorAll('[data-track]').forEach(b=>b.onclick=()=>{ U.music=b.dataset.track; save(); setMusic(true); renderKeep(); });
+  document.querySelectorAll('[data-musvol]').forEach(b=>b.onclick=()=>{ lsSet('musicvol',b.dataset.musvol); if(mus.gain){ try{ mus.gain.gain.setTargetAtTime(musicVol(),ac().currentTime,.05); }catch(e){} } renderKeep(); });
+  const m=$('#musbtn'); if(m) m.onclick=()=>{ setMusic(!(musicOn()&&mus.timer)); renderKeep(); };
+}
+
 /* ---------- XP + levels ---------- */
 const TITLES=['Scroll Rookie','Verse Seeker','Page Turner','Parable Pro','Jump Starter','Buzzer Beater','Scripture Sharpshooter','Quiz Apostle','Gospel Guru','Word Warrior','Fisher of Answers','Lamp Bearer','Vine Keeper','Shepherd\'s Voice','Living Water','Bread of Life Scholar','Light of the World','Door Keeper','Good Shepherd\'s Flock','Resurrection Runner','Way Walker','Truth Teller','Life Giver','Glory Seeker','Overcomer','Witness','Beloved Disciple','Scroll Master','Gospel Champion','Legend of John'];
 const lvlNeed=L=>75*(L-1)*L; // total XP needed to reach level L
 function levelOf(xp){ xp=xp||0; let L=1; while(xp>=lvlNeed(L+1)) L++; const title=TITLES[Math.min(L,TITLES.length)-1]+(L>TITLES.length?' ★'+(L-TITLES.length):'');
   return {level:L,title,into:xp-lvlNeed(L),span:lvlNeed(L+1)-lvlNeed(L)}; }
 function gainXP(n){ if(!U||!n) return; const before=levelOf(U.xp).level; U.xp=(U.xp||0)+n; const after=levelOf(U.xp);
-  if(after.level>before){ setTimeout(()=>{ sfx('level'); celebrate(true); toast(`<b>Level up! Level ${after.level}</b><span>You are now a ${esc(after.title)}.${themeUnlockedAt(after.level)}</span>`); checkBadges(); },900); } }
+  if(after.level>before){ setTimeout(()=>{ sfx('level'); celebrate(true); toast(`<b>Level up! Level ${after.level}</b><span>You are now a ${esc(after.title)}.${themeUnlockedAt(after.level)}${(()=>{const t=TRACKS.find(x=>x.need&&x.need.level===after.level);return t?` New music unlocked: ${t.name}!`:''})()}</span>`); checkBadges(); },900); } }
 function lvlChip(){ if(!U) return ''; const l=levelOf(U.xp); return `<span class="lvlchip" title="${esc(l.title)} · ${U.xp||0} XP">Lv ${l.level}</span>`; }
 
 /* ---------- themes ---------- */
@@ -1790,7 +1882,8 @@ function duelRead(){ if(game.phase!=='ready') return; game.phase='reading'; game
   if(canSpeak){ const q=Q[game.ids[game.qi]], g=game, token=(g.readToken=(g.readToken||0)+1);
     game.voice=true; game.fallbackAt=Date.now()+(duelWords().length*450+4000);
     try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(`According to ${q.c}, ${q.v}. ${q.q.replace(/[()]/g,'')}?`); u.lang='en-US'; u.rate=.95;
-      u.onend=()=>{ if(game===g&&g.readToken===token&&g.phase==='reading'&&!g.fullAt) g.fullAt=Date.now(); };
+      u.onstart=()=>duckMusic(true); u.onerror=()=>duckMusic(false);
+      u.onend=()=>{ duckMusic(false); if(game===g&&g.readToken===token&&g.phase==='reading'&&!g.fullAt) g.fullAt=Date.now(); };
       speechSynthesis.speak(u); }catch(e){ game.voice=false; } }
   else game.voice=false;
   render(); }
@@ -2056,6 +2149,7 @@ function wire(){
   wireClass();
   wireVerses();
   wireGames();
+  wireMusic();
   wireLeaders();
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
   on('#doimport',()=>{try{const d=JSON.parse(decodeURIComponent(escape(atob($('#code').value.trim()))));if(!d.u||!d.u.stats)throw 0;U=Object.assign(blankUser(),d.u);save();$('#importmsg').textContent='Loaded.';render()}catch(e){$('#importmsg').textContent="That code didn't load. Copy the whole code and try again."}});
