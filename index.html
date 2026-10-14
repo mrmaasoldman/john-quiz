@@ -338,8 +338,8 @@ function lsSet(k,v){try{localStorage.setItem(K+k,JSON.stringify(v));return true}
 function blankUser(){return {stats:{},mem:{},sessions:[],sel:['1:'+qVerses[1].join(',1:')].join('').split(','),opts:{order:'order',limit:'all',pool:'all',memOnly:false,mix:false,words:'all',answer:'type',timer:'off'},vopts:{from:'goal',order:'shuffle',limit:'25',mode:'type',vsel:[],kind:'ref'},vstats:{},rstats:{},counts:{},badges:{}}}
 let users = lsGet('users',[]);
 let me = null, U = null;
-function loadUser(name){ me=name; U=Object.assign(blankUser(),lsGet('u:'+name,{})); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{});if(U.vopts.chs){U.vopts.vsel=[...new Set([...(U.vopts.vsel||[]),...U.vopts.chs.flatMap(c=>allVerses(c).map(v=>c+':'+v))])];delete U.vopts.chs} U.vstats=U.vstats||{};U.rstats=U.rstats||{};U.counts=U.counts||{};U.badges=U.badges||{}; if(!users.includes(name)){users.push(name);lsSet('users',users)} lsSet('last',name); pullCloud(); applyTheme(); setTimeout(applyFreezes,300); }
-function save(){ if(!me) return; U.saved=Date.now(); lsSet('u:'+me,U); scheduleSync(); }
+function loadUser(name){ me=name; U=Object.assign(blankUser(),lsGet('u:'+name,{})); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{});if(U.vopts.chs){U.vopts.vsel=[...new Set([...(U.vopts.vsel||[]),...U.vopts.chs.flatMap(c=>allVerses(c).map(v=>c+':'+v))])];delete U.vopts.chs} U.vstats=U.vstats||{};U.rstats=U.rstats||{};U.counts=U.counts||{};U.badges=U.badges||{}; if(!users.includes(name)){users.push(name);lsSet('users',users)} lsSet('last',name); pullCloud(); applyTheme(); setTimeout(applyFreezes,300); sheetLast=''; scheduleSheet(); }
+function save(){ if(!me) return; U.saved=Date.now(); lsSet('u:'+me,U); scheduleSync(); scheduleSheet(); }
 
 /* ---------- grading ---------- */
 function norm(s){return s.toLowerCase().replace(/[’‘`]/g,"'").replace(/&/g,' and ').replace(/[^a-z0-9' ]+/g,' ').replace(/'/g,'').replace(/\s+/g,' ').trim()}
@@ -1639,6 +1639,19 @@ function wireGames(){
   on('#dread',duelRead); on('#dshow',()=>{game.phase='judge';render()}); on('#dstealshow',()=>{game.phase='stealjudge';render()});
   on('#dright',()=>duelJudge(true)); on('#dwrong',()=>duelJudge(false)); on('#dnext',duelNext); on('#dagain',duelStart);
 }
+
+/* ---------- teacher progress sheet (Google Sheets) ---------- */
+const SHEET_URL='', SHEET_KEY='jq-maas-2026';
+let sheetTimer=null, sheetLast='';
+function sheetSummary(){ const r=summary(me,U), {streak,best}=streakFrom(goalDaysOf(U.days)), td=U.daily&&U.daily[dayKey()];
+  return {key:SHEET_KEY,name:me,mem:r.mem,goal:U.goal||'',goalN:r.goalN,goalMem:r.goalMem,att:r.att,right:r.right,solid:r.solid,streak,best,today:todayCount(),
+    level:levelOf(U.xp).level,xp:U.xp||0,badges:Object.keys(U.badges||{}).length,bosses:Object.keys(U.bosses||{}).length,speed:(U.hs&&U.hs.speed)||0,
+    daily:td?td.s+'/'+(td.n||10):'',vright:(U.counts&&U.counts.vright)||0}; }
+function sendSheet(beacon){ if(!SHEET_URL.startsWith('https://')||!me||!U) return; const d=sheetSummary(), body=JSON.stringify(d); if(body===sheetLast) return; sheetLast=body;
+  try{ if(beacon&&navigator.sendBeacon&&navigator.sendBeacon(SHEET_URL,new Blob([body],{type:'text/plain'}))) return;
+    fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body,keepalive:true}).catch(()=>{sheetLast=''}); }catch(e){ sheetLast=''; } }
+function scheduleSheet(){ if(!SHEET_URL.startsWith('https://')) return; clearTimeout(sheetTimer); sheetTimer=setTimeout(()=>sendSheet(false),8000); }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ clearTimeout(sheetTimer); sendSheet(true); } });
 
 /* ---------- wiring ---------- */
 function wire(){
