@@ -819,7 +819,7 @@ function badgeTests(){
     mem1:mem>=1,mem50:mem>=50,mem200:mem>=200,memgoal:!!gk&&gk.size>0&&[...gk].every(k=>U.mem[k]),vcards25:(C.vright||0)>=25,rev10:(C.rright||0)>=10,
     night:!!ev.at&&h>=22,early:!!ev.at&&h<7,regular:(U.sessions||[]).length>=10,
     speed15:((U.hs&&U.hs.speed)||0)>=15,boss1:Object.keys(U.bosses||{}).length>=1,boss21:Object.keys(U.bosses||{}).length>=21,daily1:Object.keys(U.daily||{}).length>=1,
-    dailyperfect:Object.values(U.daily||{}).some(d=>d.s===10),level5:levelOf(U.xp).level>=5,level10:levelOf(U.xp).level>=10,freeze:((U.counts||{}).freezes||0)>=1,duel:((U.counts||{}).duels||0)>=1};
+    dailyperfect:Object.values(U.daily||{}).some(d=>d.s===(d.n||10)&&(d.n||10)>=5),level5:levelOf(U.xp).level>=5,level10:levelOf(U.xp).level>=10,freeze:((U.counts||{}).freezes||0)>=1,duel:((U.counts||{}).duels||0)>=1};
 }
 function checkBadges(ev){
   if(!U) return; if(ev) lastEv=Object.assign({},lastEv||{},ev); U.badges=U.badges||{};
@@ -1408,7 +1408,10 @@ const BOSS_HP=12, HEARTS=3;
 function gPool(){ const ids=[]; selSet().forEach(k=>(byVerse[k]||[]).forEach(id=>ids.push(id))); return ids.length?ids:Q.map(q=>q.id); }
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function hashStr(s){let x=2166136261;for(let i=0;i<s.length;i++){x^=s.charCodeAt(i);x=Math.imul(x,16777619)}return x>>>0}
-function dailyIds(day){ const r=mulberry(hashStr('johnquiz-daily-'+day)), ids=[]; while(ids.length<10){const id=Math.floor(r()*Q.length); if(!ids.includes(id)) ids.push(id);} return ids; }
+// Daily Challenge draws only from the verses this student has marked memorized, so each student's challenge is their own.
+function memQuestionIds(){ const ids=[]; Object.keys(U.mem||{}).forEach(k=>(byVerse[k]||[]).forEach(id=>ids.push(id))); return ids.sort((a,b)=>a-b); }
+function dailyIds(day){ const pool=memQuestionIds(), n=Math.min(10,pool.length), r=mulberry(hashStr('johnquiz-daily-'+day+'-'+(me||''))), ids=[];
+  while(ids.length<n){ const id=pool[Math.floor(r()*pool.length)]; if(!ids.includes(id)) ids.push(id); } return ids; }
 const thinking=()=>U.opts.answer==='think';
 
 function gNewQ(id){ game.cur={id,state:'ask',ok:null,typed:'',marked:false,msg:''}; }
@@ -1457,12 +1460,14 @@ function bossEnd(win){ game.done=true; game.win=win; if(win){ U.bosses=U.bosses|
   if(win){ sfx('cheer'); celebrate(true); } else { sfx('boom'); oops(); } checkBadges(); }
 
 /* Daily Challenge */
-function dailyStart(){ const day=dayKey(); game={type:'daily',day,ids:dailyIds(day),qi:0,streak:0,res:[],replay:!!(U.daily&&U.daily[day])}; gNewQ(game.ids[0]); render(); }
+function dailyStart(){ const day=dayKey(), ids=dailyIds(day); if(!ids.length){ toast('<b>No memory verses yet</b><span>Mark verses memorized on the Memory tab, and your Daily Challenge will quiz you on them.</span>'); return; }
+  game={type:'daily',day,ids,n:ids.length,qi:0,streak:0,res:[],replay:!!(U.daily&&U.daily[day])}; gNewQ(game.ids[0]); render(); }
 function dailyEnd(){ game.done=true; const sc=game.res.filter(x=>x.ok).length; U.daily=U.daily||{};
-  if(!U.daily[game.day]){ U.daily[game.day]={s:sc,at:Date.now()}; gainXP(20+(sc===10?30:0)); }
+  const n=game.n, perfect=sc===n&&n>=5;
+  if(!U.daily[game.day]){ U.daily[game.day]={s:sc,n,at:Date.now()}; gainXP(20+(perfect?30:0)); }
   const keys=Object.keys(U.daily).sort(); if(keys.length>60) keys.slice(0,keys.length-60).forEach(k=>delete U.daily[k]);
   U.sessions.unshift({d:Date.now(),label:'Daily Challenge',n:game.res.length,r:sc}); U.sessions=U.sessions.slice(0,40); save(); render();
-  if(sc>=8){ sfx('cheer'); celebrate(true); } checkBadges({perfect:sc===10}); }
+  if(sc>=Math.ceil(n*.8)){ sfx('cheer'); celebrate(true); } checkBadges({perfect:perfect&&n>=10}); }
 
 /* Buzzer Duel */
 function duelStart(){ const ids=shuffle(gPool().slice()); game={type:'duel',ids,qi:0,p:[{name:duelNames[0]||'Player 1',score:0},{name:duelNames[1]||'Player 2',score:0}],target:duelTarget,phase:'ready',shown:0,buzz:null,stealer:null}; render(); }
@@ -1514,7 +1519,7 @@ function gamesView(){
     <div class="row" style="justify-content:space-between"><span class="hint">Answer by</span>${seg('answer',[['type','Typing'],['think','Saying it in my head']])}</div>
     <div class="gamegrid">
       <button class="gamecard" id="gspeed"><span class="gi">⚡</span><b>Speed Round</b><small>60 seconds. Answer as many as you can.</small><span class="pill n">Best: ${best}</span></button>
-      <button class="gamecard" id="gdaily"><span class="gi">🌅</span><b>Daily Challenge</b><small>Same 10 questions for everyone today. Compare with friends!</small><span class="pill ${today?'g':'w'}">${today?`Today: ${today.s}/10`:'Not played yet'}</span></button>
+      <button class="gamecard" id="gdaily"><span class="gi">🌅</span><b>Daily Challenge</b><small>10 questions a day from the verses you've memorized. A new set every day!</small><span class="pill ${today?'g':memQuestionIds().length?'w':'n'}">${today?`Today: ${today.s}/${today.n||10}`:memQuestionIds().length?'Not played yet':'Memorize a verse to unlock'}</span></button>
       <button class="gamecard" id="gboss"><span class="gi">⚔️</span><b>Boss Battles</b><small>Beat each chapter's boss before you run out of hearts.</small><span class="pill n">${bosses}/21 defeated</span></button>
       <button class="gamecard" id="gduel"><span class="gi">🔔</span><b>Buzzer Duel</b><small>Two players, one screen. First to buzz gets to answer.</small><span class="pill n">2 players</span></button>
     </div>
@@ -1562,17 +1567,17 @@ function bossView(){
 function dailyView(){
   const g=game, day=g.day;
   if(g.done){ const sc=g.res.filter(x=>x.ok).length, hist=Object.keys(U.daily||{}).sort().slice(-7);
-    return h(`<section><div class="label">Daily Challenge · ${day}</div><h2>${sc===10?'PERFECT DAY!':scoreTitle(sc,10)}</h2>
-      <div class="panel" style="display:grid;gap:6px"><div class="big">${sc}<span class="muted" style="font-size:.45em"> / 10</span></div><div class="muted">${g.replay?'Replay for practice. Your official score today is '+U.daily[day].s+'/10.':'Official score saved. Tell your friends!'}</div></div>
-      <div class="panel" style="display:grid;gap:8px"><span class="label">Last 7 challenges</span><div class="dailyhist">${hist.map(k=>`<div><b>${U.daily[k].s}</b><small>${k.slice(5)}</small></div>`).join('')}</div></div>
+    return h(`<section><div class="label">Daily Challenge · ${day}</div><h2>${sc===g.n&&g.n>=5?'PERFECT DAY!':scoreTitle(sc,g.n)}</h2>
+      <div class="panel" style="display:grid;gap:6px"><div class="big">${sc}<span class="muted" style="font-size:.45em"> / ${g.n}</span></div><div class="muted">${g.replay?'Replay for practice. Your official score today is '+U.daily[day].s+'/'+(U.daily[day].n||10)+'.':'Official score saved. Come back tomorrow for a new set!'}${g.n<10?` Memorize more verses to get the full 10 questions.`:''}</div></div>
+      <div class="panel" style="display:grid;gap:8px"><span class="label">Last 7 challenges</span><div class="dailyhist">${hist.map(k=>`<div><b>${U.daily[k].s}<span class="hint">/${U.daily[k].n||10}</span></b><small>${k.slice(5)}</small></div>`).join('')}</div></div>
       <div class="row"><button class="btn ghost" id="ghome">Back to games</button></div></section>`); }
   const q=Q[g.cur.id];
   return h(`<section>
-    <div class="qtop"><span class="ref">Daily Challenge${g.replay?' · replay':''}</span><div class="tally">${streakTag(g.streak||0)}<span>${g.qi+1} / 10</span></div></div>
-    <div class="prog"><i style="width:${g.qi*10}%"></i></div>
+    <div class="qtop"><span class="ref">Daily Challenge${g.replay?' · replay':''}</span><div class="tally">${streakTag(g.streak||0)}<span>${g.qi+1} / ${g.n}</span></div></div>
+    <div class="prog"><i style="width:${100*g.qi/g.n}%"></i></div>
     <div class="qcard ${g.cur.state==='fb'&&g.cur.marked?(g.cur.ok?'is-right':'is-wrong'):''}"><span class="ref" style="justify-self:start">John ${q.c}:${q.v}</span>
       <div class="qtext">${fmtQ(q.q)}?</div>${gAskHtml()}
-      ${g.cur.state==='fb'&&g.cur.marked?nextBtn('gnext',g.qi===9,'question'):''}</div>
+      ${g.cur.state==='fb'&&g.cur.marked?nextBtn('gnext',g.qi===g.n-1,'question'):''}</div>
     <div class="row" style="justify-content:flex-end"><button class="btn ghost small" id="ghome">Quit</button></div>
   </section>`);
 }
