@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#5B3DF5">
+<meta name="theme-color" content="#14152b">
 <meta name="description" content="Bible quiz practice for the Gospel of John: questions, verse cards, games and memory tracking.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -17,7 +17,7 @@
 <body>
 <title>John Quiz Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&family=VT323&display=swap">
 <style>
 /* Layout: one focused study column under a frosted top bar; the question card is the stage, everything else stays quiet. Quiz-show energy: buzzer violet, hot-pink sparks, chunky display type. */
 :root{
@@ -310,6 +310,143 @@ td.n{font-family:var(--f-mono);text-align:right;white-space:nowrap}
 .you{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:var(--accent-ink);padding:1px 7px;border-radius:99px}
 .x{border:0;background:transparent;color:var(--muted);font-size:13px;text-decoration:underline;padding:0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<style id="retro">
+/* Retro RPG skin: night-blue menu windows with white pixel borders, gold cursor accents, pixel type.
+   Overrides the base tokens at higher specificity so the rest of the stylesheet follows. */
+:root:root:root{
+  --bg:#14152b; --bg2:#1b1d3a; --surface:#1f2a5c; --sunk:#111940; --line:#4a5bb0;
+  --ink:#f6f2e6; --muted:#aeb5df; --accent:#f7c948; --accent2:#ff6b81; --accent-ink:#1d1405; --accent-soft:#3b3618;
+  --good:#63e27d; --good-soft:#123824; --bad:#ff6363; --bad-soft:#4a1522; --warn:#ffb347; --warn-soft:#3d2a10;
+  --gold:#f7c948; --gold-soft:#3a3214; --shadow:6px 6px 0 rgba(0,0,0,.55);
+  --f-display:"Press Start 2P","Courier New",monospace;
+  --f-body:"Pixelify Sans","Trebuchet MS",system-ui,sans-serif;
+  --f-text:"Pixelify Sans","Trebuchet MS",system-ui,sans-serif;
+  --f-mono:"VT323","Courier New",monospace;
+  --r:0px; --win:#1f2a5c; --win2:#16204a; --frame:#e9ecff; --frame-dark:#070a1f;
+  color-scheme:dark;
+}
+*,*::before,*::after{border-radius:0!important}
+body{background-color:var(--bg)!important;
+  background-image:linear-gradient(rgba(255,255,255,.035) 2px,transparent 2px),linear-gradient(90deg,rgba(255,255,255,.035) 2px,transparent 2px)!important;
+  background-size:24px 24px!important;background-attachment:fixed;font-size:17px;letter-spacing:.01em;-webkit-font-smoothing:none;font-smooth:never}
+h1,h2,h3{font-family:var(--f-display);font-weight:400!important;letter-spacing:0;line-height:1.45;text-shadow:3px 3px 0 #000}
+h2{font-size:clamp(14px,3.8vw,19px)!important}
+h3{font-size:14px!important}
+.label{font-family:var(--f-display);font-size:9px;font-weight:400;letter-spacing:.08em;color:var(--accent)}
+.hint{font-size:15px}
+.mono,kbd,td.n{font-family:var(--f-mono);font-size:1.15em}
+kbd{background:var(--sunk);border:2px solid var(--line);color:var(--ink);padding:0 5px}
+
+/* menu windows */
+.panel,.qcard,.stat,.gamecard,.notice,.homecard,.songcard,.duelmid,.duelpad,.bossarena,.startbar,.badge.on,.themebtn,.bosscard,.toast{
+  background:linear-gradient(180deg,var(--win),var(--win2))!important;border:4px solid var(--frame)!important;
+  box-shadow:0 0 0 4px var(--frame-dark),inset 0 0 0 3px var(--frame-dark),var(--shadow)!important}
+.qcard{padding:22px!important}
+.qcard.is-right{border-color:var(--good)!important;box-shadow:0 0 0 4px var(--frame-dark),inset 0 0 0 3px var(--frame-dark),0 0 0 8px var(--good),var(--shadow)!important}
+.qcard.is-wrong{border-color:var(--bad)!important;box-shadow:0 0 0 4px var(--frame-dark),inset 0 0 0 3px var(--frame-dark),0 0 0 8px var(--bad),var(--shadow)!important}
+.startbar{backdrop-filter:none;-webkit-backdrop-filter:none}
+
+/* top bar */
+.bar{background:#0d0f24!important;backdrop-filter:none;-webkit-backdrop-filter:none;border-bottom:4px solid var(--frame-dark)}
+.brand b{font-family:var(--f-display);font-size:13px;font-weight:400;text-shadow:2px 2px 0 #000}
+.brand span{font-family:var(--f-mono);font-size:15px}
+.brand::before{width:10px;height:10px;background:var(--accent2);box-shadow:none;animation:blink 1.2s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.tabs{background:var(--frame-dark);padding:4px;gap:4px}
+.tabs button{font-family:var(--f-body);font-weight:600;font-size:15px;color:var(--muted);border:2px solid transparent}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:3px 3px 0 #000;border-color:#000}
+.tabs button[aria-selected="true"]::before{content:"▶ ";font-size:.75em}
+@media (max-width:560px){.tabs{gap:2px;padding:3px}.tabs button{font-size:12.5px;padding:6px 3px;border-width:1px}.tabs button[aria-selected="true"]::before{content:""}}
+@media (max-width:380px){.tabs button{font-size:11px;padding:6px 2px}}
+.who button,.sndbtn,.daypill,.lvlchip{border:2px solid var(--frame)!important;background:var(--sunk)!important;color:var(--ink)!important;font-family:var(--f-body)}
+.lvlchip{font-family:var(--f-display)!important;font-size:9px!important;background:var(--accent)!important;color:var(--accent-ink)!important;border-color:#000!important}
+.daypill .daytoday{font-family:var(--f-mono);font-size:14px}
+
+/* buttons */
+.btn{font-family:var(--f-display);font-weight:400;font-size:11px;letter-spacing:.02em;line-height:1.5;padding:14px 18px;
+  background:var(--accent);color:var(--accent-ink);border:3px solid #000;box-shadow:4px 4px 0 #000;transition:transform .05s,box-shadow .05s}
+.btn:hover{filter:none;background:#ffdc6b}
+.btn:active{transform:translate(4px,4px);box-shadow:0 0 0 #000}
+.btn.small{font-size:9px;padding:9px 12px}
+.btn.ghost{background:var(--sunk);color:var(--ink);border:3px solid var(--frame);box-shadow:4px 4px 0 #000}
+.btn.ghost:hover{background:#26346f}
+.btn:disabled{box-shadow:none;filter:grayscale(1)}
+.nextbtn{background:var(--accent)!important;color:var(--accent-ink)!important;font-size:12px!important;animation:none!important}
+.nextbtn:hover{background:#ffdc6b!important}
+#selfright,#gright,#vright,#dright{background:var(--good)!important;color:#06200f!important}
+#selfwrong,#gwrong,#vwrong,#dwrong{background:var(--bad)!important;color:#2a0508!important}
+.x{color:var(--accent);font-family:var(--f-body)}
+
+/* form fields */
+input[type=text],textarea,select{background:#0b1030!important;border:3px solid var(--line)!important;color:var(--ink)!important;font-family:var(--f-mono)!important;font-size:24px!important;padding:8px 12px!important}
+textarea{font-size:20px!important}
+input[type=text]:focus,textarea:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px #000!important;outline:none}
+input::placeholder,textarea::placeholder{color:#6d76a8}
+.check input{accent-color:var(--accent)}
+
+/* pills, segments, tiles */
+.seg button,.names button{font-family:var(--f-body);font-weight:600;font-size:15px;border:2px solid var(--line);background:var(--sunk);color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:#000;box-shadow:3px 3px 0 #000}
+.names button:hover{border-color:var(--accent)}
+.pill{font-family:var(--f-body);font-weight:700;border:2px solid currentColor;background:transparent!important}
+.ch,.v,.mv,.printlink,.bosscard{border:3px solid var(--line)!important;background:var(--sunk)!important;box-shadow:3px 3px 0 #000}
+.ch b{font-family:var(--f-display);font-size:12px;font-weight:400}
+.ch small,.v,.mv{font-family:var(--f-mono);font-size:16px}
+.ch.all,.v.on{background:var(--accent)!important;border-color:#000!important;color:var(--accent-ink)}
+.ch.some{background:var(--accent-soft)!important;border-color:var(--accent)!important}
+.ch.open{box-shadow:0 0 0 3px var(--accent2),3px 3px 0 #000}
+.mv.on{background:var(--gold-soft)!important;border-color:var(--gold)!important;color:var(--gold)}
+.printlink{color:var(--ink);font-family:var(--f-body)}
+.printlink.sel{border-color:var(--accent)!important;background:var(--accent-soft)!important}
+.bosscard.won{border-color:var(--gold)!important}
+
+/* question + feedback */
+.ref{font-family:var(--f-mono);font-size:18px;background:#000;color:var(--accent);border:2px solid var(--frame)}
+.qtext{font-family:var(--f-text);font-weight:600;font-size:clamp(23px,5vw,30px);line-height:1.3;letter-spacing:0}
+.qtext .qref{color:var(--accent);font-weight:700}
+.fb{border:3px solid var(--line);background:var(--sunk)}
+.fb.good{background:var(--good-soft);border-color:var(--good)}
+.fb.bad{background:var(--bad-soft);border-color:var(--bad)}
+.fb.close{background:var(--warn-soft);border-color:var(--warn)}
+.fb .hype{font-family:var(--f-display);font-weight:400;font-size:clamp(11px,2.9vw,13px);line-height:1.7;text-shadow:2px 2px 0 #000;animation:pop .25s steps(3) both}
+.fb .ans{font-weight:700}
+.big,.bigstreak,.lvlbig,.gclock span,.duelinfo .dscore,.stat b,.count b,.dailyhist b{font-family:var(--f-display)!important;font-weight:400!important;letter-spacing:0!important;text-shadow:3px 3px 0 #000}
+.big{font-size:clamp(34px,10vw,52px)}
+.stat b{font-size:20px;margin:6px 0}
+.lvlbig{font-size:30px;background:var(--accent)!important;color:var(--accent-ink)!important;border:4px solid #000;text-shadow:none}
+.streak{font-family:var(--f-display);font-weight:400;font-size:8px;background:var(--accent2);color:#fff;border:2px solid #000}
+
+/* bars: segmented like an HP gauge */
+.prog,.goldbar,.meter,.hpbar,.timer .tbar{background:#000!important;border:3px solid var(--frame);height:16px}
+.prog i,.goldbar i,.timer .tbar i{background:repeating-linear-gradient(90deg,var(--accent) 0 10px,#c99a1a 10px 12px)!important}
+.hpbar i{background:repeating-linear-gradient(90deg,var(--bad) 0 10px,#b02a3a 10px 12px)!important}
+.timer.warn .tbar i{background:repeating-linear-gradient(90deg,var(--bad) 0 10px,#b02a3a 10px 12px)!important}
+.days14 i{border:2px solid #000}
+.days14 i.hit{background:var(--accent)}
+.strip i{border:1px solid #000}
+
+/* games */
+.gamecard b{font-family:var(--f-display);font-weight:400;font-size:12px;line-height:1.5}
+.gamecard .gi,.bossbig{filter:drop-shadow(3px 3px 0 #000)}
+.buzz{font-family:var(--f-display)!important;font-weight:400!important;font-size:16px!important;border:4px solid #000!important;background:var(--accent2)!important;box-shadow:6px 6px 0 #000!important;color:#fff;text-shadow:2px 2px 0 #000}
+.duelpad.p0 .buzz{background:#4f7bff!important}
+.buzz:active:not(:disabled){transform:translate(6px,6px);box-shadow:0 0 0 #000!important}
+.listen i{background:var(--accent)}
+.badge{background:var(--sunk);border:3px solid var(--line)}
+.badge b{font-family:var(--f-body)}
+.themebtn .sw{border:3px solid #000}
+
+/* sign in */
+.signin h1{font-size:clamp(20px,6vw,30px);line-height:1.5}
+.signin h1 em{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--accent)}
+.toast{color:var(--ink)!important}
+.toast b{font-family:var(--f-display);font-weight:400;font-size:11px;line-height:1.6}
+.flash{box-shadow:inset 0 0 0 12px var(--bad)}
+table th{font-family:var(--f-display);font-weight:400;font-size:8px;color:var(--accent)}
+.board tr.mine td{background:var(--accent-soft)}
+section{animation:none}
+@media (prefers-reduced-motion:reduce){.brand::before{animation:none}}
 </style>
 
 <div id="app"></div>
@@ -1381,11 +1518,11 @@ function themeOpen(t){ if(!t.need) return true; if(!U) return false; const n=t.n
   if(n.level) return levelOf(U.xp).level>=n.level; if(n.badges) return Object.keys(U.badges||{}).length>=n.badges; if(n.bosses) return Object.keys(U.bosses||{}).length>=n.bosses; return false; }
 function themeNeedText(t){ const n=t.need||{}; return n.level?`Reach level ${n.level}`:n.badges?`Earn ${n.badges} badges`:n.bosses?`Defeat ${n.bosses} bosses`:''; }
 function themeUnlockedAt(L){ const t=THEMES.find(x=>x.need&&x.need.level===L); return t?` New theme unlocked: ${t.name}!`:''; }
-function isDarkNow(){ const r=document.documentElement.getAttribute('data-theme'); if(r) return r==='dark'; try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false} }
+function isDarkNow(){ return true; const r=document.documentElement.getAttribute('data-theme'); if(r) return r==='dark'; try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false} }
 function applyTheme(){ const st=document.documentElement.style, t=U&&THEMES.find(x=>x.id===U.theme&&themeOpen(x));
   ['--accent','--accent2','--accent-soft','--accent-ink'].forEach(p=>st.removeProperty(p));
   if(!t||t.id==='classic') return; const dark=isDarkNow(), [a,b]=dark?t.d:t.l;
-  st.setProperty('--accent',a); st.setProperty('--accent2',b); st.setProperty('--accent-soft',`color-mix(in srgb, ${a} 18%, var(--surface))`); st.setProperty('--accent-ink',dark?'#0D0B1C':'#FFFFFF'); }
+  st.setProperty('--accent',a); st.setProperty('--accent2',b); st.setProperty('--accent-soft',`color-mix(in srgb, ${a} 18%, var(--surface))`); st.setProperty('--accent-ink','#1d1405'); }
 try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme); new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); }catch(e){}
 
 /* ---------- streak freezes ---------- */
