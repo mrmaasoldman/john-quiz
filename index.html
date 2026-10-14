@@ -134,6 +134,7 @@ textarea{font-family:var(--f-mono);font-size:12px;min-height:80px;color:var(--in
 .qcard.is-wrong{border-color:var(--bad);box-shadow:0 0 0 4px color-mix(in srgb,var(--bad) 22%,transparent),var(--shadow);animation:shake .45s}
 @keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
 .qtext{font-family:var(--f-text);font-size:clamp(22px,4.8vw,31px);line-height:1.28;font-weight:800;letter-spacing:-.015em;text-wrap:pretty}
+.qtext .qref{color:var(--accent);font-weight:800;white-space:nowrap}
 .qtext .opt-words,.qtext .more{color:var(--muted);font-weight:500}
 .ansrow{display:flex;gap:8px}
 .ansrow input{flex:1;min-width:0;font-size:19px}
@@ -380,6 +381,8 @@ const $=(s,r=document)=>r.querySelector(s);
 function h(html){const t=document.createElement('template');t.innerHTML=html.trim();return t.content}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function fmtQ(s){ return esc(s).replace(/\(([^()]*)\)/g,'<span class="opt-words">($1)</span>') }
+// Quizmaster style: "According to 6:1, what did ..."
+function withRef(c,v,html){ return `<span class="qref">According to ${c}:${v},</span> `+html.replace(/^([A-Z])(?=[a-z])/,m=>m.toLowerCase()); }
 function pct(n,d){return d?Math.round(100*n/d):0}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function selSet(){return new Set(U.sel)}
@@ -629,7 +632,7 @@ function quizView(){
   const right=quiz.res.filter(r=>r.ok).length, wrong=quiz.res.length-right;
   const st=U.stats[id], words=qWords(), ask=quiz.state==='ask';
   const part = ask ? partial() : (quiz.last.part);
-  const shownText = ask ? (part ? esc(words.slice(0,quiz.shown).join(' '))+' <span class="more">…</span>' : fmtQ(quiz.wording[quiz.i])+'?') : fmtQ(quiz.wording[quiz.i])+'?';
+  const shownText = withRef(q.c,q.v, ask ? (part ? esc(words.slice(0,quiz.shown).join(' '))+' <span class="more">…</span>' : fmtQ(quiz.wording[quiz.i])+'?') : fmtQ(quiz.wording[quiz.i])+'?');
   const f=h(`<section>
     <div class="qtop">
       <span class="ref">John ${q.c}:${q.v}</span>
@@ -664,7 +667,7 @@ function thinkView(){
   if(quiz.shown==null){quiz.shown=startWords();}
   const right=quiz.res.filter(r=>r.ok).length, wrong=quiz.res.length-right;
   const st=U.stats[id], words=qWords(), ask=quiz.state==='ask', part=ask&&partial();
-  const shownText = part ? esc(words.slice(0,quiz.shown).join(' '))+' <span class="more">…</span>' : fmtQ(quiz.wording[quiz.i])+'?';
+  const shownText = withRef(q.c,q.v, part ? esc(words.slice(0,quiz.shown).join(' '))+' <span class="more">…</span>' : fmtQ(quiz.wording[quiz.i])+'?');
   const answers=q.a.map(a=>`<div class="ans">${fmtQ(a)}</div>`).join('<div class="hint">or</div>');
   return h(`<section>
     <div class="qtop"><span class="ref">John ${q.c}:${q.v}</span>
@@ -1417,7 +1420,7 @@ const thinking=()=>U.opts.answer==='think';
 function gNewQ(id){ game.cur={id,state:'ask',ok:null,typed:'',marked:false,msg:'',shown:startWords(),dq:'',da:''}; }
 function gWords(){ return Q[game.cur.id].q.split(/\s+/).filter(Boolean); }
 function gPartial(){ const c=game.cur; return c.state==='ask'&&c.shown<gWords().length; }
-function gQText(){ const c=game.cur, w=gWords(); if(gPartial()) return esc(w.slice(0,c.shown).join(' '))+' <span class="more">…</span>'; return fmtQ(Q[c.id].q)+'?'; }
+function gQText(){ const c=game.cur, w=gWords(), q=Q[c.id]; return withRef(q.c,q.v, gPartial() ? esc(w.slice(0,c.shown).join(' '))+' <span class="more">…</span>' : fmtQ(q.q)+'?'); }
 function gAddWord(){ const c=game&&game.cur; if(!c||!gPartial()) return; const a=$('#gans'), r=$('#grest'); if(a)c.da=a.value; if(r)c.dq=r.value; c.shown++; if(!gPartial()) c.dq=''; render(); const t=$('#grest')||$('#gans'); if(t) t.focus(); }
 function gAskHtml(extra){
   const c=game.cur;
@@ -1553,7 +1556,7 @@ function speedView(){
   return h(`<section>
     <div class="qtop"><div class="gclock ${left<=10000?'warn':''}" id="gclock"><span id="gtime">${Math.ceil(left/1000)}</span><small>sec</small></div><div class="tally"><span class="g" style="font-size:20px;font-weight:800">${g.score}</span><span class="hint">right</span></div></div>
     <div class="prog"><i id="gbar" style="width:${left/600}%"></i></div>
-    <div class="qcard ${g.cur.state==='fb'&&g.cur.marked?(g.cur.ok?'is-right':'is-wrong'):''}"><span class="ref" style="justify-self:start">John ${q.c}:${q.v}</span>
+    <div class="qcard ${g.cur.state==='fb'&&g.cur.marked?(g.cur.ok?'is-right':'is-wrong'):''}">
       <div class="qtext">${gQText()}</div>${gAskHtml(g.cur.state==='ask'?'<button class="btn ghost small" id="gskip" type="button">Skip</button>':'')}</div>
     <div class="row" style="justify-content:flex-end"><button class="btn ghost small" id="gquit">End round</button></div>
   </section>`);
@@ -1575,7 +1578,7 @@ function bossView(){
       <div style="display:grid;gap:6px;min-width:0;flex:1"><b>${esc(name)} <span class="hint">John ${g.c}</span></b>
         <div class="hpbar"><i style="width:${100*g.hp/BOSS_HP}%"></i></div><span class="hint mono">${g.hp}/${BOSS_HP} HP</span></div>
       <div class="hearts" aria-label="${g.hearts} hearts left">${[...Array(HEARTS)].map((_,i)=>`<span class="${i<g.hearts?'':'lost'}">❤️</span>`).join('')}</div></div>
-    <div class="qcard ${g.cur.state==='fb'&&g.cur.marked?(g.cur.ok?'is-right':'is-wrong'):''}"><span class="ref" style="justify-self:start">John ${q.c}:${q.v}</span>
+    <div class="qcard ${g.cur.state==='fb'&&g.cur.marked?(g.cur.ok?'is-right':'is-wrong'):''}">
       <div class="qtext">${gQText()}</div>${gAskHtml()}
       ${g.cur.state==='fb'&&g.cur.marked?`<button class="btn nextbtn" id="gnext">${g.hp<=0?'Finish him off':g.hearts<=0?'See what happened':'Next attack'} <span aria-hidden="true">→</span></button>`:''}</div>
     <div class="row" style="justify-content:flex-end"><button class="btn ghost small" id="gbosses">Run away</button></div>
@@ -1592,7 +1595,7 @@ function dailyView(){
   return h(`<section>
     <div class="qtop"><span class="ref">Daily Challenge${g.replay?' · replay':''}</span><div class="tally">${streakTag(g.streak||0)}<span>${g.qi+1} / ${g.n}</span></div></div>
     <div class="prog"><i style="width:${100*g.qi/g.n}%"></i></div>
-    <div class="qcard ${g.cur.state==='fb'&&g.cur.marked?(g.cur.ok?'is-right':'is-wrong'):''}"><span class="ref" style="justify-self:start">John ${q.c}:${q.v}</span>
+    <div class="qcard ${g.cur.state==='fb'&&g.cur.marked?(g.cur.ok?'is-right':'is-wrong'):''}">
       <div class="qtext">${gQText()}</div>${gAskHtml()}
       ${g.cur.state==='fb'&&g.cur.marked?nextBtn('gnext',g.qi===g.n-1,'question'):''}</div>
     <div class="row" style="justify-content:flex-end"><button class="btn ghost small" id="ghome">Quit</button></div>
