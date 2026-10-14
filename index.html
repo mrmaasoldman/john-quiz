@@ -449,6 +449,17 @@ section{animation:none}
 @media (prefers-reduced-motion:reduce){.brand::before{animation:none}}
 </style>
 <style id="zelda">
+.lbtabs{display:grid!important;grid-template-columns:repeat(2,1fr);gap:6px}
+.lbtabs button{text-align:left}
+@media (min-width:560px){.lbtabs{grid-template-columns:repeat(4,1fr)}}
+.lblist{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.lblist li{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:8px;padding:8px 10px;background:var(--tile);border:2px solid var(--win-line)}
+.lblist li.top{border-color:var(--gold)}
+.lblist li.me{background:var(--accent-soft);border-color:var(--accent)}
+.lbrank{font-size:20px;text-align:center}
+.lbname{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.lbval{font-family:var(--f-display);font-size:13px;color:var(--gold);text-shadow:2px 2px 0 #000}
+
 /* Retro game skin. Every color comes from a variable so each unlockable theme can repaint the whole site.
    Defaults are the "Overworld" palette (sand ground, black windows, brick frame, forest green, gold). */
 :root:root:root:root{
@@ -1740,10 +1751,11 @@ function gNext(){
 }
 
 /* Speed Round */
-function speedStart(){ const ids=shuffle(gPool().slice()); game={type:'speed',ids,qi:0,score:0,missed:[],end:Date.now()+60000,streak:0,res:[],started:true}; gNewQ(ids[0]); sfx('buzzer'); render(); }
+function speedStart(){ const ids=shuffle(gPool().slice()); game={type:'speed',ids,qi:0,score:0,missed:[],end:Date.now()+60000,streak:0,res:[],started:true,typed:U.opts.answer!=='think'}; gNewQ(ids[0]); sfx('buzzer'); render(); }
 function speedNext(){ if(!game||game.done) return; game.qi=(game.qi+1)%game.ids.length; gNewQ(game.ids[game.qi]); render(); }
 function speedEnd(){ if(!game||game.done) return; clearTimeout(game.adv); game.done=true; U.hs=U.hs||{}; const prev=U.hs.speed||0; game.prev=prev;
   if(game.score>prev){ U.hs.speed=game.score; game.newBest=prev>0||game.score>0; gainXP(20); }
+  if(game.typed&&game.score>(U.hs.speedTyped||0)){ U.hs.speedTyped=game.score; game.newTypedBest=true; }
   U.sessions.unshift({d:Date.now(),label:'Speed Round',n:game.res.length,r:game.score}); U.sessions=U.sessions.slice(0,40); save(); render();
   if(game.newBest&&game.score>0){ sfx('cheer'); celebrate(true); } else sfx('buzzer'); checkBadges({perfect:false}); }
 
@@ -1821,13 +1833,14 @@ function gamesView(){
       <button class="gamecard" id="gboss"><span class="gi">⚔️</span><b>Boss Battles</b><small>Beat each chapter's boss before you run out of hearts.</small><span class="pill n">${bosses}/21 defeated</span></button>
       <button class="gamecard" id="gduel"><span class="gi">🔔</span><b>Buzzer Duel</b><small>Two players, one screen. First to buzz gets to answer.</small><span class="pill n">2 players</span></button>
     </div>
+    ${leaderPanel()}
     <p class="hint" style="margin:0">Speed Round and Buzzer Duel use the verses picked on the Practice tab (now: John ${esc(rangeLabel(U.sel))}).</p>
   </section>`);
 }
 function speedView(){
   const g=game;
   if(g.done) return h(`<section><div class="label">Speed Round</div><h2>${g.newBest&&g.score>0?'NEW HIGH SCORE!':scoreTitle(g.score,Math.max(g.score,10))}</h2>
-    <div class="panel" style="display:grid;gap:6px"><div class="big">${g.score}</div><div class="muted">right in 60 seconds · best ${Math.max(g.prev,g.score)}</div></div>
+    <div class="panel" style="display:grid;gap:6px"><div class="big">${g.score}</div><div class="muted">right in 60 seconds · best ${Math.max(g.prev,g.score)}${g.typed?` · typed best ${(U.hs&&U.hs.speedTyped)||0}`:' · played in your head, so this round doesn\'t count for the leaderboard'}</div></div>
     <div class="row"><button class="btn" id="gagain">Play again</button><button class="btn ghost" id="ghome">Back to games</button></div>
     ${g.missed.length?`<div class="panel"><div class="label" style="margin-bottom:6px">Ones that got away</div><ul class="missed">${[...new Set(g.missed)].map(id=>{const q=Q[id];return `<li><span class="r">${q.c}:${q.v}</span><span class="qq">${fmtQ(q.q)}?</span><span class="aa">${q.a.map(fmtQ).join(' <span class="muted">or</span> ')}</span></li>`}).join('')}</ul></div>`:''}</section>`);
   const q=Q[g.cur.id], left=Math.max(0,g.end-Date.now());
@@ -1949,12 +1962,42 @@ let sheetTimer=null, sheetLast='';
 function sheetSummary(){ const r=summary(me,U), {streak,best}=streakFrom(goalDaysOf(U.days)), td=U.daily&&U.daily[dayKey()];
   return {key:SHEET_KEY,name:me,mem:r.mem,goal:U.goal||'',goalN:r.goalN,goalMem:r.goalMem,att:r.att,right:r.right,solid:r.solid,streak,best,today:todayCount(),
     level:levelOf(U.xp).level,xp:U.xp||0,badges:Object.keys(U.badges||{}).length,bosses:Object.keys(U.bosses||{}).length,speed:(U.hs&&U.hs.speed)||0,
-    daily:td?td.s+'/'+(td.n||10):'',vright:(U.counts&&U.counts.vright)||0}; }
+    daily:td?td.s+'/'+(td.n||10):'',vright:(U.counts&&U.counts.vright)||0,speedTyped:(U.hs&&U.hs.speedTyped)||0}; }
 function sendSheet(beacon){ if(!SHEET_URL.startsWith('https://')||!me||!U) return; const d=sheetSummary(), body=JSON.stringify(d); if(body===sheetLast) return; sheetLast=body;
   try{ if(beacon&&navigator.sendBeacon&&navigator.sendBeacon(SHEET_URL,new Blob([body],{type:'text/plain'}))) return;
     fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body,keepalive:true}).catch(()=>{sheetLast=''}); }catch(e){ sheetLast=''; } }
 function scheduleSheet(){ if(!SHEET_URL.startsWith('https://')) return; clearTimeout(sheetTimer); sheetTimer=setTimeout(()=>sendSheet(false),8000); }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ clearTimeout(sheetTimer); sendSheet(true); } });
+
+/* ---------- class leaderboards (read back from the teacher's Google Sheet) ---------- */
+let lb=null, lbAt=0, lbErr=false, lbBusy=false, lbBoard='questions';
+const LB_BOARDS=[['questions','📜','Most questions','questions answered'],['streak','🔥','Longest streak','days in a row'],['speed','⚡','Speed Round','typed answers in 60s'],['bosses','⚔️','Boss Battles','bosses defeated']];
+function loadLeaders(force){
+  if(!SHEET_URL.startsWith('https://')||lbBusy) return; if(!force&&lb&&Date.now()-lbAt<60000) return;
+  lbBusy=true; sendSheet(false);
+  fetch(SHEET_URL+'?lb=1',{cache:'no-store'}).then(r=>r.json()).then(d=>{ if(!d||!Array.isArray(d.questions)) throw 0; lb=d; lbAt=Date.now(); lbErr=false; })
+    .catch(()=>{ lbErr=true; }).finally(()=>{ lbBusy=false; if(tab==='games'&&!game) renderKeep(); });
+}
+function leaderPanel(){
+  if(!SHEET_URL.startsWith('https://')) return '';
+  const [id,ic,title,unit]=LB_BOARDS.find(b=>b[0]===lbBoard), rows=(lb&&lb[id])||[], mine=(me||'').trim().toLowerCase();
+  const medal=i=>['🥇','🥈','🥉'][i]||`<span class="mono">${i+1}</span>`;
+  const fmt=v=>id==='bosses'?`${v}/21`:v.toLocaleString();
+  return `<div class="panel lbpanel" style="display:grid;gap:12px">
+    <div class="row" style="justify-content:space-between"><span class="label">🏆 Class leaderboards</span><button class="x" id="lbrefresh">${lbBusy?'Loading…':'Refresh'}</button></div>
+    <div class="seg lbtabs">${LB_BOARDS.map(([k,i,t])=>`<button data-lb="${k}" aria-pressed="${lbBoard===k}"><span aria-hidden="true">${i}</span> ${t}</button>`).join('')}</div>
+    ${lbErr&&!lb?`<p class="hint" style="margin:0">The leaderboard couldn't load right now. Check your internet and tap Refresh.</p>`
+      :!lb?`<p class="hint" style="margin:0">Loading the leaderboard…</p>`
+      :rows.length?`<ol class="lblist">${rows.map((r,i)=>`<li class="${r.name.trim().toLowerCase()===mine?'me':''} ${i<3?'top':''}"><span class="lbrank">${medal(i)}</span><span class="lbname">${esc(r.name)}${r.name.trim().toLowerCase()===mine?' <span class="you">You</span>':''}</span><span class="lbval">${fmt(r.v)}</span></li>`).join('')}</ol>`
+      :`<p class="hint" style="margin:0">No one is on this board yet. Be the first!</p>`}
+    <span class="hint">${ic} ${title}: ${unit}.${id==='speed'?' Only rounds played by typing count.':''} Scores update a few seconds after you practice.</span>
+  </div>`;
+}
+function wireLeaders(){
+  document.querySelectorAll('[data-lb]').forEach(b=>b.onclick=()=>{lbBoard=b.dataset.lb;renderKeep()});
+  const r=$('#lbrefresh'); if(r) r.onclick=()=>{loadLeaders(true);renderKeep()};
+  if($('.lbpanel')) loadLeaders(false);
+}
 
 /* ---------- wiring ---------- */
 function wire(){
@@ -2005,6 +2048,7 @@ function wire(){
   wireClass();
   wireVerses();
   wireGames();
+  wireLeaders();
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
   on('#doimport',()=>{try{const d=JSON.parse(decodeURIComponent(escape(atob($('#code').value.trim()))));if(!d.u||!d.u.stats)throw 0;U=Object.assign(blankUser(),d.u);save();$('#importmsg').textContent='Loaded.';render()}catch(e){$('#importmsg').textContent="That code didn't load. Copy the whole code and try again."}});
   on('#reset',()=>{confirmReset=true;render()});
