@@ -3,6 +3,7 @@
  * Receives a short progress summary from the John Quiz website and keeps
  * one row per student in the "Progress" sheet. Only the sheet's owner can see the sheet;
  * the website reads back just names, leaderboard scores and yesterday's top XP (see doGet).
+ * Full progress backups are saved as text files in the teacher's Drive folder "John Quiz Backups".
  */
 const KEY = 'jq-maas-2026';        // must match the key in the website
 const SHEET_NAME = 'Progress';
@@ -15,6 +16,7 @@ function doPost(e) {
   let d;
   try { d = JSON.parse(e.postData.contents); } catch (err) { return out('bad json'); }
   if (!d || d.key !== KEY || !d.name) return out('ignored');
+  if (d.type === 'backup') return saveBackup_(String(d.name).trim().slice(0, 40), String(d.code || ''));
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -42,6 +44,22 @@ function doPost(e) {
 }
 
 // GET ?lb=1 returns the class leaderboards and Quizzer of the Day (names and scores only) for the website.
+// Full progress backups go to a Drive folder only the teacher can see: one text file per student.
+// To restore a student: open their file, copy everything, send it to them; they paste it under Progress > Paste a code.
+const BACKUP_FOLDER = 'John Quiz Backups';
+function saveBackup_(name, code) {
+  if (!name || !/^JQZ1:|^[A-Za-z0-9+/=]+$/.test(code) || code.length > 2000000) return out('ignored');
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const it = DriveApp.getFoldersByName(BACKUP_FOLDER);
+    const folder = it.hasNext() ? it.next() : DriveApp.createFolder(BACKUP_FOLDER);
+    const fname = name.replace(/[\\/:*?"<>|]/g, '') + ' - progress code.txt';
+    const files = folder.getFilesByName(fname);
+    if (files.hasNext()) files.next().setContent(code); else folder.createFile(fname, code, MimeType.PLAIN_TEXT);
+  } finally { lock.releaseLock(); }
+  return out('ok');
+}
+
 function doGet(e) {
   if (!e || !e.parameter || !e.parameter.lb) return out('John Quiz tracker is running.');
   const sh = sheet_(), n = sh.getLastRow() - 1;

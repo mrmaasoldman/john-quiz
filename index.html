@@ -1150,10 +1150,10 @@ function progressView(){
       ${U.sessions.length?`<div class="tbl-wrap"><table><tbody>${U.sessions.slice(0,12).map(s=>`<tr><td class="mono" style="white-space:nowrap">${new Date(s.d).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</td><td>${esc(s.label)}</td><td class="n">${s.r}/${s.n}</td><td class="n"><span class="pill ${pct(s.r,s.n)>=85?'g':pct(s.r,s.n)>=65?'w':'b'}">${pct(s.r,s.n)}%</span></td></tr>`).join('')}</tbody></table></div>`:'<span class="muted">Finish a practice session and it shows up here.</span>'}
     </div>
     <div class="panel" style="display:grid;gap:10px">
-      <span class="label">Move progress to another device</span>
-      <span class="hint">Scores and memory verses are saved in this browser. Copy your code, then paste it on the other device under the same name. You have ${memCount} memory verse${memCount===1?'':'s'} marked.</span>
+      <span class="label">Move or restore your progress</span>
+      <span class="hint">Your progress is saved in this browser, and a backup copy goes to Mr. Maas. Lost your progress? Ask Mr. Maas for your backup code, sign in with the same name, tap <b>Paste a code</b> and paste it. To move to another device, copy your code here and paste it there. You have ${memCount} memory verse${memCount===1?'':'s'} marked.</span>
       <div class="row"><button class="btn ghost small" id="copycode">Copy my progress code</button><button class="btn ghost small" id="showimport">Paste a code</button></div>
-      <div id="importbox" hidden style="display:grid;gap:8px"><textarea id="code" placeholder="Paste a progress code here"></textarea><div class="row"><button class="btn small" id="doimport">Load this code</button><span class="hint" id="importmsg"></span></div></div>
+      <div id="importbox" hidden style="display:grid;gap:8px"><textarea id="code" placeholder="Paste a progress code or backup code here"></textarea><div class="row"><button class="btn small" id="doimport">Load this code</button><span class="hint" id="importmsg"></span></div></div>
       <div>${confirmReset?`<div class="confirm"><span>Erase all of ${esc(me)}'s scores and memory verses?</span><button class="btn small" style="background:var(--bad);color:#fff" id="resetyes">Erase</button><button class="btn ghost small" id="resetno">Keep them</button></div>`:`<button class="btn ghost small" id="reset">Reset my progress</button>`}</div>
     </div>
   </section>`);
@@ -1214,6 +1214,15 @@ let teacherCode='', confirmRemove=null, boardSort='goal';
 function slug(n){return (n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60))||'student'}
 function codeFor(){return btoa(unescape(encodeURIComponent(JSON.stringify({n:me,u:U}))))}
 function readCode(s){const d=JSON.parse(decodeURIComponent(escape(atob(s.trim()))));if(!d.u||!d.u.stats||!d.n)throw 0;return d}
+// Compact backup codes ("JQZ1:" + gzip + base64) so a whole season of progress stays small.
+const b64ToBytes=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
+function bytesToB64(u){ let s=''; for(let i=0;i<u.length;i+=0x8000) s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000)); return btoa(s); }
+async function packCode(){ const json=JSON.stringify({n:me,u:U});
+  if(typeof CompressionStream==='undefined') return codeFor();
+  const buf=await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer(); return 'JQZ1:'+bytesToB64(new Uint8Array(buf)); }
+async function unpackCode(raw){ const s=String(raw||'').replace(/\s+/g,'');
+  if(s.startsWith('JQZ1:')){ const txt=await new Response(new Blob([b64ToBytes(s.slice(5))]).stream().pipeThrough(new DecompressionStream('gzip'))).text(); const d=JSON.parse(txt); if(!d.u||!d.u.stats) throw 0; return d; }
+  const d=JSON.parse(decodeURIComponent(escape(atob(s)))); if(!d.u||!d.u.stats) throw 0; return d; }
 function summary(name,u){
   const memCh=VERSES_IN_JOHN.map((n,i)=>{let m=0;for(let v=1;v<=n;v++)if(u.mem&&u.mem[(i+1)+':'+v])m++;return m});
   let att=0,right=0,solid=0; const st=u.stats||{};
@@ -2047,8 +2056,15 @@ function sheetSummary(){ const r=summary(me,U), {streak,best}=streakFrom(goalDay
 function sendSheet(beacon){ if(!SHEET_URL.startsWith('https://')||!me||!U) return; const d=sheetSummary(), body=JSON.stringify(d); if(body===sheetLast) return; sheetLast=body;
   try{ if(beacon&&navigator.sendBeacon&&navigator.sendBeacon(SHEET_URL,new Blob([body],{type:'text/plain'}))) return;
     fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body,keepalive:true}).catch(()=>{sheetLast=''}); }catch(e){ sheetLast=''; } }
-function scheduleSheet(){ if(!SHEET_URL.startsWith('https://')) return; clearTimeout(sheetTimer); sheetTimer=setTimeout(()=>sendSheet(false),8000); }
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ clearTimeout(sheetTimer); sendSheet(true); } });
+let backupAt=0, backupTimer=null;
+async function sendBackup(beacon){ if(!SHEET_URL.startsWith('https://')||!me||!U) return; backupAt=Date.now();
+  try{ const body=JSON.stringify({key:SHEET_KEY,type:'backup',name:me,code:await packCode()});
+    if(beacon){ if(body.length<60000&&navigator.sendBeacon) navigator.sendBeacon(SHEET_URL,new Blob([body],{type:'text/plain'})); return; }
+    fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body}).catch(()=>{backupAt=0}); }catch(e){ backupAt=0; } }
+function scheduleBackup(){ if(!SHEET_URL.startsWith('https://')||backupTimer) return; if(Date.now()-backupAt<10*60e3) return;
+  backupTimer=setTimeout(()=>{backupTimer=null;sendBackup(false)},15000); }
+function scheduleSheet(){ scheduleBackup(); if(!SHEET_URL.startsWith('https://')) return; clearTimeout(sheetTimer); sheetTimer=setTimeout(()=>sendSheet(false),8000); }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ clearTimeout(sheetTimer); sendSheet(true); if(me&&U&&Date.now()-backupAt>60e3){ clearTimeout(backupTimer); backupTimer=null; sendBackup(true); } } });
 
 /* ---------- class leaderboards (read back from the teacher's Google Sheet) ---------- */
 let lb=null, lbAt=0, lbErr=false, lbBusy=false, lbBoard='questions';
@@ -2144,7 +2160,7 @@ function wire(){
   wireMusic();
   wireLeaders();
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
-  on('#doimport',()=>{try{const d=JSON.parse(decodeURIComponent(escape(atob($('#code').value.trim()))));if(!d.u||!d.u.stats)throw 0;U=Object.assign(blankUser(),d.u);save();$('#importmsg').textContent='Loaded.';render()}catch(e){$('#importmsg').textContent="That code didn't load. Copy the whole code and try again."}});
+  on('#doimport',async()=>{ const msg=$('#importmsg'); try{ const d=await unpackCode($('#code').value); U=Object.assign(blankUser(),d.u); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{}); save(); applyTheme(); render(); toast('<b>Progress restored!</b><span>Welcome back. Everything is right where you left it.</span>'); }catch(e){ if(msg) msg.textContent="That code didn't load. Copy the whole code and try again."; } });
   on('#reset',()=>{confirmReset=true;render()});
   on('#resetno',()=>{confirmReset=false;render()});
   on('#resetyes',()=>{const sel=U.sel,opts=U.opts;U=blankUser();U.sel=sel;U.opts=opts;save();confirmReset=false;render()});
