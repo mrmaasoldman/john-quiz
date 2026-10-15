@@ -17,7 +17,7 @@
 <body>
 <title>John Quiz Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&family=Jersey+15&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&family=Jersey+15&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
 <style>
 /* Layout: one focused study column under a frosted top bar; the question card is the stage, everything else stays quiet. Quiz-show energy: buzzer violet, hot-pink sparks, chunky display type. */
 :root{
@@ -449,6 +449,17 @@ section{animation:none}
 @media (prefers-reduced-motion:reduce){.brand::before{animation:none}}
 </style>
 <style id="zelda">
+:root:root:root:root{--f-read:"Atkinson Hyperlegible","Verdana","Segoe UI",system-ui,sans-serif}
+/* Questions, answers and verses: a font designed for easy reading */
+.qtext:not([style*="f-display"]),#dq,.duelmid .qtext{font-family:var(--f-read)!important;font-weight:700!important;font-size:clamp(23px,5.4vw,30px)!important;line-height:1.35!important;letter-spacing:.005em!important}
+.qtext .qref{font-family:var(--f-read)!important;font-weight:700}
+.qtext .opt-words,.qtext .more{font-weight:400!important}
+.fb .ans,.missed .qq,.missed .aa,.fb .yours,.qres{font-family:var(--f-read)!important}
+.fb .ans{font-size:21px!important;line-height:1.4}
+input[type=text],textarea{font-family:var(--f-read)!important;font-weight:400!important;font-size:21px!important}
+#vans,#vptext{font-size:19px!important;line-height:1.5!important}
+.signin input[type=text]#nm{font-family:var(--f-body)!important}
+
 :root:root:root:root{--f-mono:"Jersey 15","Pixelify Sans","Trebuchet MS",sans-serif;--f-num:"Jersey 15","Pixelify Sans","Trebuchet MS",sans-serif}
 /* clearer digits: scoreboard-style pixel numbers everywhere numbers matter */
 .big,.bigstreak,.lvlbig,.gclock span,.duelinfo .dscore,.stat b,.count b,.dailyhist b,.lbval,.lvlchip,.streak,.daytoday,.tally,.ref,.mono,kbd,td.n,.ch b,.ch small,.v,.mv,.lbrank .mono,#tsec,#vtsec,#gtime,.rank,.timer span{font-family:var(--f-num)!important;letter-spacing:.03em!important;font-weight:400!important}
