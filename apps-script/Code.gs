@@ -2,14 +2,14 @@
  * John Quiz progress tracker (Google Apps Script)
  * Receives a short progress summary from the John Quiz website and keeps
  * one row per student in the "Progress" sheet. Only the sheet's owner can see the sheet;
- * the website reads back just names and four leaderboard numbers (see doGet).
+ * the website reads back just names, leaderboard scores and yesterday's top XP (see doGet).
  */
 const KEY = 'jq-maas-2026';        // must match the key in the website
 const SHEET_NAME = 'Progress';
 const HEADERS = ['Student','Last active','Memorized verses','Memory goal','Goal progress',
   'Questions answered','Right answers','Accuracy','Questions mastered','Day streak','Best streak',
   'Answered today','Level','XP','Badges','Bosses beaten','Speed Round best','Daily Challenge today','Verse cards right',
-  'Speed Round best (typed)'];
+  'Speed Round best (typed)','XP today','Date (today)','XP yesterday','Date (yesterday)'];
 
 function doPost(e) {
   let d;
@@ -27,7 +27,8 @@ function doPost(e) {
       num(d.att), num(d.right), d.att ? Math.round(100 * num(d.right) / num(d.att)) / 100 : '',
       num(d.solid), num(d.streak), num(d.best), num(d.today), num(d.level), num(d.xp),
       num(d.badges), num(d.bosses), num(d.speed), d.daily || '', num(d.vright),
-      num(d.speedTyped)
+      num(d.speedTyped),
+      num(d.xpToday), String(d.tdate || ''), num(d.xpYest), String(d.ydate || '')
     ];
     const names = sh.getRange(2, 1, Math.max(sh.getLastRow() - 1, 1), 1).getValues().map(r => String(r[0]).trim().toLowerCase());
     const i = names.indexOf(name.toLowerCase());
@@ -40,7 +41,7 @@ function doPost(e) {
   return out('ok');
 }
 
-// GET ?lb=1 returns the class leaderboards (names and four numbers only) for the website.
+// GET ?lb=1 returns the class leaderboards and Quizzer of the Day (names and scores only) for the website.
 function doGet(e) {
   if (!e || !e.parameter || !e.parameter.lb) return out('John Quiz tracker is running.');
   const sh = sheet_(), n = sh.getLastRow() - 1;
@@ -49,7 +50,17 @@ function doGet(e) {
     name: String(r[0]).trim(), questions: num(r[5]), streak: num(r[10]), bosses: num(r[15]), speed: num(r[19])
   }));
   const top = (k) => people.filter(p => p[k] > 0).sort((a, b) => b[k] - a[k]).slice(0, 10).map(p => ({ name: p.name, v: p[k] }));
-  const body = { at: new Date().toISOString(), questions: top('questions'), streak: top('streak'), speed: top('speed'), bosses: top('bosses') };
+  // Quizzer of the Day: most XP earned yesterday (uses the date each student's device reported)
+  const tz = Session.getScriptTimeZone();
+  const yest = Utilities.formatDate(new Date(Date.now() - 864e5), tz, 'yyyy-MM-dd');
+  const ds = v => v instanceof Date ? Utilities.formatDate(v, tz, 'yyyy-MM-dd') : String(v).trim();
+  let qotd = null;
+  rows.forEach(r => {
+    const name = String(r[0]).trim(); if (!name) return;
+    const xp = ds(r[21]) === yest ? num(r[20]) : (ds(r[23]) === yest ? num(r[22]) : 0);
+    if (xp > 0 && (!qotd || xp > qotd.xp)) qotd = { name: name, xp: xp };
+  });
+  const body = { at: new Date().toISOString(), qotd: qotd, questions: top('questions'), streak: top('streak'), speed: top('speed'), bosses: top('bosses') };
   return ContentService.createTextOutput(JSON.stringify(body)).setMimeType(ContentService.MimeType.JSON);
 }
 
