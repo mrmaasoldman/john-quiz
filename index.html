@@ -17,7 +17,7 @@
 <body>
 <title>John Quiz Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&family=Jersey+15&family=VT323&display=swap">
 <style>
 /* Layout: one focused study column under a frosted top bar; the question card is the stage, everything else stays quiet. Quiz-show energy: buzzer violet, hot-pink sparks, chunky display type. */
 :root{
@@ -449,6 +449,31 @@ section{animation:none}
 @media (prefers-reduced-motion:reduce){.brand::before{animation:none}}
 </style>
 <style id="zelda">
+:root:root:root:root{--f-mono:"Jersey 15","Pixelify Sans","Trebuchet MS",sans-serif;--f-num:"Jersey 15","Pixelify Sans","Trebuchet MS",sans-serif}
+/* clearer digits: scoreboard-style pixel numbers everywhere numbers matter */
+.big,.bigstreak,.lvlbig,.gclock span,.duelinfo .dscore,.stat b,.count b,.dailyhist b,.lbval,.lvlchip,.streak,.daytoday,.tally,.ref,.mono,kbd,td.n,.ch b,.ch small,.v,.mv,.lbrank .mono,#tsec,#vtsec,#gtime,.rank,.timer span{font-family:var(--f-num)!important;letter-spacing:.03em!important;font-weight:400!important}
+.big{font-size:clamp(56px,15vw,80px)!important}
+.bigstreak{font-size:64px!important}
+.stat b{font-size:34px!important}
+.lvlbig{font-size:46px!important}
+.lvlchip{font-size:16px!important;padding:1px 9px!important}
+.streak{font-size:15px!important;padding:1px 8px!important}
+.daytoday{font-size:16px!important}
+.tally{font-size:19px!important}
+.ref{font-size:21px!important;padding:2px 10px!important}
+.count b{font-size:34px!important}
+.ch b{font-size:22px!important}
+.ch small{font-size:15px!important}
+.v,.mv{font-size:19px!important}
+.gclock span{font-size:56px!important}
+.duelinfo .dscore{font-size:52px!important}
+.lbval{font-size:24px!important}
+.timer span,#tsec,#vtsec{font-size:22px!important}
+.hpbar + .hint,.lblist .lbrank{font-size:22px}
+kbd{font-size:17px!important}
+/* typing: use the clearer body pixel font */
+input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:21px!important;font-weight:500!important}
+
 .qotd{display:flex!important;align-items:center;gap:16px}
 .qotd .crown{font-size:42px;filter:drop-shadow(3px 3px 0 #000);animation:bob 1.6s steps(2) infinite}
 @keyframes bob{50%{transform:translateY(-4px)}}
