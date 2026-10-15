@@ -2061,7 +2061,11 @@ function loadLeaders(force){
 }
 function qotdBanner(){
   if(!SHEET_URL.startsWith('https://')) return '';
-  const q=lb&&lb.qotd; if(!q||!q.name) return '';
+  if(!lb) return '';
+  const q=lb.qotd;
+  if(!q||!q.name) return `<div class="panel qotd"><span class="crown" aria-hidden="true">👑</span><div style="display:grid;gap:4px;min-width:0">
+    <span class="label">Quizzer of the Day</span><b class="qotdname">The crown is up for grabs!</b>
+    <span class="hint">Earn the most XP today to be tomorrow's Quizzer of the Day.</span></div></div>`;
   const mine=(me||'').trim().toLowerCase()===q.name.trim().toLowerCase();
   return `<div class="panel qotd"><span class="crown" aria-hidden="true">👑</span><div style="display:grid;gap:4px;min-width:0">
     <span class="label">Quizzer of the Day</span><b class="qotdname">${esc(q.name)}${mine?' <span class="you">You!</span>':''}</b>

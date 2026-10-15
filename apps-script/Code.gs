@@ -28,7 +28,7 @@ function doPost(e) {
       num(d.solid), num(d.streak), num(d.best), num(d.today), num(d.level), num(d.xp),
       num(d.badges), num(d.bosses), num(d.speed), d.daily || '', num(d.vright),
       num(d.speedTyped),
-      num(d.xpToday), String(d.tdate || ''), num(d.xpYest), String(d.ydate || '')
+      num(d.xpToday), "'" + String(d.tdate || ''), num(d.xpYest), "'" + String(d.ydate || '')
     ];
     const names = sh.getRange(2, 1, Math.max(sh.getLastRow() - 1, 1), 1).getValues().map(r => String(r[0]).trim().toLowerCase());
     const i = names.indexOf(name.toLowerCase());
@@ -51,16 +51,17 @@ function doGet(e) {
   }));
   const top = (k) => people.filter(p => p[k] > 0).sort((a, b) => b[k] - a[k]).slice(0, 10).map(p => ({ name: p.name, v: p[k] }));
   // Quizzer of the Day: most XP earned yesterday (uses the date each student's device reported)
-  const tz = Session.getScriptTimeZone();
-  const yest = Utilities.formatDate(new Date(Date.now() - 864e5), tz, 'yyyy-MM-dd');
-  const ds = v => v instanceof Date ? Utilities.formatDate(v, tz, 'yyyy-MM-dd') : String(v).trim();
+  const tz = Session.getScriptTimeZone(), stz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+  const ds = v => v instanceof Date ? Utilities.formatDate(v, stz, 'yyyy-MM-dd') : String(v).replace(/^'/, '').trim();
+  // 'yesterday' is checked in both time zones so a setting mismatch can't hide the winner
+  const yests = [Utilities.formatDate(new Date(Date.now() - 864e5), tz, 'yyyy-MM-dd'), Utilities.formatDate(new Date(Date.now() - 864e5), stz, 'yyyy-MM-dd')];
   let qotd = null;
   rows.forEach(r => {
     const name = String(r[0]).trim(); if (!name) return;
-    const xp = ds(r[21]) === yest ? num(r[20]) : (ds(r[23]) === yest ? num(r[22]) : 0);
+    const xp = yests.includes(ds(r[21])) ? num(r[20]) : (yests.includes(ds(r[23])) ? num(r[22]) : 0);
     if (xp > 0 && (!qotd || xp > qotd.xp)) qotd = { name: name, xp: xp };
   });
-  const body = { at: new Date().toISOString(), qotd: qotd, questions: top('questions'), streak: top('streak'), speed: top('speed'), bosses: top('bosses') };
+  const body = { at: new Date().toISOString(), yesterday: yests[0], qotd: qotd, questions: top('questions'), streak: top('streak'), speed: top('speed'), bosses: top('bosses') };
   return ContentService.createTextOutput(JSON.stringify(body)).setMimeType(ContentService.MimeType.JSON);
 }
 
