@@ -47,6 +47,14 @@ function doPost(e) {
 // Full progress backups go to a Drive folder only the teacher can see: one text file per student.
 // To restore a student: open their file, copy everything, send it to them; they paste it under Progress > Paste a code.
 const BACKUP_FOLDER = 'John Quiz Backups';
+
+// Run this once from the Apps Script editor (choose "setupBackups" in the menu next to Run, then click Run).
+// It asks Google for permission to use your Drive and creates the backups folder.
+function setupBackups() {
+  const it = DriveApp.getFoldersByName(BACKUP_FOLDER);
+  const folder = it.hasNext() ? it.next() : DriveApp.createFolder(BACKUP_FOLDER);
+  Logger.log('Backups folder is ready: ' + folder.getUrl());
+}
 function saveBackup_(name, code) {
   if (!name || !/^JQZ1:|^[A-Za-z0-9+/=]+$/.test(code) || code.length > 2000000) return out('ignored');
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
