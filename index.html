@@ -516,6 +516,22 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .lblist li.me{background:var(--accent-soft);border-color:var(--accent)}
 .lbrank{font-size:20px;text-align:center}
 .lbname{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.whoname{display:inline-flex;align-items:center;gap:6px}
+.av{display:inline-block;vertical-align:middle;flex:none;image-rendering:pixelated;outline:2px solid #000;box-shadow:2px 2px 0 rgba(0,0,0,.35)}
+.lbname{position:relative}.lbav{float:left;margin-right:10px}.lbav .av{outline-width:2px}
+.qotdname .av{margin-right:4px;vertical-align:-6px}
+.names button{display:inline-flex;align-items:center;gap:8px}
+.avbig .av{outline-width:3px;box-shadow:4px 4px 0 #000}
+.avgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px}
+.avpick{position:relative;display:grid;justify-items:center;gap:4px;padding:8px 4px;background:var(--tile);border:2px solid var(--win-line);color:var(--win-ink);cursor:pointer}
+.avpick small{font-size:12px;line-height:1.2;text-align:center}
+.avpick.cur{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.avpick.locked{cursor:not-allowed}.avpick.locked .av{filter:grayscale(1) brightness(.45)}.avpick.locked small{opacity:.6}
+.avlock{position:absolute;top:4px;right:4px;font-size:10px;background:#000;color:#fff;padding:1px 4px}
+.avtabs{display:grid!important;grid-template-columns:repeat(4,1fr)}.avtabs button{font-size:14px!important;padding:8px 4px!important;white-space:nowrap}
+.avsws{display:flex;flex-wrap:wrap;gap:8px}
+.avsw{width:36px;height:36px;border:3px solid #000;cursor:pointer;font-size:14px}
+.avsw.cur{outline:3px solid var(--gold);outline-offset:2px}.avsw:disabled{cursor:not-allowed;filter:saturate(.3) brightness(.7)}
 .lbsub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
 .crowns{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .matseg{margin-bottom:4px}
@@ -786,7 +802,7 @@ function render(){
     <div class="tabs" role="tablist">
       ${['practice','games','verses','scores','progress','materials'].map(t=>`<button role="tab" data-tab="${t}" aria-selected="${tab===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}
     </div>
-    <div class="who">${dayPill()}${lvlChip()}<button class="sndbtn" id="musbtn" aria-label="${musicOn()&&mus.playing?'Stop music':'Play music'}" title="Music ${musicOn()&&mus.playing?'on':'off'}" style="${musicOn()&&mus.playing?'':'opacity:.55'}">🎵</button><button class="sndbtn" id="sndbtn" aria-label="${soundOn()?'Turn sound off':'Turn sound on'}" title="Sound ${soundOn()?'on':'off'}">${soundOn()?'🔊':'🔇'}</button>${esc(me)} <button id="switch">Switch</button></div>
+    <div class="who">${dayPill()}${lvlChip()}<button class="sndbtn" id="musbtn" aria-label="${musicOn()&&mus.playing?'Stop music':'Play music'}" title="Music ${musicOn()&&mus.playing?'on':'off'}" style="${musicOn()&&mus.playing?'':'opacity:.55'}">🎵</button><button class="sndbtn" id="sndbtn" aria-label="${soundOn()?'Turn sound off':'Turn sound on'}" title="Sound ${soundOn()?'on':'off'}">${soundOn()?'🔊':'🔇'}</button><span class="whoname">${avSvg(myAv(),26,me)}${esc(me)}</span> <button id="switch">Switch</button></div>
   </div></header>`));
   const w=document.createElement('main'); w.className='wrap'; app.append(w);
   if(tab==='practice') w.append(quiz ? (quiz.done? resultsView() : quizView()) : setupView());
@@ -874,7 +890,7 @@ function signInView(){
       <div><span class="pill n">Android</span> In Chrome, tap <b>⋮</b>, then <b>Add to Home screen</b>.</div></div>
       <span class="hint">Then it opens with one tap, like any other app.</span>
     </div>`}
-    ${users.length?`<div style="display:grid;gap:8px"><div class="label">Pick up where you left off</div><div class="names">${users.map(n=>`<button data-name="${esc(n)}">${esc(n)}</button>`).join('')}</div></div>`:''}
+    ${users.length?`<div style="display:grid;gap:8px"><div class="label">Pick up where you left off</div><div class="names">${users.map(n=>{const u=lsGet('u:'+n,null)||{};return `<button data-name="${esc(n)}">${avSvg(u.av||avDefault(n),22,n)}<span>${esc(n)}</span></button>`}).join('')}</div></div>`:''}
   </div></main>`);
   wireTeamPicker(f);
   f.querySelector('#signin').onsubmit=e=>{e.preventDefault();const n=$('#nm').value.trim().replace(/\s+/g,' ');if(!n){$('#nm').focus();return}
@@ -1237,6 +1253,7 @@ function progressView(){
   return h(`<section>
     <div><div class="label">Progress</div><h2 style="font-size:28px;font-weight:800">How ${esc(me)} is doing</h2></div>
     ${teamPanel()}
+    ${avatarPanel()}
     ${(()=>{const l=levelOf(U.xp);return `<div class="panel lvlpanel"><div class="lvlbig">${l.level}<small>level</small></div>
       <div style="display:grid;gap:6px;min-width:0"><b style="font-family:var(--f-display);font-size:19px">${esc(l.title)}</b>
         <div class="goldbar"><i style="width:${(100*l.into/l.span).toFixed(1)}%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></i></div>
@@ -1819,8 +1836,152 @@ function levelOf(xp){ xp=xp||0; let L=1; while(xp>=lvlNeed(L+1)) L++; const titl
   return {level:L,title,into:xp-lvlNeed(L),span:lvlNeed(L+1)-lvlNeed(L)}; }
 function gainXP(n){ if(!U||!n) return; const before=levelOf(U.xp).level; U.xp=(U.xp||0)+n;
   U.xpDays=U.xpDays||{}; const dk=dayKey(); U.xpDays[dk]=(U.xpDays[dk]||0)+n; const ks=Object.keys(U.xpDays).sort(); if(ks.length>40) ks.slice(0,ks.length-40).forEach(k=>delete U.xpDays[k]); const after=levelOf(U.xp);
-  if(after.level>before){ setTimeout(()=>{ sfx('level'); celebrate(true); toast(`<b>Level up! Level ${after.level}</b><span>You are now a ${esc(after.title)}.${themeUnlockedAt(after.level)}${(()=>{const t=TRACKS.find(x=>x.need&&x.need.level===after.level);return t?` New music unlocked: ${t.name}!`:''})()}</span>`); checkBadges(); },900); } }
+  if(after.level>before){ setTimeout(()=>{ sfx('level'); celebrate(true); toast(`<b>Level up! Level ${after.level}</b><span>You are now a ${esc(after.title)}.${themeUnlockedAt(after.level)}${avUnlocksAt(after.level)}${(()=>{const t=TRACKS.find(x=>x.need&&x.need.level===after.level);return t?` New music unlocked: ${t.name}!`:''})()}</span>`); checkBadges(); },900); } }
 function lvlChip(){ if(!U) return ''; const l=levelOf(U.xp); return `<span class="lvlchip" title="${esc(l.title)} · ${U.xp||0} XP">Lv ${l.level}</span>`; }
+
+/* ---------- avatars (16x16 pixel animals, hats and extras) ---------- */
+// Grids: '.' = see-through. Letters pick a color from the animal/hat palette.
+const AV_HEAD=['','','','','',
+ '....OOOOOOOO....','...OFFFFFFFFO...','..OFFFFFFFFFFO..','..OFFFFFFFFFFO..','.OFFFFFFFFFFFFO.','.OFFFFFFFFFFFFO.',
+ '.OFFFFFFFFFFFFO.','.OFFFFFFFFFFFFO.','..OFFFFFFFFFFO..','...OFFFFFFFFO...','....OOOOOOOO....'];
+const AV_FACE=['','','','','','','','','','....WE....WE....','....EE....EE....','...P.MMNNMM.P...','.....MEMMEM.....','......MMMM......'];
+const AV_BEAKFACE=['','','','','','','','','','....WE....WE....','....EE....EE....','...P..BBBB..P...','.......BB.......'];
+const AV_OWLFACE=['','','','','','','','','...YYYY..YYYY...','...YWEY..YWEY...','...YEEY..YEEY...','...YYYYBBYYYY...','.......BB.......'];
+const AV_FROGFACE=['','','','','','','','','','','......E..E......','...P........P...','....E......E....','.....EEEEEE.....'];
+const AV_EARS={
+ pointy:['','..O..........O..','..OO........OO..','..OIO......OIO..','..OIIO....OIIO..','..OIIIO..OIIIO..','..OFFFFFFFFFFO..'],
+ long:['...OO......OO...','..OFIO....OFIO..','..OFIO....OFIO..','..OFIO....OFIO..','..OFIO....OFIO..','..OFIO....OFIO..'],
+ round:['','','','..OOO......OOO..','.OIIIO....OIIIO.','.OIIIO....OIIIO.','..OOO......OOO..'],
+ big:['','','.OOOO......OOOO.','OIIIIO....OIIIIO','OIIIIO....OIIIIO','OIIIIO....OIIIIO','.OIIO......OIIO.'],
+ horns:['','..O..........O..','..OO........OO..','..OYO......OYO..','..OYYO....OYYO..','...OYYO..OYYO...'],
+ tufts:['','','..O..........O..','..OO........OO..','..OFO......OFO..','..OFFO....OFFO..'],
+ none:[]};
+const AV_FRONT={
+ floppy:['','','','','','.OOO........OOO.','ODDDO......ODDDO','ODDDO......ODDDO','ODDDO......ODDDO','ODDO........ODDO','ODDO........ODDO','.OO..........OO.'],
+ frog:['','','','..OOOO....OOOO..','.OFFFFO..OFFFFO.','.OFWEFOOOOFWEFO.','.OFEEFFFFFFEEFO.','..OFFFFFFFFFFO..']};
+const AV_MARK={
+ panda:['','','','','','','','','....DD....DD....','...DDDD..DDDD...','...DDDD..DDDD...','....DD....DD....'],
+ tiger:['','','','','','','......D..D......','...D...DD...D...','..DD........DD..','','','.DD..........DD.'],
+ fox:['','','','','','','','','','','..MM........MM..','..MM........MM..'],
+ penguin:['','','','','','','','','....MM....MM....','...MMMM..MMMM...','...MMMMMMMMMM...','...MMMMMMMMMM...','....MMMMMMMM....','.....MMMMMM.....'],
+ spots:['','','','','','','.....DD.........','....DDD..DDDD...','.........DDDD...','.........DDDD...','..DD......DD....','..DD............','..........DD....'],
+ mask:['','','','','','','','','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDDD....DDDD..','','','']};
+const AV_MANE=['','','....DDDDDDDD....','..DDDDDDDDDDDD..','.DDDDDDDDDDDDDD.','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','.DDDDDDDDDDDDDD.','..DDDDDDDDDDDD..'];
+const AV_POST={ koala:['','','','','','','','','','','.......NN.......','......NNNN......','......NNNN......'] };
+const AV_ANIMALS=[
+ {id:'cat',name:'Cat',lvl:1,ears:'pointy',c:{F:'#f4a340',I:'#ffb3c1',M:'#ffe2b8',N:'#e8607a',D:'#b86a1c'}},
+ {id:'dog',name:'Dog',lvl:1,ears:'none',front:'floppy',c:{F:'#c98a4b',I:'#ffb3c1',M:'#f3dcc0',N:'#2a1a12',D:'#6b4123'}},
+ {id:'bunny',name:'Bunny',lvl:1,ears:'long',c:{F:'#f2f2f2',I:'#ffb3c1',M:'#ffffff',N:'#ff8fab',D:'#bbb'}},
+ {id:'mouse',name:'Mouse',lvl:2,ears:'big',c:{F:'#a9a9b3',I:'#ffb3c1',M:'#d8d8de',N:'#ff8fab',D:'#666'}},
+ {id:'bear',name:'Bear',lvl:3,ears:'round',c:{F:'#8b5a2b',I:'#d9a066',M:'#d9a066',N:'#2a1a12',D:'#4a2c12'}},
+ {id:'fox',name:'Fox',lvl:4,ears:'pointy',mark:'fox',c:{F:'#f06a1d',I:'#3a2016',M:'#ffffff',N:'#2a1a12',D:'#3a2016'}},
+ {id:'frog',name:'Frog',lvl:5,ears:'none',front:'frog',face:'frog',c:{F:'#6cc04a',I:'#6cc04a',M:'#6cc04a',N:'#2a1a12',D:'#3d7a2a'}},
+ {id:'panda',name:'Panda',lvl:6,ears:'round',mark:'panda',c:{F:'#ffffff',I:'#1e1e24',M:'#ffffff',N:'#1e1e24',D:'#1e1e24',W:'#ffffff'}},
+ {id:'penguin',name:'Penguin',lvl:7,ears:'none',mark:'penguin',face:'beak',c:{F:'#2b2f45',I:'#2b2f45',M:'#ffffff',N:'#f5a623',D:'#2b2f45',B:'#f5a623'}},
+ {id:'owl',name:'Owl',lvl:8,ears:'tufts',face:'owl',c:{F:'#9a6b3f',I:'#9a6b3f',M:'#9a6b3f',N:'#f5a623',D:'#5c3b1e',B:'#f5a623',Y:'#ffd23f'}},
+ {id:'blackcat',name:'Black Cat',lvl:9,ears:'pointy',c:{F:'#33333d',I:'#ff8fab',M:'#4a4a56',N:'#ff8fab',D:'#000',E:'#ffd23f',W:'#fff'}},
+ {id:'tiger',name:'Tiger',lvl:10,ears:'round',mark:'tiger',c:{F:'#f7941d',I:'#ffe2b8',M:'#ffffff',N:'#e8607a',D:'#2a1a12'}},
+ {id:'spots',name:'Spotted Pup',lvl:11,ears:'none',front:'floppy',mark:'spots',c:{F:'#ffffff',I:'#ffb3c1',M:'#ffffff',N:'#1e1e24',D:'#1e1e24'}},
+ {id:'koala',name:'Koala',lvl:12,ears:'big',post:'koala',c:{F:'#9aa3ad',I:'#e8ecef',M:'#9aa3ad',N:'#33333d',D:'#666'}},
+ {id:'raccoon',name:'Raccoon',lvl:13,ears:'round',mark:'mask',c:{F:'#8d8f96',I:'#e0e0e0',M:'#ececec',N:'#1e1e24',D:'#2e2e36',W:'#fff'}},
+ {id:'lion',name:'Lion',lvl:14,ears:'round',mane:true,c:{F:'#f2c14e',I:'#c98a2b',M:'#fff1c9',N:'#8b4a2b',D:'#b5651d'}},
+ {id:'unicorn',name:'Unicorn',lvl:16,ears:'pointy',horn:true,c:{F:'#ffffff',I:'#ffb3e6',M:'#ffffff',N:'#ff8fab',D:'#c58af9',Y:'#ffd23f'}},
+ {id:'dragon',name:'Dragon',lvl:18,ears:'horns',c:{F:'#4caf50',I:'#4caf50',M:'#a5d6a7',N:'#1b5e20',D:'#1b5e20',Y:'#ffe082'}},
+];
+const AV_HATS=[
+ {id:'none',name:'No hat',lvl:1,y:0,g:[]},
+ {id:'cap',name:'Cap',lvl:1,y:3,g:['.....OOOOOO.....','....OCCCCCCO....','...OCCCKKCCCO...','..OCCCCCCCCCCO..','.OKKKKKKKKKKKKO.','..OOOOOOOOOOOO..']},
+ {id:'bow',name:'Bow',lvl:1,y:2,g:['........OO...OO.','........OCO.OCO.','........OCCOCCO.','........OCO.OCO.','........OO...OO.']},
+ {id:'beanie',name:'Beanie',lvl:2,y:2,g:['.......KK.......','......OKKO......','....OOOOOOOO....','...OCCCCCCCCO...','..OCCCCCCCCCCO..','..OKKKKKKKKKKO..','..OOOOOOOOOOOO..']},
+ {id:'party',name:'Party hat',lvl:3,y:0,g:['......KKK.......','.......O........','......OCO.......','......OKO.......','.....OCCCO......','.....OKKKO......','....OCCCCCO.....','....OOOOOOO.....']},
+ {id:'flower',name:'Flower',lvl:4,y:3,g:['..........O.....','.........OKO....','........OKYKO...','.........OKO....','..........O.....']},
+ {id:'phones',name:'Headphones',lvl:5,y:4,g:['....OOOOOOOO....','...OCCCCCCCCO...','..OCO......OCO..','.OCO........OCO.','OKKO........OKKO','OKKO........OKKO','OKKO........OKKO','.OO..........OO.']},
+ {id:'cowboy',name:'Cowboy hat',lvl:7,y:2,g:['.....OO..OO.....','....OCCOOCCO....','....OCCCCCCO....','....OKKKKKKO....','OOOOOCCCCCCOOOOO','OCCCCCCCCCCCCCCO','.OOOOOOOOOOOOOO.']},
+ {id:'pirate',name:'Pirate hat',lvl:9,y:2,g:['......OOOO......','...OOOCCCCOOO...','..OCCCCKKCCCCO..','.OCCCCKKKKCCCCO.','.OCCCCCKKCCCCCO.','..OOOOOOOOOOOO..']},
+ {id:'wizard',name:'Wizard hat',lvl:11,y:0,g:['........OCO.....','.......OCCO.....','......OCKCO.....','......OCCCCO....','.....OCCCKCO....','....OCCKCCCCO...','..OOOOOOOOOOOO..','.OCCCCCCCCCCCCO.','..OOOOOOOOOOOO..']},
+ {id:'knight',name:'Knight helmet',lvl:13,y:1,g:['.......KK.......','......KKK.......','.....OOOOOO.....','....OCCCCCCO....','...OCCCCCCCCO...','..OCCCCCCCCCCO..','..OCOOOOOOOOCO..','..OC........CO..','..OC........CO..','..OO........OO..']},
+ {id:'grad',name:'Grad cap',lvl:15,y:2,g:['.......OO.......','....OOOCCOOO....','.OOOCCCCCCCCOOO.','OCCCCCCKCCCCCCCO','.OOOCCCCCCCCOOO.','...OCCCCCCCCOK..','...OOOOOOOOOOK..','.............K..']},
+ {id:'crown',name:'Crown',lvl:20,y:2,g:['...O...OO...O...','..OCO.OCCO.OCO..','..OCCOCCCCOCCO..','..OCKCCRRCCKCO..','..OCCCCCCCCCCO..','..OOOOOOOOOOOO..']},
+];
+const AV_HATFIX={cap:{K:'#ffffff'},bow:{},beanie:{K:'#ffffff'},party:{K:'#ffd23f'},flower:{Y:'#ffd23f',K:'C'},phones:{K:'#33333d'},cowboy:{K:'#3a2016'},
+ pirate:{K:'#ffffff'},wizard:{K:'#ffd23f'},knight:{K:'#e53935',C:'#c9ced6'},grad:{K:'#ffd23f',C:'#1e1e24'},crown:{C:'#ffd23f',K:'#4fc3f7',R:'#e53935'}};
+const AV_FACES=[
+ {id:'none',name:'Nothing',lvl:1,y:0,g:[]},
+ {id:'glasses',name:'Glasses',lvl:2,y:8,g:['...OOOO..OOOO...','...O..OOOO..O...','...O..O..O..O...','...OOOO..OOOO...']},
+ {id:'blush',name:'Rosy cheeks',lvl:3,y:11,g:['..PP........PP..']},
+ {id:'mustache',name:'Mustache',lvl:6,y:12,g:['.....OOOOOO.....','...OOOO..OOOO...','...O........O...']},
+ {id:'shades',name:'Sunglasses',lvl:8,y:8,g:['...OOOO..OOOO...','.OOWSSOOOOWSSOO.','...OSSO..OSSO...','...OOOO..OOOO...']},
+ {id:'patch',name:'Eye patch',lvl:9,y:8,g:['..OOOOOOOOOOOO..','...OOOO.........','...OOOO.........','....OO..........']},
+ {id:'bowtie',name:'Bow tie',lvl:12,y:13,g:['....OO....OO....','....OCOOOOCO....','....OO....OO....']},
+];
+const AV_COLORS=[['red','#e53935'],['orange','#fb8c00'],['yellow','#fdd835'],['green','#43a047'],['blue','#1e88e5'],['purple','#8e24aa'],['pink','#f06292'],['black','#2b2b33']];
+const AV_BGS=[['sky','#8ecae6'],['grass','#9ad08b'],['sun','#ffd166'],['rose','#f4a6b7'],['lilac','#c8b6ff'],['sand','#e9d8a6'],['night','#2d3561'],['slate','#6b7280'],
+ ['gold','#ffcf33',12],['ruby','#c62828',15],['rainbow','rainbow',19]];
+const avFind=(list,id)=>list.find(x=>x.id===id);
+function avDefault(name){ let hsh=0; for(const ch of String(name||'')) hsh=(hsh*31+ch.charCodeAt(0))>>>0; const starters=AV_ANIMALS.filter(a=>a.lvl===1);
+  return [starters[hsh%starters.length].id,'none','none',AV_BGS[hsh%8][0],AV_COLORS[(hsh>>3)%7][0]].join('.'); }
+function avParse(code,name){ const d=avDefault(name).split('.'), p=String(code||'').split('.');
+  return {a:avFind(AV_ANIMALS,p[0])?p[0]:d[0], h:avFind(AV_HATS,p[1])?p[1]:'none', f:avFind(AV_FACES,p[2])?p[2]:'none',
+    bg:AV_BGS.some(b=>b[0]===p[3])?p[3]:d[3], hc:AV_COLORS.some(c=>c[0]===p[4])?p[4]:d[4]}; }
+const avCode=o=>[o.a,o.h,o.f,o.bg,o.hc].join('.');
+const avCache={};
+function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[key]) return avCache[key];
+  const o=avParse(code,name), an=avFind(AV_ANIMALS,o.a), hat=avFind(AV_HATS,o.h), face=avFind(AV_FACES,o.f);
+  const hc=(AV_COLORS.find(c=>c[0]===o.hc)||AV_COLORS[0])[1], bg=(AV_BGS.find(b=>b[0]===o.bg)||AV_BGS[0])[1];
+  const base=Object.assign({O:'#1a1a22',E:'#1a1a22',W:'#ffffff',P:'#ff9eb5',B:'#f5a623',Y:'#ffd23f',S:'#1a1a22'},an.c);
+  const grid=[...Array(16)].map(()=>Array(16).fill(null));
+  const put=(rows,pal,y0)=>rows.forEach((r,i)=>{const y=(y0||0)+i; if(y<0||y>15) return; for(let x=0;x<r.length&&x<16;x++){const ch=r[x]; if(ch==='.') continue; const col=pal[ch]; if(col) grid[y][x]=col;}});
+  if(an.mane) put(AV_MANE,base);
+  put(AV_EARS[an.ears]||[],base);
+  if(an.horn) put(['.......OO.......','......OYYO......','......OYYO......','.....OYYYYO.....','.....OYYYYO.....'],base);
+  put(AV_HEAD,base);
+  if(an.horn) put(['','','','','','.......DD.......','......DDD.......'],base);
+  if(an.mark) put(AV_MARK[an.mark],base);
+  put(an.face==='beak'?AV_BEAKFACE:an.face==='owl'?AV_OWLFACE:an.face==='frog'?AV_FROGFACE:AV_FACE,base);
+  if(an.post) put(AV_POST[an.post],base);
+  if(an.front) put(AV_FRONT[an.front],base);
+  if(face&&face.g.length) put(face.g,Object.assign({},base,{O:'#1a1a22',C:hc}),face.y);
+  if(hat&&hat.g.length){ const fx=AV_HATFIX[hat.id]||{}, pal=Object.assign({},base,{O:'#1a1a22',C:hc}); for(const k in fx) pal[k]=fx[k]==='C'?hc:fx[k]; put(hat.g,pal,hat.y); }
+  let rects='';
+  for(let y=0;y<16;y++){ let x=0; while(x<16){ const c=grid[y][x]; if(!c){x++;continue} let w=1; while(x+w<16&&grid[y][x+w]===c) w++; rects+=`<rect x="${x}" y="${y}" width="${w}" height="1" fill="${c}"/>`; x+=w; } }
+  const bgFill=bg==='rainbow'?'url(#rb)':bg, defs=bg==='rainbow'?'<defs><linearGradient id="rb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a80"/><stop offset=".25" stop-color="#ffd180"/><stop offset=".5" stop-color="#ccff90"/><stop offset=".75" stop-color="#80d8ff"/><stop offset="1" stop-color="#ea80fc"/></linearGradient></defs>':'';
+  const svg=`<svg class="av" width="${px}" height="${px}" viewBox="-1 -1 18 18" shape-rendering="crispEdges" aria-hidden="true">${defs}<rect x="-1" y="-1" width="18" height="18" fill="${bgFill}"/>${rects}</svg>`;
+  return (avCache[key]=svg);
+}
+const myAv=()=>U?(U.av||avDefault(me)):'';
+function avOpen(item){ return levelOf(U.xp).level>=(item.lvl||1); }
+function avUnlocksAt(L){ const n=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>x.lvl===L).map(x=>x.name).concat(AV_BGS.filter(b=>b[2]===L).map(b=>b[0][0].toUpperCase()+b[0].slice(1)+' background'));
+  return n.length?` New avatar stuff: ${n.join(', ')}!`:''; }
+let avTab='animal';
+function avatarPanel(){
+  const o=avParse(myAv(),me), L=levelOf(U.xp).level;
+  const tabs=[['animal','🐾 Animal'],['hat','🎩 Hat'],['face','😎 Face'],['color','🎨 Colors']];
+  const lockTag=n=>`<span class="avlock">🔒 Lv ${n}</span>`;
+  const tile=(code,label,open,cur,attr,need)=>`<button class="avpick ${cur?'cur':''} ${open?'':'locked'}" ${open?attr:'disabled'} aria-pressed="${cur}" title="${esc(label)}${open?'':' (unlocks at level '+need+')'}">${avSvg(code,44,me)}<small>${esc(label)}</small>${open?'':lockTag(need)}</button>`;
+  let body='';
+  if(avTab==='animal') body=AV_ANIMALS.map(a=>tile(avCode({...o,a:a.id}),a.name,L>=a.lvl,o.a===a.id,`data-av="a:${a.id}"`,a.lvl)).join('');
+  if(avTab==='hat') body=AV_HATS.map(x=>tile(avCode({...o,h:x.id}),x.name,L>=x.lvl,o.h===x.id,`data-av="h:${x.id}"`,x.lvl)).join('');
+  if(avTab==='face') body=AV_FACES.map(x=>tile(avCode({...o,f:x.id}),x.name,L>=x.lvl,o.f===x.id,`data-av="f:${x.id}"`,x.lvl)).join('');
+  const sw=(k,v,col,cur,need)=>{const open=!need||L>=need; return `<button class="avsw ${cur?'cur':''}" ${open?`data-av="${k}:${v}"`:'disabled'} aria-pressed="${cur}" title="${v}${open?'':' (level '+need+')'}" style="background:${col==='rainbow'?'linear-gradient(135deg,#ff8a80,#ffd180,#ccff90,#80d8ff,#ea80fc)':col}">${open?'':'🔒'}</button>`};
+  const colors=`<div style="display:grid;gap:8px"><span class="hint">Hat and bow tie color</span><div class="avsws">${AV_COLORS.map(([v,c])=>sw('hc',v,c,o.hc===v)).join('')}</div>
+    <span class="hint">Background</span><div class="avsws">${AV_BGS.map(([v,c,n])=>sw('bg',v,c,o.bg===v,n)).join('')}</div></div>`;
+  const nextUp=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>x.lvl>L).sort((a,b)=>a.lvl-b.lvl)[0];
+  return `<div class="panel avpanel" style="display:grid;gap:12px">
+    <div class="row" style="justify-content:space-between"><span class="label">Your avatar</span>${nextUp?`<span class="hint">Next unlock: ${esc(nextUp.name)} at level ${nextUp.lvl}</span>`:'<span class="hint">Everything unlocked!</span>'}</div>
+    <div class="row" style="gap:14px;align-items:center;flex-wrap:nowrap"><div class="avbig">${avSvg(myAv(),88,me)}</div>
+      <div style="display:grid;gap:4px;min-width:0"><b style="overflow-wrap:anywhere">${esc(me)}</b><span class="hint">Shows next to your name and on the high scores. Level up to unlock more animals, hats and extras.</span>
+      <button class="x" id="avrand" style="justify-self:start">🎲 Surprise me</button></div></div>
+    <div class="seg avtabs">${tabs.map(([k,t])=>`<button data-avtab="${k}" aria-pressed="${avTab===k}">${t}</button>`).join('')}</div>
+    ${avTab==='color'?colors:`<div class="avgrid">${body}</div>`}
+  </div>`;
+}
+function wireAvatar(){
+  document.querySelectorAll('[data-avtab]').forEach(b=>b.onclick=()=>{avTab=b.dataset.avtab;renderKeep()});
+  document.querySelectorAll('[data-av]').forEach(b=>b.onclick=()=>{ const [k,v]=b.dataset.av.split(':'); const o=avParse(myAv(),me); o[k]=v; U.av=avCode(o); save(); sfx&&sfx('ding'); renderKeep(); });
+  const r=$('#avrand'); if(r) r.onclick=()=>{ const L=levelOf(U.xp).level, pick=a=>a[Math.floor(Math.random()*a.length)];
+    U.av=avCode({a:pick(AV_ANIMALS.filter(x=>x.lvl<=L)).id,h:pick(AV_HATS.filter(x=>x.lvl<=L)).id,f:pick(AV_FACES.filter(x=>x.lvl<=L)).id,
+      bg:pick(AV_BGS.filter(b=>!b[2]||b[2]<=L))[0],hc:pick(AV_COLORS)[0]}); save(); renderKeep(); };
+}
 
 /* ---------- themes ---------- */
 // Full-site color themes inspired by classic 8-bit games. Each one repaints page, windows, buttons and bars.
@@ -2178,7 +2339,7 @@ function sheetSummary(){ const r=summary(me,U), {streak,best}=streakFrom(goalDay
     level:levelOf(U.xp).level,xp:U.xp||0,badges:Object.keys(U.badges||{}).length,bosses:Object.keys(U.bosses||{}).length,speed:(U.hs&&U.hs.speed)||0,
     daily:td?td.s+'/'+(td.n||10):'',vright:(U.counts&&U.counts.vright)||0,speedTyped:(U.hs&&U.hs.speedTyped)||0,
     xpToday:(U.xpDays&&U.xpDays[dayKey()])||0,tdate:dayKey(),xpYest:(U.xpDays&&U.xpDays[shiftDay(dayKey(),-1)])||0,ydate:shiftDay(dayKey(),-1),
-    team:U.team&&U.team!==NO_TEAM?U.team:'',xpWeek:xpWeek(),wk:weekKey()}; }
+    team:U.team&&U.team!==NO_TEAM?U.team:'',xpWeek:xpWeek(),wk:weekKey(),av:myAv()}; }
 // Weeks start on Monday.
 function weekKey(k){ k=k||dayKey(); const [y,m,d]=k.split('-').map(Number); return shiftDay(k,-((new Date(y,m-1,d).getDay()+6)%7)); }
 function xpWeek(){ const wk=weekKey(), x=U.xpDays||{}; let t=0; for(let k=wk,i=0;i<7&&k<=dayKey();i++,k=shiftDay(k,1)) t+=x[k]||0; return t; }
@@ -2216,7 +2377,7 @@ function qotdBanner(){
   if(!SHEET_URL.startsWith('https://')||!lb) return '';
   const q=lb.qotd, t=lb.totd; let out='';
   if(!q||!q.name) out+=crown('👑','Quizzer of the Day','The crown is up for grabs!',"Earn the most XP today to be tomorrow's Quizzer of the Day.");
-  else { const mine=isMe(q.name); out+=crown('👑','Quizzer of the Day',`${esc(q.name)}${mine?' <span class="you">You!</span>':''}`,
+  else { const mine=isMe(q.name); out+=crown('👑','Quizzer of the Day',`${avSvg(mine?myAv():(q.av||avDefault(q.name)),28,q.name)} ${esc(q.name)}${mine?' <span class="you">You!</span>':''}`,
     `Earned the most XP yesterday: <b>${q.xp.toLocaleString()} XP</b>.${mine?' Way to go!':' Can you take the crown tomorrow?'}`); }
   if('totd' in lb){
     if(!t||!t.name) out+=crown('🛡️','Team of the Day','The team crown is up for grabs!',"The team whose quizzers earn the most XP today wins tomorrow.");
@@ -2226,12 +2387,12 @@ function qotdBanner(){
   return `<div class="crowns">${out}</div>`;
 }
 const medal=i=>['🥇','🥈','🥉'][i]||`<span class="mono">${i+1}</span>`;
-function boardBody(rows,fmt,isMine,sub){
+function boardBody(rows,fmt,isMine,sub,pic){
   if(lbErr&&!lb) return `<p class="hint" style="margin:0">The high scores couldn't load right now. Check your internet and tap Refresh.</p>`;
   if(!lb) return `<p class="hint" style="margin:0">Loading high scores…</p>`;
   if(!rows) return `<p class="hint" style="margin:0">This board turns on once your teacher updates the progress sheet.</p>`;
   if(!rows.length) return `<p class="hint" style="margin:0">No one is on this board yet. Be the first!</p>`;
-  return `<ol class="lblist">${rows.map((r,i)=>{const m=isMine(r.name);return `<li class="${m?'me':''} ${i<3?'top':''}"><span class="lbrank">${medal(i)}</span><span class="lbname">${esc(r.name)}${m?' <span class="you">You</span>':''}${sub(r)?`<small class="lbsub">${sub(r)}</small>`:''}</span><span class="lbval">${fmt(r.v)}</span></li>`}).join('')}</ol>`;
+  return `<ol class="lblist">${rows.map((r,i)=>{const m=isMine(r.name);return `<li class="${m?'me':''} ${i<3?'top':''}"><span class="lbrank">${medal(i)}</span><span class="lbname">${pic?`<span class="lbav">${avSvg(isMine(r.name)?myAv():(r.av||avDefault(r.name)),30,r.name)}</span>`:''}${esc(r.name)}${m?' <span class="you">You</span>':''}${sub(r)?`<small class="lbsub">${sub(r)}</small>`:''}</span><span class="lbval">${fmt(r.v)}</span></li>`}).join('')}</ol>`;
 }
 function leaderPanel(){
   if(!SHEET_URL.startsWith('https://')) return '';
@@ -2241,7 +2402,7 @@ function leaderPanel(){
   return `<div class="panel lbpanel" style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><span class="label">🏆 Quizzer high scores</span><button class="x" id="lbrefresh">${lbBusy?'Loading…':'Refresh'}</button></div>
     <div class="seg lbtabs">${LB_BOARDS.map(([k,i,t])=>`<button data-lb="${k}" aria-pressed="${lbBoard===k}"><span aria-hidden="true">${i}</span> ${t}</button>`).join('')}</div>
-    ${boardBody(rows,fmt,isMe,r=>r.team?'🛡️ '+esc(r.team):'')}
+    ${boardBody(rows,fmt,isMe,r=>r.team?'🛡️ '+esc(r.team):'',true)}
     <span class="hint">${ic} ${title}: ${unit}.${id==='speed'?' Only rounds played by typing count.':''} Scores update a few seconds after you practice.</span>
   </div>`;
 }
@@ -2322,7 +2483,7 @@ function wire(){
   wireGames();
   wireVerseQs();
   wireMusic();
-  wireLeaders(); wireTeamPanel();
+  wireLeaders(); wireTeamPanel(); wireAvatar();
   document.querySelectorAll('[data-matsub]').forEach(b=>b.onclick=()=>{matSub=b.dataset.matsub;render()});
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
   on('#doimport',async()=>{ const msg=$('#importmsg'); try{ const d=await unpackCode($('#code').value); U=Object.assign(blankUser(),d.u); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{}); save(); applyTheme(); render(); toast('<b>Progress restored!</b><span>Welcome back. Everything is right where you left it.</span>'); }catch(e){ if(msg) msg.textContent="That code didn't load. Copy the whole code and try again."; } });

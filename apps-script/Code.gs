@@ -11,7 +11,7 @@ const HEADERS = ['Student','Last active','Memorized verses','Memory goal','Goal 
   'Questions answered','Right answers','Accuracy','Questions mastered','Day streak','Best streak',
   'Answered today','Level','XP','Badges','Bosses beaten','Speed Round best','Daily Challenge today','Verse cards right',
   'Speed Round best (typed)','XP today','Date (today)','XP yesterday','Date (yesterday)',
-  'Team','XP this week','Week of'];
+  'Team','XP this week','Week of','Avatar'];
 
 function doPost(e) {
   let d;
@@ -32,7 +32,8 @@ function doPost(e) {
       num(d.badges), num(d.bosses), num(d.speed), d.daily || '', num(d.vright),
       num(d.speedTyped),
       num(d.xpToday), "'" + String(d.tdate || ''), num(d.xpYest), "'" + String(d.ydate || ''),
-      String(d.team || '').trim().replace(/\s+/g, ' ').slice(0, 40), num(d.xpWeek), "'" + String(d.wk || '')
+      String(d.team || '').trim().replace(/\s+/g, ' ').slice(0, 40), num(d.xpWeek), "'" + String(d.wk || ''),
+      /^[a-z.]{0,60}$/.test(String(d.av || '')) ? String(d.av || '') : ''
     ];
     const names = sh.getRange(2, 1, Math.max(sh.getLastRow() - 1, 1), 1).getValues().map(r => String(r[0]).trim().toLowerCase());
     const i = names.indexOf(name.toLowerCase());
@@ -93,10 +94,11 @@ function doGet(e) {
       questions: num(r[5]), streak: num(r[10]), bosses: num(r[15]), speed: num(r[19]),
       day: todays.includes(ds(r[21])) ? num(r[20]) : 0,
       yest: yests.includes(ds(r[21])) ? num(r[20]) : (yests.includes(ds(r[23])) ? num(r[22]) : 0),
-      week: weeks.includes(ds(r[26])) ? num(r[25]) : 0
+      week: weeks.includes(ds(r[26])) ? num(r[25]) : 0,
+      av: String(r[27] || '')
     };
   });
-  const top = k => people.filter(p => p[k] > 0).sort((a, b) => b[k] - a[k]).slice(0, 10).map(p => ({ name: p.name, team: p.team, v: p[k] }));
+  const top = k => people.filter(p => p[k] > 0).sort((a, b) => b[k] - a[k]).slice(0, 10).map(p => ({ name: p.name, team: p.team, av: p.av, v: p[k] }));
   const teamTop = k => {
     const m = {};
     people.forEach(p => { if (!p.team || !(p[k] > 0)) return; const t = m[p.team] || (m[p.team] = { name: p.team, v: 0, n: 0 }); t.v += p[k]; t.n++; });
@@ -106,7 +108,7 @@ function doGet(e) {
   const q = top('yest')[0], t = teamTop('yest')[0];
   const body = {
     at: new Date().toISOString(), yesterday: yests[0],
-    qotd: q ? { name: q.name, xp: q.v } : null,
+    qotd: q ? { name: q.name, xp: q.v, av: q.av } : null,
     totd: t ? { name: t.name, xp: t.v, n: t.n } : null,
     teams: Object.keys(teamNames).map(x => teamNames[x]).sort(),
     questions: top('questions'), streak: top('streak'), speed: top('speed'), bosses: top('bosses'),
