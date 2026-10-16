@@ -1919,7 +1919,7 @@ const AV_BGS=[['sky','#8ecae6'],['grass','#9ad08b'],['sun','#ffd166'],['rose','#
  ['gold','#ffcf33',12],['ruby','#c62828',15],['rainbow','rainbow',19]];
 const avFind=(list,id)=>list.find(x=>x.id===id);
 function avDefault(name){ let hsh=0; for(const ch of String(name||'')) hsh=(hsh*31+ch.charCodeAt(0))>>>0; const starters=AV_ANIMALS.filter(a=>a.lvl===1);
-  return [starters[hsh%starters.length].id,'none','none',AV_BGS[hsh%8][0],AV_COLORS[(hsh>>3)%7][0]].join('.'); }
+  return [starters[hsh%starters.length].id,'none','none',AV_BGS[hsh%8][0],AV_COLORS[(hsh>>>3)%7][0]].join('.'); }
 function avParse(code,name){ const d=avDefault(name).split('.'), p=String(code||'').split('.');
   return {a:avFind(AV_ANIMALS,p[0])?p[0]:d[0], h:avFind(AV_HATS,p[1])?p[1]:'none', f:avFind(AV_FACES,p[2])?p[2]:'none',
     bg:AV_BGS.some(b=>b[0]===p[3])?p[3]:d[3], hc:AV_COLORS.some(c=>c[0]===p[4])?p[4]:d[4]}; }
