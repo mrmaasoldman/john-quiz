@@ -807,13 +807,13 @@ function render(){
   const w=document.createElement('main'); w.className='wrap'; app.append(w);
   if(tab==='practice') w.append(quiz ? (quiz.done? resultsView() : quizView()) : setupView());
   if(tab==='progress') w.append(progressView());
-  if(tab==='scores') w.append(scoresView());
+  if(tab==='scores'){ try{ w.append(scoresView()); }catch(err){ w.append(h(`<section><div><div class="label">High Scores</div><h2>Who's on top?</h2></div><div class="panel"><p class="hint" style="margin:0">The high scores hit a snag. Tap Refresh, or tell Mr. Maas: ${esc(err&&err.message||err)}</p><button class="btn small" id="lbrefresh" style="margin-top:10px">Refresh</button></div></section>`)); } }
   if(tab==='class') w.append(classView());
   if(tab==='games') w.append(gamesView());
   if(tab==='materials') w.append(materialsView());
   if(tab==='verses') w.append(vc ? (vc.done? vResultsView() : vCardView()) : vSetupView());
   {const sel=app.querySelector('.tabs [aria-selected="true"]'); if(sel&&sel.scrollIntoView) try{sel.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}}
-  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(game&&game.type==='duel'&&game.phase==='reading'){stopVoice();game.phase='ready'}if(quiz&&tab==='practice')quiz.deadline=null;if(vc&&tab==='verses')vc.deadline=null;tab=b.dataset.tab;confirmReset=false;render()});
+  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(game&&game.type==='duel'&&game.phase==='reading'){stopVoice();game.phase='ready'}if(quiz&&tab==='practice')quiz.deadline=null;if(vc&&tab==='verses')vc.deadline=null;const nt=b.dataset.tab, moved=nt!==tab; tab=nt;confirmReset=false;render(); if(moved) window.scrollTo(0,0)});
   $('#switch').onclick=()=>{musicStop();me=null;U=null;quiz=null;vc=null;game=null;goalEdit=false;goalDraft=null;applyTheme();render()};
   $('#sndbtn').onclick=()=>{lsSet('sound',!soundOn());if(soundOn())sfx('ding');renderKeep()};
   wire();
@@ -2378,11 +2378,11 @@ function qotdBanner(){
   const q=lb.qotd, t=lb.totd; let out='';
   if(!q||!q.name) out+=crown('👑','Quizzer of the Day','The crown is up for grabs!',"Earn the most XP today to be tomorrow's Quizzer of the Day.");
   else { const mine=isMe(q.name); out+=crown('👑','Quizzer of the Day',`${avSvg(mine?myAv():(q.av||avDefault(q.name)),28,q.name)} ${esc(q.name)}${mine?' <span class="you">You!</span>':''}`,
-    `Earned the most XP yesterday: <b>${q.xp.toLocaleString()} XP</b>.${mine?' Way to go!':' Can you take the crown tomorrow?'}`); }
+    `Earned the most XP yesterday: <b>${(+q.xp||0).toLocaleString()} XP</b>.${mine?' Way to go!':' Can you take the crown tomorrow?'}`); }
   if('totd' in lb){
     if(!t||!t.name) out+=crown('🛡️','Team of the Day','The team crown is up for grabs!',"The team whose quizzers earn the most XP today wins tomorrow.");
     else { const mine=isMyTeam(t.name); out+=crown('🛡️','Team of the Day',`${esc(t.name)}${mine?' <span class="you">Your team!</span>':''}`,
-      `Earned <b>${t.xp.toLocaleString()} XP</b> together yesterday${t.n?` with ${t.n} quizzer${t.n===1?'':'s'}`:''}.${mine?' Keep it going!':''}`); }
+      `Earned <b>${(+t.xp||0).toLocaleString()} XP</b> together yesterday${t.n?` with ${t.n} quizzer${t.n===1?'':'s'}`:''}.${mine?' Keep it going!':''}`); }
   }
   return `<div class="crowns">${out}</div>`;
 }
@@ -2390,6 +2390,7 @@ const medal=i=>['🥇','🥈','🥉'][i]||`<span class="mono">${i+1}</span>`;
 function boardBody(rows,fmt,isMine,sub,pic){
   if(lbErr&&!lb) return `<p class="hint" style="margin:0">The high scores couldn't load right now. Check your internet and tap Refresh.</p>`;
   if(!lb) return `<p class="hint" style="margin:0">Loading high scores…</p>`;
+  rows=Array.isArray(rows)?rows.filter(r=>r&&r.name!=null&&r.name!==''):rows;
   if(!rows) return `<p class="hint" style="margin:0">This board turns on once your teacher updates the progress sheet.</p>`;
   if(!rows.length) return `<p class="hint" style="margin:0">No one is on this board yet. Be the first!</p>`;
   return `<ol class="lblist">${rows.map((r,i)=>{const m=isMine(r.name);return `<li class="${m?'me':''} ${i<3?'top':''}"><span class="lbrank">${medal(i)}</span><span class="lbname">${pic?`<span class="lbav">${avSvg(isMine(r.name)?myAv():(r.av||avDefault(r.name)),30,r.name)}</span>`:''}${esc(r.name)}${m?' <span class="you">You</span>':''}${sub(r)?`<small class="lbsub">${sub(r)}</small>`:''}</span><span class="lbval">${fmt(r.v)}</span></li>`}).join('')}</ol>`;
@@ -2398,7 +2399,7 @@ function leaderPanel(){
   if(!SHEET_URL.startsWith('https://')) return '';
   const [id,ic,title,unit]=LB_BOARDS.find(b=>b[0]===lbBoard), rows=lb?lb[id]:[];
   const xp=id==='day'||id==='week';
-  const fmt=v=>id==='bosses'?`${v}/21`:v.toLocaleString()+(xp?' XP':'');
+  const fmt=v=>id==='bosses'?`${+v||0}/21`:(+v||0).toLocaleString()+(xp?' XP':'');
   return `<div class="panel lbpanel" style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><span class="label">🏆 Quizzer high scores</span><button class="x" id="lbrefresh">${lbBusy?'Loading…':'Refresh'}</button></div>
     <div class="seg lbtabs">${LB_BOARDS.map(([k,i,t])=>`<button data-lb="${k}" aria-pressed="${lbBoard===k}"><span aria-hidden="true">${i}</span> ${t}</button>`).join('')}</div>
@@ -2412,7 +2413,7 @@ function teamBoardPanel(){
   return `<div class="panel lbpanel" style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><span class="label">🛡️ Team high scores</span><span class="hint">Your team: <b>${esc(teamLabel(U.team))}</b></span></div>
     <div class="seg lbtabs">${TEAM_BOARDS.map(([k,i,t])=>`<button data-lbt="${k}" aria-pressed="${lbTeamBoard===k}"><span aria-hidden="true">${i}</span> ${t}</button>`).join('')}</div>
-    ${boardBody(rows,v=>v.toLocaleString()+' XP',isMyTeam,r=>r.n?`${r.n} quizzer${r.n===1?'':'s'} earning XP`:'')}
+    ${boardBody(rows,v=>(+v||0).toLocaleString()+' XP',isMyTeam,r=>r.n?`${r.n} quizzer${r.n===1?'':'s'} earning XP`:'')}
     <span class="hint">${ic} ${title}: ${unit}, adding up everyone on the team.</span>
   </div>`;
 }
