@@ -516,6 +516,11 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .lblist li.me{background:var(--accent-soft);border-color:var(--accent)}
 .lbrank{font-size:20px;text-align:center}
 .lbname{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.lbsub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
+.crowns{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.matseg{margin-bottom:4px}
+.teampick select{width:100%}
+.signin form .btn{justify-self:stretch}
 .lbval{font-family:var(--f-display);font-size:13px;color:var(--gold);text-shadow:2px 2px 0 #000}
 
 /* Retro game skin. Every color comes from a variable so each unlockable theme can repaint the whole site.
@@ -774,17 +779,19 @@ let tab='practice', openCh=null, quiz=null, confirmReset=false;
 function render(){
   const app=$('#app'); app.innerHTML='';
   if(!me){ app.append(signInView()); const i=$('#nm'); i&&i.focus(); return; }
+  if(!U.team){ app.append(teamGateView()); return; }
+  if(tab==='memory') tab='materials';
   app.append(h(`<header class="bar"><div class="bar-in">
     <div class="brand"><b>John Quiz</b><span>BQF · Sept 2026 set</span></div>
     <div class="tabs" role="tablist">
-      ${['practice','games','verses','progress','memory','materials'].map(t=>`<button role="tab" data-tab="${t}" aria-selected="${tab===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}
+      ${['practice','games','verses','scores','progress','materials'].map(t=>`<button role="tab" data-tab="${t}" aria-selected="${tab===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}
     </div>
     <div class="who">${dayPill()}${lvlChip()}<button class="sndbtn" id="musbtn" aria-label="${musicOn()&&mus.playing?'Stop music':'Play music'}" title="Music ${musicOn()&&mus.playing?'on':'off'}" style="${musicOn()&&mus.playing?'':'opacity:.55'}">🎵</button><button class="sndbtn" id="sndbtn" aria-label="${soundOn()?'Turn sound off':'Turn sound on'}" title="Sound ${soundOn()?'on':'off'}">${soundOn()?'🔊':'🔇'}</button>${esc(me)} <button id="switch">Switch</button></div>
   </div></header>`));
   const w=document.createElement('main'); w.className='wrap'; app.append(w);
   if(tab==='practice') w.append(quiz ? (quiz.done? resultsView() : quizView()) : setupView());
   if(tab==='progress') w.append(progressView());
-  if(tab==='memory') w.append(memoryView());
+  if(tab==='scores') w.append(scoresView());
   if(tab==='class') w.append(classView());
   if(tab==='games') w.append(gamesView());
   if(tab==='materials') w.append(materialsView());
@@ -796,13 +803,68 @@ function render(){
   wire();
 }
 
+/* ---------- Bible Quizzing teams ---------- */
+const NO_TEAM='(none)';
+const normTeam=t=>String(t||'').trim().replace(/\s+/g,' ').slice(0,40);
+function knownTeams(){ const m=new Map(), add=t=>{t=normTeam(t); if(t&&t!==NO_TEAM&&!m.has(t.toLowerCase())) m.set(t.toLowerCase(),t)};
+  ((lb&&lb.teams)||[]).forEach(add); (lsGet('teams',[])||[]).forEach(add); users.forEach(n=>{const u=lsGet('u:'+n,null); if(u) add(u.team)});
+  return [...m.values()].sort((a,b)=>a.localeCompare(b)); }
+const teamLabel=t=>!t||t===NO_TEAM?'No team yet':t;
+function teamOptions(cur){ const ts=knownTeams(); cur=cur||'';
+  return `<option value="" ${cur?'':'selected'}>Choose your team…</option>${ts.map(t=>`<option value="${esc(t)}" ${cur.toLowerCase()===t.toLowerCase()?'selected':''}>${esc(t)}</option>`).join('')}
+    <option value="__new" ${cur==='__new'?'selected':''}>➕ My team isn't listed. Add it…</option><option value="${NO_TEAM}" ${cur===NO_TEAM?'selected':''}>I'm not on a team yet</option>`; }
+function teamPicker(cur){ return `<div class="teampick" style="display:grid;gap:8px">
+    <label class="label" for="tmsel">Your Bible Quizzing team</label>
+    <select id="tmsel">${teamOptions(cur)}</select>
+    <input type="text" id="tmnew" maxlength="40" autocomplete="off" placeholder="Type your team's name" hidden>
+    <span class="hint" id="tmmsg"></span></div>`; }
+function wireTeamPicker(root){ const sel=root.querySelector('#tmsel'), inp=root.querySelector('#tmnew'); if(!sel) return;
+  sel.onchange=()=>{ inp.hidden=sel.value!=='__new'; if(!inp.hidden) inp.focus(); const m=root.querySelector('#tmmsg'); if(m) m.textContent=''; }; }
+// Fill in teams other quizzers added (from the sheet) without wiping what's typed.
+function refreshTeamOptions(){ const sel=$('#tmsel'); if(!sel) return; const v=sel.value; sel.innerHTML=teamOptions(v); if(v&&sel.value!==v) sel.value=v; }
+function readTeamPick(root){ const sel=root.querySelector('#tmsel'), msg=root.querySelector('#tmmsg'); if(!sel) return null;
+  let t=sel.value;
+  if(t==='__new'){ t=normTeam(root.querySelector('#tmnew').value); if(!t){ msg.innerHTML='<span style="color:var(--bad)">Type your team\'s name.</span>'; root.querySelector('#tmnew').focus(); return null; }
+    const same=knownTeams().find(x=>x.toLowerCase()===t.toLowerCase()); if(same) t=same; }
+  if(!t){ msg.innerHTML='<span style="color:var(--bad)">Pick your team (or “not on a team yet”).</span>'; sel.focus(); return null; }
+  if(t!==NO_TEAM){ const ts=lsGet('teams',[])||[]; if(!ts.some(x=>x.toLowerCase()===t.toLowerCase())){ ts.push(t); lsSet('teams',ts.slice(-200)); } }
+  return t; }
+function setTeam(t){ if(!U||!t) return; const changed=U.team!==t; U.team=t; save(); if(changed){ sheetLast=''; sendSheet(false); } }
+function teamGateView(){
+  const f=h(`<main class="wrap"><div class="signin">
+    <div><div class="label">One more thing, ${esc(me)}</div><h1>Pick your <em>team</em>.</h1></div>
+    <p class="muted" style="margin:0">Your XP now counts for your Bible Quizzing team too. Team of the Day is up for grabs!</p>
+    <form id="teamgate" style="display:grid;gap:14px">${teamPicker('')}<button class="btn" type="submit">Let's go</button></form>
+    <button class="x" id="gateback" type="button" style="justify-self:start">Not ${esc(me)}? Switch</button>
+  </div></main>`);
+  wireTeamPicker(f);
+  f.querySelector('#teamgate').onsubmit=e=>{e.preventDefault(); const t=readTeamPick(document); if(!t) return; setTeam(t); render();};
+  f.querySelector('#gateback').onclick=()=>{musicStop();me=null;U=null;applyTheme();render()};
+  setTimeout(()=>loadLeaders(false),0);
+  return f;
+}
+
+let teamEdit=false;
+function teamPanel(){
+  if(teamEdit) return `<form class="panel" id="teamform" style="display:grid;gap:12px">${teamPicker(U.team)}
+    <div class="row"><button class="btn small" type="submit">Save team</button><button class="btn ghost small" type="button" id="teamcancel">Cancel</button></div></form>`;
+  return `<div class="panel row" style="justify-content:space-between;align-items:center"><div style="display:grid;gap:4px;min-width:0"><span class="label">Bible Quizzing team</span><b style="overflow-wrap:anywhere">🛡️ ${esc(teamLabel(U.team))}</b></div>
+    <button class="btn ghost small" id="teamedit">Change team</button></div>`;
+}
+function wireTeamPanel(){
+  const e=$('#teamedit'); if(e) e.onclick=()=>{teamEdit=true;renderKeep();loadLeaders(false)};
+  const c=$('#teamcancel'); if(c) c.onclick=()=>{teamEdit=false;renderKeep()};
+  const f=$('#teamform'); if(f){ wireTeamPicker(f); f.onsubmit=ev=>{ev.preventDefault(); const t=readTeamPick(f); if(!t) return; setTeam(t); teamEdit=false; toast(`<b>Team saved</b><span>${esc(teamLabel(t))}</span>`); renderKeep();}; }
+}
+
 /* ---------- sign in ---------- */
 function signInView(){
   const f=h(`<main class="wrap"><div class="signin">
     <div><div class="label">Bible Quiz · Gospel of John</div><h1>Become <em>unbeatable</em> at John.</h1></div>
     <p class="muted" style="margin:0">Type your name to save your scores, streaks and memory verses. Warning: side effects include extreme smartness.</p>
-    <form id="signin" class="row" style="flex-wrap:nowrap">
-      <input type="text" id="nm" autocomplete="off" placeholder="Your name" maxlength="40">
+    <form id="signin" style="display:grid;gap:14px">
+      <input type="text" id="nm" autocomplete="off" placeholder="Your name" maxlength="40" aria-label="Your name">
+      ${teamPicker('')}
       <button class="btn" type="submit">Start</button>
     </form>
     ${lsGet('hidehome',false)?'':`<div class="panel homecard">
@@ -814,7 +876,12 @@ function signInView(){
     </div>`}
     ${users.length?`<div style="display:grid;gap:8px"><div class="label">Pick up where you left off</div><div class="names">${users.map(n=>`<button data-name="${esc(n)}">${esc(n)}</button>`).join('')}</div></div>`:''}
   </div></main>`);
-  f.querySelector('#signin').onsubmit=e=>{e.preventDefault();const n=$('#nm').value.trim().replace(/\s+/g,' ');if(!n)return;loadUser(n);render()};
+  wireTeamPicker(f);
+  f.querySelector('#signin').onsubmit=e=>{e.preventDefault();const n=$('#nm').value.trim().replace(/\s+/g,' ');if(!n){$('#nm').focus();return}
+    const old=users.find(x=>x.toLowerCase()===n.toLowerCase()), ou=old&&lsGet('u:'+old,null);
+    let t=null; if(!(ou&&ou.team&&!$('#tmsel').value)){ t=readTeamPick(document); if(!t) return; }
+    loadUser(n); if(t) setTeam(t); render()};
+  setTimeout(()=>loadLeaders(false),0);
   f.querySelectorAll('[data-name]').forEach(b=>b.onclick=()=>{loadUser(b.dataset.name);render()});
   const hh=f.querySelector('#hidehome'); if(hh) hh.onclick=()=>{lsSet('hidehome',true);render()};
   return f;
@@ -847,8 +914,12 @@ function printPanel(){ const sel=new Set(U.sel.map(k=>+k.split(':')[0]));
     <div class="printgrid">${PRINT_LINKS.map((u,i)=>`<a class="printlink ${sel.has(i+1)?'sel':''}" href="${u}" target="_blank" rel="noopener"><span aria-hidden="true">🖨️</span> John ${i+1}</a>`).join('')}</div>
     <span class="hint">To print: on a computer, choose <b>File → Print</b>. On a phone, tap <b>⋮</b> (or <b>…</b>) then <b>Share & export → Print</b>. Highlighted chapters are the ones picked on the Practice tab.</span></div>`; }
 const SONGS_URL='https://drive.google.com/drive/folders/1XPC3YZAwg-NdOoXap4Z4amll050fq0pB?usp=sharing';
+let matSub='memory';
 function materialsView(){
+  const seg=`<div class="seg matseg" role="tablist"><button data-matsub="memory" aria-pressed="${matSub==='memory'}"><span aria-hidden="true">🧠</span> Memory verses</button><button data-matsub="study" aria-pressed="${matSub==='study'}"><span aria-hidden="true">📚</span> Sheets &amp; songs</button></div>`;
+  if(matSub==='memory'){ const m=memoryView(); m.firstElementChild.prepend(h(seg)); return m; }
   return h(`<section>
+    ${seg}
     <div><div class="label">Materials</div><h2>Study sheets and songs</h2></div>
     <a class="songcard" href="${SONGS_URL}" target="_blank" rel="noopener"><span class="gi" aria-hidden="true">🎵</span>
       <div style="display:grid;gap:3px;min-width:0"><b>John Songs</b><small>Songs for everything in John. Opens the Google Drive folder.</small></div><span class="hint" aria-hidden="true">↗</span></a>
@@ -1165,6 +1236,7 @@ function progressView(){
   const memCount=Object.keys(U.mem).length;
   return h(`<section>
     <div><div class="label">Progress</div><h2 style="font-size:28px;font-weight:800">How ${esc(me)} is doing</h2></div>
+    ${teamPanel()}
     ${(()=>{const l=levelOf(U.xp);return `<div class="panel lvlpanel"><div class="lvlbig">${l.level}<small>level</small></div>
       <div style="display:grid;gap:6px;min-width:0"><b style="font-family:var(--f-display);font-size:19px">${esc(l.title)}</b>
         <div class="goldbar"><i style="width:${(100*l.into/l.span).toFixed(1)}%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></i></div>
@@ -1475,7 +1547,7 @@ function vSetupView(){
   const needText=o.mode==='type';
   let empty='';
   if(!pool.length){
-    if(o.from==='goal'&&!gk) empty='Set a memory goal on the Memory tab first, or pick chapters here.';
+    if(o.from==='goal'&&!gk) empty='Set a memory goal on the Materials tab first, or pick chapters here.';
     else if(o.from==='mem'&&!Object.keys(U.mem).length) empty='You haven\'t marked any verses memorized yet. Pick chapters instead.';
     else if(o.from==='pick'&&!o.vsel.length) empty='Pick at least one chapter or verse above.';
     else if(needText) empty='Typing needs the verse text for these chapters. Add it below, or switch to “Say it in my head”.';
@@ -1906,7 +1978,7 @@ function bossEnd(win){ game.done=true; game.win=win; if(win){ U.bosses=U.bosses|
   if(win){ sfx('cheer'); celebrate(true); } else { sfx('boom'); oops(); } checkBadges(); }
 
 /* Daily Challenge */
-function dailyStart(){ const day=dayKey(), ids=dailyIds(day); if(!ids.length){ toast('<b>No memory verses yet</b><span>Mark verses memorized on the Memory tab, and your Daily Challenge will quiz you on them.</span>'); return; }
+function dailyStart(){ const day=dayKey(), ids=dailyIds(day); if(!ids.length){ toast('<b>No memory verses yet</b><span>Mark verses memorized on the Materials tab, and your Daily Challenge will quiz you on them.</span>'); return; }
   game={type:'daily',day,ids,n:ids.length,qi:0,streak:0,res:[],replay:!!(U.daily&&U.daily[day])}; gNewQ(game.ids[0]); render(); }
 function dailyEnd(){ game.done=true; const sc=game.res.filter(x=>x.ok).length; U.daily=U.daily||{};
   const n=game.n, perfect=sc===n&&n>=5;
@@ -1975,7 +2047,6 @@ function gamesView(){
       <button class="gamecard" id="gboss"><span class="gi">⚔️</span><b>Boss Battles</b><small>Beat each chapter's boss before you run out of hearts.</small><span class="pill n">${bosses}/21 defeated</span></button>
       <button class="gamecard" id="gduel"><span class="gi">🔔</span><b>Buzzer Duel</b><small>Two players, one screen. First to buzz gets to answer.</small><span class="pill n">2 players</span></button>
     </div>
-    ${leaderPanel()}
     <p class="hint" style="margin:0">Speed Round and Buzzer Duel use the verses picked on the Practice tab (now: John ${esc(rangeLabel(U.sel))}).</p>
   </section>`);
 }
@@ -2106,7 +2177,11 @@ function sheetSummary(){ const r=summary(me,U), {streak,best}=streakFrom(goalDay
   return {key:SHEET_KEY,name:me,mem:r.mem,goal:U.goal||'',goalN:r.goalN,goalMem:r.goalMem,att:r.att,right:r.right,solid:r.solid,streak,best,today:todayCount(),
     level:levelOf(U.xp).level,xp:U.xp||0,badges:Object.keys(U.badges||{}).length,bosses:Object.keys(U.bosses||{}).length,speed:(U.hs&&U.hs.speed)||0,
     daily:td?td.s+'/'+(td.n||10):'',vright:(U.counts&&U.counts.vright)||0,speedTyped:(U.hs&&U.hs.speedTyped)||0,
-    xpToday:(U.xpDays&&U.xpDays[dayKey()])||0,tdate:dayKey(),xpYest:(U.xpDays&&U.xpDays[shiftDay(dayKey(),-1)])||0,ydate:shiftDay(dayKey(),-1)}; }
+    xpToday:(U.xpDays&&U.xpDays[dayKey()])||0,tdate:dayKey(),xpYest:(U.xpDays&&U.xpDays[shiftDay(dayKey(),-1)])||0,ydate:shiftDay(dayKey(),-1),
+    team:U.team&&U.team!==NO_TEAM?U.team:'',xpWeek:xpWeek(),wk:weekKey()}; }
+// Weeks start on Monday.
+function weekKey(k){ k=k||dayKey(); const [y,m,d]=k.split('-').map(Number); return shiftDay(k,-((new Date(y,m-1,d).getDay()+6)%7)); }
+function xpWeek(){ const wk=weekKey(), x=U.xpDays||{}; let t=0; for(let k=wk,i=0;i<7&&k<=dayKey();i++,k=shiftDay(k,1)) t+=x[k]||0; return t; }
 function sendSheet(beacon){ if(!SHEET_URL.startsWith('https://')||!me||!U) return; const d=sheetSummary(), body=JSON.stringify(d); if(body===sheetLast) return; sheetLast=body;
   try{ if(beacon&&navigator.sendBeacon&&navigator.sendBeacon(SHEET_URL,new Blob([body],{type:'text/plain'}))) return;
     fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body,keepalive:true}).catch(()=>{sheetLast=''}); }catch(e){ sheetLast=''; } }
@@ -2121,45 +2196,79 @@ function scheduleSheet(){ scheduleBackup(); if(!SHEET_URL.startsWith('https://')
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ clearTimeout(sheetTimer); sendSheet(true); if(me&&U&&Date.now()-backupAt>60e3){ clearTimeout(backupTimer); backupTimer=null; sendBackup(true); } } });
 
 /* ---------- class leaderboards (read back from the teacher's Google Sheet) ---------- */
-let lb=null, lbAt=0, lbErr=false, lbBusy=false, lbBoard='questions';
-const LB_BOARDS=[['questions','📜','Most questions','questions answered'],['streak','🔥','Longest streak','days in a row'],['speed','⚡','Speed Round','typed answers in 60s'],['bosses','⚔️','Boss Battles','bosses defeated']];
+let lb=null, lbAt=0, lbErr=false, lbBusy=false, lbBoard='day', lbTeamBoard='teamDay';
+const LB_BOARDS=[['day','☀️','Today','XP earned today'],['week','📅','This week','XP earned since Monday'],['questions','📜','Most questions','questions answered'],['streak','🔥','Longest streak','days in a row'],['speed','⚡','Speed Round','typed answers in 60s'],['bosses','⚔️','Boss Battles','bosses defeated']];
+const TEAM_BOARDS=[['teamDay','☀️','Today','team XP earned today'],['teamWeek','📅','This week','team XP earned since Monday']];
 function loadLeaders(force){
   if(!SHEET_URL.startsWith('https://')||lbBusy) return; if(!force&&Date.now()-lbAt<60000) return; lbAt=Date.now();
   lbBusy=true; sendSheet(false);
-  fetch(SHEET_URL+'?lb=1',{cache:'no-store'}).then(r=>r.json()).then(d=>{ if(!d||!Array.isArray(d.questions)) throw 0; lb=d; lbAt=Date.now(); lbErr=false; })
-    .catch(()=>{ lbErr=true; }).finally(()=>{ lbBusy=false; if((tab==='games'&&!game)||(tab==='practice'&&!quiz)) renderKeep(); });
+  fetch(SHEET_URL+'?lb=1',{cache:'no-store'}).then(r=>r.json()).then(d=>{ if(!d||!Array.isArray(d.questions)) throw 0; lb=d; lbAt=Date.now(); lbErr=false;
+      if(Array.isArray(d.teams)) lsSet('teams',[...new Set([...(lsGet('teams',[])||[]),...d.teams.map(normTeam).filter(Boolean)])].slice(-200)); })
+    .catch(()=>{ lbErr=true; }).finally(()=>{ lbBusy=false;
+      if(!me||!U||!U.team||teamEdit){ refreshTeamOptions(); return; }
+      if((tab==='games'&&!game)||(tab==='practice'&&!quiz)||tab==='scores') renderKeep(); });
 }
+const isMe=n=>String(n||'').trim().toLowerCase()===(me||'').trim().toLowerCase();
+const isMyTeam=n=>!!(U&&U.team&&U.team!==NO_TEAM&&String(n||'').trim().toLowerCase()===U.team.toLowerCase());
+function crown(icon,label,title,hint){ return `<div class="panel qotd"><span class="crown" aria-hidden="true">${icon}</span><div style="display:grid;gap:4px;min-width:0">
+    <span class="label">${label}</span><b class="qotdname">${title}</b><span class="hint">${hint}</span></div></div>`; }
 function qotdBanner(){
-  if(!SHEET_URL.startsWith('https://')) return '';
-  if(!lb) return '';
-  const q=lb.qotd;
-  if(!q||!q.name) return `<div class="panel qotd"><span class="crown" aria-hidden="true">👑</span><div style="display:grid;gap:4px;min-width:0">
-    <span class="label">Quizzer of the Day</span><b class="qotdname">The crown is up for grabs!</b>
-    <span class="hint">Earn the most XP today to be tomorrow's Quizzer of the Day.</span></div></div>`;
-  const mine=(me||'').trim().toLowerCase()===q.name.trim().toLowerCase();
-  return `<div class="panel qotd"><span class="crown" aria-hidden="true">👑</span><div style="display:grid;gap:4px;min-width:0">
-    <span class="label">Quizzer of the Day</span><b class="qotdname">${esc(q.name)}${mine?' <span class="you">You!</span>':''}</b>
-    <span class="hint">Earned the most XP yesterday: <b>${q.xp.toLocaleString()} XP</b>.${mine?' Way to go!':' Can you take the crown tomorrow?'}</span></div></div>`;
+  if(!SHEET_URL.startsWith('https://')||!lb) return '';
+  const q=lb.qotd, t=lb.totd; let out='';
+  if(!q||!q.name) out+=crown('👑','Quizzer of the Day','The crown is up for grabs!',"Earn the most XP today to be tomorrow's Quizzer of the Day.");
+  else { const mine=isMe(q.name); out+=crown('👑','Quizzer of the Day',`${esc(q.name)}${mine?' <span class="you">You!</span>':''}`,
+    `Earned the most XP yesterday: <b>${q.xp.toLocaleString()} XP</b>.${mine?' Way to go!':' Can you take the crown tomorrow?'}`); }
+  if('totd' in lb){
+    if(!t||!t.name) out+=crown('🛡️','Team of the Day','The team crown is up for grabs!',"The team whose quizzers earn the most XP today wins tomorrow.");
+    else { const mine=isMyTeam(t.name); out+=crown('🛡️','Team of the Day',`${esc(t.name)}${mine?' <span class="you">Your team!</span>':''}`,
+      `Earned <b>${t.xp.toLocaleString()} XP</b> together yesterday${t.n?` with ${t.n} quizzer${t.n===1?'':'s'}`:''}.${mine?' Keep it going!':''}`); }
+  }
+  return `<div class="crowns">${out}</div>`;
+}
+const medal=i=>['🥇','🥈','🥉'][i]||`<span class="mono">${i+1}</span>`;
+function boardBody(rows,fmt,isMine,sub){
+  if(lbErr&&!lb) return `<p class="hint" style="margin:0">The high scores couldn't load right now. Check your internet and tap Refresh.</p>`;
+  if(!lb) return `<p class="hint" style="margin:0">Loading high scores…</p>`;
+  if(!rows) return `<p class="hint" style="margin:0">This board turns on once your teacher updates the progress sheet.</p>`;
+  if(!rows.length) return `<p class="hint" style="margin:0">No one is on this board yet. Be the first!</p>`;
+  return `<ol class="lblist">${rows.map((r,i)=>{const m=isMine(r.name);return `<li class="${m?'me':''} ${i<3?'top':''}"><span class="lbrank">${medal(i)}</span><span class="lbname">${esc(r.name)}${m?' <span class="you">You</span>':''}${sub(r)?`<small class="lbsub">${sub(r)}</small>`:''}</span><span class="lbval">${fmt(r.v)}</span></li>`}).join('')}</ol>`;
 }
 function leaderPanel(){
   if(!SHEET_URL.startsWith('https://')) return '';
-  const [id,ic,title,unit]=LB_BOARDS.find(b=>b[0]===lbBoard), rows=(lb&&lb[id])||[], mine=(me||'').trim().toLowerCase();
-  const medal=i=>['🥇','🥈','🥉'][i]||`<span class="mono">${i+1}</span>`;
-  const fmt=v=>id==='bosses'?`${v}/21`:v.toLocaleString();
+  const [id,ic,title,unit]=LB_BOARDS.find(b=>b[0]===lbBoard), rows=lb?lb[id]:[];
+  const xp=id==='day'||id==='week';
+  const fmt=v=>id==='bosses'?`${v}/21`:v.toLocaleString()+(xp?' XP':'');
   return `<div class="panel lbpanel" style="display:grid;gap:12px">
-    <div class="row" style="justify-content:space-between"><span class="label">🏆 Class leaderboards</span><button class="x" id="lbrefresh">${lbBusy?'Loading…':'Refresh'}</button></div>
+    <div class="row" style="justify-content:space-between"><span class="label">🏆 Quizzer high scores</span><button class="x" id="lbrefresh">${lbBusy?'Loading…':'Refresh'}</button></div>
     <div class="seg lbtabs">${LB_BOARDS.map(([k,i,t])=>`<button data-lb="${k}" aria-pressed="${lbBoard===k}"><span aria-hidden="true">${i}</span> ${t}</button>`).join('')}</div>
-    ${lbErr&&!lb?`<p class="hint" style="margin:0">The leaderboard couldn't load right now. Check your internet and tap Refresh.</p>`
-      :!lb?`<p class="hint" style="margin:0">Loading the leaderboard…</p>`
-      :rows.length?`<ol class="lblist">${rows.map((r,i)=>`<li class="${r.name.trim().toLowerCase()===mine?'me':''} ${i<3?'top':''}"><span class="lbrank">${medal(i)}</span><span class="lbname">${esc(r.name)}${r.name.trim().toLowerCase()===mine?' <span class="you">You</span>':''}</span><span class="lbval">${fmt(r.v)}</span></li>`).join('')}</ol>`
-      :`<p class="hint" style="margin:0">No one is on this board yet. Be the first!</p>`}
+    ${boardBody(rows,fmt,isMe,r=>r.team?'🛡️ '+esc(r.team):'')}
     <span class="hint">${ic} ${title}: ${unit}.${id==='speed'?' Only rounds played by typing count.':''} Scores update a few seconds after you practice.</span>
   </div>`;
 }
+function teamBoardPanel(){
+  if(!SHEET_URL.startsWith('https://')) return '';
+  const [id,ic,title,unit]=TEAM_BOARDS.find(b=>b[0]===lbTeamBoard), rows=lb?lb[id]:[];
+  return `<div class="panel lbpanel" style="display:grid;gap:12px">
+    <div class="row" style="justify-content:space-between"><span class="label">🛡️ Team high scores</span><span class="hint">Your team: <b>${esc(teamLabel(U.team))}</b></span></div>
+    <div class="seg lbtabs">${TEAM_BOARDS.map(([k,i,t])=>`<button data-lbt="${k}" aria-pressed="${lbTeamBoard===k}"><span aria-hidden="true">${i}</span> ${t}</button>`).join('')}</div>
+    ${boardBody(rows,v=>v.toLocaleString()+' XP',isMyTeam,r=>r.n?`${r.n} quizzer${r.n===1?'':'s'} earning XP`:'')}
+    <span class="hint">${ic} ${title}: ${unit}, adding up everyone on the team.</span>
+  </div>`;
+}
+function scoresView(){
+  if(!SHEET_URL.startsWith('https://')) return h(`<section><div><div class="label">High Scores</div><h2>High scores</h2></div><p class="hint">High scores aren't turned on for this site.</p></section>`);
+  return h(`<section>
+    <div><div class="label">High Scores</div><h2>Who's on top?</h2></div>
+    ${qotdBanner()}
+    ${leaderPanel()}
+    ${teamBoardPanel()}
+  </section>`);
+}
 function wireLeaders(){
   document.querySelectorAll('[data-lb]').forEach(b=>b.onclick=()=>{lbBoard=b.dataset.lb;renderKeep()});
+  document.querySelectorAll('[data-lbt]').forEach(b=>b.onclick=()=>{lbTeamBoard=b.dataset.lbt;renderKeep()});
   const r=$('#lbrefresh'); if(r) r.onclick=()=>{loadLeaders(true);renderKeep()};
-  if($('.lbpanel')||(tab==='practice'&&!quiz)||(tab==='games'&&!game)) loadLeaders(false);
+  if(tab==='scores'||(tab==='practice'&&!quiz)||(tab==='games'&&!game)) loadLeaders(false);
 }
 
 /* ---------- wiring ---------- */
@@ -2213,7 +2322,8 @@ function wire(){
   wireGames();
   wireVerseQs();
   wireMusic();
-  wireLeaders();
+  wireLeaders(); wireTeamPanel();
+  document.querySelectorAll('[data-matsub]').forEach(b=>b.onclick=()=>{matSub=b.dataset.matsub;render()});
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
   on('#doimport',async()=>{ const msg=$('#importmsg'); try{ const d=await unpackCode($('#code').value); U=Object.assign(blankUser(),d.u); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{}); save(); applyTheme(); render(); toast('<b>Progress restored!</b><span>Welcome back. Everything is right where you left it.</span>'); }catch(e){ if(msg) msg.textContent="That code didn't load. Copy the whole code and try again."; } });
   on('#reset',()=>{confirmReset=true;render()});
