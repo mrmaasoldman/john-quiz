@@ -449,6 +449,15 @@ section{animation:none}
 @media (prefers-reduced-motion:reduce){.brand::before{animation:none}}
 </style>
 <style id="zelda">
+.vqbox{display:grid;gap:8px}
+.vqbox > .btn{justify-self:start}
+.vqlist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.vqlist li{display:grid;gap:3px;padding:10px 12px;background:var(--tile);border:2px solid var(--win-line);font-family:var(--f-read)}
+.vqlist li.cur{border-color:var(--gold)}
+.vqlist .vqq{font-weight:700;font-size:17px;line-height:1.35}
+.vqlist .vqa{color:var(--good);font-weight:700;font-size:16px}
+.vqlist .you{justify-self:start}
+
 :root:root:root:root{--f-read:"Atkinson Hyperlegible","Verdana","Segoe UI",system-ui,sans-serif}
 /* Questions, answers and verses: a font designed for easy reading */
 .qtext:not([style*="f-display"]),#dq,.duelmid .qtext{font-family:var(--f-read)!important;font-weight:700!important;font-size:clamp(23px,5.4vw,30px)!important;line-height:1.35!important;letter-spacing:.005em!important}
@@ -953,7 +962,7 @@ ${ask&&U.opts.timer==='20'?(()=>{if(!quiz.deadline)quiz.deadline=Date.now()+2000
           ${ask?'<button class="btn" type="submit">Check</button>':''}
         </div></label>
       </form>
-      ${ask?`<div class="row" style="justify-content:space-between"><span class="hint">Press <kbd>Enter</kbd> to ${part?'move on, then to check':'check'}. Words in (parentheses) are optional.</span><span class="hint">${st?`Your record: ${st[1]}/${st[0]}`:'First time seeing this one'}</span></div>`:feedback(q)+nextBtn('nextq',quiz.i===quiz.ids.length-1,'question')}
+      ${ask?`<div class="row" style="justify-content:space-between"><span class="hint">Press <kbd>Enter</kbd> to ${part?'move on, then to check':'check'}. Words in (parentheses) are optional.</span><span class="hint">${st?`Your record: ${st[1]}/${st[0]}`:'First time seeing this one'}</span></div>`:feedback(q)+verseQs(q)+nextBtn('nextq',quiz.i===quiz.ids.length-1,'question')}
     </div>
     <div class="row" style="justify-content:space-between">
       <button class="btn ghost small" id="reveal" ${ask?'':'hidden'}>I don't know — show me</button>
@@ -982,7 +991,7 @@ ${ask&&U.opts.timer==='20'?(()=>{if(!quiz.deadline)quiz.deadline=Date.now()+2000
         <div class="row"><button class="btn" id="showans">Show answer</button><span class="hint"><kbd>Enter</kbd> shows the answer${part?' · <kbd>Space</kbd> adds a word':''}</span></div>
         <span class="hint">${st?`Your record: ${st[1]}/${st[0]}`:'First time seeing this one'}</span>`
       :`${quiz.last.timeout?'<div class="hype" style="color:var(--bad)">Time\'s up! Did you get it?</div>':''}<div class="fb" style="background:var(--sunk)">${quiz.last.part?`<div class="hint">You jumped after ${quiz.last.words} word${quiz.last.words===1?'':'s'}.</div>`:''}${answers}</div>
-        ${quiz.last.marked?`<div class="fb ${quiz.last.ok?'good':'bad'}"><div class="hype">${esc(quiz.last.msg)}</div></div>${nextBtn('nextq',quiz.i===quiz.ids.length-1,'question')}`
+        ${quiz.last.marked?`<div class="fb ${quiz.last.ok?'good':'bad'}"><div class="hype">${esc(quiz.last.msg)}</div></div>${verseQs(q)}${nextBtn('nextq',quiz.i===quiz.ids.length-1,'question')}`
         :`<div class="row"><button class="btn" id="selfright" style="background:var(--good);color:#fff">I got it</button><button class="btn" id="selfwrong" style="background:var(--bad);color:#fff">I missed it</button>
           <span class="hint"><kbd>Y</kbd> got it · <kbd>N</kbd> missed it</span></div>`}`}
     </div>
@@ -1041,8 +1050,16 @@ function addWord(){
   const a=$('#ans'), r=$('#restq'); if(a)quiz.da=a.value; if(r)quiz.dq=r.value; if(quiz.dq==null)quiz.dq=''; if(quiz.da==null)quiz.da='';
   quiz.shown++; if(!partial()) quiz.dq=''; render();
 }
+// "See all questions on this verse" — shown with an answer so students can study the whole verse.
+let vqOpen=null;
+function verseQs(q){ const key=q.c+':'+q.v, ids=byVerse[key]||[]; if(ids.length<2) return '';
+  const open=vqOpen===key;
+  return `<div class="vqbox"><button class="btn ghost small" data-vq="${key}" aria-expanded="${open}">${open?'▲ Hide':'📖 See all'} ${ids.length} questions on ${key}</button>
+    ${open?`<ol class="vqlist">${ids.map(id=>{const x=Q[id];return `<li class="${id===q.id?'cur':''}"><span class="vqq">${fmtQ(x.q)}?${x.aq&&x.aq.length?` <span class="hint">[or ${x.aq.map(a=>esc(a)+'?').join(' or ')}]</span>`:''}</span><span class="vqa">${x.a.map(fmtQ).join(' <span class="hint">or</span> ')}</span>${id===q.id?'<span class="you">This one</span>':''}</li>`}).join('')}</ol>`:''}
+  </div>`; }
+function wireVerseQs(){ document.querySelectorAll('[data-vq]').forEach(b=>b.onclick=()=>{ vqOpen=vqOpen===b.dataset.vq?null:b.dataset.vq; renderKeep(); }); }
 function nextQ(){
-  quiz.i++; quiz.state='ask'; quiz.last=null; quiz.shown=null; quiz.deadline=null;
+  quiz.i++; quiz.state='ask'; quiz.last=null; quiz.shown=null; quiz.deadline=null; vqOpen=null;
   if(quiz.i>=quiz.ids.length) finishQuiz(); else render();
 }
 function finishQuiz(){
@@ -1868,7 +1885,7 @@ function gFinish(ok,typed){
   render(); react(ok,game.streak);
 }
 function gNext(){
-  if(!game) return;
+  if(!game) return; vqOpen=null;
   if(game.type==='boss'){ if(game.hp<=0) return bossEnd(true); if(game.hearts<=0) return bossEnd(false); game.qi=(game.qi+1)%game.ids.length; gNewQ(game.ids[game.qi]); render(); return; }
   if(game.type==='daily'){ game.qi++; if(game.qi>=game.ids.length) return dailyEnd(); gNewQ(game.ids[game.qi]); render(); return; }
 }
@@ -1996,6 +2013,7 @@ function bossView(){
       <div class="hearts" aria-label="${g.hearts} hearts left">${[...Array(HEARTS)].map((_,i)=>`<span class="${i<g.hearts?'':'lost'}">❤️</span>`).join('')}</div></div>
     <div class="qcard ${g.cur.state==='fb'&&g.cur.marked?(g.cur.ok?'is-right':'is-wrong'):''}">
       <div class="qtext">${gQText()}</div>${gAskHtml()}
+      ${g.cur.state==='fb'&&g.cur.marked?verseQs(Q[g.cur.id]):''}
       ${g.cur.state==='fb'&&g.cur.marked?`<button class="btn nextbtn" id="gnext">${g.hp<=0?'Finish him off':g.hearts<=0?'See what happened':'Next attack'} <span aria-hidden="true">→</span></button>`:''}</div>
     <div class="row" style="justify-content:flex-end"><button class="btn ghost small" id="gbosses">Run away</button></div>
   </section>`);
@@ -2013,7 +2031,7 @@ function dailyView(){
     <div class="prog"><i style="width:${100*g.qi/g.n}%"></i></div>
     <div class="qcard ${g.cur.state==='fb'&&g.cur.marked?(g.cur.ok?'is-right':'is-wrong'):''}">
       <div class="qtext">${gQText()}</div>${gAskHtml()}
-      ${g.cur.state==='fb'&&g.cur.marked?nextBtn('gnext',g.qi===g.n-1,'question'):''}</div>
+      ${g.cur.state==='fb'&&g.cur.marked?verseQs(Q[g.cur.id])+nextBtn('gnext',g.qi===g.n-1,'question'):''}</div>
     <div class="row" style="justify-content:flex-end"><button class="btn ghost small" id="ghome">Quit</button></div>
   </section>`);
 }
@@ -2193,6 +2211,7 @@ function wire(){
   wireClass();
   wireVerses();
   wireGames();
+  wireVerseQs();
   wireMusic();
   wireLeaders();
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
