@@ -532,6 +532,18 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .avsws{display:flex;flex-wrap:wrap;gap:8px}
 .avsw{width:36px;height:36px;border:3px solid #000;cursor:pointer;font-size:14px}
 .avsw.cur{outline:3px solid var(--gold);outline-offset:2px}.avsw:disabled{cursor:not-allowed;filter:saturate(.3) brightness(.7)}
+.tbstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.tbstats .stat{display:grid;gap:2px;padding:10px;background:var(--tile);border:2px solid var(--win-line)}
+.tbstats .stat b{font-family:var(--f-num);font-size:30px;line-height:1;color:var(--gold)}
+.tbstats .stat span{font-size:13px;color:var(--win-muted)}
+.tblist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.tblist li{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"ref q t" "bar bar bar";gap:4px 10px;align-items:center;padding:8px 10px;background:var(--tile);border:2px solid var(--win-line)}
+.tbref{grid-area:ref;font-family:var(--f-num);font-size:20px;white-space:nowrap}
+.tblist li.ok .tbref{color:var(--good)}.tblist li.no .tbref{color:var(--bad)}
+.tbq{grid-area:q;font-family:var(--f-read);font-size:14px;line-height:1.35;min-width:0;overflow-wrap:anywhere}
+.tbt{grid-area:t;font-size:22px;white-space:nowrap}
+.tbbar{grid-area:bar;height:8px;background:rgba(0,0,0,.35)}
+.tbbar i{display:block;height:100%;background:var(--good)}.tblist li.no .tbbar i{background:var(--bad)}
 .lbsub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
 .crowns{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .matseg{margin-bottom:4px}
@@ -813,7 +825,7 @@ function render(){
   if(tab==='materials') w.append(materialsView());
   if(tab==='verses') w.append(vc ? (vc.done? vResultsView() : vCardView()) : vSetupView());
   {const sel=app.querySelector('.tabs [aria-selected="true"]'); if(sel&&sel.scrollIntoView) try{sel.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}}
-  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(game&&game.type==='duel'&&game.phase==='reading'){stopVoice();game.phase='ready'}if(quiz&&tab==='practice')quiz.deadline=null;if(vc&&tab==='verses')vc.deadline=null;const nt=b.dataset.tab, moved=nt!==tab; tab=nt;confirmReset=false;render(); if(moved) window.scrollTo(0,0)});
+  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(game&&game.type==='duel'&&game.phase==='reading'){stopVoice();game.phase='ready'}if(quiz&&tab==='practice'){quiz.deadline=null;if(quiz.state==='ask'&&quiz.t0&&!quiz.away)quiz.away=Date.now()}if(vc&&tab==='verses'){vc.deadline=null;if(vc.state==='ask'&&vc.t0&&!vc.away)vc.away=Date.now()}const nt=b.dataset.tab, moved=nt!==tab; tab=nt;confirmReset=false;render(); if(moved) window.scrollTo(0,0)});
   $('#switch').onclick=()=>{musicStop();me=null;U=null;quiz=null;vc=null;game=null;goalEdit=false;goalDraft=null;applyTheme();render()};
   $('#sndbtn').onclick=()=>{lsSet('sound',!soundOn());if(soundOn())sfx('ding');renderKeep()};
   wire();
@@ -1021,7 +1033,10 @@ function spokenQ(){ if(!quiz) return ''; const q=Q[quiz.ids[quiz.i]], w=qWords()
 function startWords(){return U.opts.words==='all'?Infinity:+U.opts.words}
 function qWords(){return quiz.wording[quiz.i].split(/\s+/).filter(Boolean)}
 function partial(){return quiz.shown<qWords().length}
+function qClock(){ if(quiz.state!=='ask') return; if(!quiz.t0) quiz.t0=Date.now(); if(quiz.away){ quiz.t0+=Date.now()-quiz.away; quiz.away=null; } }
+const qElapsed=()=>quiz&&quiz.t0?Math.min(600000,Date.now()-quiz.t0):null;
 function quizView(){
+  qClock();
   if(U.opts.answer==='think') return thinkView();
   const id=quiz.ids[quiz.i], q=Q[id], n=quiz.ids.length;
   if(quiz.shown==null){quiz.shown=startWords();quiz.dq='';quiz.da='';}
@@ -1085,7 +1100,7 @@ ${ask&&U.opts.timer==='20'?(()=>{if(!quiz.deadline)quiz.deadline=Date.now()+2000
     <div class="row" style="justify-content:space-between"><span></span><button class="btn ghost small" id="quit">End session</button></div>
   </section>`);
 }
-function thinkReveal(timeout){ if(!quiz||quiz.state!=='ask')return; quiz.deadline=null; quiz.last={part:partial(),words:quiz.shown,marked:false,timeout:!!timeout}; quiz.state='fb'; render(); }
+function thinkReveal(timeout){ if(!quiz||quiz.state!=='ask')return; quiz.deadline=null; quiz.last={part:partial(),words:quiz.shown,marked:false,timeout:!!timeout,ms:qElapsed()}; quiz.state='fb'; render(); }
 function timeUp(){ if(!quiz||quiz.state!=='ask') return; quiz.deadline=null;
   if(U.opts.answer==='think') thinkReveal(true);
   else { const a=$('#ans'), r=$('#restq'); quiz.timeoutFlag=true; submitAnswer(a?a.value:(quiz.da||''), r?r.value:(quiz.dq||'')); } }
@@ -1095,7 +1110,7 @@ setInterval(()=>{ if(tab!=='practice'||!quiz||quiz.done||quiz.state!=='ask'||!qu
   const s5=Math.ceil(left/1000); if(left<=5000&&left>0&&quiz.lastTick!==s5){quiz.lastTick=s5;sfx('tick')}
   if(left<=0) timeUp(); },100);
 function thinkMark(ok){ if(!quiz||quiz.state!=='fb'||quiz.last.marked)return; const id=quiz.ids[quiz.i];
-  quiz.streak=ok?(quiz.streak||0)+1:0; quiz.last.marked=true; quiz.last.ok=ok; quiz.last.msg=ok?rightMsg(quiz.streak,false):wrongMsg(); quiz.res.push({id,ok,typed:'',words:quiz.last.part?quiz.last.words:null}); record(id,ok); save(); render(); react(ok,quiz.streak); }
+  quiz.streak=ok?(quiz.streak||0)+1:0; quiz.last.marked=true; quiz.last.ok=ok; quiz.last.msg=ok?rightMsg(quiz.streak,false):wrongMsg(); quiz.res.push({id,ok,typed:'',words:quiz.last.part?quiz.last.words:null,ms:quiz.last.ms}); record(id,ok); save(); render(); react(ok,quiz.streak); }
 function feedback(q){
   const L=quiz.last; const answers=q.a.map(a=>`<div class="ans">${fmtQ(a)}</div>`).join('<div class="hint">or</div>');
   const qline = L.part ? `<div class="qres ${L.qres==='wrong'?'bad':'good'}">Question ${L.qres==='wrong'?'✗':'✓'} <span class="hint">· jumped after ${L.words} word${L.words===1?'':'s'}</span>${L.qres==='wrong'&&L.rest?`<div class="yours">You finished it: <s>${esc(L.wordsText+' '+L.rest)}</s></div>`:''}</div>` : '';
@@ -1124,7 +1139,7 @@ function submitAnswer(typed,rest){
   quiz.streak=ok?(quiz.streak||0)+1:0;
   quiz.last={typed,rest,result,ares,qres,part,words:quiz.shown,wordsText:words.join(' '),overridden:false,msg:ok?rightMsg(quiz.streak,result==='close'):wrongMsg()};
   quiz.deadline=null; if(quiz.timeoutFlag){quiz.timeoutFlag=false; quiz.last.timeout=true; if(!ok) quiz.last.msg="Time's up! "+quiz.last.msg;}
-  quiz.res.push({id,ok,typed,words:part?quiz.shown:null});
+  quiz.res.push({id,ok,typed,words:part?quiz.shown:null,ms:qElapsed()});
   record(id,ok); save(); quiz.state='fb'; render(); react(ok,quiz.streak);
 }
 function overrideRight(){
@@ -1146,7 +1161,7 @@ function verseQs(q){ const key=q.c+':'+q.v, ids=byVerse[key]||[]; if(ids.length<
   </div>`; }
 function wireVerseQs(){ document.querySelectorAll('[data-vq]').forEach(b=>b.onclick=()=>{ vqOpen=vqOpen===b.dataset.vq?null:b.dataset.vq; renderKeep(); }); }
 function nextQ(){
-  quiz.i++; quiz.state='ask'; quiz.last=null; quiz.shown=null; quiz.deadline=null; vqOpen=null;
+  quiz.i++; quiz.state='ask'; quiz.last=null; quiz.shown=null; quiz.deadline=null; quiz.t0=null; quiz.away=null; vqOpen=null;
   if(quiz.i>=quiz.ids.length) finishQuiz(); else render();
 }
 function finishQuiz(){
@@ -1156,6 +1171,30 @@ function finishQuiz(){
     U.sessions=U.sessions.slice(0,40); save();
   }
   render(); checkBadges({perfect:quiz.res.length>=10&&quiz.res.every(x=>x.ok)});
+}
+/* ---------- answer-time breakdown (shown after a session) ---------- */
+const fmtMs=ms=>{ if(ms==null) return '–'; const t=ms/1000; if(t<60) return (t<10?t.toFixed(1):Math.round(t))+'s'; const m=Math.floor(t/60), sec=Math.round(t%60); return m+':'+String(sec).padStart(2,'0'); };
+let tbSort='order';
+function timeBreakdown(items,what){
+  const timed=items.filter(x=>x.ms!=null); if(!timed.length) return '';
+  const tot=timed.reduce((a,x)=>a+x.ms,0), avg=tot/timed.length, max=Math.max(...timed.map(x=>x.ms));
+  const fast=timed.reduce((a,x)=>x.ms<a.ms?x:a), slow=timed.reduce((a,x)=>x.ms>a.ms?x:a);
+  const R=timed.filter(x=>x.ok), W=timed.filter(x=>!x.ok), av=a=>a.length?fmtMs(a.reduce((s,x)=>s+x.ms,0)/a.length):'–';
+  const list=tbSort==='slow'?[...items].sort((a,b)=>(b.ms||0)-(a.ms||0)):items;
+  return `<div class="panel tbpanel" style="display:grid;gap:12px">
+    <div class="row" style="justify-content:space-between"><span class="label">⏱️ Time breakdown</span>
+      <div class="seg"><button data-tbsort="order" aria-pressed="${tbSort==='order'}">In order</button><button data-tbsort="slow" aria-pressed="${tbSort==='slow'}">Slowest first</button></div></div>
+    <div class="tbstats">
+      <div class="stat"><b>${fmtMs(tot)}</b><span>Total time</span></div>
+      <div class="stat"><b>${fmtMs(avg)}</b><span>Average per ${what}</span></div>
+      <div class="stat"><b>${fmtMs(fast.ms)}</b><span>Fastest · ${esc(fast.ref)}</span></div>
+      <div class="stat"><b>${fmtMs(slow.ms)}</b><span>Slowest · ${esc(slow.ref)}</span></div>
+    </div>
+    ${R.length&&W.length?`<span class="hint">Right answers took <b>${av(R)}</b> on average. Misses took <b>${av(W)}</b>.</span>`:''}
+    <ol class="tblist">${list.map(x=>`<li class="${x.ok?'ok':'no'}"><span class="tbref">${x.ok?'✓':'✗'} ${esc(x.ref)}</span><span class="tbq">${x.text}</span>
+      <span class="tbbar"><i style="width:${x.ms==null?0:Math.max(4,100*x.ms/max).toFixed(1)}%"></i></span><span class="tbt mono">${fmtMs(x.ms)}</span></li>`).join('')}</ol>
+    <span class="hint">Timed from when each ${what} appeared until you answered${what==='question'&&U.opts.answer==='think'?' (tapped Show answer)':''}. Time on other tabs doesn't count.</span>
+  </div>`;
 }
 function resultsView(){
   const n=quiz.res.length, r=quiz.res.filter(x=>x.ok).length; const miss=quiz.res.filter(x=>!x.ok);
@@ -1170,6 +1209,7 @@ function resultsView(){
       ${miss.length?`<button class="btn" id="retry">Retry the ${miss.length} I missed</button>`:''}
       <button class="btn ${miss.length?'ghost':''}" id="again">Back to setup</button>
     </div>
+    ${timeBreakdown(quiz.res.map(x=>{const q=Q[x.id];return {ok:x.ok,ms:x.ms,ref:q.c+':'+q.v,text:fmtQ(quiz.wording&&quiz.ids.indexOf(x.id)>=0?quiz.wording[quiz.ids.indexOf(x.id)]:q.q)+'?'}}),'question')}
     ${miss.length?`<div class="panel"><div class="label" style="margin-bottom:6px">Review what you missed</div><ul class="missed">${miss.map(m=>{const q=Q[m.id];return `<li><span class="r">${q.c}:${q.v}</span><span class="qq">${fmtQ(q.q)}?</span><span class="aa">${q.a.map(fmtQ).join(' <span class="muted">or</span> ')}</span></li>`}).join('')}</ul></div>`:''}
   </section>`);
 }
@@ -1634,7 +1674,10 @@ function diffWords(exp,got){
     else {out.push({t:'miss',w:exp[i].raw});i++;miss++} }
   return {out,miss,extra};
 }
+function vClock(){ if(vc.state!=='ask') return; if(!vc.t0) vc.t0=Date.now(); if(vc.away){ vc.t0+=Date.now()-vc.away; vc.away=null; } }
+const vElapsed=()=>vc&&vc.t0?Math.min(600000,Date.now()-vc.t0):null;
 function vCardView(){
+  vClock();
   if(vc.kind==='rev') return vRevView();
   const k=vc.keys[vc.i], [c,v]=k.split(':').map(Number), n=vc.keys.length, txt=vText(c,v);
   const right=vc.res.filter(r=>r.ok).length, wrong=vc.res.length-right, st=U.vstats[k], ask=vc.state==='ask';
@@ -1683,9 +1726,9 @@ function vRevView(){
     <div class="row" style="justify-content:space-between"><span></span><button class="btn ghost small" id="vquit">End session</button></div>
   </section>`);
 }
-function vCheckRef(){ const k=vc.keys[vc.i],[c,v]=k.split(':').map(Number), typed=$('#rans').value.trim(), r=parseRef(typed);
+function vCheckRef(){ const ms=vElapsed(), k=vc.keys[vc.i],[c,v]=k.split(':').map(Number), typed=$('#rans').value.trim(), r=parseRef(typed);
   const ok=!!r&&r[0]===c&&r[1]===v; vc.streak=ok?(vc.streak||0)+1:0;
-  vc.last={typed,ok,marked:true,msg:ok?rightMsg(vc.streak,false):(vc.timeout?"Time's up! ":'')+(r&&r[0]===c?'Right chapter! '+wrongMsg():wrongMsg())}; vc.timeout=false; vc.deadline=null; vRecord(k,ok); vc.state='fb'; render(); react(ok,vc.streak); }
+  vc.last={typed,ok,ms,marked:true,msg:ok?rightMsg(vc.streak,false):(vc.timeout?"Time's up! ":'')+(r&&r[0]===c?'Right chapter! '+wrongMsg():wrongMsg())}; vc.timeout=false; vc.deadline=null; vRecord(k,ok); vc.state='fb'; render(); react(ok,vc.streak); }
 function vDone(k,ok){
   return `<div class="fb ${ok?'good':'bad'}"><div class="hype">${esc(vc.last.msg||'')}</div>
     ${(ok&&!U.mem[k])||(vc.mode==='type'&&vc.kind!=='rev'&&!ok&&!vc.last.overridden)?`<div class="row">${ok&&!U.mem[k]?'<button class="btn ghost small" id="vmarkmem">Mark as memorized</button>':''}${vc.mode==='type'&&vc.kind!=='rev'&&!ok&&!vc.last.overridden?'<button class="btn ghost small" id="voverride">I had it right</button>':''}</div>`:''}</div>
@@ -1700,17 +1743,17 @@ function vFeedback(k,txt){
     ${vDone(k,L.ok)}`;
 }
 function vCheck(){
-  const k=vc.keys[vc.i],[c,v]=k.split(':'), txt=vText(c,v), typed=$('#vans').value;
+  const ms=vElapsed(), k=vc.keys[vc.i],[c,v]=k.split(':'), txt=vText(c,v), typed=$('#vans').value;
   const exp=wordsOf(txt), got=wordsOf(typed), diff=diffWords(exp,got), errs=diff.miss+diff.extra;
   const result = !got.length?'wrong': errs===0?'right' : (errs===1&&exp.length>=8)?'close':'wrong';
   const ok=result!=='wrong'; vc.streak=ok?(vc.streak||0)+1:0;
-  vc.last={diff,result,ok,marked:true,overridden:false,msg:ok?rightMsg(vc.streak,result==='close'):(vc.timeout?"Time's up! ":'')+wrongMsg()}; vc.timeout=false; vc.deadline=null; vRecord(k,ok); vc.state='fb'; render(); react(ok,vc.streak);
+  vc.last={diff,result,ok,ms,marked:true,overridden:false,msg:ok?rightMsg(vc.streak,result==='close'):(vc.timeout?"Time's up! ":'')+wrongMsg()}; vc.timeout=false; vc.deadline=null; vRecord(k,ok); vc.state='fb'; render(); react(ok,vc.streak);
 }
-function vRecord(k,ok){ bumpDay(); const map=vc.kind==='rev'?(U.rstats||(U.rstats={})):U.vstats; const st=map[k]||[0,0,0,0]; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); map[k]=st; vc.res.push({k,ok});
+function vRecord(k,ok){ bumpDay(); const map=vc.kind==='rev'?(U.rstats||(U.rstats={})):U.vstats; const st=map[k]||[0,0,0,0]; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); map[k]=st; vc.res.push({k,ok,ms:vc.last&&vc.last.ms});
   const C=U.counts||(U.counts={}); if(ok){ if(vc.kind==='rev') C.rright=(C.rright||0)+1; else C.vright=(C.vright||0)+1; } lastEv={ok,sessionStreak:vc.streak||0}; gainXP(ok?10+Math.min(10,2*Math.max(0,(vc.streak||0)-1)):1); save(); }
-function vReveal(){ if(!vc||vc.state!=='ask')return; vc.last={marked:false,timeout:!!vc.timeout}; vc.timeout=false; vc.deadline=null; vc.state='fb'; render(); }
+function vReveal(){ if(!vc||vc.state!=='ask')return; vc.last={marked:false,timeout:!!vc.timeout,ms:vElapsed()}; vc.timeout=false; vc.deadline=null; vc.state='fb'; render(); }
 function vMark(ok){ if(!vc||vc.state!=='fb'||vc.last.marked)return; vc.streak=ok?(vc.streak||0)+1:0; vc.last.marked=true; vc.last.ok=ok; vc.last.msg=ok?rightMsg(vc.streak,false):wrongMsg(); vRecord(vc.keys[vc.i],ok); render(); react(ok,vc.streak); }
-function vNext(){ vc.i++; vc.state='ask'; vc.last=null; vc.draft=''; vc.deadline=null; if(vc.i>=vc.keys.length){vc.done=true;
+function vNext(){ vc.i++; vc.state='ask'; vc.last=null; vc.draft=''; vc.deadline=null; vc.t0=null; vc.away=null; if(vc.i>=vc.keys.length){vc.done=true;
   if(vc.res.length){U.sessions.unshift({d:Date.now(),label:'Verse cards',n:vc.res.length,r:vc.res.filter(x=>x.ok).length});U.sessions=U.sessions.slice(0,40);save();}} render(); if(vc.done) checkBadges({perfect:vc.res.length>=10&&vc.res.every(x=>x.ok)}); }
 function vResultsView(){
   const n=vc.res.length, r=vc.res.filter(x=>x.ok).length, miss=vc.res.filter(x=>!x.ok);
@@ -1719,6 +1762,7 @@ function vResultsView(){
     <h2>${scoreTitle(r,n)}</h2>
     <div class="panel" style="display:grid;gap:8px"><div class="big">${r}<span class="muted" style="font-size:.45em"> / ${n}</span></div><div class="muted">${n?pct(r,n)+'% said correctly':'No cards answered.'}</div></div>
     <div class="row">${miss.length?`<button class="btn" id="vretry">Retry the ${miss.length} I missed</button>`:''}<button class="btn ${miss.length?'ghost':''}" id="vagain">Back to setup</button></div>
+    ${timeBreakdown(vc.res.map(x=>{const [c,v]=x.k.split(':');const t=vText(c,v)||'';return {ok:x.ok,ms:x.ms,ref:x.k,text:esc(t.length>70?t.slice(0,70).replace(/\s+\S*$/,'')+'…':t)}}),'card')}
     ${miss.length?`<div class="panel"><div class="label" style="margin-bottom:8px">Work on these</div><div class="vgrid">${miss.map(m=>`<span class="v" style="padding:4px 8px">${m.k}</span>`).join('')}</div></div>`:''}
   </section>`);
 }
@@ -2485,6 +2529,7 @@ function wire(){
   wireVerseQs();
   wireMusic();
   wireLeaders(); wireTeamPanel(); wireAvatar();
+  document.querySelectorAll('[data-tbsort]').forEach(b=>b.onclick=()=>{tbSort=b.dataset.tbsort;renderKeep()});
   document.querySelectorAll('[data-matsub]').forEach(b=>b.onclick=()=>{matSub=b.dataset.matsub;render()});
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
   on('#doimport',async()=>{ const msg=$('#importmsg'); try{ const d=await unpackCode($('#code').value); U=Object.assign(blankUser(),d.u); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{}); save(); applyTheme(); render(); toast('<b>Progress restored!</b><span>Welcome back. Everything is right where you left it.</span>'); }catch(e){ if(msg) msg.textContent="That code didn't load. Copy the whole code and try again."; } });
