@@ -777,8 +777,13 @@ function scoreTitle(r,n){ const p=n?r/n:0; if(!n) return 'Warm-up complete.'; if
 
 /* ---------- daily streak + read aloud ---------- */
 const DAILY=30;
-function dayKey(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function shiftDay(k,n){const [y,m,d]=k.split('-').map(Number);return dayKey(new Date(y,m-1,d+n))}
+// Every day boundary (streaks, daily goal, XP today, high scores) uses Central time, wherever the device is.
+const DAY_TZ='America/Chicago';
+let dayFmt=null; try{ dayFmt=new Intl.DateTimeFormat('en-US',{timeZone:DAY_TZ,year:'numeric',month:'2-digit',day:'2-digit'}); }catch(e){}
+function dayKey(d){ d=d||new Date();
+  if(dayFmt){ try{ const p={}; dayFmt.formatToParts(d).forEach(x=>p[x.type]=x.value); if(p.year&&p.month&&p.day) return p.year+'-'+p.month+'-'+p.day; }catch(e){} }
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function shiftDay(k,n){ const [y,m,d]=k.split('-').map(Number), t=new Date(Date.UTC(y,m-1,d+n)); return t.getUTCFullYear()+'-'+String(t.getUTCMonth()+1).padStart(2,'0')+'-'+String(t.getUTCDate()).padStart(2,'0'); }
 function goalDaysOf(days){const fz=(typeof U!=='undefined'&&U&&days===U.days&&U.frozen)?Object.keys(U.frozen):[];return [...new Set([...Object.keys(days||{}).filter(k=>days[k]>=DAILY),...fz])].sort()}
 function streakFrom(goalDays){
   const set=new Set(goalDays), today=dayKey(); let k=set.has(today)?today:shiftDay(today,-1), n=0;
@@ -2385,7 +2390,7 @@ function sheetSummary(){ const r=summary(me,U), {streak,best}=streakFrom(goalDay
     xpToday:(U.xpDays&&U.xpDays[dayKey()])||0,tdate:dayKey(),xpYest:(U.xpDays&&U.xpDays[shiftDay(dayKey(),-1)])||0,ydate:shiftDay(dayKey(),-1),
     team:U.team&&U.team!==NO_TEAM?U.team:'',xpWeek:xpWeek(),wk:weekKey(),av:myAv()}; }
 // Weeks start on Monday.
-function weekKey(k){ k=k||dayKey(); const [y,m,d]=k.split('-').map(Number); return shiftDay(k,-((new Date(y,m-1,d).getDay()+6)%7)); }
+function weekKey(k){ k=k||dayKey(); const [y,m,d]=k.split('-').map(Number); return shiftDay(k,-((new Date(Date.UTC(y,m-1,d)).getUTCDay()+6)%7)); }
 function xpWeek(){ const wk=weekKey(), x=U.xpDays||{}; let t=0; for(let k=wk,i=0;i<7&&k<=dayKey();i++,k=shiftDay(k,1)) t+=x[k]||0; return t; }
 function sendSheet(beacon){ if(!SHEET_URL.startsWith('https://')||!me||!U) return; const d=sheetSummary(), body=JSON.stringify(d); if(body===sheetLast) return; sheetLast=body;
   try{ if(beacon&&navigator.sendBeacon&&navigator.sendBeacon(SHEET_URL,new Blob([body],{type:'text/plain'}))) return;
@@ -2413,17 +2418,45 @@ function loadLeaders(force){
       if(!me||!U||!U.team||teamEdit){ refreshTeamOptions(); return; }
       if((tab==='games'&&!game)||(tab==='practice'&&!quiz)||tab==='scores') renderKeep(); });
 }
+// Boards that depend on the date are worked out here with this device's clock, so a sheet set to
+// another time zone can't drop anyone, and your own XP shows immediately (before the sheet catches up).
+let lbCalcFor=null, lbCalcKey='', lbCalc=null;
+function lbData(){
+  if(!lb) return null;
+  const today=dayKey(), yest=shiftDay(today,-1), wk=weekKey(), x=(U&&U.xpDays)||{};
+  const mine=U?{name:me,team:U.team&&U.team!==NO_TEAM?U.team:'',av:myAv(),td:today,xt:x[today]||0,yd:yest,xy:x[yest]||0,wk,xw:xpWeek()}:null;
+  const key=today+'|'+JSON.stringify(mine);
+  if(lbCalcFor===lb&&lbCalcKey===key) return lbCalc;
+  const out=Object.assign({},lb), low=n=>String(n||'').trim().toLowerCase(), meL=low(me);
+  const top=(arr,k)=>arr.filter(p=>p[k]>0).sort((a,b)=>b[k]-a[k]).slice(0,10).map(p=>({name:p.name,team:p.team,av:p.av,v:p[k]}));
+  if(Array.isArray(lb.rows)){
+    const rows=lb.rows.filter(r=>r&&r.name!=null&&low(r.name)!==meL); if(mine) rows.push(mine);
+    const val=(r,d)=>r.td===d?(+r.xt||0):r.yd===d?(+r.xy||0):0;
+    const ppl=rows.map(r=>({name:String(r.name),team:normTeam(r.team),av:r.av||'',day:val(r,today),yest:val(r,yest),week:r.wk===wk?(+r.xw||0):0}));
+    const teams=k=>{ const m={}; ppl.forEach(p=>{ if(!p.team||!(p[k]>0)) return; const id=p.team.toLowerCase(), t=m[id]||(m[id]={name:p.team,v:0,n:0}); t.v+=p[k]; t.n++; });
+      return Object.values(m).sort((a,b)=>b.v-a.v).slice(0,10); };
+    out.day=top(ppl,'day'); out.week=top(ppl,'week'); out.teamDay=teams('day'); out.teamWeek=teams('week');
+    const q=top(ppl,'yest')[0], t=teams('yest')[0];
+    out.qotd=q?{name:q.name,xp:q.v,av:q.av}:null; out.totd=t?{name:t.name,xp:t.v,n:t.n}:null;
+  } else if(mine){
+    // Older sheet script: just slot your own live XP into the personal boards.
+    [['day','xt'],['week','xw']].forEach(([b,k])=>{ if(!Array.isArray(lb[b])) return;
+      const list=lb[b].filter(r=>low(r.name)!==meL).map(r=>Object.assign({},r)); if(mine[k]>0) list.push({name:me,team:mine.team,av:mine.av,v:mine[k]});
+      out[b]=list.sort((a,b2)=>b2.v-a.v).slice(0,10); });
+  }
+  lbCalcFor=lb; lbCalcKey=key; lbCalc=out; return out;
+}
 const isMe=n=>String(n||'').trim().toLowerCase()===(me||'').trim().toLowerCase();
 const isMyTeam=n=>!!(U&&U.team&&U.team!==NO_TEAM&&String(n||'').trim().toLowerCase()===U.team.toLowerCase());
 function crown(icon,label,title,hint){ return `<div class="panel qotd"><span class="crown" aria-hidden="true">${icon}</span><div style="display:grid;gap:4px;min-width:0">
     <span class="label">${label}</span><b class="qotdname">${title}</b><span class="hint">${hint}</span></div></div>`; }
 function qotdBanner(){
   if(!SHEET_URL.startsWith('https://')||!lb) return '';
-  const q=lb.qotd, t=lb.totd; let out='';
+  const D=lbData(), q=D.qotd, t=D.totd; let out='';
   if(!q||!q.name) out+=crown('👑','Quizzer of the Day','The crown is up for grabs!',"Earn the most XP today to be tomorrow's Quizzer of the Day.");
   else { const mine=isMe(q.name); out+=crown('👑','Quizzer of the Day',`${avSvg(mine?myAv():(q.av||avDefault(q.name)),28,q.name)} ${esc(q.name)}${mine?' <span class="you">You!</span>':''}`,
     `Earned the most XP yesterday: <b>${(+q.xp||0).toLocaleString()} XP</b>.${mine?' Way to go!':' Can you take the crown tomorrow?'}`); }
-  if('totd' in lb){
+  if('totd' in D){
     if(!t||!t.name) out+=crown('🛡️','Team of the Day','The team crown is up for grabs!',"The team whose quizzers earn the most XP today wins tomorrow.");
     else { const mine=isMyTeam(t.name); out+=crown('🛡️','Team of the Day',`${esc(t.name)}${mine?' <span class="you">Your team!</span>':''}`,
       `Earned <b>${(+t.xp||0).toLocaleString()} XP</b> together yesterday${t.n?` with ${t.n} quizzer${t.n===1?'':'s'}`:''}.${mine?' Keep it going!':''}`); }
@@ -2441,7 +2474,7 @@ function boardBody(rows,fmt,isMine,sub,pic){
 }
 function leaderPanel(){
   if(!SHEET_URL.startsWith('https://')) return '';
-  const [id,ic,title,unit]=LB_BOARDS.find(b=>b[0]===lbBoard), rows=lb?lb[id]:[];
+  const [id,ic,title,unit]=LB_BOARDS.find(b=>b[0]===lbBoard), rows=lb?lbData()[id]:[];
   const xp=id==='day'||id==='week';
   const fmt=v=>id==='bosses'?`${+v||0}/21`:(+v||0).toLocaleString()+(xp?' XP':'');
   return `<div class="panel lbpanel" style="display:grid;gap:12px">
@@ -2453,7 +2486,7 @@ function leaderPanel(){
 }
 function teamBoardPanel(){
   if(!SHEET_URL.startsWith('https://')) return '';
-  const [id,ic,title,unit]=TEAM_BOARDS.find(b=>b[0]===lbTeamBoard), rows=lb?lb[id]:[];
+  const [id,ic,title,unit]=TEAM_BOARDS.find(b=>b[0]===lbTeamBoard), rows=lb?lbData()[id]:[];
   return `<div class="panel lbpanel" style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><span class="label">🛡️ Team high scores</span><span class="hint">Your team: <b>${esc(teamLabel(U.team))}</b></span></div>
     <div class="seg lbtabs">${TEAM_BOARDS.map(([k,i,t])=>`<button data-lbt="${k}" aria-pressed="${lbTeamBoard===k}"><span aria-hidden="true">${i}</span> ${t}</button>`).join('')}</div>

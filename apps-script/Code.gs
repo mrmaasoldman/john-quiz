@@ -75,9 +75,8 @@ function doGet(e) {
   if (!e || !e.parameter || !e.parameter.lb) return out('John Quiz tracker is running.');
   const sh = sheet_(), n = sh.getLastRow() - 1;
   const rows = n > 0 ? sh.getRange(2, 1, n, HEADERS.length).getValues() : [];
-  // Dates come from each student's device. Each is checked in both the script's and the
-  // spreadsheet's time zone so a settings mismatch can't hide anyone.
-  const tz = Session.getScriptTimeZone(), stz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+  // Everything runs on Central time: the website reports dates in Central time too.
+  const tz = 'America/Chicago', stz = 'America/Chicago';
   const ds = v => v instanceof Date ? Utilities.formatDate(v, stz, 'yyyy-MM-dd') : String(v).replace(/^'/, '').trim();
   const fmt = (ms, z) => Utilities.formatDate(new Date(ms), z, 'yyyy-MM-dd');
   const both = ms => [fmt(ms, tz), fmt(ms, stz)];
@@ -95,7 +94,9 @@ function doGet(e) {
       day: todays.includes(ds(r[21])) ? num(r[20]) : 0,
       yest: yests.includes(ds(r[21])) ? num(r[20]) : (yests.includes(ds(r[23])) ? num(r[22]) : 0),
       week: weeks.includes(ds(r[26])) ? num(r[25]) : 0,
-      av: String(r[27] || '')
+      av: String(r[27] || ''),
+      raw: { name: String(r[0]).trim(), team: t ? teamNames[t.toLowerCase()] : '', av: String(r[27] || ''),
+             td: ds(r[21]), xt: num(r[20]), yd: ds(r[23]), xy: num(r[22]), wk: ds(r[26]), xw: num(r[25]) }
     };
   });
   const top = k => people.filter(p => p[k] > 0).sort((a, b) => b[k] - a[k]).slice(0, 10).map(p => ({ name: p.name, team: p.team, av: p.av, v: p[k] }));
@@ -112,7 +113,10 @@ function doGet(e) {
     totd: t ? { name: t.name, xp: t.v, n: t.n } : null,
     teams: Object.keys(teamNames).map(x => teamNames[x]).sort(),
     questions: top('questions'), streak: top('streak'), speed: top('speed'), bosses: top('bosses'),
-    day: top('day'), week: top('week'), teamDay: teamTop('day'), teamWeek: teamTop('week')
+    day: top('day'), week: top('week'), teamDay: teamTop('day'), teamWeek: teamTop('week'),
+    // Each student's XP with the dates their own device reported, so the website can decide
+    // "today", "yesterday" and "this week" by the student's clock instead of this script's time zone.
+    rows: people.filter(p => p.raw.xt > 0 || p.raw.xy > 0 || p.raw.xw > 0).map(p => p.raw)
   };
   return ContentService.createTextOutput(JSON.stringify(body)).setMimeType(ContentService.MimeType.JSON);
 }
