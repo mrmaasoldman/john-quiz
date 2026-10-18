@@ -107,7 +107,11 @@ const AV_MARK={
  penguin:['','','','','','','','','....MM....MM....','...MMMM..MMMM...','...MMMMMMMMMM...','...MMMMMMMMMM...','....MMMMMMMM....','.....MMMMMM.....'],
  spots:['','','','','','','.....DD.........','....DDD..DDDD...','.........DDDD...','.........DDDD...','..DD......DD....','..DD............','..........DD....'],
  mask:['','','','','','','','','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDDD....DDDD..','','',''],
- hair:['','','','','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..']};
+ hair:['','','','','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..'],
+ // Reformer: brown hair below a soft black scholar's cap
+ lhair:['','','','','','','','..DDFFFFFFFFDD..','..DD........DD..','..D..........D..']};
+// Reformer's cap and dark robe with a white collar (drawn after the face)
+const AV_LUTHER=['','','','...OOOOOOOOOO...','.OOGGGGGGGGGGOO.','OGGGGGGGGGGGGGGO','.OGGGGGGGGGGGGO.','..OOOOOOOOOOOO..','','','','','OO............OO','GWO..........OWG','GGWO........OWGG','GGGWOOOOOOOOWGGG'];
 const AV_HUMAN_EARS=['','','','','','','','','','O..............O','OF............FO','O..............O'];
 const AV_HUMANFACE=['','','','','','','','','','....WE....WE....','....EE....EE....','...P...NN...P...','.....E....E.....','......EEEE......'];
 const AV_SKINS=[['sa','#f6d3b3','#e3a98a'],['sb','#e8b48c','#cc8a62'],['sc','#c68a5e','#a46a40'],['sd','#8d5a3b','#6f4229'],['se','#5c3a24','#432818']];
@@ -132,6 +136,7 @@ const AV_ANIMALS=[
  {id:'lion',name:'Lion',lvl:14,ears:'round',mane:true,c:{F:'#f2c14e',I:'#c98a2b',M:'#fff1c9',N:'#8b4a2b',D:'#b5651d'}},
  {id:'unicorn',name:'Unicorn',lvl:16,ears:'pointy',horn:true,c:{F:'#ffffff',I:'#ffb3e6',M:'#ffffff',N:'#ff8fab',D:'#c58af9',Y:'#ffd23f'}},
  {id:'hoops',name:'Hoops Star',lvl:15,ears:'none',mark:'hair',human:true,c:{F:'#c68a5e',I:'#c68a5e',M:'#c68a5e',N:'#a46a40',D:'#1e1e24',P:'#e0857a'}},
+ {id:'luther',name:'Martin Luther',lvl:999,event:'luther',ears:'none',mark:'lhair',human:true,skin:['#f2cfae','#d9a888'],c:{F:'#f2cfae',I:'#f2cfae',M:'#f2cfae',N:'#d9a888',D:'#6b4a2e',P:'#e8958a',G:'#26262e'}},
  {id:'dragon',name:'Dragon',lvl:18,ears:'horns',c:{F:'#4caf50',I:'#4caf50',M:'#a5d6a7',N:'#1b5e20',D:'#1b5e20',Y:'#ffe082'}},
 ];
 const AV_HATS=[
@@ -166,6 +171,13 @@ const AV_COLORS=[['red','#e53935'],['orange','#fb8c00'],['yellow','#fdd835'],['g
 const AV_BGS=[['sky','#8ecae6'],['grass','#9ad08b'],['sun','#ffd166'],['rose','#f4a6b7'],['lilac','#c8b6ff'],['sand','#e9d8a6'],['night','#2d3561'],['slate','#6b7280'],
  ['gold','#ffcf33',12],['ruby','#c62828',15],['rainbow','rainbow',19]];
 const avFind=(list,id)=>list.find(x=>x.id===id);
+// Limited-time unlocks: earn the XP between start and end (Central dates, inclusive) and keep the item forever.
+const AV_EVENTS={luther:{name:'Martin Luther',need:1200,start:'2026-10-18',end:'2026-10-25',endLabel:'Sunday, Oct 25'}};
+const avOwned=id=>!!(U&&U.unlocks&&U.unlocks[id]);
+function avEventActive(id){ const e=AV_EVENTS[id]; if(!e) return false; const d=dayKey(); return d>=e.start&&d<=e.end; }
+function avEventXP(id){ const e=AV_EVENTS[id]; if(!e||!U) return 0; const x=U.xpDays||{}; let t=0; for(const k in x) if(k>=e.start&&k<=e.end) t+=x[k]||0; return t; }
+const avItemOpen=(x,L)=>x.event?avOwned(x.event):L>=(x.lvl||1);
+const avShown=x=>!x.event||avOwned(x.event)||avEventActive(x.event);
 function avDefault(name){ let hsh=0; for(const ch of String(name||'')) hsh=(hsh*31+ch.charCodeAt(0))>>>0; const starters=AV_ANIMALS.filter(a=>a.lvl===1);
   return [starters[hsh%starters.length].id,'none','none',AV_BGS[hsh%8][0],AV_COLORS[(hsh>>>3)%7][0]].join('.'); }
 function avParse(code,name){ const d=avDefault(name).split('.'), p=String(code||'').split('.');
@@ -177,7 +189,7 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   const o=avParse(code,name), an=avFind(AV_ANIMALS,o.a), hat=avFind(AV_HATS,o.h), face=avFind(AV_FACES,o.f);
   const hc=(AV_COLORS.find(c=>c[0]===o.hc)||AV_COLORS[0])[1], bg=(AV_BGS.find(b=>b[0]===o.bg)||AV_BGS[0])[1];
   const base=Object.assign({O:'#1a1a22',E:'#1a1a22',W:'#ffffff',P:'#ff9eb5',B:'#f5a623',Y:'#ffd23f',S:'#1a1a22'},an.c);
-  if(an.human){ const sk=AV_SKINS.find(k=>k[0]===o.sk)||AV_SKINS[2]; base.F=base.M=base.I=sk[1]; base.N=sk[2]; }
+  if(an.human){ const sk=an.skin?[0,an.skin[0],an.skin[1]]:(AV_SKINS.find(k=>k[0]===o.sk)||AV_SKINS[2]); base.F=base.M=base.I=sk[1]; base.N=sk[2]; }
   const grid=[...Array(16)].map(()=>Array(16).fill(null));
   const put=(rows,pal,y0)=>rows.forEach((r,i)=>{const y=(y0||0)+i; if(y<0||y>15) return; for(let x=0;x<r.length&&x<16;x++){const ch=r[x]; if(ch==='.') continue; const col=pal[ch]; if(col) grid[y][x]=col;}});
   if(an.mane) put(AV_MANE,base);
@@ -190,6 +202,7 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   if(an.post) put(AV_POST[an.post],base);
   if(an.front) put(AV_FRONT[an.front],base);
   if(an.human) put(AV_HUMAN_EARS,base);
+  if(an.id==='luther') put(AV_LUTHER,Object.assign({},base,{W:'#ffffff'}));
   if(face&&face.g.length){ const fp=Object.assign({},base,{O:'#1a1a22',C:hc}); if(face.id==='jersey') fp.K='#ffffff'; put(face.g,fp,face.y); }
   if(hat&&hat.g.length){ const fx=AV_HATFIX[hat.id]||{}, pal=Object.assign({},base,{O:'#1a1a22',C:hc}); for(const k in fx) pal[k]=fx[k]==='C'?hc:fx[k]; put(hat.g,pal,hat.y); }
   let rects='';
@@ -206,17 +219,17 @@ let avTab='animal';
 function avatarPanel(){
   const o=avParse(myAv(),me), L=levelOf(U.xp).level;
   const tabs=[['animal','🐾 Animal'],['hat','🎩 Hat'],['face','😎 Face'],['color','🎨 Colors']];
-  const lockTag=n=>`<span class="avlock">🔒 Lv ${n}</span>`;
-  const tile=(code,label,open,cur,attr,need)=>`<button class="avpick ${cur?'cur':''} ${open?'':'locked'}" ${open?attr:'disabled'} aria-pressed="${cur}" title="${esc(label)}${open?'':' (unlocks at level '+need+')'}">${avSvg(code,44,me)}<small>${esc(label)}</small>${open?'':lockTag(need)}</button>`;
+  const lockTag=n=>n==='event'?`<span class="avlock ev">⏳ Event</span>`:`<span class="avlock">🔒 Lv ${n}</span>`;
+  const tile=(code,label,open,cur,attr,need)=>`<button class="avpick ${cur?'cur':''} ${open?'':'locked'} ${need==='event'?'evitem':''}" ${open?attr:'disabled'} aria-pressed="${cur}" title="${esc(label)}${open?'':need==='event'?' (limited-time unlock)':' (unlocks at level '+need+')'}">${avSvg(code,44,me)}<small>${esc(label)}</small>${open?'':lockTag(need)}</button>`;
   let body='';
-  if(avTab==='animal') body=AV_ANIMALS.map(a=>tile(avCode({...o,a:a.id}),a.name,L>=a.lvl,o.a===a.id,`data-av="a:${a.id}"`,a.lvl)).join('');
+  if(avTab==='animal') body=AV_ANIMALS.filter(avShown).map(a=>tile(avCode({...o,a:a.id}),a.name,avItemOpen(a,L),o.a===a.id,`data-av="a:${a.id}"`,a.event?'event':a.lvl)).join('');
   if(avTab==='hat') body=AV_HATS.map(x=>tile(avCode({...o,h:x.id}),x.name,L>=x.lvl,o.h===x.id,`data-av="h:${x.id}"`,x.lvl)).join('');
   if(avTab==='face') body=AV_FACES.map(x=>tile(avCode({...o,f:x.id}),x.name,L>=x.lvl,o.f===x.id,`data-av="f:${x.id}"`,x.lvl)).join('');
   const sw=(k,v,col,cur,need)=>{const open=!need||L>=need; return `<button class="avsw ${cur?'cur':''}" ${open?`data-av="${k}:${v}"`:'disabled'} aria-pressed="${cur}" title="${v}${open?'':' (level '+need+')'}" style="background:${col==='rainbow'?'linear-gradient(135deg,#ff8a80,#ffd180,#ccff90,#80d8ff,#ea80fc)':col}">${open?'':'🔒'}</button>`};
   const skinRow=avFind(AV_ANIMALS,o.a).human?`<span class="hint">Skin tone</span><div class="avsws">${AV_SKINS.map(([v,c])=>sw('sk',v,c,o.sk===v)).join('')}</div>`:'';
   const colors=`<div style="display:grid;gap:8px">${skinRow}<span class="hint">Hat, bow tie and jersey color</span><div class="avsws">${AV_COLORS.map(([v,c])=>sw('hc',v,c,o.hc===v)).join('')}</div>
     <span class="hint">Background</span><div class="avsws">${AV_BGS.map(([v,c,n])=>sw('bg',v,c,o.bg===v,n)).join('')}</div></div>`;
-  const nextUp=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>x.lvl>L).sort((a,b)=>a.lvl-b.lvl)[0];
+  const nextUp=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>!x.event&&x.lvl>L).sort((a,b)=>a.lvl-b.lvl)[0];
   return `<div class="panel avpanel" style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><span class="label">Your avatar</span>${nextUp?`<span class="hint">Next unlock: ${esc(nextUp.name)} at level ${nextUp.lvl}</span>`:'<span class="hint">Everything unlocked!</span>'}</div>
     <div class="row" style="gap:14px;align-items:center;flex-wrap:nowrap"><div class="avbig">${avSvg(myAv(),88,me)}</div>
@@ -230,7 +243,7 @@ function wireAvatar(){
   document.querySelectorAll('[data-avtab]').forEach(b=>b.onclick=()=>{avTab=b.dataset.avtab;renderKeep()});
   document.querySelectorAll('[data-av]').forEach(b=>b.onclick=()=>{ const [k,v]=b.dataset.av.split(':'); const o=avParse(myAv(),me); o[k]=v; U.av=avCode(o); save(); sfx&&sfx('ding'); renderKeep(); });
   const r=$('#avrand'); if(r) r.onclick=()=>{ const L=levelOf(U.xp).level, pick=a=>a[Math.floor(Math.random()*a.length)];
-    U.av=avCode({a:pick(AV_ANIMALS.filter(x=>x.lvl<=L)).id,h:pick(AV_HATS.filter(x=>x.lvl<=L)).id,f:pick(AV_FACES.filter(x=>x.lvl<=L)).id,
+    U.av=avCode({a:pick(AV_ANIMALS.filter(x=>avItemOpen(x,L))).id,h:pick(AV_HATS.filter(x=>x.lvl<=L)).id,f:pick(AV_FACES.filter(x=>x.lvl<=L)).id,
       bg:pick(AV_BGS.filter(b=>!b[2]||b[2]<=L))[0],hc:pick(AV_COLORS)[0],sk:pick(AV_SKINS)[0]}); save(); renderKeep(); };
 }
 
