@@ -106,7 +106,11 @@ const AV_MARK={
  fox:['','','','','','','','','','','..MM........MM..','..MM........MM..'],
  penguin:['','','','','','','','','....MM....MM....','...MMMM..MMMM...','...MMMMMMMMMM...','...MMMMMMMMMM...','....MMMMMMMM....','.....MMMMMM.....'],
  spots:['','','','','','','.....DD.........','....DDD..DDDD...','.........DDDD...','.........DDDD...','..DD......DD....','..DD............','..........DD....'],
- mask:['','','','','','','','','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDDD....DDDD..','','','']};
+ mask:['','','','','','','','','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDDD....DDDD..','','',''],
+ hair:['','','','','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..']};
+const AV_HUMAN_EARS=['','','','','','','','','','O..............O','OF............FO','O..............O'];
+const AV_HUMANFACE=['','','','','','','','','','....WE....WE....','....EE....EE....','...P...NN...P...','.....E....E.....','......EEEE......'];
+const AV_SKINS=[['sa','#f6d3b3','#e3a98a'],['sb','#e8b48c','#cc8a62'],['sc','#c68a5e','#a46a40'],['sd','#8d5a3b','#6f4229'],['se','#5c3a24','#432818']];
 const AV_MANE=['','','....DDDDDDDD....','..DDDDDDDDDDDD..','.DDDDDDDDDDDDDD.','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','.DDDDDDDDDDDDDD.','..DDDDDDDDDDDD..'];
 const AV_POST={ koala:['','','','','','','','','','','.......NN.......','......NNNN......','......NNNN......'] };
 const AV_ANIMALS=[
@@ -127,6 +131,7 @@ const AV_ANIMALS=[
  {id:'raccoon',name:'Raccoon',lvl:13,ears:'round',mark:'mask',c:{F:'#8d8f96',I:'#e0e0e0',M:'#ececec',N:'#1e1e24',D:'#2e2e36',W:'#fff'}},
  {id:'lion',name:'Lion',lvl:14,ears:'round',mane:true,c:{F:'#f2c14e',I:'#c98a2b',M:'#fff1c9',N:'#8b4a2b',D:'#b5651d'}},
  {id:'unicorn',name:'Unicorn',lvl:16,ears:'pointy',horn:true,c:{F:'#ffffff',I:'#ffb3e6',M:'#ffffff',N:'#ff8fab',D:'#c58af9',Y:'#ffd23f'}},
+ {id:'hoops',name:'Hoops Star',lvl:15,ears:'none',mark:'hair',human:true,c:{F:'#c68a5e',I:'#c68a5e',M:'#c68a5e',N:'#a46a40',D:'#1e1e24',P:'#e0857a'}},
  {id:'dragon',name:'Dragon',lvl:18,ears:'horns',c:{F:'#4caf50',I:'#4caf50',M:'#a5d6a7',N:'#1b5e20',D:'#1b5e20',Y:'#ffe082'}},
 ];
 const AV_HATS=[
@@ -142,10 +147,11 @@ const AV_HATS=[
  {id:'wizard',name:'Wizard hat',lvl:11,y:0,g:['........OCO.....','.......OCCO.....','......OCKCO.....','......OCCCCO....','.....OCCCKCO....','....OCCKCCCCO...','..OOOOOOOOOOOO..','.OCCCCCCCCCCCCO.','..OOOOOOOOOOOO..']},
  {id:'knight',name:'Knight helmet',lvl:13,y:1,g:['.......KK.......','......KKK.......','.....OOOOOO.....','....OCCCCCCO....','...OCCCCCCCCO...','..OCCCCCCCCCCO..','..OCOOOOOOOOCO..','..OC........CO..','..OC........CO..','..OO........OO..']},
  {id:'grad',name:'Grad cap',lvl:15,y:2,g:['.......OO.......','....OOOCCOOO....','.OOOCCCCCCCCOOO.','OCCCCCCKCCCCCCCO','.OOOCCCCCCCCOOO.','...OCCCCCCCCOK..','...OOOOOOOOOOK..','.............K..']},
+ {id:'sweat',name:'Sweatband',lvl:15,y:7,g:['..OCCCCCCCCCCO..','..OCCCCKKCCCCO..']},
  {id:'crown',name:'Crown',lvl:20,y:2,g:['...O...OO...O...','..OCO.OCCO.OCO..','..OCCOCCCCOCCO..','..OCKCCRRCCKCO..','..OCCCCCCCCCCO..','..OOOOOOOOOOOO..']},
 ];
 const AV_HATFIX={cap:{K:'#ffffff'},bow:{},beanie:{K:'#ffffff'},party:{K:'#ffd23f'},flower:{Y:'#ffd23f',K:'C'},phones:{K:'#33333d'},cowboy:{K:'#3a2016'},
- pirate:{K:'#ffffff'},wizard:{K:'#ffd23f'},knight:{K:'#e53935',C:'#c9ced6'},grad:{K:'#ffd23f',C:'#1e1e24'},crown:{C:'#ffd23f',K:'#4fc3f7',R:'#e53935'}};
+ pirate:{K:'#ffffff'},wizard:{K:'#ffd23f'},knight:{K:'#e53935',C:'#c9ced6'},grad:{K:'#ffd23f',C:'#1e1e24'},sweat:{K:'#ffffff'},crown:{C:'#ffd23f',K:'#4fc3f7',R:'#e53935'}};
 const AV_FACES=[
  {id:'none',name:'Nothing',lvl:1,y:0,g:[]},
  {id:'glasses',name:'Glasses',lvl:2,y:8,g:['...OOOO..OOOO...','...O..OOOO..O...','...O..O..O..O...','...OOOO..OOOO...']},
@@ -154,6 +160,7 @@ const AV_FACES=[
  {id:'shades',name:'Sunglasses',lvl:8,y:8,g:['...OOOO..OOOO...','.OOWSSOOOOWSSOO.','...OSSO..OSSO...','...OOOO..OOOO...']},
  {id:'patch',name:'Eye patch',lvl:9,y:8,g:['..OOOOOOOOOOOO..','...OOOO.........','...OOOO.........','....OO..........']},
  {id:'bowtie',name:'Bow tie',lvl:12,y:13,g:['....OO....OO....','....OCOOOOCO....','....OO....OO....']},
+ {id:'jersey',name:'Jersey',lvl:15,y:12,g:['OO............OO','CKO..........OKC','CCKO........OKCC','CCCKOOOOOOOOKCCC']},
 ];
 const AV_COLORS=[['red','#e53935'],['orange','#fb8c00'],['yellow','#fdd835'],['green','#43a047'],['blue','#1e88e5'],['purple','#8e24aa'],['pink','#f06292'],['black','#2b2b33']];
 const AV_BGS=[['sky','#8ecae6'],['grass','#9ad08b'],['sun','#ffd166'],['rose','#f4a6b7'],['lilac','#c8b6ff'],['sand','#e9d8a6'],['night','#2d3561'],['slate','#6b7280'],
@@ -163,13 +170,14 @@ function avDefault(name){ let hsh=0; for(const ch of String(name||'')) hsh=(hsh*
   return [starters[hsh%starters.length].id,'none','none',AV_BGS[hsh%8][0],AV_COLORS[(hsh>>>3)%7][0]].join('.'); }
 function avParse(code,name){ const d=avDefault(name).split('.'), p=String(code||'').split('.');
   return {a:avFind(AV_ANIMALS,p[0])?p[0]:d[0], h:avFind(AV_HATS,p[1])?p[1]:'none', f:avFind(AV_FACES,p[2])?p[2]:'none',
-    bg:AV_BGS.some(b=>b[0]===p[3])?p[3]:d[3], hc:AV_COLORS.some(c=>c[0]===p[4])?p[4]:d[4]}; }
-const avCode=o=>[o.a,o.h,o.f,o.bg,o.hc].join('.');
+    bg:AV_BGS.some(b=>b[0]===p[3])?p[3]:d[3], hc:AV_COLORS.some(c=>c[0]===p[4])?p[4]:d[4], sk:AV_SKINS.some(k=>k[0]===p[5])?p[5]:'sc'}; }
+const avCode=o=>[o.a,o.h,o.f,o.bg,o.hc,o.sk||'sc'].join('.');
 const avCache={};
 function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[key]) return avCache[key];
   const o=avParse(code,name), an=avFind(AV_ANIMALS,o.a), hat=avFind(AV_HATS,o.h), face=avFind(AV_FACES,o.f);
   const hc=(AV_COLORS.find(c=>c[0]===o.hc)||AV_COLORS[0])[1], bg=(AV_BGS.find(b=>b[0]===o.bg)||AV_BGS[0])[1];
   const base=Object.assign({O:'#1a1a22',E:'#1a1a22',W:'#ffffff',P:'#ff9eb5',B:'#f5a623',Y:'#ffd23f',S:'#1a1a22'},an.c);
+  if(an.human){ const sk=AV_SKINS.find(k=>k[0]===o.sk)||AV_SKINS[2]; base.F=base.M=base.I=sk[1]; base.N=sk[2]; }
   const grid=[...Array(16)].map(()=>Array(16).fill(null));
   const put=(rows,pal,y0)=>rows.forEach((r,i)=>{const y=(y0||0)+i; if(y<0||y>15) return; for(let x=0;x<r.length&&x<16;x++){const ch=r[x]; if(ch==='.') continue; const col=pal[ch]; if(col) grid[y][x]=col;}});
   if(an.mane) put(AV_MANE,base);
@@ -178,10 +186,11 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   put(AV_HEAD,base);
   if(an.horn) put(['','','','','','.......DD.......','......DDD.......'],base);
   if(an.mark) put(AV_MARK[an.mark],base);
-  put(an.face==='beak'?AV_BEAKFACE:an.face==='owl'?AV_OWLFACE:an.face==='frog'?AV_FROGFACE:AV_FACE,base);
+  put(an.human?AV_HUMANFACE:an.face==='beak'?AV_BEAKFACE:an.face==='owl'?AV_OWLFACE:an.face==='frog'?AV_FROGFACE:AV_FACE,base);
   if(an.post) put(AV_POST[an.post],base);
   if(an.front) put(AV_FRONT[an.front],base);
-  if(face&&face.g.length) put(face.g,Object.assign({},base,{O:'#1a1a22',C:hc}),face.y);
+  if(an.human) put(AV_HUMAN_EARS,base);
+  if(face&&face.g.length){ const fp=Object.assign({},base,{O:'#1a1a22',C:hc}); if(face.id==='jersey') fp.K='#ffffff'; put(face.g,fp,face.y); }
   if(hat&&hat.g.length){ const fx=AV_HATFIX[hat.id]||{}, pal=Object.assign({},base,{O:'#1a1a22',C:hc}); for(const k in fx) pal[k]=fx[k]==='C'?hc:fx[k]; put(hat.g,pal,hat.y); }
   let rects='';
   for(let y=0;y<16;y++){ let x=0; while(x<16){ const c=grid[y][x]; if(!c){x++;continue} let w=1; while(x+w<16&&grid[y][x+w]===c) w++; rects+=`<rect x="${x}" y="${y}" width="${w}" height="1" fill="${c}"/>`; x+=w; } }
@@ -204,7 +213,8 @@ function avatarPanel(){
   if(avTab==='hat') body=AV_HATS.map(x=>tile(avCode({...o,h:x.id}),x.name,L>=x.lvl,o.h===x.id,`data-av="h:${x.id}"`,x.lvl)).join('');
   if(avTab==='face') body=AV_FACES.map(x=>tile(avCode({...o,f:x.id}),x.name,L>=x.lvl,o.f===x.id,`data-av="f:${x.id}"`,x.lvl)).join('');
   const sw=(k,v,col,cur,need)=>{const open=!need||L>=need; return `<button class="avsw ${cur?'cur':''}" ${open?`data-av="${k}:${v}"`:'disabled'} aria-pressed="${cur}" title="${v}${open?'':' (level '+need+')'}" style="background:${col==='rainbow'?'linear-gradient(135deg,#ff8a80,#ffd180,#ccff90,#80d8ff,#ea80fc)':col}">${open?'':'🔒'}</button>`};
-  const colors=`<div style="display:grid;gap:8px"><span class="hint">Hat and bow tie color</span><div class="avsws">${AV_COLORS.map(([v,c])=>sw('hc',v,c,o.hc===v)).join('')}</div>
+  const skinRow=avFind(AV_ANIMALS,o.a).human?`<span class="hint">Skin tone</span><div class="avsws">${AV_SKINS.map(([v,c])=>sw('sk',v,c,o.sk===v)).join('')}</div>`:'';
+  const colors=`<div style="display:grid;gap:8px">${skinRow}<span class="hint">Hat, bow tie and jersey color</span><div class="avsws">${AV_COLORS.map(([v,c])=>sw('hc',v,c,o.hc===v)).join('')}</div>
     <span class="hint">Background</span><div class="avsws">${AV_BGS.map(([v,c,n])=>sw('bg',v,c,o.bg===v,n)).join('')}</div></div>`;
   const nextUp=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>x.lvl>L).sort((a,b)=>a.lvl-b.lvl)[0];
   return `<div class="panel avpanel" style="display:grid;gap:12px">
@@ -221,7 +231,7 @@ function wireAvatar(){
   document.querySelectorAll('[data-av]').forEach(b=>b.onclick=()=>{ const [k,v]=b.dataset.av.split(':'); const o=avParse(myAv(),me); o[k]=v; U.av=avCode(o); save(); sfx&&sfx('ding'); renderKeep(); });
   const r=$('#avrand'); if(r) r.onclick=()=>{ const L=levelOf(U.xp).level, pick=a=>a[Math.floor(Math.random()*a.length)];
     U.av=avCode({a:pick(AV_ANIMALS.filter(x=>x.lvl<=L)).id,h:pick(AV_HATS.filter(x=>x.lvl<=L)).id,f:pick(AV_FACES.filter(x=>x.lvl<=L)).id,
-      bg:pick(AV_BGS.filter(b=>!b[2]||b[2]<=L))[0],hc:pick(AV_COLORS)[0]}); save(); renderKeep(); };
+      bg:pick(AV_BGS.filter(b=>!b[2]||b[2]<=L))[0],hc:pick(AV_COLORS)[0],sk:pick(AV_SKINS)[0]}); save(); renderKeep(); };
 }
 
 // --- dates (Central time, same as the student site) ---
