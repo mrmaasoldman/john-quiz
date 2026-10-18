@@ -562,6 +562,10 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .xplog{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 .xplog li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:6px 10px;background:var(--tile);border:2px solid var(--win-line);font-size:14px}
 .xpsess{display:grid;gap:10px}.xpbig{font-family:var(--f-num);font-size:34px;color:var(--gold);text-shadow:2px 2px 0 #000}
+.avwrap{position:relative;display:inline-block;line-height:0;vertical-align:middle;flex:none;margin-top:calc(var(--avpx)*.3)}
+.avcrown{position:absolute;left:50%;top:calc(var(--avpx)*-.42);width:calc(var(--avpx)*.72);height:auto;transform:translateX(-50%) rotate(-10deg);filter:drop-shadow(1px 1px 0 rgba(0,0,0,.5));pointer-events:none;animation:crownbob 1.6s steps(2) infinite}
+@keyframes crownbob{50%{transform:translateX(-50%) translateY(-1px) rotate(-6deg)}}
+@media (prefers-reduced-motion:reduce){.avcrown{animation:none}}
 .lbsub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
 .crowns{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .matseg{margin-bottom:4px}
@@ -840,7 +844,7 @@ function render(){
     <div class="tabs" role="tablist">
       ${['practice','games','verses','scores','progress','materials'].map(t=>`<button role="tab" data-tab="${t}" aria-selected="${tab===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}
     </div>
-    <div class="who">${dayPill()}${lvlChip()}<button class="sndbtn" id="musbtn" aria-label="${musicOn()&&mus.playing?'Stop music':'Play music'}" title="Music ${musicOn()&&mus.playing?'on':'off'}" style="${musicOn()&&mus.playing?'':'opacity:.55'}">🎵</button><button class="sndbtn" id="sndbtn" aria-label="${soundOn()?'Turn sound off':'Turn sound on'}" title="Sound ${soundOn()?'on':'off'}">${soundOn()?'🔊':'🔇'}</button><span class="whoname">${avSvg(myAv(),26,me)}${esc(me)}</span> <button id="switch">Switch</button></div>
+    <div class="who">${dayPill()}${lvlChip()}<button class="sndbtn" id="musbtn" aria-label="${musicOn()&&mus.playing?'Stop music':'Play music'}" title="Music ${musicOn()&&mus.playing?'on':'off'}" style="${musicOn()&&mus.playing?'':'opacity:.55'}">🎵</button><button class="sndbtn" id="sndbtn" aria-label="${soundOn()?'Turn sound off':'Turn sound on'}" title="Sound ${soundOn()?'on':'off'}">${soundOn()?'🔊':'🔇'}</button><span class="whoname">${avC(myAv(),26,me)}${esc(me)}</span> <button id="switch">Switch</button></div>
   </div></header>`));
   const w=document.createElement('main'); w.className='wrap'; app.append(w);
   if(tab==='practice') w.append(quiz ? (quiz.done? resultsView() : quizView()) : setupView());
@@ -928,7 +932,7 @@ function signInView(){
       <div><span class="pill n">Android</span> In Chrome, tap <b>⋮</b>, then <b>Add to Home screen</b>.</div></div>
       <span class="hint">Then it opens with one tap, like any other app.</span>
     </div>`}
-    ${users.length?`<div style="display:grid;gap:8px"><div class="label">Pick up where you left off</div><div class="names">${users.map(n=>{const u=lsGet('u:'+n,null)||{};return `<button data-name="${esc(n)}">${avSvg(u.av||avDefault(n),22,n)}<span>${esc(n)}</span></button>`}).join('')}</div></div>`:''}
+    ${users.length?`<div style="display:grid;gap:8px"><div class="label">Pick up where you left off</div><div class="names">${users.map(n=>{const u=lsGet('u:'+n,null)||{};return `<button data-name="${esc(n)}">${avC(u.av||avDefault(n),22,n)}<span>${esc(n)}</span></button>`}).join('')}</div></div>`:''}
   </div></main>`);
   wireTeamPicker(f);
   f.querySelector('#signin').onsubmit=e=>{e.preventDefault();const n=$('#nm').value.trim().replace(/\s+/g,' ');if(!n){$('#nm').focus();return}
@@ -2053,6 +2057,14 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   const svg=`<svg class="av" width="${px}" height="${px}" viewBox="-1 -1 18 18" shape-rendering="crispEdges" aria-hidden="true">${defs}<rect x="-1" y="-1" width="18" height="18" fill="${bgFill}"/>${rects}</svg>`;
   return (avCache[key]=svg);
 }
+// Quizzer of the Day wears a pixel crown on their avatar everywhere it shows.
+const CROWN_PX=['.O...O...O.','OYO.OYO.OYO','OYYOYYYOYYO','OYYYYRYYYYO','OYYYYYYYYYO','.OOOOOOOOO.'];
+let crownSvgCache='';
+function crownSvg(){ if(crownSvgCache) return crownSvgCache; const pal={O:'#1a1a22',Y:'#ffd23f',R:'#e53935'}; let r='';
+  CROWN_PX.forEach((row,y)=>{ for(let x=0;x<row.length;x++){ const c=pal[row[x]]; if(c) r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${c}"/>`; } });
+  return crownSvgCache=`<svg class="avcrown" viewBox="0 0 11 6" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`; }
+function isQotd(name){ try{ if(!lb||!name) return false; const q=lbData().qotd; return !!(q&&q.name&&String(q.name).trim().toLowerCase()===String(name).trim().toLowerCase()); }catch(e){ return false; } }
+function avC(code,px,name){ const svg=avSvg(code,px,name); return isQotd(name)?`<span class="avwrap" style="--avpx:${px}px" title="Quizzer of the Day">${svg}${crownSvg()}</span>`:svg; }
 const myAv=()=>U?(U.av||avDefault(me)):'';
 function avOpen(item){ return levelOf(U.xp).level>=(item.lvl||1); }
 function avUnlocksAt(L){ const n=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>x.lvl===L).map(x=>x.name).concat(AV_BGS.filter(b=>b[2]===L).map(b=>b[0][0].toUpperCase()+b[0].slice(1)+' background'));
@@ -2073,7 +2085,7 @@ function avatarPanel(){
   const nextUp=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>x.lvl>L).sort((a,b)=>a.lvl-b.lvl)[0];
   return `<div class="panel avpanel" style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><span class="label">Your avatar</span>${nextUp?`<span class="hint">Next unlock: ${esc(nextUp.name)} at level ${nextUp.lvl}</span>`:'<span class="hint">Everything unlocked!</span>'}</div>
-    <div class="row" style="gap:14px;align-items:center;flex-wrap:nowrap"><div class="avbig">${avSvg(myAv(),88,me)}</div>
+    <div class="row" style="gap:14px;align-items:center;flex-wrap:nowrap"><div class="avbig">${avC(myAv(),88,me)}</div>
       <div style="display:grid;gap:4px;min-width:0"><b style="overflow-wrap:anywhere">${esc(me)}</b><span class="hint">Shows next to your name and on the high scores. Level up to unlock more animals, hats and extras.</span>
       <button class="x" id="avrand" style="justify-self:start">🎲 Surprise me</button></div></div>
     <div class="seg avtabs">${tabs.map(([k,t])=>`<button data-avtab="${k}" aria-pressed="${avTab===k}">${t}</button>`).join('')}</div>
@@ -2478,7 +2490,7 @@ function loadLeaders(force){
   fetch(SHEET_URL+'?lb=1',{cache:'no-store'}).then(r=>r.json()).then(d=>{ if(!d||!Array.isArray(d.questions)) throw 0; lb=d; lbAt=Date.now(); lbErr=false;
       if(Array.isArray(d.teams)) lsSet('teams',[...new Set([...(lsGet('teams',[])||[]),...d.teams.map(normTeam).filter(Boolean)])].slice(-200)); })
     .catch(()=>{ lbErr=true; }).finally(()=>{ lbBusy=false;
-      if(!me||!U||!U.team||teamEdit){ refreshTeamOptions(); return; }
+      if(!me||!U||!U.team||teamEdit){ refreshTeamOptions(); if(!me) document.querySelectorAll('.names [data-name]').forEach(b=>{ const n=b.dataset.name, u=lsGet('u:'+n,null)||{}, old=b.querySelector('.av,.avwrap'); if(old) old.outerHTML=avC(u.av||avDefault(n),22,n); }); return; }
       if((tab==='games'&&!game)||(tab==='practice'&&!quiz)||tab==='scores') renderKeep(); });
 }
 // Boards that depend on the date are worked out here with this device's clock, so a sheet set to
@@ -2518,7 +2530,7 @@ function qotdBanner(){
   if(!SHEET_URL.startsWith('https://')||!lb) return '';
   const D=lbData(), q=D.qotd, t=D.totd; let out='';
   if(!q||!q.name) out+=crown('👑','Quizzer of the Day','The crown is up for grabs!',"Earn the most XP today to be tomorrow's Quizzer of the Day.");
-  else { const mine=isMe(q.name); out+=crown('👑','Quizzer of the Day',`${avSvg(mine?myAv():(q.av||avDefault(q.name)),28,q.name)} ${esc(q.name)}${mine?' <span class="you">You!</span>':''}`,
+  else { const mine=isMe(q.name); out+=crown('👑','Quizzer of the Day',`${avC(mine?myAv():(q.av||avDefault(q.name)),28,q.name)} ${esc(q.name)}${mine?' <span class="you">You!</span>':''}`,
     `Earned the most XP yesterday: <b>${(+q.xp||0).toLocaleString()} XP</b>.${mine?' Way to go!':' Can you take the crown tomorrow?'}`); }
   if('totd' in D){
     if(!t||!t.name) out+=crown('🛡️','Team of the Day','The team crown is up for grabs!',"The team whose quizzers earn the most XP today wins tomorrow.");
@@ -2536,7 +2548,7 @@ function boardBody(rows,fmt,isMine,sub,pic,mode,youTag,who){
   if(!rows) return `<p class="hint" style="margin:0">This board turns on once your teacher updates the progress sheet.</p>`;
   if(!rows.length) return `<p class="hint" style="margin:0">No one is on this board yet. Be the first!</p>`;
   const mi=rows.findIndex(r=>isMine(r.name));
-  const li=(r,i)=>{const m=isMine(r.name);return `<li class="${m?'me':''} ${i<3?'top':''}"><span class="lbrank">${medal(i)}</span><span class="lbname">${pic?`<span class="lbav">${avSvg(m?myAv():(r.av||avDefault(r.name)),30,r.name)}</span>`:''}${esc(r.name)}${m?` <span class="you">${youTag}</span>`:''}${sub(r)?`<small class="lbsub">${sub(r)}</small>`:''}</span><span class="lbval">${fmt(r.v)}</span></li>`};
+  const li=(r,i)=>{const m=isMine(r.name);return `<li class="${m?'me':''} ${i<3?'top':''}"><span class="lbrank">${medal(i)}</span><span class="lbname">${pic?`<span class="lbav">${avC(m?myAv():(r.av||avDefault(r.name)),30,r.name)}</span>`:''}${esc(r.name)}${m?` <span class="you">${youTag}</span>`:''}${sub(r)?`<small class="lbsub">${sub(r)}</small>`:''}</span><span class="lbval">${fmt(r.v)}</span></li>`};
   const gap=`<li class="lbgap" aria-hidden="true">⋮</li>`;
   const mineCard=mi<0?`<div class="lbmine"><span>${who==='team'?'Your team isn\'t':'You\'re not'} on this board yet.</span><span class="hint">${who==='team'?'Earn some XP for your team to get on it!':'Answer a question to get on it!'}</span></div>`
     :`<div class="lbmine"><span class="lbmrank">#${mi+1}</span><span>${who==='team'?'Your team':'You'} · <b>${fmt(rows[mi].v)}</b></span><span class="hint">${mi===0?'First place!':(()=>{const d=(+rows[mi-1].v||0)-(+rows[mi].v||0);return d>0?`${fmt(d).replace('/21','')} behind #${mi}`:`Tied with #${mi}`})()} · ${rows.length} on the board</span></div>`;
