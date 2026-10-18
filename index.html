@@ -1021,7 +1021,6 @@ function setupView(){
         <span class="hint">Fewer words = jump practice. You finish the question, then answer it.</span></div>
       <div class="opt"><span class="label">Extras</span>
         <label class="check"><input type="checkbox" id="memOnly" ${o.memOnly?'checked':''}> Only verses I've memorized</label>
-        <label class="check"><input type="checkbox" id="mix" ${o.mix?'checked':''}> Mix up question wording</label>
         ${canSpeak?`<label class="check"><input type="checkbox" id="speakopt" ${o.speak?'checked':''}> Read questions out loud</label>`:''}
       </div>
     </div>
@@ -1052,7 +1051,7 @@ function parseRange(str,versesOf=c=>qVerses[c]){
 /* ---------- quiz ---------- */
 function startQuiz(){
   const ids=buildPool(); if(!ids.length) return;
-  quiz={ids,i:0,res:[],state:'ask',last:null,label:'John '+rangeLabel(U.sel),wording:ids.map(id=>{const q=Q[id];if(!U.opts.mix||!q.aq.length)return q.q;const all=[q.q,...q.aq];return all[Math.floor(Math.random()*all.length)]})};
+  quiz={ids,i:0,res:[],state:'ask',last:null,label:'John '+rangeLabel(U.sel),wording:ids.map(id=>Q[id].q)};
   render();
 }
 function spokenQ(){ if(!quiz) return ''; const q=Q[quiz.ids[quiz.i]], w=qWords(); return `According to ${q.c}, ${q.v}. `+(partial()?w.slice(0,quiz.shown).join(' '):quiz.wording[quiz.i]+'?'); }
@@ -2607,7 +2606,6 @@ function wire(){
     U.sel=[...out];openCh=null;save();render()};
   document.querySelectorAll('[data-opt]').forEach(b=>b.onclick=()=>{U.opts[b.dataset.opt]=b.dataset.val;save();render()});
   const mo=$('#memOnly'); if(mo) mo.onchange=()=>{U.opts.memOnly=mo.checked;save();render()};
-  const mx=$('#mix'); if(mx) mx.onchange=()=>{U.opts.mix=mx.checked;save()};
   const so=$('#speakopt'); if(so) so.onchange=()=>{U.opts.speak=so.checked;save(); if(so.checked) speak('Questions will be read out loud.')};
   on('#start',startQuiz);
   // quiz
