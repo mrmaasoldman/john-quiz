@@ -90,7 +90,7 @@ function doGet(e) {
     if (t && !teamNames[t.toLowerCase()]) teamNames[t.toLowerCase()] = t;
     return {
       name: String(r[0]).trim(), team: t ? teamNames[t.toLowerCase()] : '',
-      questions: num(r[5]), streak: num(r[10]), bosses: num(r[15]), speed: num(r[19]),
+      questions: num(r[5]), streak: num(r[10]), xp: num(r[13]), bosses: num(r[15]), speed: num(r[19]),
       day: todays.includes(ds(r[21])) ? num(r[20]) : 0,
       yest: yests.includes(ds(r[21])) ? num(r[20]) : (yests.includes(ds(r[23])) ? num(r[22]) : 0),
       week: weeks.includes(ds(r[26])) ? num(r[25]) : 0,
@@ -99,11 +99,11 @@ function doGet(e) {
              td: ds(r[21]), xt: num(r[20]), yd: ds(r[23]), xy: num(r[22]), wk: ds(r[26]), xw: num(r[25]) }
     };
   });
-  const top = k => people.filter(p => p[k] > 0).sort((a, b) => b[k] - a[k]).slice(0, 10).map(p => ({ name: p.name, team: p.team, av: p.av, v: p[k] }));
+  const top = k => people.filter(p => p[k] > 0).sort((a, b) => b[k] - a[k]).slice(0, 1000).map(p => ({ name: p.name, team: p.team, av: p.av, v: p[k] }));
   const teamTop = k => {
     const m = {};
     people.forEach(p => { if (!p.team || !(p[k] > 0)) return; const t = m[p.team] || (m[p.team] = { name: p.team, v: 0, n: 0 }); t.v += p[k]; t.n++; });
-    return Object.keys(m).map(x => m[x]).sort((a, b) => b.v - a.v).slice(0, 10);
+    return Object.keys(m).map(x => m[x]).sort((a, b) => b.v - a.v);
   };
   // Quizzer of the Day and Team of the Day: most XP earned yesterday
   const q = top('yest')[0], t = teamTop('yest')[0];
@@ -112,7 +112,7 @@ function doGet(e) {
     qotd: q ? { name: q.name, xp: q.v, av: q.av } : null,
     totd: t ? { name: t.name, xp: t.v, n: t.n } : null,
     teams: Object.keys(teamNames).map(x => teamNames[x]).sort(),
-    questions: top('questions'), streak: top('streak'), speed: top('speed'), bosses: top('bosses'),
+    questions: top('questions'), streak: top('streak'), speed: top('speed'), bosses: top('bosses'), xp: top('xp'),
     day: top('day'), week: top('week'), teamDay: teamTop('day'), teamWeek: teamTop('week'),
     // Each student's XP with the dates their own device reported, so the website can decide
     // "today", "yesterday" and "this week" by the student's clock instead of this script's time zone.

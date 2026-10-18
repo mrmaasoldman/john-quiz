@@ -544,6 +544,10 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .tbt{grid-area:t;font-size:22px;white-space:nowrap}
 .tbbar{grid-area:bar;height:8px;background:rgba(0,0,0,.35)}
 .tbbar i{display:block;height:100%;background:var(--good)}.tblist li.no .tbbar i{background:var(--bad)}
+.lblist li.lbgap{display:block;text-align:center;color:var(--win-muted);font-size:22px;line-height:1;padding:0;background:none;border:0}
+.lbmine{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:12px;align-items:center;padding:10px 12px;background:var(--accent-soft);border:2px solid var(--accent)}
+.lbmine>span:not(.lbmrank){grid-column:2}.lbmine .lbmrank{grid-row:1/3;font-family:var(--f-num);font-size:36px;line-height:1;color:var(--gold);text-shadow:2px 2px 0 #000}
+.lbmode{margin-top:-4px}
 .lbsub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
 .crowns{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .matseg{margin-bottom:4px}
@@ -2407,7 +2411,7 @@ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==
 
 /* ---------- class leaderboards (read back from the teacher's Google Sheet) ---------- */
 let lb=null, lbAt=0, lbErr=false, lbBusy=false, lbBoard='day', lbTeamBoard='teamDay';
-const LB_BOARDS=[['day','☀️','Today','XP earned today'],['week','📅','This week','XP earned since Monday'],['questions','📜','Most questions','questions answered'],['streak','🔥','Longest streak','days in a row'],['speed','⚡','Speed Round','typed answers in 60s'],['bosses','⚔️','Boss Battles','bosses defeated']];
+const LB_BOARDS=[['day','☀️','Today','XP earned today'],['week','📅','This week','XP earned since Monday'],['xp','⭐','Total XP','all the XP earned this season'],['questions','📜','Most questions','questions answered'],['streak','🔥','Longest streak','days in a row'],['speed','⚡','Speed Round','typed answers in 60s'],['bosses','⚔️','Boss Battles','bosses defeated']];
 const TEAM_BOARDS=[['teamDay','☀️','Today','team XP earned today'],['teamWeek','📅','This week','team XP earned since Monday']];
 function loadLeaders(force){
   if(!SHEET_URL.startsWith('https://')||lbBusy) return; if(!force&&Date.now()-lbAt<60000) return; lbAt=Date.now();
@@ -2428,22 +2432,23 @@ function lbData(){
   const key=today+'|'+JSON.stringify(mine);
   if(lbCalcFor===lb&&lbCalcKey===key) return lbCalc;
   const out=Object.assign({},lb), low=n=>String(n||'').trim().toLowerCase(), meL=low(me);
-  const top=(arr,k)=>arr.filter(p=>p[k]>0).sort((a,b)=>b[k]-a[k]).slice(0,10).map(p=>({name:p.name,team:p.team,av:p.av,v:p[k]}));
+  const top=(arr,k)=>arr.filter(p=>p[k]>0).sort((a,b)=>b[k]-a[k]).map(p=>({name:p.name,team:p.team,av:p.av,v:p[k]}));
   if(Array.isArray(lb.rows)){
     const rows=lb.rows.filter(r=>r&&r.name!=null&&low(r.name)!==meL); if(mine) rows.push(mine);
     const val=(r,d)=>r.td===d?(+r.xt||0):r.yd===d?(+r.xy||0):0;
     const ppl=rows.map(r=>({name:String(r.name),team:normTeam(r.team),av:r.av||'',day:val(r,today),yest:val(r,yest),week:r.wk===wk?(+r.xw||0):0}));
     const teams=k=>{ const m={}; ppl.forEach(p=>{ if(!p.team||!(p[k]>0)) return; const id=p.team.toLowerCase(), t=m[id]||(m[id]={name:p.team,v:0,n:0}); t.v+=p[k]; t.n++; });
-      return Object.values(m).sort((a,b)=>b.v-a.v).slice(0,10); };
+      return Object.values(m).sort((a,b)=>b.v-a.v); };
     out.day=top(ppl,'day'); out.week=top(ppl,'week'); out.teamDay=teams('day'); out.teamWeek=teams('week');
     const q=top(ppl,'yest')[0], t=teams('yest')[0];
     out.qotd=q?{name:q.name,xp:q.v,av:q.av}:null; out.totd=t?{name:t.name,xp:t.v,n:t.n}:null;
-  } else if(mine){
-    // Older sheet script: just slot your own live XP into the personal boards.
-    [['day','xt'],['week','xw']].forEach(([b,k])=>{ if(!Array.isArray(lb[b])) return;
-      const list=lb[b].filter(r=>low(r.name)!==meL).map(r=>Object.assign({},r)); if(mine[k]>0) list.push({name:me,team:mine.team,av:mine.av,v:mine[k]});
-      out[b]=list.sort((a,b2)=>b2.v-a.v).slice(0,10); });
   }
+  // Slot your own live numbers into the other boards so they're never behind.
+  if(mine){ const sm=sheetSummary(), live={questions:sm.att,streak:sm.best,speed:sm.speedTyped,bosses:sm.bosses,xp:sm.xp};
+    if(!Array.isArray(lb.rows)){ live.day=mine.xt; live.week=mine.xw; }
+    Object.keys(live).forEach(b=>{ if(!Array.isArray(lb[b])) return;
+      const list=lb[b].filter(r=>r&&low(r.name)!==meL).map(r=>Object.assign({},r)); if(live[b]>0) list.push({name:me,team:mine.team,av:mine.av,v:live[b]});
+      out[b]=list.sort((a,b2)=>b2.v-a.v); }); }
   lbCalcFor=lb; lbCalcKey=key; lbCalc=out; return out;
 }
 const isMe=n=>String(n||'').trim().toLowerCase()===(me||'').trim().toLowerCase();
@@ -2464,23 +2469,36 @@ function qotdBanner(){
   return `<div class="crowns">${out}</div>`;
 }
 const medal=i=>['🥇','🥈','🥉'][i]||`<span class="mono">${i+1}</span>`;
-function boardBody(rows,fmt,isMine,sub,pic){
+let lbMode='top', lbTeamMode='top';
+function boardBody(rows,fmt,isMine,sub,pic,mode,youTag,who){
   if(lbErr&&!lb) return `<p class="hint" style="margin:0">The high scores couldn't load right now. Check your internet and tap Refresh.</p>`;
   if(!lb) return `<p class="hint" style="margin:0">Loading high scores…</p>`;
   rows=Array.isArray(rows)?rows.filter(r=>r&&r.name!=null&&r.name!==''):rows;
   if(!rows) return `<p class="hint" style="margin:0">This board turns on once your teacher updates the progress sheet.</p>`;
   if(!rows.length) return `<p class="hint" style="margin:0">No one is on this board yet. Be the first!</p>`;
-  return `<ol class="lblist">${rows.map((r,i)=>{const m=isMine(r.name);return `<li class="${m?'me':''} ${i<3?'top':''}"><span class="lbrank">${medal(i)}</span><span class="lbname">${pic?`<span class="lbav">${avSvg(isMine(r.name)?myAv():(r.av||avDefault(r.name)),30,r.name)}</span>`:''}${esc(r.name)}${m?' <span class="you">You</span>':''}${sub(r)?`<small class="lbsub">${sub(r)}</small>`:''}</span><span class="lbval">${fmt(r.v)}</span></li>`}).join('')}</ol>`;
+  const mi=rows.findIndex(r=>isMine(r.name));
+  const li=(r,i)=>{const m=isMine(r.name);return `<li class="${m?'me':''} ${i<3?'top':''}"><span class="lbrank">${medal(i)}</span><span class="lbname">${pic?`<span class="lbav">${avSvg(m?myAv():(r.av||avDefault(r.name)),30,r.name)}</span>`:''}${esc(r.name)}${m?` <span class="you">${youTag}</span>`:''}${sub(r)?`<small class="lbsub">${sub(r)}</small>`:''}</span><span class="lbval">${fmt(r.v)}</span></li>`};
+  const gap=`<li class="lbgap" aria-hidden="true">⋮</li>`;
+  const mineCard=mi<0?`<div class="lbmine"><span>${who==='team'?'Your team isn\'t':'You\'re not'} on this board yet.</span><span class="hint">${who==='team'?'Earn some XP for your team to get on it!':'Answer a question to get on it!'}</span></div>`
+    :`<div class="lbmine"><span class="lbmrank">#${mi+1}</span><span>${who==='team'?'Your team':'You'} · <b>${fmt(rows[mi].v)}</b></span><span class="hint">${mi===0?'First place!':(()=>{const d=(+rows[mi-1].v||0)-(+rows[mi].v||0);return d>0?`${fmt(d).replace('/21','')} behind #${mi}`:`Tied with #${mi}`})()} · ${rows.length} on the board</span></div>`;
+  let list;
+  if(mode==='me'&&mi>=0){ const lo=Math.max(0,mi-5), hi=Math.min(rows.length,mi+6);
+    list=(lo>0?gap:'')+rows.slice(lo,hi).map((r,k)=>li(r,lo+k)).join('')+(hi<rows.length?gap:''); }
+  else if(mode==='me'){ const lo=Math.max(0,rows.length-5); list=(lo>0?gap:'')+rows.slice(lo).map((r,k)=>li(r,lo+k)).join(''); }
+  else { list=rows.slice(0,10).map(li).join('')+(mi>=10?gap+li(rows[mi],mi):''); }
+  return `${mineCard}<ol class="lblist">${list}</ol>`;
 }
+const modeSeg=(attr,cur,who)=>`<div class="seg lbmode"><button data-${attr}="top" aria-pressed="${cur==='top'}">🏆 Top 10</button><button data-${attr}="me" aria-pressed="${cur==='me'}">📍 Around ${who}</button></div>`;
 function leaderPanel(){
   if(!SHEET_URL.startsWith('https://')) return '';
   const [id,ic,title,unit]=LB_BOARDS.find(b=>b[0]===lbBoard), rows=lb?lbData()[id]:[];
-  const xp=id==='day'||id==='week';
+  const xp=id==='day'||id==='week'||id==='xp';
   const fmt=v=>id==='bosses'?`${+v||0}/21`:(+v||0).toLocaleString()+(xp?' XP':'');
   return `<div class="panel lbpanel" style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><span class="label">🏆 Quizzer high scores</span><button class="x" id="lbrefresh">${lbBusy?'Loading…':'Refresh'}</button></div>
     <div class="seg lbtabs">${LB_BOARDS.map(([k,i,t])=>`<button data-lb="${k}" aria-pressed="${lbBoard===k}"><span aria-hidden="true">${i}</span> ${t}</button>`).join('')}</div>
-    ${boardBody(rows,fmt,isMe,r=>r.team?'🛡️ '+esc(r.team):'',true)}
+    ${modeSeg('lbmode',lbMode,'me')}
+    ${boardBody(rows,fmt,isMe,r=>r.team?'🛡️ '+esc(r.team):'',true,lbMode,'You','me')}
     <span class="hint">${ic} ${title}: ${unit}.${id==='speed'?' Only rounds played by typing count.':''} Scores update a few seconds after you practice.</span>
   </div>`;
 }
@@ -2490,7 +2508,8 @@ function teamBoardPanel(){
   return `<div class="panel lbpanel" style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><span class="label">🛡️ Team high scores</span><span class="hint">Your team: <b>${esc(teamLabel(U.team))}</b></span></div>
     <div class="seg lbtabs">${TEAM_BOARDS.map(([k,i,t])=>`<button data-lbt="${k}" aria-pressed="${lbTeamBoard===k}"><span aria-hidden="true">${i}</span> ${t}</button>`).join('')}</div>
-    ${boardBody(rows,v=>(+v||0).toLocaleString()+' XP',isMyTeam,r=>r.n?`${r.n} quizzer${r.n===1?'':'s'} earning XP`:'')}
+    ${modeSeg('lbtmode',lbTeamMode,'my team')}
+    ${boardBody(rows,v=>(+v||0).toLocaleString()+' XP',isMyTeam,r=>r.n?`${r.n} quizzer${r.n===1?'':'s'} earning XP`:'',false,lbTeamMode,'Your team','team')}
     <span class="hint">${ic} ${title}: ${unit}, adding up everyone on the team.</span>
   </div>`;
 }
@@ -2506,6 +2525,8 @@ function scoresView(){
 function wireLeaders(){
   document.querySelectorAll('[data-lb]').forEach(b=>b.onclick=()=>{lbBoard=b.dataset.lb;renderKeep()});
   document.querySelectorAll('[data-lbt]').forEach(b=>b.onclick=()=>{lbTeamBoard=b.dataset.lbt;renderKeep()});
+  document.querySelectorAll('[data-lbmode]').forEach(b=>b.onclick=()=>{lbMode=b.dataset.lbmode;renderKeep()});
+  document.querySelectorAll('[data-lbtmode]').forEach(b=>b.onclick=()=>{lbTeamMode=b.dataset.lbtmode;renderKeep()});
   const r=$('#lbrefresh'); if(r) r.onclick=()=>{loadLeaders(true);renderKeep()};
   if(tab==='scores'||(tab==='practice'&&!quiz)||(tab==='games'&&!game)) loadLeaders(false);
 }
