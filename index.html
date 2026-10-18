@@ -548,6 +548,20 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .lbmine{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:12px;align-items:center;padding:10px 12px;background:var(--accent-soft);border:2px solid var(--accent)}
 .lbmine>span:not(.lbmrank){grid-column:2}.lbmine .lbmrank{grid-row:1/3;font-family:var(--f-num);font-size:36px;line-height:1;color:var(--gold);text-shadow:2px 2px 0 #000}
 .lbmode{margin-top:-4px}
+.xppop{position:fixed;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;display:grid;gap:4px;justify-items:end;text-align:right;padding:8px 12px;background:#000;border:3px solid var(--gold);color:#fff;box-shadow:4px 4px 0 rgba(0,0,0,.5);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s;max-width:70vw}
+.xppop.show{opacity:1;transform:none}
+.xppop b{font-family:var(--f-num);font-size:30px;line-height:1;color:var(--gold)}
+.xppop span{font-size:13px;line-height:1.4;color:#fff}
+.xpdetails summary{cursor:pointer;list-style:none}.xpdetails summary::-webkit-details-marker{display:none}
+.xpdetails summary::after{content:' ▼';font-size:10px;color:var(--win-muted)}.xpdetails[open] summary::after{content:' ▲'}
+.xpguide{display:grid;gap:12px;margin-top:12px}
+.xprules{display:grid;gap:6px}
+.xprule{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start;padding:8px 10px;background:var(--tile);border:2px solid var(--win-line)}
+.xprule .xpi{font-size:20px;line-height:1.2}.xprule small{display:block;font-size:13px;color:var(--win-muted);margin-top:2px}
+.xpv{font-family:var(--f-num);font-size:20px;color:var(--gold);white-space:nowrap}
+.xplog{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.xplog li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:6px 10px;background:var(--tile);border:2px solid var(--win-line);font-size:14px}
+.xpsess{display:grid;gap:10px}.xpbig{font-family:var(--f-num);font-size:34px;color:var(--gold);text-shadow:2px 2px 0 #000}
 .lbsub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
 .crowns{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .matseg{margin-bottom:4px}
@@ -802,7 +816,7 @@ function bumpDay(){ U.days=U.days||{}; const k=dayKey(), before=U.days[k]||0; U.
 const toastQ=[]; let toastBusy=false;
 function toast(html){ toastQ.push(html); if(!toastBusy) nextToast(); }
 function nextToast(){ const html=toastQ.shift(); if(!html){toastBusy=false;return} toastBusy=true; const t=document.createElement('div'); t.className='toast'; t.innerHTML=html; document.body.appendChild(t); setTimeout(()=>{t.remove();nextToast()},3400); }
-function checkDailyGoal(){ if(!goalJustHit) return; goalJustHit=false; const {streak}=streakFrom(goalDaysOf(U.days)); maybeAwardFreeze(streak); gainXP(25);
+function checkDailyGoal(){ if(!goalJustHit) return; goalJustHit=false; const {streak}=streakFrom(goalDaysOf(U.days)); maybeAwardFreeze(streak); gainXP(25,[['goal','Daily goal: 30 questions',25]]);
   setTimeout(()=>{ celebrate(true); toast(`<b>Daily goal smashed!</b><span>${DAILY} questions today · ${streak}-day streak${streak>1?'. Keep it rolling!':'. Day one of something great.'}</span>`); },500); }
 function dayPill(){ if(!U) return ''; const {streak}=streakFrom(goalDaysOf(U.days)), t=todayCount(), done=t>=DAILY;
   return `<span class="daypill ${done?'done':''}" title="Days in a row with at least ${DAILY} questions"><i aria-hidden="true">🔥</i>${streak}<span class="daytoday">${done?'✓':Math.min(t,DAILY)+'/'+DAILY}</span></span>`; }
@@ -881,7 +895,7 @@ function teamGateView(){
   return f;
 }
 
-let teamEdit=false;
+let teamEdit=false, xpOpen=false;
 function teamPanel(){
   if(teamEdit) return `<form class="panel" id="teamform" style="display:grid;gap:12px">${teamPicker(U.team)}
     <div class="row"><button class="btn small" type="submit">Save team</button><button class="btn ghost small" type="button" id="teamcancel">Cancel</button></div></form>`;
@@ -1136,7 +1150,8 @@ function record(id,ok,ctx){ bumpDay(); const st=U.stats[id]||[0,0,0,0,0]; const 
   const C=U.counts||(U.counts={}); if(ok&&was===0) C.comeback=(C.comeback||0)+1; if(ok&&U.opts.timer==='20') C.timed=(C.timed||0)+1;
   const words=ctx?ctx.words:((ok&&quiz&&quiz.last&&quiz.last.part)?quiz.last.words:null), stk=ctx?ctx.streak:(quiz?quiz.streak||0:0);
   lastEv={ok, words, sessionStreak:stk};
-  gainXP(ok?10+(words!=null&&words<=3?5:0)+Math.min(10,2*Math.max(0,stk-1)):1); }
+  const sb=Math.min(10,2*Math.max(0,stk-1)), quick=words!=null&&words<=3;
+  gainXP(ok?10+(quick?5:0)+sb:1, ok?[['right','Right answer',10]].concat(quick?[['quick',`Quick Draw (${words} word${words===1?'':'s'})`,5]]:[],sb?[['streak',`${stk} in a row`,sb]]:[]):[['try','For trying',1]]); }
 function submitAnswer(typed,rest){
   const id=quiz.ids[quiz.i], q=Q[id];
   typed=(typed||'').trim(); rest=(rest||'').trim();
@@ -1214,6 +1229,7 @@ function resultsView(){
       <div class="big">${r}<span class="muted" style="font-size:.45em"> / ${n}</span></div>
       <div class="muted">${n?pct(r,n)+'% correct':'No questions answered.'}</div>
     </div>
+    ${sessXPPanel(quiz)}
     <div class="row">
       ${miss.length?`<button class="btn" id="retry">Retry the ${miss.length} I missed</button>`:''}
       <button class="btn ${miss.length?'ghost':''}" id="again">Back to setup</button>
@@ -1306,7 +1322,8 @@ function progressView(){
     ${(()=>{const l=levelOf(U.xp);return `<div class="panel lvlpanel"><div class="lvlbig">${l.level}<small>level</small></div>
       <div style="display:grid;gap:6px;min-width:0"><b style="font-family:var(--f-display);font-size:19px">${esc(l.title)}</b>
         <div class="goldbar"><i style="width:${(100*l.into/l.span).toFixed(1)}%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></i></div>
-        <span class="hint">${U.xp||0} XP · ${l.span-l.into} XP to level ${l.level+1}. Right answers earn 10 XP, with bonuses for streaks and early jumps.</span></div></div>`})()}
+        <span class="hint">${U.xp||0} XP · ${l.span-l.into} XP to level ${l.level+1}.</span></div></div>
+      <details class="panel xpdetails" ${xpOpen?'open':''}><summary><span class="label">⭐ How you earn XP</span></summary>${xpGuide()}</details>`})()}
     ${(()=>{const gd=goalDaysOf(U.days),{streak,best}=streakFrom(gd),t=todayCount(),set=new Set(gd);
       const last=[...Array(14)].map((_,i)=>shiftDay(dayKey(),i-13));
       return `<div class="panel streakpanel">
@@ -1759,7 +1776,7 @@ function vCheck(){
   vc.last={diff,result,ok,ms,marked:true,overridden:false,msg:ok?rightMsg(vc.streak,result==='close'):(vc.timeout?"Time's up! ":'')+wrongMsg()}; vc.timeout=false; vc.deadline=null; vRecord(k,ok); vc.state='fb'; render(); react(ok,vc.streak);
 }
 function vRecord(k,ok){ bumpDay(); const map=vc.kind==='rev'?(U.rstats||(U.rstats={})):U.vstats; const st=map[k]||[0,0,0,0]; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); map[k]=st; vc.res.push({k,ok,ms:vc.last&&vc.last.ms});
-  const C=U.counts||(U.counts={}); if(ok){ if(vc.kind==='rev') C.rright=(C.rright||0)+1; else C.vright=(C.vright||0)+1; } lastEv={ok,sessionStreak:vc.streak||0}; gainXP(ok?10+Math.min(10,2*Math.max(0,(vc.streak||0)-1)):1); save(); }
+  const C=U.counts||(U.counts={}); if(ok){ if(vc.kind==='rev') C.rright=(C.rright||0)+1; else C.vright=(C.vright||0)+1; } lastEv={ok,sessionStreak:vc.streak||0}; const vs=vc.streak||0, vsb=Math.min(10,2*Math.max(0,vs-1)); gainXP(ok?10+vsb:1, ok?[['right','Right answer',10]].concat(vsb?[['streak',`${vs} in a row`,vsb]]:[]):[['try','For trying',1]]); save(); }
 function vReveal(){ if(!vc||vc.state!=='ask')return; vc.last={marked:false,timeout:!!vc.timeout,ms:vElapsed()}; vc.timeout=false; vc.deadline=null; vc.state='fb'; render(); }
 function vMark(ok){ if(!vc||vc.state!=='fb'||vc.last.marked)return; vc.streak=ok?(vc.streak||0)+1:0; vc.last.marked=true; vc.last.ok=ok; vc.last.msg=ok?rightMsg(vc.streak,false):wrongMsg(); vRecord(vc.keys[vc.i],ok); render(); react(ok,vc.streak); }
 function vNext(){ vc.i++; vc.state='ask'; vc.last=null; vc.draft=''; vc.deadline=null; vc.t0=null; vc.away=null; if(vc.i>=vc.keys.length){vc.done=true;
@@ -1770,6 +1787,7 @@ function vResultsView(){
     <div class="label">Verse cards complete</div>
     <h2>${scoreTitle(r,n)}</h2>
     <div class="panel" style="display:grid;gap:8px"><div class="big">${r}<span class="muted" style="font-size:.45em"> / ${n}</span></div><div class="muted">${n?pct(r,n)+'% said correctly':'No cards answered.'}</div></div>
+    ${sessXPPanel(vc)}
     <div class="row">${miss.length?`<button class="btn" id="vretry">Retry the ${miss.length} I missed</button>`:''}<button class="btn ${miss.length?'ghost':''}" id="vagain">Back to setup</button></div>
     ${timeBreakdown(vc.res.map(x=>{const [c,v]=x.k.split(':');const t=vText(c,v)||'';return {ok:x.ok,ms:x.ms,ref:x.k,text:esc(t.length>70?t.slice(0,70).replace(/\s+\S*$/,'')+'…':t)}}),'card')}
     ${miss.length?`<div class="panel"><div class="label" style="margin-bottom:8px">Work on these</div><div class="vgrid">${miss.map(m=>`<span class="v" style="padding:4px 8px">${m.k}</span>`).join('')}</div></div>`:''}
@@ -1887,9 +1905,41 @@ const TITLES=['Scroll Rookie','Verse Seeker','Page Turner','Parable Pro','Jump S
 const lvlNeed=L=>75*(L-1)*L; // total XP needed to reach level L
 function levelOf(xp){ xp=xp||0; let L=1; while(xp>=lvlNeed(L+1)) L++; const title=TITLES[Math.min(L,TITLES.length)-1]+(L>TITLES.length?' ★'+(L-TITLES.length):'');
   return {level:L,title,into:xp-lvlNeed(L),span:lvlNeed(L+1)-lvlNeed(L)}; }
-function gainXP(n){ if(!U||!n) return; const before=levelOf(U.xp).level; U.xp=(U.xp||0)+n;
+// parts: [[kind,label,amount],...] so every XP award can be shown and explained.
+const XP_KINDS={right:'Right answers',streak:'Streak bonuses',quick:'Quick Draw bonuses',try:'Points for trying',goal:'Daily goal bonus',daily:'Daily Challenge',perfect:'Perfect-score bonus',speed:'Speed Round best',boss:'Boss battles'};
+let xpPopT=null;
+function xpPop(n,parts){
+  let el=document.getElementById('xppop'); if(!el){ el=document.createElement('div'); el.id='xppop'; el.className='xppop'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
+  el.innerHTML=`<b>+${n} XP</b>${parts.length>1||(parts[0]&&parts[0][0]!=='right')?`<span>${parts.map(p=>`+${p[2]} ${esc(p[1])}`).join('<br>')}</span>`:''}`;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(xpPopT); xpPopT=setTimeout(()=>el.classList.remove('show'),2200);
+}
+function addSessXP(o,parts){ if(!o||o.done) return; o.xp=o.xp||{total:0,by:{}}; parts.forEach(([k,,a])=>{o.xp.total+=a; o.xp.by[k]=(o.xp.by[k]||0)+a;}); }
+function gainXP(n,parts){ if(!U||!n) return; parts=(parts&&parts.length)?parts:[['other','XP',n]];
+  if(tab==='practice') addSessXP(quiz,parts); if(tab==='verses') addSessXP(vc,parts);
+  U.xpLog=U.xpLog||[]; U.xpLog.unshift({t:Date.now(),n,w:parts.map(p=>p[1]+(parts.length>1?' +'+p[2]:'')).join(' · ')}); if(U.xpLog.length>30) U.xpLog.length=30;
+  setTimeout(()=>xpPop(n,parts),60);
+  const before=levelOf(U.xp).level; U.xp=(U.xp||0)+n;
   U.xpDays=U.xpDays||{}; const dk=dayKey(); U.xpDays[dk]=(U.xpDays[dk]||0)+n; const ks=Object.keys(U.xpDays).sort(); if(ks.length>40) ks.slice(0,ks.length-40).forEach(k=>delete U.xpDays[k]); const after=levelOf(U.xp);
   if(after.level>before){ setTimeout(()=>{ sfx('level'); celebrate(true); toast(`<b>Level up! Level ${after.level}</b><span>You are now a ${esc(after.title)}.${themeUnlockedAt(after.level)}${avUnlocksAt(after.level)}${(()=>{const t=TRACKS.find(x=>x.need&&x.need.level===after.level);return t?` New music unlocked: ${t.name}!`:''})()}</span>`); checkBadges(); },900); } }
+const XP_RULES=[
+ ['✅','Right answer','10 XP','Practice, Verse Cards and every game.'],
+ ['🔥','Streak bonus','+2 to +10','+2 for your 2nd right answer in a row, +4 for the 3rd, and so on, up to +10 per answer at 6 in a row. A miss resets it.'],
+ ['🎯','Quick Draw','+5','Get it right after seeing 3 words or fewer of the question (when “words shown” is on).'],
+ ['👍','Wrong answer','1 XP','Just for trying.'],
+ ['📅','Daily goal','+25','Once a day, when you hit 30 questions.'],
+ ['🗓️','Daily Challenge','+20','Once a day, plus 30 more if you get every one right.'],
+ ['⚡','Speed Round','+20','Each time you beat your best score.'],
+ ['⚔️','Boss Battle','+50','The first time you beat a chapter boss, then +15 for each win after that.']];
+function xpGuide(){ const l=levelOf(U.xp), today=(U.xpDays&&U.xpDays[dayKey()])||0, log=(U.xpLog||[]).slice(0,8);
+  return `<div class="xpguide">
+    <div class="xprules">${XP_RULES.map(([i,t,v,d])=>`<div class="xprule"><span class="xpi" aria-hidden="true">${i}</span><div><b>${t}</b> <span class="xpv">${v}</span><small>${d}</small></div></div>`).join('')}</div>
+    <p class="hint" style="margin:0">Levels: each level needs 150 more XP than the one before (level 2 = 150 XP, level 3 = 450, level 4 = 900…). You have <b>${(U.xp||0).toLocaleString()} XP</b> and need <b>${(l.span-l.into).toLocaleString()}</b> more for level ${l.level+1}. Today: <b>${today.toLocaleString()} XP</b>.</p>
+    ${log.length?`<div style="display:grid;gap:6px"><span class="label">Your latest XP</span><ul class="xplog">${log.map(e=>`<li><span class="xpv">+${e.n}</span><span>${esc(e.w)}</span><span class="hint">${new Date(e.t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</span></li>`).join('')}</ul></div>`:''}
+  </div>`; }
+function sessXPPanel(o){ if(!o||!o.xp||!o.xp.total) return '';
+  return `<div class="panel xpsess"><div class="row" style="justify-content:space-between;align-items:baseline"><span class="label">⭐ XP earned</span><b class="xpbig">+${o.xp.total.toLocaleString()} XP</b></div>
+    <ul class="xplog">${Object.entries(o.xp.by).sort((a,b)=>b[1]-a[1]).map(([k,a])=>`<li><span class="xpv">+${a}</span><span>${esc(XP_KINDS[k]||'Other')}</span></li>`).join('')}</ul></div>`; }
 function lvlChip(){ if(!U) return ''; const l=levelOf(U.xp); return `<span class="lvlchip" title="${esc(l.title)} · ${U.xp||0} XP">Lv ${l.level}</span>`; }
 
 /* ---------- avatars (16x16 pixel animals, hats and extras) ---------- */
@@ -2180,14 +2230,14 @@ function gNext(){
 function speedStart(){ const ids=shuffle(gPool().slice()); game={type:'speed',ids,qi:0,score:0,missed:[],end:Date.now()+60000,streak:0,res:[],started:true,typed:U.opts.answer!=='think'}; gNewQ(ids[0]); sfx('buzzer'); render(); }
 function speedNext(){ if(!game||game.done) return; game.qi=(game.qi+1)%game.ids.length; gNewQ(game.ids[game.qi]); render(); }
 function speedEnd(){ if(!game||game.done) return; clearTimeout(game.adv); game.done=true; U.hs=U.hs||{}; const prev=U.hs.speed||0; game.prev=prev;
-  if(game.score>prev){ U.hs.speed=game.score; game.newBest=prev>0||game.score>0; gainXP(20); }
+  if(game.score>prev){ U.hs.speed=game.score; game.newBest=prev>0||game.score>0; gainXP(20,[['speed','New Speed Round best',20]]); }
   if(game.typed&&game.score>(U.hs.speedTyped||0)){ U.hs.speedTyped=game.score; game.newTypedBest=true; }
   U.sessions.unshift({d:Date.now(),label:'Speed Round',n:game.res.length,r:game.score}); U.sessions=U.sessions.slice(0,40); save(); render();
   if(game.newBest&&game.score>0){ sfx('cheer'); celebrate(true); } else sfx('buzzer'); checkBadges({perfect:false}); }
 
 /* Boss Battle */
 function bossStart(c){ const ids=shuffle(Q.filter(q=>q.c===c).map(q=>q.id)); game={type:'boss',c,ids,qi:0,hp:BOSS_HP,hearts:HEARTS,streak:0,res:[]}; gNewQ(ids[0]); sfx('boom'); render(); }
-function bossEnd(win){ game.done=true; game.win=win; if(win){ U.bosses=U.bosses||{}; const first=!U.bosses[game.c]; U.bosses[game.c]=Date.now(); gainXP(first?50:15); game.first=first; }
+function bossEnd(win){ game.done=true; game.win=win; if(win){ U.bosses=U.bosses||{}; const first=!U.bosses[game.c]; U.bosses[game.c]=Date.now(); gainXP(first?50:15,[['boss',first?'First win vs. this boss':'Boss beaten again',first?50:15]]); game.first=first; }
   U.sessions.unshift({d:Date.now(),label:'Boss: John '+game.c,n:game.res.length,r:game.res.filter(x=>x.ok).length}); U.sessions=U.sessions.slice(0,40); save(); render();
   if(win){ sfx('cheer'); celebrate(true); } else { sfx('boom'); oops(); } checkBadges(); }
 
@@ -2196,7 +2246,7 @@ function dailyStart(){ const day=dayKey(), ids=dailyIds(day); if(!ids.length){ t
   game={type:'daily',day,ids,n:ids.length,qi:0,streak:0,res:[],replay:!!(U.daily&&U.daily[day])}; gNewQ(game.ids[0]); render(); }
 function dailyEnd(){ game.done=true; const sc=game.res.filter(x=>x.ok).length; U.daily=U.daily||{};
   const n=game.n, perfect=sc===n&&n>=5;
-  if(!U.daily[game.day]){ U.daily[game.day]={s:sc,n,at:Date.now()}; gainXP(20+(perfect?30:0)); }
+  if(!U.daily[game.day]){ U.daily[game.day]={s:sc,n,at:Date.now()}; gainXP(20+(perfect?30:0),[['daily','Daily Challenge done',20]].concat(perfect?[['perfect','Perfect score',30]]:[])); }
   const keys=Object.keys(U.daily).sort(); if(keys.length>60) keys.slice(0,keys.length-60).forEach(k=>delete U.daily[k]);
   U.sessions.unshift({d:Date.now(),label:'Daily Challenge',n:game.res.length,r:sc}); U.sessions=U.sessions.slice(0,40); save(); render();
   if(sc>=Math.ceil(n*.8)){ sfx('cheer'); celebrate(true); } checkBadges({perfect:perfect&&n>=10}); }
@@ -2520,6 +2570,7 @@ function scoresView(){
     ${qotdBanner()}
     ${leaderPanel()}
     ${teamBoardPanel()}
+    <details class="panel xpdetails" ${xpOpen?'open':''}><summary><span class="label">⭐ How is XP earned?</span></summary>${xpGuide()}</details>
   </section>`);
 }
 function wireLeaders(){
@@ -2583,6 +2634,7 @@ function wire(){
   wireVerseQs();
   wireMusic();
   wireLeaders(); wireTeamPanel(); wireAvatar();
+  document.querySelectorAll('.xpdetails').forEach(d=>d.ontoggle=()=>{xpOpen=d.open});
   document.querySelectorAll('[data-tbsort]').forEach(b=>b.onclick=()=>{tbSort=b.dataset.tbsort;renderKeep()});
   document.querySelectorAll('[data-matsub]').forEach(b=>b.onclick=()=>{matSub=b.dataset.matsub;render()});
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
