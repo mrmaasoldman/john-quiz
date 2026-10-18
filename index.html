@@ -811,6 +811,9 @@ function streakFrom(goalDays){
 }
 function todayCount(){return (U&&U.days&&U.days[dayKey()])||0}
 let goalJustHit=false;
+// Practice time per day (from the answer timer), capped at 2 minutes per answer.
+function studyMs(ms){ if(!U||!(ms>0)) return; U.msDays=U.msDays||{}; const k=dayKey(); U.msDays[k]=(U.msDays[k]||0)+Math.min(ms,120000);
+  const ks=Object.keys(U.msDays).sort(); if(ks.length>40) ks.slice(0,ks.length-40).forEach(x=>delete U.msDays[x]); }
 function bumpDay(){ U.days=U.days||{}; const k=dayKey(), before=U.days[k]||0; U.days[k]=before+1; if(before+1===DAILY) goalJustHit=true;
   const keys=Object.keys(U.days).sort(); if(keys.length>120) keys.slice(0,keys.length-120).forEach(x=>delete U.days[x]); }
 const toastQ=[]; let toastBusy=false;
@@ -1133,7 +1136,7 @@ setInterval(()=>{ if(tab!=='practice'||!quiz||quiz.done||quiz.state!=='ask'||!qu
   const s5=Math.ceil(left/1000); if(left<=5000&&left>0&&quiz.lastTick!==s5){quiz.lastTick=s5;sfx('tick')}
   if(left<=0) timeUp(); },100);
 function thinkMark(ok){ if(!quiz||quiz.state!=='fb'||quiz.last.marked)return; const id=quiz.ids[quiz.i];
-  quiz.streak=ok?(quiz.streak||0)+1:0; quiz.last.marked=true; quiz.last.ok=ok; quiz.last.msg=ok?rightMsg(quiz.streak,false):wrongMsg(); quiz.res.push({id,ok,typed:'',words:quiz.last.part?quiz.last.words:null,ms:quiz.last.ms}); record(id,ok); save(); render(); react(ok,quiz.streak); }
+  quiz.streak=ok?(quiz.streak||0)+1:0; quiz.last.marked=true; quiz.last.ok=ok; quiz.last.msg=ok?rightMsg(quiz.streak,false):wrongMsg(); quiz.res.push({id,ok,typed:'',words:quiz.last.part?quiz.last.words:null,ms:quiz.last.ms}); studyMs(quiz.last.ms); record(id,ok); save(); render(); react(ok,quiz.streak); }
 function feedback(q){
   const L=quiz.last; const answers=q.a.map(a=>`<div class="ans">${fmtQ(a)}</div>`).join('<div class="hint">or</div>');
   const qline = L.part ? `<div class="qres ${L.qres==='wrong'?'bad':'good'}">Question ${L.qres==='wrong'?'✗':'✓'} <span class="hint">· jumped after ${L.words} word${L.words===1?'':'s'}</span>${L.qres==='wrong'&&L.rest?`<div class="yours">You finished it: <s>${esc(L.wordsText+' '+L.rest)}</s></div>`:''}</div>` : '';
@@ -1163,7 +1166,7 @@ function submitAnswer(typed,rest){
   quiz.streak=ok?(quiz.streak||0)+1:0;
   quiz.last={typed,rest,result,ares,qres,part,words:quiz.shown,wordsText:words.join(' '),overridden:false,msg:ok?rightMsg(quiz.streak,result==='close'):wrongMsg()};
   quiz.deadline=null; if(quiz.timeoutFlag){quiz.timeoutFlag=false; quiz.last.timeout=true; if(!ok) quiz.last.msg="Time's up! "+quiz.last.msg;}
-  quiz.res.push({id,ok,typed,words:part?quiz.shown:null,ms:qElapsed()});
+  quiz.res.push({id,ok,typed,words:part?quiz.shown:null,ms:qElapsed()}); studyMs(quiz.res[quiz.res.length-1].ms);
   record(id,ok); save(); quiz.state='fb'; render(); react(ok,quiz.streak);
 }
 function overrideRight(){
@@ -1775,7 +1778,7 @@ function vCheck(){
   const ok=result!=='wrong'; vc.streak=ok?(vc.streak||0)+1:0;
   vc.last={diff,result,ok,ms,marked:true,overridden:false,msg:ok?rightMsg(vc.streak,result==='close'):(vc.timeout?"Time's up! ":'')+wrongMsg()}; vc.timeout=false; vc.deadline=null; vRecord(k,ok); vc.state='fb'; render(); react(ok,vc.streak);
 }
-function vRecord(k,ok){ bumpDay(); const map=vc.kind==='rev'?(U.rstats||(U.rstats={})):U.vstats; const st=map[k]||[0,0,0,0]; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); map[k]=st; vc.res.push({k,ok,ms:vc.last&&vc.last.ms});
+function vRecord(k,ok){ bumpDay(); const map=vc.kind==='rev'?(U.rstats||(U.rstats={})):U.vstats; const st=map[k]||[0,0,0,0]; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); map[k]=st; vc.res.push({k,ok,ms:vc.last&&vc.last.ms}); studyMs(vc.last&&vc.last.ms);
   const C=U.counts||(U.counts={}); if(ok){ if(vc.kind==='rev') C.rright=(C.rright||0)+1; else C.vright=(C.vright||0)+1; } lastEv={ok,sessionStreak:vc.streak||0}; const vs=vc.streak||0, vsb=Math.min(10,2*Math.max(0,vs-1)); gainXP(ok?10+vsb:1, ok?[['right','Right answer',10]].concat(vsb?[['streak',`${vs} in a row`,vsb]]:[]):[['try','For trying',1]]); save(); }
 function vReveal(){ if(!vc||vc.state!=='ask')return; vc.last={marked:false,timeout:!!vc.timeout,ms:vElapsed()}; vc.timeout=false; vc.deadline=null; vc.state='fb'; render(); }
 function vMark(ok){ if(!vc||vc.state!=='fb'||vc.last.marked)return; vc.streak=ok?(vc.streak||0)+1:0; vc.last.marked=true; vc.last.ok=ok; vc.last.msg=ok?rightMsg(vc.streak,false):wrongMsg(); vRecord(vc.keys[vc.i],ok); render(); react(ok,vc.streak); }
@@ -2442,7 +2445,14 @@ function sheetSummary(){ const r=summary(me,U), {streak,best}=streakFrom(goalDay
     level:levelOf(U.xp).level,xp:U.xp||0,badges:Object.keys(U.badges||{}).length,bosses:Object.keys(U.bosses||{}).length,speed:(U.hs&&U.hs.speed)||0,
     daily:td?td.s+'/'+(td.n||10):'',vright:(U.counts&&U.counts.vright)||0,speedTyped:(U.hs&&U.hs.speedTyped)||0,
     xpToday:(U.xpDays&&U.xpDays[dayKey()])||0,tdate:dayKey(),xpYest:(U.xpDays&&U.xpDays[shiftDay(dayKey(),-1)])||0,ydate:shiftDay(dayKey(),-1),
-    team:U.team&&U.team!==NO_TEAM?U.team:'',xpWeek:xpWeek(),wk:weekKey(),av:myAv()}; }
+    team:U.team&&U.team!==NO_TEAM?U.team:'',xpWeek:xpWeek(),wk:weekKey(),av:myAv(),...studyHistory()}; }
+// For the coaches' dashboard: the last 28 days (oldest first, ending today) and per-chapter results.
+function studyHistory(){ const today=dayKey(), d=U.days||{}, x=U.xpDays||{}, m=U.msDays||{}, q=[], xp=[], sec=[];
+  for(let i=27;i>=0;i--){ const k=shiftDay(today,-i); q.push(d[k]||0); xp.push(x[k]||0); sec.push(Math.round((m[k]||0)/1000)); }
+  const ch=CH.map(()=>[0,0,0,0]); const st=U.stats||{};
+  for(const id in st){ const qq=Q[id]; if(!qq) continue; const a=ch[qq.c-1]; if(!a) continue; a[0]+=st[id][0]; a[1]+=st[id][1]; if(st[id][2]===1) a[2]++; }
+  for(const k in (U.mem||{})){ if(!U.mem[k]) continue; const c=+k.split(':')[0]; if(ch[c-1]) ch[c-1][3]++; }
+  return {qh:q.join(','),xh:xp.join(','),sh:sec.join(','),ch:ch.map(a=>a.join('.')).join(',')}; }
 // Weeks start on Monday.
 function weekKey(k){ k=k||dayKey(); const [y,m,d]=k.split('-').map(Number); return shiftDay(k,-((new Date(Date.UTC(y,m-1,d)).getUTCDay()+6)%7)); }
 function xpWeek(){ const wk=weekKey(), x=U.xpDays||{}; let t=0; for(let k=wk,i=0;i<7&&k<=dayKey();i++,k=shiftDay(k,1)) t+=x[k]||0; return t; }

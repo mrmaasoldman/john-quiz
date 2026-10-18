@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1030">
+<title>Coach Dashboard</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Jersey+15&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+:root{--bg:#0b1030;--bg2:#121a46;--card:#161f52;--tile:#0e1640;--line:#2c3a86;--ink:#f4f1e6;--muted:#a9b3e0;--gold:#ffd23f;--good:#58e08c;--bad:#ff6b5a;--warn:#ffb347;--accent:#4fc3f7;
+  --f-head:'Pixelify Sans',system-ui,sans-serif;--f-body:'Atkinson Hyperlegible',system-ui,-apple-system,sans-serif;--f-num:'Jersey 15','Pixelify Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--f-body)}
+body{background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);background-size:18px 18px;min-height:100vh}
+button,input,select{font:inherit;color:inherit}
+[hidden]{display:none!important}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 60px}
+h1,h2,h3{font-family:var(--f-head);font-weight:700;margin:0;line-height:1.2}
+h1{font-size:clamp(22px,4vw,30px)}h2{font-size:20px}h3{font-size:17px}
+.label{font-family:var(--f-head);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+.muted{color:var(--muted)}.hint{color:var(--muted);font-size:14px}
+.card{background:var(--card);border:3px solid var(--line);box-shadow:5px 5px 0 rgba(0,0,0,.45);padding:16px;display:grid;gap:12px}
+.btn{background:var(--gold);color:#1a1300;border:3px solid #000;box-shadow:3px 3px 0 #000;padding:9px 16px;font-family:var(--f-head);font-weight:700;cursor:pointer}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);box-shadow:none}
+input[type=text],input[type=password],select{background:var(--tile);border:3px solid var(--line);padding:10px 12px;color:var(--ink);min-width:0}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.signin{max-width:440px;margin:12vh auto 0}
+.err{color:var(--bad);font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--tile);border:2px solid var(--line);padding:10px 12px;display:grid;gap:2px}
+.tile b{font-family:var(--f-num);font-size:34px;line-height:1;color:var(--gold);font-weight:400}
+.tile span{font-size:13px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin:16px 0}
+@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+.chart svg{width:100%;height:auto;display:block}
+.nudge{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--tile);border:2px solid var(--line);padding:4px 10px 4px 4px;cursor:pointer}
+.chip small{color:var(--warn)}
+.tblwrap{overflow-x:auto;border:2px solid var(--line);background:var(--tile)}
+table{border-collapse:collapse;width:100%;min-width:900px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+th{font-family:var(--f-head);font-size:13px;color:var(--muted);font-weight:500;position:sticky;top:0;background:var(--bg2);cursor:pointer;user-select:none}
+th[aria-sort=descending]::after{content:' ▼';color:var(--gold)}th[aria-sort=ascending]::after{content:' ▲';color:var(--gold)}
+td.n{font-family:var(--f-num);font-size:22px;line-height:1}
+tbody tr{cursor:pointer}tbody tr:hover{background:rgba(255,255,255,.05)}
+td.who,th.who{position:sticky;left:0;background:var(--tile);z-index:1}th.who{background:var(--bg2);z-index:2}
+tbody tr:hover td.who{background:#18225a}
+.who .nm{display:inline-flex;align-items:center;gap:10px}
+.who b{font-weight:700}.who small{display:block;color:var(--muted);font-size:12px}
+.av{display:inline-block;flex:none;outline:2px solid #000;image-rendering:pixelated}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0}
+.g{color:var(--good)}.w{color:var(--warn)}.b{color:var(--bad)}
+.bar{height:8px;background:rgba(0,0,0,.4);min-width:70px}.bar i{display:block;height:100%;background:var(--good)}
+.spark{display:inline-block;vertical-align:middle;margin-left:8px}
+.modal{position:fixed;inset:0;background:rgba(3,6,24,.78);z-index:20;overflow:auto;padding:24px 12px}
+.modal .card{max-width:900px;margin:0 auto}
+.dhead{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.chtbl{min-width:560px}
+.chtbl td,.chtbl th{padding:6px 8px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;margin-right:5px;vertical-align:-1px}
+.empty{padding:20px;text-align:center;color:var(--muted)}
+footer{margin-top:24px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<script>
+(function(){
+const SHEET_URL='https://script.google.com/macros/s/AKfycbwuMn5RzT0fGVk5vt8qmWUsuFYjrGUe87ytVAD1qodJ0XC2qfY4BIpIEGdtcleGAvYf/exec';
+const CHQ=[156, 99, 144, 202, 167, 243, 162, 228, 143, 133, 217, 182, 146, 103, 90, 120, 89, 177, 192, 129, 118];               // questions per chapter
+const VERSES=[51,25,36,54,47,71,53,59,41,42,57,50,38,31,27,33,26,40,42,31,25];
+const TOTAL_Q=CHQ.reduce((a,b)=>a+b,0);
+// --- shared pixel avatars ---
+let U=null, me=''; const levelOf=()=>({level:1}); const $=s=>document.querySelector(s);
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+/* ---------- avatars (16x16 pixel animals, hats and extras) ---------- */
+// Grids: '.' = see-through. Letters pick a color from the animal/hat palette.
+const AV_HEAD=['','','','','',
+ '....OOOOOOOO....','...OFFFFFFFFO...','..OFFFFFFFFFFO..','..OFFFFFFFFFFO..','.OFFFFFFFFFFFFO.','.OFFFFFFFFFFFFO.',
+ '.OFFFFFFFFFFFFO.','.OFFFFFFFFFFFFO.','..OFFFFFFFFFFO..','...OFFFFFFFFO...','....OOOOOOOO....'];
+const AV_FACE=['','','','','','','','','','....WE....WE....','....EE....EE....','...P.MMNNMM.P...','.....MEMMEM.....','......MMMM......'];
+const AV_BEAKFACE=['','','','','','','','','','....WE....WE....','....EE....EE....','...P..BBBB..P...','.......BB.......'];
+const AV_OWLFACE=['','','','','','','','','...YYYY..YYYY...','...YWEY..YWEY...','...YEEY..YEEY...','...YYYYBBYYYY...','.......BB.......'];
+const AV_FROGFACE=['','','','','','','','','','','......E..E......','...P........P...','....E......E....','.....EEEEEE.....'];
+const AV_EARS={
+ pointy:['','..O..........O..','..OO........OO..','..OIO......OIO..','..OIIO....OIIO..','..OIIIO..OIIIO..','..OFFFFFFFFFFO..'],
+ long:['...OO......OO...','..OFIO....OFIO..','..OFIO....OFIO..','..OFIO....OFIO..','..OFIO....OFIO..','..OFIO....OFIO..'],
+ round:['','','','..OOO......OOO..','.OIIIO....OIIIO.','.OIIIO....OIIIO.','..OOO......OOO..'],
+ big:['','','.OOOO......OOOO.','OIIIIO....OIIIIO','OIIIIO....OIIIIO','OIIIIO....OIIIIO','.OIIO......OIIO.'],
+ horns:['','..O..........O..','..OO........OO..','..OYO......OYO..','..OYYO....OYYO..','...OYYO..OYYO...'],
+ tufts:['','','..O..........O..','..OO........OO..','..OFO......OFO..','..OFFO....OFFO..'],
+ none:[]};
+const AV_FRONT={
+ floppy:['','','','','','.OOO........OOO.','ODDDO......ODDDO','ODDDO......ODDDO','ODDDO......ODDDO','ODDO........ODDO','ODDO........ODDO','.OO..........OO.'],
+ frog:['','','','..OOOO....OOOO..','.OFFFFO..OFFFFO.','.OFWEFOOOOFWEFO.','.OFEEFFFFFFEEFO.','..OFFFFFFFFFFO..']};
+const AV_MARK={
+ panda:['','','','','','','','','....DD....DD....','...DDDD..DDDD...','...DDDD..DDDD...','....DD....DD....'],
+ tiger:['','','','','','','......D..D......','...D...DD...D...','..DD........DD..','','','.DD..........DD.'],
+ fox:['','','','','','','','','','','..MM........MM..','..MM........MM..'],
+ penguin:['','','','','','','','','....MM....MM....','...MMMM..MMMM...','...MMMMMMMMMM...','...MMMMMMMMMM...','....MMMMMMMM....','.....MMMMMM.....'],
+ spots:['','','','','','','.....DD.........','....DDD..DDDD...','.........DDDD...','.........DDDD...','..DD......DD....','..DD............','..........DD....'],
+ mask:['','','','','','','','','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDDD....DDDD..','','','']};
+const AV_MANE=['','','....DDDDDDDD....','..DDDDDDDDDDDD..','.DDDDDDDDDDDDDD.','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','.DDDDDDDDDDDDDD.','..DDDDDDDDDDDD..'];
+const AV_POST={ koala:['','','','','','','','','','','.......NN.......','......NNNN......','......NNNN......'] };
+const AV_ANIMALS=[
+ {id:'cat',name:'Cat',lvl:1,ears:'pointy',c:{F:'#f4a340',I:'#ffb3c1',M:'#ffe2b8',N:'#e8607a',D:'#b86a1c'}},
+ {id:'dog',name:'Dog',lvl:1,ears:'none',front:'floppy',c:{F:'#c98a4b',I:'#ffb3c1',M:'#f3dcc0',N:'#2a1a12',D:'#6b4123'}},
+ {id:'bunny',name:'Bunny',lvl:1,ears:'long',c:{F:'#f2f2f2',I:'#ffb3c1',M:'#ffffff',N:'#ff8fab',D:'#bbb'}},
+ {id:'mouse',name:'Mouse',lvl:2,ears:'big',c:{F:'#a9a9b3',I:'#ffb3c1',M:'#d8d8de',N:'#ff8fab',D:'#666'}},
+ {id:'bear',name:'Bear',lvl:3,ears:'round',c:{F:'#8b5a2b',I:'#d9a066',M:'#d9a066',N:'#2a1a12',D:'#4a2c12'}},
+ {id:'fox',name:'Fox',lvl:4,ears:'pointy',mark:'fox',c:{F:'#f06a1d',I:'#3a2016',M:'#ffffff',N:'#2a1a12',D:'#3a2016'}},
+ {id:'frog',name:'Frog',lvl:5,ears:'none',front:'frog',face:'frog',c:{F:'#6cc04a',I:'#6cc04a',M:'#6cc04a',N:'#2a1a12',D:'#3d7a2a'}},
+ {id:'panda',name:'Panda',lvl:6,ears:'round',mark:'panda',c:{F:'#ffffff',I:'#1e1e24',M:'#ffffff',N:'#1e1e24',D:'#1e1e24',W:'#ffffff'}},
+ {id:'penguin',name:'Penguin',lvl:7,ears:'none',mark:'penguin',face:'beak',c:{F:'#2b2f45',I:'#2b2f45',M:'#ffffff',N:'#f5a623',D:'#2b2f45',B:'#f5a623'}},
+ {id:'owl',name:'Owl',lvl:8,ears:'tufts',face:'owl',c:{F:'#9a6b3f',I:'#9a6b3f',M:'#9a6b3f',N:'#f5a623',D:'#5c3b1e',B:'#f5a623',Y:'#ffd23f'}},
+ {id:'blackcat',name:'Black Cat',lvl:9,ears:'pointy',c:{F:'#33333d',I:'#ff8fab',M:'#4a4a56',N:'#ff8fab',D:'#000',E:'#ffd23f',W:'#fff'}},
+ {id:'tiger',name:'Tiger',lvl:10,ears:'round',mark:'tiger',c:{F:'#f7941d',I:'#ffe2b8',M:'#ffffff',N:'#e8607a',D:'#2a1a12'}},
+ {id:'spots',name:'Spotted Pup',lvl:11,ears:'none',front:'floppy',mark:'spots',c:{F:'#ffffff',I:'#ffb3c1',M:'#ffffff',N:'#1e1e24',D:'#1e1e24'}},
+ {id:'koala',name:'Koala',lvl:12,ears:'big',post:'koala',c:{F:'#9aa3ad',I:'#e8ecef',M:'#9aa3ad',N:'#33333d',D:'#666'}},
+ {id:'raccoon',name:'Raccoon',lvl:13,ears:'round',mark:'mask',c:{F:'#8d8f96',I:'#e0e0e0',M:'#ececec',N:'#1e1e24',D:'#2e2e36',W:'#fff'}},
+ {id:'lion',name:'Lion',lvl:14,ears:'round',mane:true,c:{F:'#f2c14e',I:'#c98a2b',M:'#fff1c9',N:'#8b4a2b',D:'#b5651d'}},
+ {id:'unicorn',name:'Unicorn',lvl:16,ears:'pointy',horn:true,c:{F:'#ffffff',I:'#ffb3e6',M:'#ffffff',N:'#ff8fab',D:'#c58af9',Y:'#ffd23f'}},
+ {id:'dragon',name:'Dragon',lvl:18,ears:'horns',c:{F:'#4caf50',I:'#4caf50',M:'#a5d6a7',N:'#1b5e20',D:'#1b5e20',Y:'#ffe082'}},
+];
+const AV_HATS=[
+ {id:'none',name:'No hat',lvl:1,y:0,g:[]},
+ {id:'cap',name:'Cap',lvl:1,y:3,g:['.....OOOOOO.....','....OCCCCCCO....','...OCCCKKCCCO...','..OCCCCCCCCCCO..','.OKKKKKKKKKKKKO.','..OOOOOOOOOOOO..']},
+ {id:'bow',name:'Bow',lvl:1,y:2,g:['........OO...OO.','........OCO.OCO.','........OCCOCCO.','........OCO.OCO.','........OO...OO.']},
+ {id:'beanie',name:'Beanie',lvl:2,y:2,g:['.......KK.......','......OKKO......','....OOOOOOOO....','...OCCCCCCCCO...','..OCCCCCCCCCCO..','..OKKKKKKKKKKO..','..OOOOOOOOOOOO..']},
+ {id:'party',name:'Party hat',lvl:3,y:0,g:['......KKK.......','.......O........','......OCO.......','......OKO.......','.....OCCCO......','.....OKKKO......','....OCCCCCO.....','....OOOOOOO.....']},
+ {id:'flower',name:'Flower',lvl:4,y:3,g:['..........O.....','.........OKO....','........OKYKO...','.........OKO....','..........O.....']},
+ {id:'phones',name:'Headphones',lvl:5,y:4,g:['....OOOOOOOO....','...OCCCCCCCCO...','..OCO......OCO..','.OCO........OCO.','OKKO........OKKO','OKKO........OKKO','OKKO........OKKO','.OO..........OO.']},
+ {id:'cowboy',name:'Cowboy hat',lvl:7,y:2,g:['.....OO..OO.....','....OCCOOCCO....','....OCCCCCCO....','....OKKKKKKO....','OOOOOCCCCCCOOOOO','OCCCCCCCCCCCCCCO','.OOOOOOOOOOOOOO.']},
+ {id:'pirate',name:'Pirate hat',lvl:9,y:2,g:['......OOOO......','...OOOCCCCOOO...','..OCCCCKKCCCCO..','.OCCCCKKKKCCCCO.','.OCCCCCKKCCCCCO.','..OOOOOOOOOOOO..']},
+ {id:'wizard',name:'Wizard hat',lvl:11,y:0,g:['........OCO.....','.......OCCO.....','......OCKCO.....','......OCCCCO....','.....OCCCKCO....','....OCCKCCCCO...','..OOOOOOOOOOOO..','.OCCCCCCCCCCCCO.','..OOOOOOOOOOOO..']},
+ {id:'knight',name:'Knight helmet',lvl:13,y:1,g:['.......KK.......','......KKK.......','.....OOOOOO.....','....OCCCCCCO....','...OCCCCCCCCO...','..OCCCCCCCCCCO..','..OCOOOOOOOOCO..','..OC........CO..','..OC........CO..','..OO........OO..']},
+ {id:'grad',name:'Grad cap',lvl:15,y:2,g:['.......OO.......','....OOOCCOOO....','.OOOCCCCCCCCOOO.','OCCCCCCKCCCCCCCO','.OOOCCCCCCCCOOO.','...OCCCCCCCCOK..','...OOOOOOOOOOK..','.............K..']},
+ {id:'crown',name:'Crown',lvl:20,y:2,g:['...O...OO...O...','..OCO.OCCO.OCO..','..OCCOCCCCOCCO..','..OCKCCRRCCKCO..','..OCCCCCCCCCCO..','..OOOOOOOOOOOO..']},
+];
+const AV_HATFIX={cap:{K:'#ffffff'},bow:{},beanie:{K:'#ffffff'},party:{K:'#ffd23f'},flower:{Y:'#ffd23f',K:'C'},phones:{K:'#33333d'},cowboy:{K:'#3a2016'},
+ pirate:{K:'#ffffff'},wizard:{K:'#ffd23f'},knight:{K:'#e53935',C:'#c9ced6'},grad:{K:'#ffd23f',C:'#1e1e24'},crown:{C:'#ffd23f',K:'#4fc3f7',R:'#e53935'}};
+const AV_FACES=[
+ {id:'none',name:'Nothing',lvl:1,y:0,g:[]},
+ {id:'glasses',name:'Glasses',lvl:2,y:8,g:['...OOOO..OOOO...','...O..OOOO..O...','...O..O..O..O...','...OOOO..OOOO...']},
+ {id:'blush',name:'Rosy cheeks',lvl:3,y:11,g:['..PP........PP..']},
+ {id:'mustache',name:'Mustache',lvl:6,y:12,g:['.....OOOOOO.....','...OOOO..OOOO...','...O........O...']},
+ {id:'shades',name:'Sunglasses',lvl:8,y:8,g:['...OOOO..OOOO...','.OOWSSOOOOWSSOO.','...OSSO..OSSO...','...OOOO..OOOO...']},
+ {id:'patch',name:'Eye patch',lvl:9,y:8,g:['..OOOOOOOOOOOO..','...OOOO.........','...OOOO.........','....OO..........']},
+ {id:'bowtie',name:'Bow tie',lvl:12,y:13,g:['....OO....OO....','....OCOOOOCO....','....OO....OO....']},
+];
+const AV_COLORS=[['red','#e53935'],['orange','#fb8c00'],['yellow','#fdd835'],['green','#43a047'],['blue','#1e88e5'],['purple','#8e24aa'],['pink','#f06292'],['black','#2b2b33']];
+const AV_BGS=[['sky','#8ecae6'],['grass','#9ad08b'],['sun','#ffd166'],['rose','#f4a6b7'],['lilac','#c8b6ff'],['sand','#e9d8a6'],['night','#2d3561'],['slate','#6b7280'],
+ ['gold','#ffcf33',12],['ruby','#c62828',15],['rainbow','rainbow',19]];
+const avFind=(list,id)=>list.find(x=>x.id===id);
+function avDefault(name){ let hsh=0; for(const ch of String(name||'')) hsh=(hsh*31+ch.charCodeAt(0))>>>0; const starters=AV_ANIMALS.filter(a=>a.lvl===1);
+  return [starters[hsh%starters.length].id,'none','none',AV_BGS[hsh%8][0],AV_COLORS[(hsh>>>3)%7][0]].join('.'); }
+function avParse(code,name){ const d=avDefault(name).split('.'), p=String(code||'').split('.');
+  return {a:avFind(AV_ANIMALS,p[0])?p[0]:d[0], h:avFind(AV_HATS,p[1])?p[1]:'none', f:avFind(AV_FACES,p[2])?p[2]:'none',
+    bg:AV_BGS.some(b=>b[0]===p[3])?p[3]:d[3], hc:AV_COLORS.some(c=>c[0]===p[4])?p[4]:d[4]}; }
+const avCode=o=>[o.a,o.h,o.f,o.bg,o.hc].join('.');
+const avCache={};
+function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[key]) return avCache[key];
+  const o=avParse(code,name), an=avFind(AV_ANIMALS,o.a), hat=avFind(AV_HATS,o.h), face=avFind(AV_FACES,o.f);
+  const hc=(AV_COLORS.find(c=>c[0]===o.hc)||AV_COLORS[0])[1], bg=(AV_BGS.find(b=>b[0]===o.bg)||AV_BGS[0])[1];
+  const base=Object.assign({O:'#1a1a22',E:'#1a1a22',W:'#ffffff',P:'#ff9eb5',B:'#f5a623',Y:'#ffd23f',S:'#1a1a22'},an.c);
+  const grid=[...Array(16)].map(()=>Array(16).fill(null));
+  const put=(rows,pal,y0)=>rows.forEach((r,i)=>{const y=(y0||0)+i; if(y<0||y>15) return; for(let x=0;x<r.length&&x<16;x++){const ch=r[x]; if(ch==='.') continue; const col=pal[ch]; if(col) grid[y][x]=col;}});
+  if(an.mane) put(AV_MANE,base);
+  put(AV_EARS[an.ears]||[],base);
+  if(an.horn) put(['.......OO.......','......OYYO......','......OYYO......','.....OYYYYO.....','.....OYYYYO.....'],base);
+  put(AV_HEAD,base);
+  if(an.horn) put(['','','','','','.......DD.......','......DDD.......'],base);
+  if(an.mark) put(AV_MARK[an.mark],base);
+  put(an.face==='beak'?AV_BEAKFACE:an.face==='owl'?AV_OWLFACE:an.face==='frog'?AV_FROGFACE:AV_FACE,base);
+  if(an.post) put(AV_POST[an.post],base);
+  if(an.front) put(AV_FRONT[an.front],base);
+  if(face&&face.g.length) put(face.g,Object.assign({},base,{O:'#1a1a22',C:hc}),face.y);
+  if(hat&&hat.g.length){ const fx=AV_HATFIX[hat.id]||{}, pal=Object.assign({},base,{O:'#1a1a22',C:hc}); for(const k in fx) pal[k]=fx[k]==='C'?hc:fx[k]; put(hat.g,pal,hat.y); }
+  let rects='';
+  for(let y=0;y<16;y++){ let x=0; while(x<16){ const c=grid[y][x]; if(!c){x++;continue} let w=1; while(x+w<16&&grid[y][x+w]===c) w++; rects+=`<rect x="${x}" y="${y}" width="${w}" height="1" fill="${c}"/>`; x+=w; } }
+  const bgFill=bg==='rainbow'?'url(#rb)':bg, defs=bg==='rainbow'?'<defs><linearGradient id="rb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a80"/><stop offset=".25" stop-color="#ffd180"/><stop offset=".5" stop-color="#ccff90"/><stop offset=".75" stop-color="#80d8ff"/><stop offset="1" stop-color="#ea80fc"/></linearGradient></defs>':'';
+  const svg=`<svg class="av" width="${px}" height="${px}" viewBox="-1 -1 18 18" shape-rendering="crispEdges" aria-hidden="true">${defs}<rect x="-1" y="-1" width="18" height="18" fill="${bgFill}"/>${rects}</svg>`;
+  return (avCache[key]=svg);
+}
+const myAv=()=>U?(U.av||avDefault(me)):'';
+function avOpen(item){ return levelOf(U.xp).level>=(item.lvl||1); }
+function avUnlocksAt(L){ const n=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>x.lvl===L).map(x=>x.name).concat(AV_BGS.filter(b=>b[2]===L).map(b=>b[0][0].toUpperCase()+b[0].slice(1)+' background'));
+  return n.length?` New avatar stuff: ${n.join(', ')}!`:''; }
+let avTab='animal';
+function avatarPanel(){
+  const o=avParse(myAv(),me), L=levelOf(U.xp).level;
+  const tabs=[['animal','🐾 Animal'],['hat','🎩 Hat'],['face','😎 Face'],['color','🎨 Colors']];
+  const lockTag=n=>`<span class="avlock">🔒 Lv ${n}</span>`;
+  const tile=(code,label,open,cur,attr,need)=>`<button class="avpick ${cur?'cur':''} ${open?'':'locked'}" ${open?attr:'disabled'} aria-pressed="${cur}" title="${esc(label)}${open?'':' (unlocks at level '+need+')'}">${avSvg(code,44,me)}<small>${esc(label)}</small>${open?'':lockTag(need)}</button>`;
+  let body='';
+  if(avTab==='animal') body=AV_ANIMALS.map(a=>tile(avCode({...o,a:a.id}),a.name,L>=a.lvl,o.a===a.id,`data-av="a:${a.id}"`,a.lvl)).join('');
+  if(avTab==='hat') body=AV_HATS.map(x=>tile(avCode({...o,h:x.id}),x.name,L>=x.lvl,o.h===x.id,`data-av="h:${x.id}"`,x.lvl)).join('');
+  if(avTab==='face') body=AV_FACES.map(x=>tile(avCode({...o,f:x.id}),x.name,L>=x.lvl,o.f===x.id,`data-av="f:${x.id}"`,x.lvl)).join('');
+  const sw=(k,v,col,cur,need)=>{const open=!need||L>=need; return `<button class="avsw ${cur?'cur':''}" ${open?`data-av="${k}:${v}"`:'disabled'} aria-pressed="${cur}" title="${v}${open?'':' (level '+need+')'}" style="background:${col==='rainbow'?'linear-gradient(135deg,#ff8a80,#ffd180,#ccff90,#80d8ff,#ea80fc)':col}">${open?'':'🔒'}</button>`};
+  const colors=`<div style="display:grid;gap:8px"><span class="hint">Hat and bow tie color</span><div class="avsws">${AV_COLORS.map(([v,c])=>sw('hc',v,c,o.hc===v)).join('')}</div>
+    <span class="hint">Background</span><div class="avsws">${AV_BGS.map(([v,c,n])=>sw('bg',v,c,o.bg===v,n)).join('')}</div></div>`;
+  const nextUp=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>x.lvl>L).sort((a,b)=>a.lvl-b.lvl)[0];
+  return `<div class="panel avpanel" style="display:grid;gap:12px">
+    <div class="row" style="justify-content:space-between"><span class="label">Your avatar</span>${nextUp?`<span class="hint">Next unlock: ${esc(nextUp.name)} at level ${nextUp.lvl}</span>`:'<span class="hint">Everything unlocked!</span>'}</div>
+    <div class="row" style="gap:14px;align-items:center;flex-wrap:nowrap"><div class="avbig">${avSvg(myAv(),88,me)}</div>
+      <div style="display:grid;gap:4px;min-width:0"><b style="overflow-wrap:anywhere">${esc(me)}</b><span class="hint">Shows next to your name and on the high scores. Level up to unlock more animals, hats and extras.</span>
+      <button class="x" id="avrand" style="justify-self:start">🎲 Surprise me</button></div></div>
+    <div class="seg avtabs">${tabs.map(([k,t])=>`<button data-avtab="${k}" aria-pressed="${avTab===k}">${t}</button>`).join('')}</div>
+    ${avTab==='color'?colors:`<div class="avgrid">${body}</div>`}
+  </div>`;
+}
+function wireAvatar(){
+  document.querySelectorAll('[data-avtab]').forEach(b=>b.onclick=()=>{avTab=b.dataset.avtab;renderKeep()});
+  document.querySelectorAll('[data-av]').forEach(b=>b.onclick=()=>{ const [k,v]=b.dataset.av.split(':'); const o=avParse(myAv(),me); o[k]=v; U.av=avCode(o); save(); sfx&&sfx('ding'); renderKeep(); });
+  const r=$('#avrand'); if(r) r.onclick=()=>{ const L=levelOf(U.xp).level, pick=a=>a[Math.floor(Math.random()*a.length)];
+    U.av=avCode({a:pick(AV_ANIMALS.filter(x=>x.lvl<=L)).id,h:pick(AV_HATS.filter(x=>x.lvl<=L)).id,f:pick(AV_FACES.filter(x=>x.lvl<=L)).id,
+      bg:pick(AV_BGS.filter(b=>!b[2]||b[2]<=L))[0],hc:pick(AV_COLORS)[0]}); save(); renderKeep(); };
+}
+
+// --- dates (Central time, same as the student site) ---
+let dayFmt=null; try{ dayFmt=new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}); }catch(e){}
+function dayKey(d){ d=d||new Date(); if(dayFmt){ try{ const p={}; dayFmt.formatToParts(d).forEach(x=>p[x.type]=x.value); return p.year+'-'+p.month+'-'+p.day; }catch(e){} }
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function shiftDay(k,n){ const [y,m,d]=k.split('-').map(Number), t=new Date(Date.UTC(y,m-1,d+n)); return t.getUTCFullYear()+'-'+String(t.getUTCMonth()+1).padStart(2,'0')+'-'+String(t.getUTCDate()).padStart(2,'0'); }
+function daysBetween(a,b){ const p=k=>{const [y,m,d]=k.split('-').map(Number);return Date.UTC(y,m-1,d)}; return Math.round((p(b)-p(a))/864e5); }
+function weekKey(k){ const [y,m,d]=k.split('-').map(Number); return shiftDay(k,-((new Date(Date.UTC(y,m-1,d)).getUTCDay()+6)%7)); }
+const dow=k=>{const [y,m,d]=k.split('-').map(Number);return new Date(Date.UTC(y,m-1,d)).getUTCDay()};
+const shortDate=k=>{const [y,m,d]=k.split('-').map(Number);return new Date(Date.UTC(y,m-1,d)).toLocaleDateString(undefined,{month:'short',day:'numeric',timeZone:'UTC'})};
+const fmtMin=sec=>{ if(!sec) return '0m'; const m=Math.round(sec/60); return m<60?m+'m':Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m'; };
+const pct=(a,b)=>b?Math.round(100*a/b):0;
+// --- storage (this device only) ---
+const store={get(k){try{return localStorage.getItem('jqcoach:'+k)}catch(e){return null}},set(k,v){try{v==null?localStorage.removeItem('jqcoach:'+k):localStorage.setItem('jqcoach:'+k,v)}catch(e){}}};
+
+let code=store.get('code')||'', data=null, err='', busy=false, team=store.get('team')||'', sortKey='q7', sortDir=-1, sel=null;
+
+function load(c){
+  if(!SHEET_URL.startsWith('https://')){ err='This dashboard is not connected to a sheet yet.'; render(); return; }
+  busy=true; err=''; render();
+  fetch(SHEET_URL+'?coach='+encodeURIComponent(c),{cache:'no-store'}).then(r=>r.json()).then(d=>{
+    if(d.error){ err=d.error==='bad code'?"That code didn't work. Check it with Mr. Maas.":'Something went wrong: '+d.error; data=null; code=''; store.set('code',null); }
+    else if(!Array.isArray(d.quizzers)){ err='The progress sheet needs its newest script before the coaches dashboard can work.'; data=null; }
+    else { data=d; code=c; store.set('code',c); if(team&&!d.teams.some(t=>t.toLowerCase()===team.toLowerCase())) team=''; }
+  }).catch(()=>{ err=data?"Couldn't refresh. Check your internet and try again.":"Couldn't reach the progress sheet. Check your internet, or the sheet may need its newest script."; })
+    .finally(()=>{ busy=false; render(); });
+}
+
+// Line up each quizzer's 28-day history so the last value is today.
+function series(str,td,today){ if(!str||!td) return null; const a=str.split(',').map(Number); if(a.length!==28||a.some(isNaN)) return null;
+  const gap=daysBetween(td,today); if(gap<0) return a; if(gap>=28) return Array(28).fill(0); return a.slice(gap).concat(Array(gap).fill(0)); }
+function derive(q,today){
+  const qh=series(q.qh,q.td,today), sh=series(q.sh,q.td,today), xh=series(q.xh,q.td,today);
+  const sum=(a,n)=>a?a.slice(-n).reduce((s,v)=>s+v,0):null;
+  const has=!!qh;
+  let lastDay=null; if(qh){ for(let i=27;i>=0;i--) if(qh[i]>0){ lastDay=shiftDay(today,i-27); break; } }
+  if(!lastDay&&q.td&&q.today>0) lastDay=q.td;
+  const chs=(q.ch||'').split(',').map(s=>s.split('.').map(Number)).filter(a=>a.length===4&&!a.some(isNaN));
+  return Object.assign({},q,{has,qh,sh,xh,lastDay,
+    since:lastDay?daysBetween(lastDay,today):null,
+    q0:q.td===today?q.today:0, q7:has?sum(qh,7):(q.td===today?q.today:null), q28:sum(qh,28),
+    s7:sum(sh,7), a7:qh?qh.slice(-7).filter(v=>v>0).length:null,
+    xw:q.wk===weekKey(today)?q.xw:0, acc:q.att?pct(q.right,q.att):null, chs:chs.length===21?chs:null});
+}
+function view(){ const today=dayKey(); let qs=data.quizzers.map(q=>derive(q,today));
+  if(team) qs=qs.filter(q=>(q.team||'').toLowerCase()===team.toLowerCase()); return {today,qs}; }
+
+const COLS=[
+ ['name','Quizzer',q=>q.name.toLowerCase()],
+ ['since','Last practiced',q=>q.since==null?9999:q.since],
+ ['q0','Today',q=>q.q0],
+ ['q7','Questions (7 days)',q=>q.q7==null?-1:q.q7],
+ ['s7','Practice time (7 days)',q=>q.s7==null?-1:q.s7],
+ ['a7','Days active (7)',q=>q.a7==null?-1:q.a7],
+ ['streak','Day streak',q=>q.streak],
+ ['xw','XP this week',q=>q.xw],
+ ['acc','Accuracy',q=>q.acc==null?-1:q.acc],
+ ['solid','Mastered',q=>q.solid],
+ ['mem','Memorized',q=>q.mem],
+ ['level','Level',q=>q.xp]];
+
+function lastTxt(q){ if(q.since==null) return '<span class="b"><span class="dot" style="background:var(--bad)"></span>No practice yet</span>';
+  const c=q.since===0?'g':q.since<=2?'w':'b', col=q.since===0?'var(--good)':q.since<=2?'var(--warn)':'var(--bad)';
+  return `<span class="${c}"><span class="dot" style="background:${col}"></span>${q.since===0?'Today':q.since===1?'Yesterday':q.since+' days ago'}</span>`; }
+function spark(a){ if(!a) return ''; const v=a.slice(-14), mx=Math.max(1,...v), w=4, gap=1, h=22;
+  return `<svg class="spark" width="${v.length*(w+gap)}" height="${h}" viewBox="0 0 ${v.length*(w+gap)} ${h}" aria-hidden="true">${v.map((x,i)=>`<rect x="${i*(w+gap)}" y="${h-Math.max(x?2:1,h*x/mx)}" width="${w}" height="${Math.max(x?2:1,h*x/mx)}" fill="${x?'#58e08c':'#2c3a86'}"/>`).join('')}</svg>`; }
+function barChart(vals,today,opts){ opts=opts||{}; const n=vals.length, W=760, H=opts.h||170, pad=28, bw=(W-pad)/n, mx=Math.max(1,...vals);
+  const yTicks=[0,Math.round(mx/2),mx];
+  let s=`<svg viewBox="0 -12 ${W} ${H+36}" role="img" aria-label="${esc(opts.label||'chart')}">`;
+  yTicks.forEach(t=>{ const y=H-H*t/mx; s+=`<line x1="${pad}" x2="${W}" y1="${y}" y2="${y}" stroke="#2c3a86" stroke-width="1"/><text x="${pad-6}" y="${y+4}" text-anchor="end" fill="#a9b3e0" font-size="11">${t}</text>`; });
+  vals.forEach((v,i)=>{ const k=shiftDay(today,i-(n-1)), h=H*v/mx, x=pad+i*bw+1;
+    s+=`<rect x="${x}" y="${H-h}" width="${Math.max(1,bw-3)}" height="${h}" fill="${i===n-1?'#ffd23f':'#58e08c'}"><title>${shortDate(k)}: ${v} ${opts.unit||''}</title></rect>`;
+    if(dow(k)===1||i===n-1) s+=`<text x="${x+bw/2}" y="${H+16}" text-anchor="middle" fill="#a9b3e0" font-size="11">${i===n-1?'Today':shortDate(k)}</text>`; });
+  return s+'</svg>'; }
+
+function signinView(){
+  return `<div class="signin card">
+    <div><div class="label">John Quiz</div><h1>Coach Dashboard</h1></div>
+    <p class="muted" style="margin:0">See how much your quizzers are studying. Enter the access code Mr. Maas gave you.</p>
+    <form id="cform" class="row" style="flex-wrap:nowrap"><input type="password" id="ccode" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Access code" style="flex:1" aria-label="Access code"><button class="btn" type="submit">${busy?'Checking…':'Open'}</button></form>
+    ${err?`<p class="err" style="margin:0">${esc(err)}</p>`:''}
+    <span class="hint">Your code is remembered on this device until you sign out.</span>
+  </div>`;
+}
+function dashView(){
+  const {today,qs}=view(), N=qs.length;
+  const sort=COLS.find(c=>c[0]===sortKey)||COLS[3];
+  const rows=[...qs].sort((a,b)=>{const x=sort[2](a),y=sort[2](b);return (x<y?-1:x>y?1:0)*sortDir || a.name.localeCompare(b.name)});
+  const act0=qs.filter(q=>q.since===0).length, act7=qs.filter(q=>q.since!=null&&q.since<7).length;
+  const tq7=qs.reduce((s,q)=>s+(q.q7||0),0), ts7=qs.reduce((s,q)=>s+(q.s7||0),0), txw=qs.reduce((s,q)=>s+(q.xw||0),0);
+  const accs=qs.filter(q=>q.acc!=null), avgAcc=accs.length?Math.round(accs.reduce((s,q)=>s+q.acc,0)/accs.length):null;
+  const teamDaily=Array(28).fill(0); qs.forEach(q=>{ if(q.qh) q.qh.forEach((v,i)=>teamDaily[i]+=v); });
+  const nudge=qs.filter(q=>q.since==null||q.since>=3).sort((a,b)=>(b.since==null?999:b.since)-(a.since==null?999:a.since));
+  const noHist=qs.filter(q=>!q.has).length;
+  return `
+  <div class="top">
+    <div><div class="label">Coach Dashboard · John Quiz</div><h1>${data.all&&!team?'All teams':esc(team||data.teams.join(', ')||'Your team')}</h1><span class="hint">Signed in as ${esc(data.coach)}</span></div>
+    <div class="row">
+      ${data.teams.length>1?`<select id="tsel" aria-label="Team"><option value="">${data.all?'All teams':'All my teams'}</option>${data.teams.map(t=>`<option ${t.toLowerCase()===team.toLowerCase()?'selected':''}>${esc(t)}</option>`).join('')}</select>`:''}
+      <button class="btn ghost" id="refresh">${busy?'Loading…':'Refresh'}</button><button class="btn ghost" id="signout">Sign out</button>
+    </div>
+  </div>
+  ${err?`<p class="err">${esc(err)}</p>`:''}
+  ${!N?`<div class="card empty">No quizzers have picked ${team?esc(team):'this team'} yet. Quizzers choose their team when they sign in to the study site.</div>`:`
+  <div class="tiles">
+    <div class="tile"><b>${N}</b><span>Quizzers</span></div>
+    <div class="tile"><b>${act0}<small style="font-size:.5em;color:var(--muted)"> / ${N}</small></b><span>Practiced today</span></div>
+    <div class="tile"><b>${act7}<small style="font-size:.5em;color:var(--muted)"> / ${N}</small></b><span>Practiced this week</span></div>
+    <div class="tile"><b>${tq7.toLocaleString()}</b><span>Questions, last 7 days</span></div>
+    <div class="tile"><b>${fmtMin(ts7)}</b><span>Practice time, last 7 days</span></div>
+    <div class="tile"><b>${txw.toLocaleString()}</b><span>Team XP this week</span></div>
+    <div class="tile"><b>${avgAcc==null?'–':avgAcc+'%'}</b><span>Average accuracy</span></div>
+  </div>
+  <div class="grid2">
+    <div class="card chart"><div class="row" style="justify-content:space-between"><span class="label">Team questions per day · last 4 weeks</span><span class="hint">Gold = today</span></div>${barChart(teamDaily,today,{label:'Team questions per day',unit:'questions'})}</div>
+    <div class="card"><span class="label">Needs a nudge</span>
+      ${nudge.length?`<span class="hint">No practice in 3 or more days.</span><div class="nudge">${nudge.map(q=>`<button class="chip" data-q="${esc(q.name)}">${avSvg(q.av||avDefault(q.name),24,q.name)}${esc(q.name)} <small>${q.since==null?'not yet':q.since+'d'}</small></button>`).join('')}</div>`
+        :`<span class="g" style="font-weight:700">Everyone has practiced in the last 3 days. 🎉</span>`}
+    </div>
+  </div>
+  <div class="card" style="padding:12px">
+    <div class="row" style="justify-content:space-between"><span class="label">Quizzers</span><span class="hint">Tap a column to sort · tap a quizzer for details</span></div>
+    <div class="tblwrap"><table><thead><tr>${COLS.map(([k,t])=>`<th data-sort="${k}" class="${k==='name'?'who':''}" ${sortKey===k?`aria-sort="${sortDir<0?'descending':'ascending'}"`:''}>${t}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(q=>`<tr data-q="${esc(q.name)}">
+      <td class="who"><span class="nm">${avSvg(q.av||avDefault(q.name),30,q.name)}<span><b>${esc(q.name)}</b>${data.all&&!team||data.teams.length>1&&!team?`<small>${esc(q.team||'No team')}</small>`:''}</span></span></td>
+      <td>${lastTxt(q)}</td>
+      <td class="n">${q.q0}</td>
+      <td><span class="n" style="font-family:var(--f-num);font-size:22px">${q.q7==null?'–':q.q7}</span>${spark(q.qh)}</td>
+      <td class="n">${q.s7==null?'–':fmtMin(q.s7)}</td>
+      <td class="n">${q.a7==null?'–':q.a7+'/7'}</td>
+      <td class="n">${q.streak}</td>
+      <td class="n">${(q.xw||0).toLocaleString()}</td>
+      <td class="n ${q.acc==null?'':q.acc>=85?'g':q.acc>=65?'w':'b'}">${q.acc==null?'–':q.acc+'%'}</td>
+      <td><span class="n" style="font-family:var(--f-num);font-size:22px">${q.solid}</span> <span class="hint">/ ${TOTAL_Q}</span></td>
+      <td><span class="n" style="font-family:var(--f-num);font-size:22px">${q.mem}</span>${q.goalPct?` <span class="hint">· ${Math.round(q.goalPct*100)}% of goal</span>`:''}</td>
+      <td class="n">${q.level}</td></tr>`).join('')}</tbody></table></div>
+    ${noHist?`<span class="hint">“–” means that quizzer hasn't practiced since the study site started sending daily history. It fills in the next time they practice.</span>`:''}
+  </div>`}
+  <footer>Practice time counts time spent answering in Practice and Verse Cards (games aren't timed). Questions include games. Days run midnight to midnight Central time. Updated ${new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}.</footer>
+  ${sel?detailView(qs.find(q=>q.name===sel),today):''}`;
+}
+function detailView(q,today){ if(!q) return '';
+  const tile=(v,l)=>`<div class="tile"><b>${v}</b><span>${l}</span></div>`;
+  return `<div class="modal" id="modal"><div class="card" role="dialog" aria-modal="true" aria-label="${esc(q.name)}">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div class="dhead">${avSvg(q.av||avDefault(q.name),64,q.name)}<div><h2>${esc(q.name)}</h2><span class="hint">${esc(q.team||'No team')} · Level ${q.level} · ${q.xp.toLocaleString()} XP · Last practiced: ${lastTxt(q)}</span></div></div>
+      <button class="btn ghost" id="close">Close</button></div>
+    <div class="tiles">
+      ${tile(q.q0,'Questions today')}${tile(q.q7==null?'–':q.q7,'Questions, 7 days')}${tile(q.q28==null?'–':q.q28,'Questions, 28 days')}${tile(q.s7==null?'–':fmtMin(q.s7),'Practice time, 7 days')}
+      ${tile(q.att.toLocaleString(),'Questions answered (all)')}${tile(q.acc==null?'–':q.acc+'%','Accuracy')}${tile(q.solid+'<small style="font-size:.5em;color:var(--muted)"> / '+TOTAL_Q+'</small>','Questions mastered')}
+      ${tile(q.mem,'Verses memorized'+(q.goalPct?' · '+Math.round(q.goalPct*100)+'% of goal':''))}${tile(q.streak+' <small style="font-size:.5em;color:var(--muted)">best '+q.best+'</small>','Day streak')}
+      ${tile(q.bosses+'/21','Bosses beaten')}${tile(q.speed,'Speed Round best')}${tile(q.vright,'Verse cards right')}${tile(q.badges,'Badges')}
+    </div>
+    ${q.goal&&q.goal!=='(no goal set)'?`<span class="hint">Memory goal: ${esc(q.goal)}</span>`:''}
+    <div class="chart"><div class="row" style="justify-content:space-between"><span class="label">Questions per day · last 4 weeks</span></div>
+      ${q.qh?barChart(q.qh,today,{label:'Questions per day',unit:'questions',h:140}):`<p class="hint">Daily history starts the next time ${esc(q.name)} practices.</p>`}</div>
+    ${q.sh&&q.sh.some(v=>v)?`<div class="chart"><span class="label">Practice minutes per day</span>${barChart(q.sh.map(v=>Math.round(v/60)),today,{label:'Practice minutes per day',unit:'minutes',h:110})}</div>`:''}
+    <div><span class="label">By chapter</span>
+      ${q.chs?`<div class="tblwrap" style="margin-top:8px"><table class="chtbl"><thead><tr><th>Ch</th><th>Answers</th><th>Accuracy</th><th>Questions mastered</th><th>Verses memorized</th></tr></thead><tbody>
+        ${q.chs.map((a,i)=>{const acc=a[0]?pct(a[1],a[0]):null, mp=pct(a[2],CHQ[i]), vp=pct(a[3],VERSES[i]);return `<tr style="cursor:default">
+          <td class="n">${i+1}</td><td class="n">${a[0]}</td>
+          <td class="n ${acc==null?'':acc>=85?'g':acc>=65?'w':'b'}">${acc==null?'–':acc+'%'}</td>
+          <td><div class="row" style="flex-wrap:nowrap;gap:8px"><div class="bar" style="flex:1"><i style="width:${mp}%"></i></div><span class="hint">${a[2]}/${CHQ[i]}</span></div></td>
+          <td><div class="row" style="flex-wrap:nowrap;gap:8px"><div class="bar" style="flex:1"><i style="width:${vp}%;background:var(--gold)"></i></div><span class="hint">${a[3]}/${VERSES[i]}</span></div></td></tr>`}).join('')}</tbody></table></div>`
+        :`<p class="hint">Chapter details show up the next time ${esc(q.name)} practices.</p>`}
+    </div>
+  </div></div>`;
+}
+
+function render(){
+  const app=$('#app'), y=scrollY;
+  app.innerHTML=data?dashView():signinView();
+  const f=$('#cform'); if(f){ const i=$('#ccode'); i.focus(); f.onsubmit=e=>{e.preventDefault(); const c=i.value.trim(); if(c) load(c);}; return; }
+  const ts=$('#tsel'); if(ts) ts.onchange=()=>{team=ts.value; store.set('team',team||null); render();};
+  $('#refresh').onclick=()=>load(code);
+  $('#signout').onclick=()=>{ store.set('code',null); store.set('team',null); code=''; data=null; team=''; sel=null; err=''; render(); };
+  document.querySelectorAll('[data-sort]').forEach(th=>th.onclick=()=>{ const k=th.dataset.sort; if(sortKey===k) sortDir=-sortDir; else { sortKey=k; sortDir=(k==='name'||k==='since')?1:-1; } render(); });
+  document.querySelectorAll('[data-q]').forEach(el=>el.onclick=()=>{ sel=el.dataset.q; render(); });
+  const m=$('#modal'); if(m){ $('#close').onclick=()=>{sel=null;render()}; m.onclick=e=>{ if(e.target===m){sel=null;render()} }; }
+  scrollTo(0,y);
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&sel){ sel=null; render(); } });
+render(); if(code) load(code);
+})();
+</script>
+</body>
+</html>
