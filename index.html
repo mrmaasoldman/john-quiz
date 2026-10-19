@@ -572,6 +572,55 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .evtitle{font-family:var(--f-display);font-weight:400;font-size:clamp(13px,3.6vw,17px);line-height:1.5;color:var(--gold);text-shadow:2px 2px 0 #000}
 .avlock.ev{background:var(--gold);color:#000}
 .avpick.evitem{border-color:var(--gold)}
+.live .ltop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.live.host{max-width:1100px}
+.ljoinbox{display:flex!important;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.lurl{font-family:var(--f-num);font-size:clamp(20px,3.4vw,34px);color:var(--win-ink);overflow-wrap:anywhere}
+.lcodebig{font-family:var(--f-display);font-size:clamp(34px,7vw,72px);letter-spacing:.12em;color:var(--gold);text-shadow:4px 4px 0 #000;background:#000;border:4px solid var(--gold);padding:10px 18px}
+.lplayers{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.lp{display:grid;justify-items:center;gap:4px;padding:10px;background:var(--win);border:3px solid var(--frame);color:var(--win-ink);text-align:center;animation:pop .35s both}
+.lp b{overflow-wrap:anywhere}.lp small{color:var(--win-muted);font-size:12px}
+.lqhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.lref{font-family:var(--f-num);font-size:26px;color:var(--label)}
+.lclock{font-family:var(--f-num);font-size:44px;line-height:1;background:#000;color:var(--gold);border:3px solid var(--gold);min-width:72px;text-align:center;padding:4px 10px}
+.lcount{font-size:18px}.lcount b{font-family:var(--f-num);font-size:30px;color:var(--gold)}
+.lbarw{height:12px}
+.lq{font-family:var(--f-read);font-weight:700;font-size:clamp(24px,4.2vw,46px);line-height:1.3;background:var(--win);color:var(--win-ink);border:4px solid var(--frame);padding:20px;text-align:center}
+.lq.phone{font-size:clamp(19px,5vw,26px);padding:14px}
+.lchoices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lch{display:flex;align-items:center;gap:12px;padding:18px 16px;min-height:86px;border:4px solid #000;box-shadow:5px 5px 0 rgba(0,0,0,.45);color:#fff;font-family:var(--f-read);font-weight:700;font-size:clamp(18px,2.6vw,30px);line-height:1.25;text-align:left;text-shadow:2px 2px 0 rgba(0,0,0,.45);position:relative}
+button.lch{cursor:pointer;width:100%}button.lch:active{transform:translate(3px,3px);box-shadow:2px 2px 0 rgba(0,0,0,.45)}
+.lchoices.phone .lch{font-size:18px;min-height:96px}
+.lch .lsh{font-size:1.4em;flex:none;width:1.2em;text-align:center}
+.lch.c0{background:#d6304a}.lch.c1{background:#2f6fd6}.lch.c2{background:#c98b00}.lch.c3{background:#2e8b2e}
+.lch.dim{opacity:.35}.lch.right{outline:5px solid #fff;outline-offset:-9px}
+.lch.right::after{content:'✓';position:absolute;right:14px;top:8px;font-size:30px}
+.lch .ldist{margin-left:auto;font-family:var(--f-num);font-size:34px;background:rgba(0,0,0,.35);padding:0 10px;min-width:44px;text-align:center}
+.lch.right .ldist{margin-right:34px}
+.lch.mini{min-height:0;padding:10px 12px;font-size:17px;box-shadow:none}
+.lanswer{display:grid;gap:6px;justify-items:center;text-align:center;background:var(--win);border:4px solid var(--good);padding:18px;color:var(--win-ink)}
+.lanswer b{font-family:var(--f-read);font-size:clamp(24px,4vw,40px)}
+.lboard{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.lboard li{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--win);border:3px solid var(--frame);color:var(--win-ink);font-size:clamp(17px,2.4vw,26px);animation:pop .35s both}
+.lboard li b{flex:1;min-width:0;overflow-wrap:anywhere}.lboard.small li{font-size:16px;padding:6px 10px}
+.lrk{font-family:var(--f-num);font-size:1.4em;color:var(--gold);min-width:1.4em}
+.lsc{font-family:var(--f-num);font-size:1.3em;color:var(--gold);white-space:nowrap}
+.lstreak{font-size:.8em}
+.lpodium{display:flex;justify-content:center;align-items:flex-end;gap:12px;margin:10px 0}
+.lpod{display:grid;justify-items:center;gap:6px;text-align:center;color:var(--ink);max-width:32%}
+.lpod b{overflow-wrap:anywhere}.lstep{width:100%;min-width:90px;background:var(--win);border:4px solid var(--gold);color:var(--gold);font-family:var(--f-display);font-size:28px;display:grid;place-items:center}
+.lpod.p1 .lstep{height:150px}.lpod.p2 .lstep{height:105px}.lpod.p3 .lstep{height:75px}
+.lme{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--win);border:3px solid var(--frame);color:var(--win-ink)}
+.lme b{flex:1;min-width:0;overflow-wrap:anywhere}
+.lwait{display:grid!important;gap:10px;justify-items:center;text-align:center;padding:26px 16px!important}
+.lbig{font-family:var(--f-display);font-weight:400;font-size:clamp(20px,6vw,30px);line-height:1.4;color:var(--gold);text-shadow:3px 3px 0 #000}
+.lresult{display:grid!important;gap:10px;justify-items:center;text-align:center;padding:28px 16px!important}
+.lresult.ok{border-color:var(--good)!important}.lresult.no{border-color:var(--bad)!important}
+.lresult.no .lbig{color:var(--bad)}.lpts{font-family:var(--f-num);font-size:30px;color:var(--good)}
+.lchs{display:flex;flex-wrap:wrap;gap:6px}.lchs button{min-width:44px;padding:8px 0;background:var(--tile);border:2px solid var(--win-line);color:var(--win-ink);font-family:var(--f-num);font-size:20px;cursor:pointer}
+.lchs button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:#000}
+.livecard{border-color:var(--gold)!important}
+@media (max-width:560px){.lchoices{grid-template-columns:1fr}.lch{min-height:64px}.lchoices.phone .lch{min-height:72px}}
 .lbsub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
 .crowns{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .matseg{margin-bottom:4px}
@@ -844,6 +893,8 @@ function render(){
   const app=$('#app'); app.innerHTML='';
   if(!me){ app.append(signInView()); const i=$('#nm'); i&&i.focus(); return; }
   if(!U.team){ app.append(teamGateView()); return; }
+  if(liveJoinCode&&!live){ live={role:'menu',code:liveJoinCode,unsub:[]}; liveJoinCode=null; try{ history.replaceState(null,'',location.pathname); }catch(e){} }
+  if(live){ app.append(liveView()); wireLive(); return; }
   if(tab==='memory') tab='materials';
   app.append(h(`<header class="bar"><div class="bar-in">
     <div class="brand"><b>John Quiz</b><span>BQF · Sept 2026 set</span></div>
@@ -862,7 +913,7 @@ function render(){
   if(tab==='verses') w.append(vc ? (vc.done? vResultsView() : vCardView()) : vSetupView());
   {const sel=app.querySelector('.tabs [aria-selected="true"]'); if(sel&&sel.scrollIntoView) try{sel.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}}
   app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(game&&game.type==='duel'&&game.phase==='reading'){stopVoice();game.phase='ready'}if(quiz&&tab==='practice'){quiz.deadline=null;if(quiz.state==='ask'&&quiz.t0&&!quiz.away)quiz.away=Date.now()}if(vc&&tab==='verses'){vc.deadline=null;if(vc.state==='ask'&&vc.t0&&!vc.away)vc.away=Date.now()}const nt=b.dataset.tab, moved=nt!==tab; tab=nt;confirmReset=false;render(); if(moved) window.scrollTo(0,0)});
-  $('#switch').onclick=()=>{musicStop();me=null;U=null;quiz=null;vc=null;game=null;goalEdit=false;goalDraft=null;applyTheme();render()};
+  $('#switch').onclick=()=>{liveStop();live=null;musicStop();me=null;U=null;quiz=null;vc=null;game=null;goalEdit=false;goalDraft=null;applyTheme();render()};
   $('#sndbtn').onclick=()=>{lsSet('sound',!soundOn());if(soundOn())sfx('ding');renderKeep()};
   wire();
 }
@@ -2370,6 +2421,7 @@ function gamesView(){
       <button class="gamecard" id="gspeed"><span class="gi">⚡</span><b>Speed Round</b><small>60 seconds. Answer as many as you can.</small><span class="pill n">Best: ${best}</span></button>
       <button class="gamecard" id="gdaily"><span class="gi">🌅</span><b>Daily Challenge</b><small>10 questions a day from the verses you've memorized. A new set every day!</small><span class="pill ${today?'g':memQuestionIds().length?'w':'n'}">${today?`Today: ${today.s}/${today.n||10}`:memQuestionIds().length?'Not played yet':'Memorize a verse to unlock'}</span></button>
       <button class="gamecard" id="gboss"><span class="gi">⚔️</span><b>Boss Battles</b><small>Beat each chapter's boss before you run out of hearts.</small><span class="pill n">${bosses}/21 defeated</span></button>
+      <button class="gamecard livecard" id="glive"><span class="gi">📡</span><b>Live Quiz</b><small>Everyone plays at once on their phones. Join with a code, or host on a big screen.</small><span class="pill g">Multiplayer</span></button>
       <button class="gamecard" id="gduel"><span class="gi">🔔</span><b>Buzzer Duel</b><small>Two players, one screen. First to buzz gets to answer.</small><span class="pill n">2 players</span></button>
     </div>
     <p class="hint" style="margin:0">Speed Round and Buzzer Duel use the verses picked on the Practice tab (now: John ${esc(rangeLabel(U.sel))}).</p>
@@ -2471,6 +2523,7 @@ function wireGames(){
   on('#gdaily',dailyStart);
   on('#gboss',()=>{game={type:'boss'};render()});
   on('#gduel',()=>{game={type:'duel',phase:'setup'};render()});
+  on('#glive',()=>{live={role:'menu',unsub:[]};render();window.scrollTo(0,0)});
   on('#ghome',()=>{if(game)clearTimeout(game.adv);stopVoice();game=null;render()});
   on('#gagain',speedStart);
   on('#gquit',speedEnd);
@@ -2648,6 +2701,223 @@ function wireLeaders(){
   document.querySelectorAll('[data-lbtmode]').forEach(b=>b.onclick=()=>{lbTeamMode=b.dataset.lbtmode;renderKeep()});
   const r=$('#lbrefresh'); if(r) r.onclick=()=>{loadLeaders(true);renderKeep()};
   if(tab==='scores'||(tab==='practice'&&!quiz)||(tab==='games'&&!game)) loadLeaders(false);
+}
+
+/* ---------- Live Quiz (host on a big screen, everyone plays on their phones) ---------- */
+// Uses a Firebase Realtime Database through its REST + streaming API (no extra libraries).
+const LIVE_DB='__FIREBASE_URL__'.replace(/\/+$/,'');
+const liveOn=()=>/^https?:\/\/[^_]/.test(LIVE_DB);
+const LDB={
+  u:p=>LIVE_DB+'/'+p+'.json',
+  async req(m,p,v){ const r=await fetch(LDB.u(p),{method:m,headers:{'Content-Type':'application/json'},body:v===undefined?undefined:JSON.stringify(v)}); if(!r.ok) throw new Error('db '+r.status); return r.json(); },
+  get:p=>LDB.req('GET',p), put:(p,v)=>LDB.req('PUT',p,v), patch:(p,v)=>LDB.req('PATCH',p,v), del:p=>LDB.req('DELETE',p),
+  listen(p,cb){ let data=null, es=null, closed=false;
+    const setPath=(path,val)=>{ const ks=path.split('/').filter(Boolean); if(!ks.length){ data=val; return; }
+      if(!data||typeof data!=='object') data={}; let n=data; for(let i=0;i<ks.length-1;i++){ if(!n[ks[i]]||typeof n[ks[i]]!=='object') n[ks[i]]={}; n=n[ks[i]]; }
+      const last=ks[ks.length-1]; if(val===null) delete n[last]; else n[last]=val; };
+    es=new EventSource(LDB.u(p));
+    es.addEventListener('put',e=>{ if(closed) return; const d=JSON.parse(e.data); setPath(d.path,d.data); cb(data); });
+    es.addEventListener('patch',e=>{ if(closed) return; const d=JSON.parse(e.data); for(const k in (d.data||{})) setPath((d.path==='/'?'':d.path)+'/'+k,d.data[k]); cb(data); });
+    es.addEventListener('cancel',()=>es.close());
+    return ()=>{ closed=true; try{es.close()}catch(e){} }; }
+};
+const LIVE_SHAPES=[['♥','c0'],['◆','c1'],['★','c2'],['●','c3']];
+let live=null, liveJoinCode=null;
+try{ const j=new URLSearchParams(location.search).get('join'); if(j) liveJoinCode=j.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5); }catch(e){}
+const liveJoinUrl=code=>location.origin+location.pathname+'?join='+code;
+function liveStop(){ if(!live) return; (live.unsub||[]).forEach(f=>{try{f()}catch(e){}}); clearInterval(live.tick); clearTimeout(live.auto); live.unsub=[]; }
+function liveExit(){ liveStop(); if(live&&live.role==='host'&&live.code) LDB.del('rooms/'+live.code).catch(()=>{}); live=null; render(); }
+function liveRoomCode(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c=''; for(let i=0;i<5;i++) c+=A[Math.floor(Math.random()*A.length)]; return c; }
+// Three believable wrong answers from the same chapter, closest in length first.
+function liveChoices(q){ const right=q.a[0], wc=right.split(/\s+/).length, seen=new Set(q.a.map(norm));
+  const pick=pool=>{ shuffle(pool); pool.sort((a,b)=>Math.abs(a.split(/\s+/).length-wc)-Math.abs(b.split(/\s+/).length-wc)); const out=[];
+    for(const a of pool){ const n=norm(a); if(!n||seen.has(n)) continue; seen.add(n); out.push(a); if(out.length===3) break; } return out; };
+  let wrong=pick(Q.filter(x=>x.c===q.c&&x.id!==q.id).map(x=>x.a[0])); if(wrong.length<3) wrong=wrong.concat(pick(Q.filter(x=>x.id!==q.id).map(x=>x.a[0]))).slice(0,3);
+  const list=shuffle([right,...wrong]); return {list,correct:list.indexOf(right)}; }
+
+/* ----- host ----- */
+function liveHostSetup(){ const chs=[...new Set(U.sel.map(k=>+k.split(':')[0]))].sort((a,b)=>a-b);
+  live={role:'host',phase:'setup',cfg:{chs:chs.length?chs:[1],mode:'choice',n:10,time:20,teams:true,speak:false},unsub:[]}; render(); }
+async function liveCreate(){ const L=live, cfg=L.cfg;
+  const ids=Q.filter(q=>cfg.chs.includes(q.c)).map(q=>q.id); if(!ids.length){ L.err='Pick at least one chapter.'; render(); return; }
+  L.busy=true; L.err=''; render();
+  try{
+    let code=''; for(let i=0;i<6;i++){ const c=liveRoomCode(), h=await LDB.get('rooms/'+c+'/host'); if(!h||!(h.created>Date.now()-864e5)){ code=c; break; } }
+    if(!code) throw new Error('no code');
+    L.order=shuffle(ids.slice()).slice(0,cfg.n); L.code=code; L.players={}; L.phase='lobby';
+    await LDB.put('rooms/'+code,{host:{name:me,created:Date.now()},cfg:{mode:cfg.mode,n:L.order.length,time:cfg.time,teams:cfg.teams},state:{phase:'lobby',n:L.order.length,mode:cfg.mode}});
+    L.unsub.push(LDB.listen('rooms/'+code+'/players',d=>{ L.players=d||{}; if(['lobby','question'].includes(L.phase)) liveRefresh(); }));
+  }catch(e){ L.err="Couldn't start a game. Check your internet and try again."; L.phase='setup'; }
+  L.busy=false; render(); }
+const livePlayers=()=>Object.entries((live&&live.players)||{}).map(([pid,p])=>Object.assign({pid},p)).filter(p=>p&&p.name);
+async function liveStartQ(i){ const L=live; clearInterval(L.tick); clearTimeout(L.auto); if(L.ansUnsub){L.ansUnsub();L.ansUnsub=null}
+  const qid=L.order[i], q=Q[qid], ch=L.cfg.mode==='choice'?liveChoices(q):{list:null,correct:-1};
+  L.i=i; L.cur={qid,choices:ch.list,correct:ch.correct}; L.answers={}; L.phase='question'; L.qStart=Date.now();
+  const st={phase:'question',i,n:L.order.length,qid,ref:q.c+':'+q.v,q:q.q,choices:ch.list||null,time:L.cfg.time,mode:L.cfg.mode,at:Date.now()};
+  render();
+  try{ await LDB.put('rooms/'+L.code+'/state',st); }catch(e){}
+  L.ansUnsub=LDB.listen('rooms/'+L.code+'/answers/'+i,d=>{ if(live!==L||L.phase!=='question'||L.i!==i) return; L.answers=d||{}; const n=livePlayers().length;
+    if(n&&Object.keys(L.answers).length>=n){ clearTimeout(L.auto); L.auto=setTimeout(()=>liveReveal(),700); } liveRefresh(); });
+  if(L.cfg.speak) speak(`According to ${q.c}, ${q.v}. ${q.q}?`);
+  L.tick=setInterval(()=>{ if(live!==L||L.phase!=='question'){clearInterval(L.tick);return}
+    const left=Math.max(0,L.cfg.time*1000-(Date.now()-L.qStart)), el=document.getElementById('lclock'); if(el) el.textContent=Math.ceil(left/1000);
+    const bar=document.getElementById('lbar'); if(bar) bar.style.width=(100*left/(L.cfg.time*1000))+'%';
+    if(left<=0){ clearInterval(L.tick); liveReveal(); } },200); }
+async function liveReveal(){ const L=live; if(!L||L.phase!=='question') return; clearInterval(L.tick); clearTimeout(L.auto); if(L.ansUnsub){L.ansUnsub();L.ansUnsub=null}
+  L.phase='reveal'; try{ speechSynthesis.cancel(); }catch(e){}
+  const q=Q[L.cur.qid], T=L.cfg.time*1000, upd={}, dist=[0,0,0,0]; let nRight=0;
+  livePlayers().forEach(p=>{ const a=L.answers[p.pid]; let ok=false, given=null;
+    if(a){ given=a.c; ok=L.cfg.mode==='choice'?(+a.c===L.cur.correct):grade(q,String(a.c||''))!=='wrong'; if(L.cfg.mode==='choice'&&dist[+a.c]!=null) dist[+a.c]++; }
+    const streak=ok?(p.streak||0)+1:0, t=a?Math.min(T,Math.max(0,+a.t||0)):T;
+    const pts=ok?Math.round(1000*(1-0.5*t/T))+Math.min(4,streak-1)*100:0; if(ok) nRight++;
+    p.score=(p.score||0)+pts; p.streak=streak;
+    upd[p.pid]={name:p.name,av:p.av||'',team:p.team||'',joined:p.joined||0,score:p.score,streak,last:{i:L.i,ok,pts,answered:!!a,given:given==null?null:String(given).slice(0,60)}}; });
+  L.players=Object.assign({},L.players,upd); L.dist=dist; L.nRight=nRight; L.nAns=Object.keys(L.answers).length;
+  render();
+  try{ if(Object.keys(upd).length) await LDB.patch('rooms/'+L.code+'/players',upd);
+    await LDB.put('rooms/'+L.code+'/state',{phase:'reveal',i:L.i,n:L.order.length,qid:L.cur.qid,ref:q.c+':'+q.v,q:q.q,choices:L.cur.choices||null,correct:L.cur.correct,answer:q.a.join(' or '),mode:L.cfg.mode,dist,nRight,nAns:L.nAns}); }catch(e){} }
+function liveRanks(){ const ps=livePlayers().sort((a,b)=>(b.score||0)-(a.score||0)||a.name.localeCompare(b.name)); const ranks={}; ps.forEach((p,i)=>ranks[p.pid]=i+1); return {ps,ranks}; }
+function liveTeams(ps){ const m={}; ps.forEach(p=>{ if(!p.team) return; const t=m[p.team.toLowerCase()]||(m[p.team.toLowerCase()]={name:p.team,total:0,n:0}); t.total+=p.score||0; t.n++; });
+  return Object.values(m).map(t=>Object.assign(t,{avg:Math.round(t.total/t.n)})).sort((a,b)=>b.avg-a.avg); }
+async function liveBoard(final){ const L=live; const {ps,ranks}=liveRanks(); L.phase=final?'done':'board'; render();
+  const top=ps.slice(0,final?3:5).map(p=>({name:p.name,av:p.av||'',score:p.score||0,team:p.team||''}));
+  try{ await LDB.put('rooms/'+L.code+'/state',{phase:L.phase,i:L.i,n:L.order.length,top,ranks,count:ps.length,teams:L.cfg.teams?liveTeams(ps):null}); }catch(e){}
+  if(final){ celebrate(true); sfx('level'); } }
+function liveNext(){ const L=live; if(L.phase==='reveal') return liveBoard(L.i>=L.order.length-1); if(L.phase==='board') return liveStartQ(L.i+1); }
+
+/* ----- player ----- */
+async function liveJoin(raw){ const code=String(raw||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5); const L=live;
+  if(code.length!==5){ L.err='Room codes have 5 letters and numbers.'; render(); return; }
+  L.busy=true; L.err=''; render();
+  try{ const h=await LDB.get('rooms/'+code+'/host'); if(!h){ L.busy=false; L.err=`There's no game with the code ${code}. Check the big screen.`; render(); return; }
+    let pid=''; try{ pid=sessionStorage.getItem('live:'+code)||''; }catch(e){}
+    if(!pid){ pid=Math.random().toString(36).slice(2,12); try{ sessionStorage.setItem('live:'+code,pid); }catch(e){} }
+    const old=await LDB.get('rooms/'+code+'/players/'+pid);
+    await LDB.put('rooms/'+code+'/players/'+pid,Object.assign({score:0,streak:0},old||{},{name:me,av:myAv(),team:U.team&&U.team!==NO_TEAM?U.team:'',joined:(old&&old.joined)||Date.now()}));
+    live={role:'player',code,pid,host:h.name||'',st:null,p:null,qi:-1,ans:null,xpDone:{},unsub:[]};
+    live.unsub.push(LDB.listen('rooms/'+code+'/state',d=>liveOnState(d)));
+    live.unsub.push(LDB.listen('rooms/'+code+'/players/'+pid,d=>{ if(!live||live.role!=='player') return; if(d) live.p=d; if(live.st&&live.st.phase!=='question') liveRefresh(); }));
+    render();
+  }catch(e){ L.busy=false; L.err="Couldn't join. Check your internet and try again."; render(); } }
+function liveOnState(st){ const L=live; if(!L||L.role!=='player') return;
+  if(st===null&&L.st){ L.st={phase:'ended'}; render(); return; }
+  if(!st) return;
+  const prev=L.st; L.st=st;
+  if(st.phase==='question'&&st.i!==L.qi){ L.qi=st.i; L.t0=performance.now(); L.ans=null; L.draft=''; clearInterval(L.tick);
+    L.tick=setInterval(()=>{ if(live!==L||!L.st||L.st.phase!=='question'){clearInterval(L.tick);return}
+      const left=Math.max(0,L.st.time*1000-(performance.now()-L.t0)), el=document.getElementById('lclock'); if(el) el.textContent=Math.ceil(left/1000);
+      const bar=document.getElementById('lbar'); if(bar) bar.style.width=(100*left/(L.st.time*1000))+'%';
+      if(left<=0&&L.ans==null){ clearInterval(L.tick); L.ans='late'; render(); } },200); }
+  if(st.phase==='reveal'&&!L.xpDone[st.i]){ L.xpDone[st.i]=1; setTimeout(()=>{ if(live!==L) return; const last=L.p&&L.p.last;
+      const ok=!!(last&&last.i===st.i&&last.ok); if(last&&last.i===st.i&&last.answered){ record(st.qid,ok,{streak:ok?(L.p.streak||0):0,words:null}); save(); react(ok,ok?(L.p.streak||0):0); } render(); },400); }
+  if(!prev||prev.phase!==st.phase||prev.i!==st.i) render(); }
+async function liveAnswer(c){ const L=live; if(!L||L.role!=='player'||!L.st||L.st.phase!=='question'||L.ans!=null) return;
+  const t=Math.round(performance.now()-L.t0); if(t>L.st.time*1000+500){ L.ans='late'; render(); return; }
+  L.ans=c; render(); sfx('ding');
+  try{ await LDB.put('rooms/'+L.code+'/answers/'+L.st.i+'/'+L.pid,{c,t}); }catch(e){ L.ans=null; L.err="Your answer didn't send. Tap it again."; render(); } }
+
+/* ----- views ----- */
+function liveTop(title){ return `<div class="ltop"><span class="label">📡 Live Quiz${title?' · '+title:''}</span><button class="btn ghost small" id="lexit">${live&&live.role==='host'&&live.phase!=='setup'?'End game':'Leave'}</button></div>`; }
+function liveView(){ const L=live;
+  if(!liveOn()) return h(`<main class="wrap live"><section>${liveTop('')}<div class="panel" style="display:grid;gap:10px"><b class="evtitle">Live Quiz is almost ready!</b><p class="hint" style="margin:0">Mr. Maas just needs to finish connecting it. Check back soon.</p></div></section></main>`);
+  if(L.role==='menu') return h(`<main class="wrap live"><section>${liveTop('')}
+    <div class="panel" style="display:grid;gap:12px"><span class="label">Join a game</span><p class="hint" style="margin:0">Type the code on the big screen.</p>
+      <form id="ljoin" class="row" style="flex-wrap:nowrap"><input type="text" id="lcode" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" value="${esc(L.code||'')}" style="flex:1;text-transform:uppercase;letter-spacing:.2em"><button class="btn" type="submit">${L.busy?'Joining…':'Join'}</button></form>
+      ${L.err?`<p style="color:var(--bad);font-weight:700;margin:0">${esc(L.err)}</p>`:''}
+      <span class="hint">You'll play as <b>${esc(me)}</b>${U.team&&U.team!==NO_TEAM?` for <b>${esc(U.team)}</b>`:''}.</span></div>
+    <div class="panel" style="display:grid;gap:10px"><span class="label">Host a game</span><p class="hint" style="margin:0">Run a game on a TV or projector. Everyone joins on their phones with a code.</p><button class="btn ghost" id="lhost" style="justify-self:start">Host a Live Quiz</button></div>
+  </section></main>`);
+  if(L.role==='host') return h(liveHostView());
+  return h(livePlayerView()); }
+function liveHostView(){ const L=live, c=L.cfg;
+  if(L.phase==='setup'){ const segL=(k,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-lcfg="${k}" data-val="${v}" aria-pressed="${String(c[k])===String(v)}">${l}</button>`).join('')}</div>`;
+    return `<main class="wrap live"><section>${liveTop('Host')}<div><div class="label">Host a Live Quiz</div><h2>Set up your game</h2></div>
+      <div class="panel" style="display:grid;gap:14px">
+        <div style="display:grid;gap:8px"><span class="label">Chapters</span><div class="lchs">${CH.map(n=>`<button data-lch="${n}" aria-pressed="${c.chs.includes(n)}">${n}</button>`).join('')}</div>
+          <div class="row"><button class="x" id="lchall">All</button><button class="x" id="lchnone">None</button><span class="hint">${Q.filter(q=>c.chs.includes(q.c)).length} questions to draw from</span></div></div>
+        <div class="row" style="justify-content:space-between"><span class="label">Answers</span>${segL('mode',[['choice','Pick from 4'],['type','Type it']])}</div>
+        <div class="row" style="justify-content:space-between"><span class="label">Questions</span>${segL('n',[[5,'5'],[10,'10'],[15,'15'],[20,'20']])}</div>
+        <div class="row" style="justify-content:space-between"><span class="label">Seconds each</span>${segL('time',[[10,'10'],[20,'20'],[30,'30']])}</div>
+        <div class="row" style="justify-content:space-between"><span class="label">Team standings</span>${segL('teams',[['true','On'],['false','Off']])}</div>
+        <div class="row" style="justify-content:space-between"><span class="label">Read questions aloud</span>${segL('speak',[['true','On'],['false','Off']])}</div>
+        ${L.err?`<p style="color:var(--bad);font-weight:700;margin:0">${esc(L.err)}</p>`:''}
+        <button class="btn" id="lcreate">${L.busy?'Creating…':'Create game'}</button>
+      </div></section></main>`; }
+  const ps=livePlayers();
+  if(L.phase==='lobby') return `<main class="wrap live host"><section>${liveTop('Host')}
+    <div class="panel ljoinbox"><div><span class="label">Join on your phone</span><div class="lurl">${esc(liveJoinUrl(L.code).replace(/^https?:\/\//,''))}</div><span class="hint">or open the study site → Games → Live Quiz, and type the code</span></div><div class="lcodebig">${L.code}</div></div>
+    <div class="row" style="justify-content:space-between"><b class="evtitle">${ps.length} player${ps.length===1?'':'s'} in</b><button class="btn" id="lstart" ${ps.length?'':'disabled'}>Start game</button></div>
+    <div class="lplayers">${ps.sort((a,b)=>(a.joined||0)-(b.joined||0)).map(p=>`<div class="lp">${avSvg(p.av||avDefault(p.name),48,p.name)}<b>${esc(p.name)}</b>${p.team?`<small>${esc(p.team)}</small>`:''}</div>`).join('')||'<p class="hint">Waiting for players…</p>'}</div>
+  </section></main>`;
+  const q=L.cur?Q[L.cur.qid]:null;
+  if(L.phase==='question'){ const left=Math.max(0,c.time*1000-(Date.now()-L.qStart)), n=Object.keys(L.answers||{}).length;
+    return `<main class="wrap live host"><section>${liveTop(`Question ${L.i+1} of ${L.order.length}`)}
+      <div class="lqhead"><span class="lref">John ${q.c}:${q.v}</span><span class="lclock" id="lclock">${Math.ceil(left/1000)}</span><span class="lcount"><b>${n}</b> / ${ps.length} answered</span></div>
+      <div class="tbar lbarw"><i id="lbar" style="width:${100*left/(c.time*1000)}%"></i></div>
+      <div class="lq">${withRef(q.c,q.v,fmtQ(q.q))}?</div>
+      ${c.mode==='choice'?`<div class="lchoices">${L.cur.choices.map((t,k)=>`<div class="lch ${LIVE_SHAPES[k][1]}"><span class="lsh">${LIVE_SHAPES[k][0]}</span>${esc(t)}</div>`).join('')}</div>`:`<p class="hint" style="text-align:center">Players are typing their answers…</p>`}
+      <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="lskip">Show answer now</button></div></section></main>`; }
+  if(L.phase==='reveal') return `<main class="wrap live host"><section>${liveTop(`Question ${L.i+1} of ${L.order.length}`)}
+    <div class="lqhead"><span class="lref">John ${q.c}:${q.v}</span><span class="lcount"><b>${L.nRight}</b> / ${ps.length} got it</span></div>
+    <div class="lq">${withRef(q.c,q.v,fmtQ(q.q))}?</div>
+    ${c.mode==='choice'?`<div class="lchoices">${L.cur.choices.map((t,k)=>`<div class="lch ${LIVE_SHAPES[k][1]} ${k===L.cur.correct?'right':'dim'}"><span class="lsh">${LIVE_SHAPES[k][0]}</span>${esc(t)}<span class="ldist">${L.dist[k]}</span></div>`).join('')}</div>`
+      :`<div class="lanswer"><span class="label">Answer</span><b>${q.a.map(fmtQ).join(' <span class="hint">or</span> ')}</b></div>`}
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="lnext">${L.i>=L.order.length-1?'Final results':'Leaderboard'} →</button></div></section></main>`;
+  const {ps:ranked}=liveRanks(), teams=c.teams?liveTeams(ranked):[];
+  if(L.phase==='board') return `<main class="wrap live host"><section>${liveTop(`After question ${L.i+1} of ${L.order.length}`)}
+    <h2 class="evtitle" style="font-size:22px">Leaderboard</h2>
+    <ol class="lboard">${ranked.slice(0,5).map((p,i)=>`<li><span class="lrk">${i+1}</span>${avSvg(p.av||avDefault(p.name),40,p.name)}<b>${esc(p.name)}</b>${p.streak>=2?`<span class="lstreak">🔥${p.streak}</span>`:''}<span class="lsc">${(p.score||0).toLocaleString()}</span></li>`).join('')}</ol>
+    ${teams.length>1?`<div class="panel" style="display:grid;gap:8px"><span class="label">Teams (average score)</span>${teams.map((t,i)=>`<div class="row" style="justify-content:space-between"><b>${i+1}. ${esc(t.name)} <span class="hint">· ${t.n} player${t.n===1?'':'s'}</span></b><span class="lsc">${t.avg.toLocaleString()}</span></div>`).join('')}</div>`:''}
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="lnext">Next question →</button></div></section></main>`;
+  const pod=ranked.slice(0,3);
+  return `<main class="wrap live host"><section>${liveTop('Final results')}
+    <h2 class="evtitle" style="font-size:24px;text-align:center">🏆 Final results</h2>
+    <div class="lpodium">${[1,0,2].filter(i=>pod[i]).map(i=>`<div class="lpod p${i+1}">${avSvg(pod[i].av||avDefault(pod[i].name),i===0?84:64,pod[i].name)}<b>${esc(pod[i].name)}</b><span class="lsc">${(pod[i].score||0).toLocaleString()}</span><div class="lstep">${i+1}</div></div>`).join('')}</div>
+    ${teams.length>1?`<div class="panel" style="display:grid;gap:8px"><span class="label">Winning team: ${esc(teams[0].name)} 🛡️</span>${teams.map((t,i)=>`<div class="row" style="justify-content:space-between"><b>${i+1}. ${esc(t.name)}</b><span class="lsc">${t.avg.toLocaleString()} avg</span></div>`).join('')}</div>`:''}
+    <ol class="lboard small">${ranked.slice(3).map((p,i)=>`<li><span class="lrk">${i+4}</span>${avSvg(p.av||avDefault(p.name),28,p.name)}<b>${esc(p.name)}</b><span class="lsc">${(p.score||0).toLocaleString()}</span></li>`).join('')}</ol>
+    <div class="row" style="justify-content:center"><button class="btn" id="lagain">New game</button><button class="btn ghost" id="lclose">Close room</button></div></section></main>`; }
+function livePlayerView(){ const L=live, st=L.st, p=L.p||{};
+  const head=`<div class="lme">${avSvg(myAv(),36,me)}<b>${esc(me)}</b><span class="lsc">${(p.score||0).toLocaleString()}</span></div>`;
+  if(!st) return `<main class="wrap live"><section>${liveTop(L.code)}${head}<p class="hint">Connecting…</p></section></main>`;
+  if(st.phase==='ended') return `<main class="wrap live"><section>${liveTop(L.code)}${head}<div class="panel"><b class="evtitle">The game has ended.</b><p class="hint" style="margin:0">Thanks for playing!</p></div></section></main>`;
+  if(st.phase==='lobby') return `<main class="wrap live"><section>${liveTop(L.code)}${head}<div class="panel lwait"><b class="evtitle">You're in! 🎉</b><p class="hint" style="margin:0">Watch the big screen. The game starts soon.</p></div></section></main>`;
+  if(st.phase==='question'){ const left=Math.max(0,st.time*1000-(performance.now()-(L.t0||performance.now())));
+    let body;
+    if(L.ans==='late') body=`<div class="panel lwait"><b class="evtitle">Time's up!</b><p class="hint" style="margin:0">Get ready for the next one.</p></div>`;
+    else if(L.ans!=null) body=`<div class="panel lwait"><b class="evtitle">Answer locked in! 🔒</b>${st.mode==='choice'?`<div class="lch ${LIVE_SHAPES[L.ans][1]} mini"><span class="lsh">${LIVE_SHAPES[L.ans][0]}</span>${esc(st.choices[L.ans])}</div>`:`<p style="margin:0"><b>${esc(L.ans)}</b></p>`}<p class="hint" style="margin:0">Waiting for everyone else…</p></div>`;
+    else if(st.mode==='choice') body=`<div class="lchoices phone">${st.choices.map((t,k)=>`<button class="lch ${LIVE_SHAPES[k][1]}" data-lans="${k}"><span class="lsh">${LIVE_SHAPES[k][0]}</span>${esc(t)}</button>`).join('')}</div>`;
+    else body=`<form id="ltype" class="ansrow" autocomplete="off"><input type="text" id="lans" placeholder="Your answer" autocomplete="off" value="${esc(L.draft||'')}"><button class="btn" type="submit">Send</button></form>`;
+    return `<main class="wrap live"><section>${liveTop(`Question ${st.i+1} of ${st.n}`)}${head}
+      <div class="lqhead"><span class="lref">John ${esc(st.ref)}</span><span class="lclock" id="lclock">${Math.ceil(left/1000)}</span></div>
+      <div class="tbar lbarw"><i id="lbar" style="width:${100*left/(st.time*1000)}%"></i></div>
+      <div class="lq phone">${withRef(...String(st.ref).split(':'),fmtQ(st.q))}?</div>${body}
+      ${L.err?`<p style="color:var(--bad);font-weight:700">${esc(L.err)}</p>`:''}</section></main>`; }
+  if(st.phase==='reveal'){ const last=p.last&&p.last.i===st.i?p.last:null, ok=!!(last&&last.ok);
+    return `<main class="wrap live"><section>${liveTop(`Question ${st.i+1} of ${st.n}`)}${head}
+      <div class="panel lresult ${ok?'ok':'no'}"><b class="lbig">${ok?'Correct! ✓':last&&last.answered?'Not this time ✗':'No answer'}</b>
+        ${ok?`<span class="lpts">+${last.pts.toLocaleString()} points${p.streak>=2?` · 🔥 ${p.streak} in a row`:''}</span>`:''}
+        <span class="hint">Answer: <b>${esc(st.answer)}</b></span></div></section></main>`; }
+  const rank=st.ranks&&st.ranks[L.pid], tot=st.count||0;
+  if(st.phase==='board') return `<main class="wrap live"><section>${liveTop(`After question ${st.i+1} of ${st.n}`)}${head}
+    <div class="panel lwait"><span class="label">You're in</span><b class="lbig">${rank?ordinal(rank):'–'} place</b><span class="hint">out of ${tot} · ${(p.score||0).toLocaleString()} points</span></div></section></main>`;
+  return `<main class="wrap live"><section>${liveTop('Final results')}${head}
+    <div class="panel lwait"><span class="label">Final results</span><b class="lbig">${rank?ordinal(rank):'–'} place${rank===1?' 🏆':rank&&rank<=3?' 🎉':''}</b><span class="hint">out of ${tot} · ${(p.score||0).toLocaleString()} points</span>
+    ${st.top&&st.top.length?`<ol class="lboard small">${st.top.map((t,i)=>`<li><span class="lrk">${i+1}</span>${avSvg(t.av||avDefault(t.name),28,t.name)}<b>${esc(t.name)}</b><span class="lsc">${t.score.toLocaleString()}</span></li>`).join('')}</ol>`:''}</div></section></main>`; }
+const ordinal=n=>n+(n%100>=11&&n%100<=13?'th':['th','st','nd','rd'][n%10]||'th');
+// Re-render without losing typed text or focus
+function liveRefresh(){ const t=$('#lans'); if(t&&live) live.draft=t.value; render(); const t2=$('#lans'); if(t2){ t2.focus(); t2.setSelectionRange(t2.value.length,t2.value.length); } }
+function wireLive(){ const L=live; const on=(s,f)=>{const e=$(s); if(e) e.onclick=f};
+  on('#lexit',()=>{ if(L&&L.role==='host'&&!['setup','done'].includes(L.phase)&&!confirm('End this game for everyone?')) return; liveExit(); });
+  const jf=$('#ljoin'); if(jf){ const i=$('#lcode'); if(!L.code) i.focus(); jf.onsubmit=e=>{e.preventDefault(); liveJoin(i.value);}; }
+  on('#lhost',liveHostSetup);
+  document.querySelectorAll('[data-lcfg]').forEach(b=>b.onclick=()=>{ const k=b.dataset.lcfg, v=b.dataset.val; L.cfg[k]=v==='true'?true:v==='false'?false:isNaN(+v)?v:+v; render(); });
+  document.querySelectorAll('[data-lch]').forEach(b=>b.onclick=()=>{ const n=+b.dataset.lch, s=new Set(L.cfg.chs); s.has(n)?s.delete(n):s.add(n); L.cfg.chs=[...s].sort((a,b)=>a-b); render(); });
+  on('#lchall',()=>{ L.cfg.chs=CH.slice(); render(); }); on('#lchnone',()=>{ L.cfg.chs=[]; render(); });
+  on('#lcreate',liveCreate); on('#lstart',()=>liveStartQ(0)); on('#lskip',liveReveal); on('#lnext',liveNext);
+  on('#lagain',()=>{ const cfg=L.cfg; liveStop(); LDB.del('rooms/'+L.code).catch(()=>{}); live={role:'host',phase:'setup',cfg,unsub:[]}; render(); });
+  on('#lclose',()=>liveExit());
+  document.querySelectorAll('[data-lans]').forEach(b=>b.onclick=()=>liveAnswer(+b.dataset.lans));
+  const tf=$('#ltype'); if(tf){ const i=$('#lans'); if(document.activeElement!==i) i.focus(); i.oninput=()=>{L.draft=i.value}; tf.onsubmit=e=>{e.preventDefault(); const v=i.value.trim(); if(v) liveAnswer(v);}; }
 }
 
 /* ---------- wiring ---------- */

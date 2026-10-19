@@ -1,0 +1,15 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$room": {
+        ".read": true,
+        ".write": true,
+        ".validate": "$room.matches(/^[A-Z0-9]{5}$/)",
+        "players": { "$pid": { ".validate": "$pid.matches(/^[a-z0-9]{4,12}$/) && newData.child('name').isString() && newData.child('name').val().length <= 40" } },
+        "answers": { "$i": { "$pid": { ".validate": "newData.child('t').isNumber()" } } }
+      }
+    }
+  }
+}
