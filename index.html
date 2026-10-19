@@ -1331,8 +1331,6 @@ function progressView(){
   return h(`<section>
     <div><div class="label">Progress</div><h2 style="font-size:28px;font-weight:800">How ${esc(me)} is doing</h2></div>
     ${teamPanel()}
-    ${eventBanners()}
-    ${avatarPanel()}
     ${(()=>{const l=levelOf(U.xp);return `<div class="panel lvlpanel"><div class="lvlbig">${l.level}<small>level</small></div>
       <div style="display:grid;gap:6px;min-width:0"><b style="font-family:var(--f-display);font-size:19px">${esc(l.title)}</b>
         <div class="goldbar"><i style="width:${(100*l.into/l.span).toFixed(1)}%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></i></div>
@@ -1349,6 +1347,8 @@ function progressView(){
           <div class="days14" title="Last 14 days">${last.map(k=>`<i class="${U.frozen&&U.frozen[k]?'frz':set.has(k)?'hit':(U.days&&U.days[k]?'some':'')} ${k===dayKey()?'today':''}" title="${k}: ${(U.days&&U.days[k])||0}"></i>`).join('')}</div>
           <span class="hint">Last 14 days</span>
         </div></div>`})()}
+    ${eventBanners()}
+    ${avatarPanel()}
     <div class="stats">
       <div class="stat"><span class="label">Questions tried</span><b>${ids.length}</b><span class="hint">of ${Q.length}</span></div>
       <div class="stat"><span class="label">Accuracy</span><b>${att?pct(rt,att)+'%':'—'}</b><span class="hint">${rt} right of ${att} answers</span></div>
