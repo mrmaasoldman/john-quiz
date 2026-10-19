@@ -450,6 +450,13 @@ section{animation:none}
 </style>
 <style id="zelda">
 .vqbox{display:grid;gap:8px}
+.vqbtns{gap:8px}
+.vread{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:stretch}
+.vrnav{min-width:40px;font-size:26px;line-height:1;background:var(--tile);border:2px solid var(--win-line);color:var(--win-ink);cursor:pointer}
+.vrnav:disabled{opacity:.3;cursor:default}
+.vrtext{padding:10px 12px;background:var(--tile);border:2px solid var(--win-line);color:var(--win-ink);font-family:var(--f-read);font-size:17px;line-height:1.5}
+.vrhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}
+.vrref{font-family:var(--f-num);font-size:22px;font-weight:400;color:var(--gold)}
 .vqbox > .btn{justify-self:start}
 .vqlist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .vqlist li{display:grid;gap:3px;padding:10px 12px;background:var(--tile);border:2px solid var(--win-line);font-family:var(--f-read)}
@@ -1241,15 +1248,25 @@ function addWord(){
   quiz.shown++; if(!partial()) quiz.dq=''; render();
 }
 // "See all questions on this verse" — shown with an answer so students can study the whole verse.
-let vqOpen=null;
-function verseQs(q){ const key=q.c+':'+q.v, ids=byVerse[key]||[]; if(ids.length<2) return '';
-  const open=vqOpen===key;
-  return `<div class="vqbox"><button class="btn ghost small" data-vq="${key}" aria-expanded="${open}">${open?'▲ Hide':'📖 See all'} ${ids.length} questions on ${key}</button>
+let vqOpen=null, vrOpen=null; // vrOpen: the verse being read {base,c,v}; the arrows step to the verse before/after
+const vNeighbor=(c,v,d)=>{ if(d<0) return v>1?[c,v-1]:c>1?[c-1,VERSES_IN_JOHN[c-2]]:null; return v<VERSES_IN_JOHN[c-1]?[c,v+1]:c<21?[c+1,1]:null; };
+function verseRead(q){ const key=q.c+':'+q.v; if(!vrOpen||vrOpen.base!==key) return '';
+  const {c,v}=vrOpen, prev=vNeighbor(c,v,-1), next=vNeighbor(c,v,1), here=c===q.c&&v===q.v, rel=here?'Your verse':((c*1000+v)<(q.c*1000+q.v)?'Before':'After');
+  return `<div class="vread"><button class="vrnav" ${prev?`data-vrgo="${prev.join(':')}"`:'disabled'} aria-label="Verse before">‹</button>
+    <div class="vrtext"><div class="vrhead"><b class="vrref">John ${c}:${v}</b><span class="hint">${rel}</span>${here?'':`<button class="x" data-vrgo="${key}">Back to ${key}</button>`}</div>${esc(vText(c,v)||'Verse text not available.')}</div>
+    <button class="vrnav" ${next?`data-vrgo="${next.join(':')}"`:'disabled'} aria-label="Verse after">›</button></div>`; }
+function verseQs(q){ const key=q.c+':'+q.v, ids=byVerse[key]||[], hasText=!!vText(q.c,q.v);
+  if(ids.length<2&&!hasText) return '';
+  const open=vqOpen===key, rd=!!(vrOpen&&vrOpen.base===key);
+  return `<div class="vqbox"><div class="row vqbtns">${hasText?`<button class="btn ghost small" data-vr="${key}" aria-expanded="${rd}">${rd?'▲ Hide verse':'📖 Read '+key}</button>`:''}${ids.length>1?`<button class="btn ghost small" data-vq="${key}" aria-expanded="${open}">${open?'▲ Hide':'📋 All'} ${ids.length} questions</button>`:''}</div>
+    ${verseRead(q)}
     ${open?`<ol class="vqlist">${ids.map(id=>{const x=Q[id];return `<li class="${id===q.id?'cur':''}"><span class="vqq">${fmtQ(x.q)}?${x.aq&&x.aq.length?` <span class="hint">[or ${x.aq.map(a=>esc(a)+'?').join(' or ')}]</span>`:''}</span><span class="vqa">${x.a.map(fmtQ).join(' <span class="hint">or</span> ')}</span>${id===q.id?'<span class="you">This one</span>':''}</li>`}).join('')}</ol>`:''}
   </div>`; }
-function wireVerseQs(){ document.querySelectorAll('[data-vq]').forEach(b=>b.onclick=()=>{ vqOpen=vqOpen===b.dataset.vq?null:b.dataset.vq; renderKeep(); }); }
+function wireVerseQs(){ document.querySelectorAll('[data-vq]').forEach(b=>b.onclick=()=>{ vqOpen=vqOpen===b.dataset.vq?null:b.dataset.vq; renderKeep(); });
+  document.querySelectorAll('[data-vr]').forEach(b=>b.onclick=()=>{ const k=b.dataset.vr; if(vrOpen&&vrOpen.base===k) vrOpen=null; else { const [c,v]=k.split(':').map(Number); vrOpen={base:k,c,v}; } renderKeep(); });
+  document.querySelectorAll('[data-vrgo]').forEach(b=>b.onclick=()=>{ if(!vrOpen) return; const [c,v]=b.dataset.vrgo.split(':').map(Number); vrOpen.c=c; vrOpen.v=v; renderKeep(); }); }
 function nextQ(){
-  quiz.i++; quiz.state='ask'; quiz.last=null; quiz.shown=null; quiz.deadline=null; quiz.t0=null; quiz.away=null; vqOpen=null;
+  quiz.i++; quiz.state='ask'; quiz.last=null; quiz.shown=null; quiz.deadline=null; quiz.t0=null; quiz.away=null; vqOpen=null; vrOpen=null;
   if(quiz.i>=quiz.ids.length) finishQuiz(); else render();
 }
 function finishQuiz(){
@@ -2353,7 +2370,7 @@ function gFinish(ok,typed){
   render(); react(ok,game.streak);
 }
 function gNext(){
-  if(!game) return; vqOpen=null;
+  if(!game) return; vqOpen=null; vrOpen=null;
   if(game.type==='boss'){ if(game.hp<=0) return bossEnd(true); if(game.hearts<=0) return bossEnd(false); game.qi=(game.qi+1)%game.ids.length; gNewQ(game.ids[game.qi]); render(); return; }
   if(game.type==='daily'){ game.qi++; if(game.qi>=game.ids.length) return dailyEnd(); gNewQ(game.ids[game.qi]); render(); return; }
 }
