@@ -2705,7 +2705,7 @@ function wireLeaders(){
 
 /* ---------- Live Quiz (host on a big screen, everyone plays on their phones) ---------- */
 // Uses a Firebase Realtime Database through its REST + streaming API (no extra libraries).
-const LIVE_DB='__FIREBASE_URL__'.replace(/\/+$/,'');
+const LIVE_DB='https://john-quiz-2-default-rtdb.firebaseio.com'.replace(/\/+$/,'');
 const liveOn=()=>/^https?:\/\/[^_]/.test(LIVE_DB);
 const LDB={
   u:p=>LIVE_DB+'/'+p+'.json',
