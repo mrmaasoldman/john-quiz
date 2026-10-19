@@ -2056,6 +2056,18 @@ const AV_MARK={
 const AV_LUTHER=['','','','...OOOOOOOOOO...','.OOGGGGGGGGGGOO.','OGGGGGGGGGGGGGGO','.OGGGGGGGGGGGGO.','..OOOOOOOOOOOO..','','','','','OO............OO','GWO..........OWG','GGWO........OWGG','GGGWOOOOOOOOWGGG'];
 const AV_HUMAN_EARS=['','','','','','','','','','O..............O','OF............FO','O..............O'];
 const AV_HUMANFACE=['','','','','','','','','','....WE....WE....','....EE....EE....','...P...NN...P...','.....E....E.....','......EEEE......'];
+// Hair for person avatars: back = drawn behind the head, top = over the forehead, side = long strands in front.
+const AV_HAIR={
+ short:{top:['','','','','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..']},
+ spiky:{top:['','','','....D..DD..D....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..']},
+ curly:{back:['','....DDDDDDDD....','..DDDDDDDDDDDD..','.DDDDDDDDDDDDDD.','.DDDDDDDDDDDDDD.','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','.DDDDDDDDDDDDDD.','..DD........DD..'],
+   top:['','','','','....DDDDDDDD....','..DDDDDDDDDDDD..','..DDDDDDDDDDDD..','..DDFDDFFDDFDD..']},
+ long:{top:['','','','','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..'],
+   side:['','','','','','','','','.DD..........DD.','DD............DD','DD............DD','DD............DD','DD............DD','DDD..........DDD','DDD..........DDD','.DD..........DD.']},
+ bun:{top:['','......DDDD......','.....DDDDDD.....','......DDDD......','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..']},
+ bald:{}};
+const AV_HAIRSTYLES=[['short','Short'],['spiky','Spiky'],['curly','Curly'],['long','Long'],['bun','Bun'],['bald','Bald']];
+const AV_HAIRCOLORS=[['hblack','#1e1e24'],['hdbrown','#3b2618'],['hbrown','#6b4a2e'],['hblond','#e8c15a'],['hred','#b5481f'],['hgray','#a8a8b0'],['hblue','#3f7fe0'],['hpink','#f06fb0']];
 const AV_SKINS=[['sa','#f6d3b3','#e3a98a'],['sb','#e8b48c','#cc8a62'],['sc','#c68a5e','#a46a40'],['sd','#8d5a3b','#6f4229'],['se','#5c3a24','#432818']];
 const AV_MANE=['','','....DDDDDDDD....','..DDDDDDDDDDDD..','.DDDDDDDDDDDDDD.','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','.DDDDDDDDDDDDDD.','..DDDDDDDDDDDD..'];
 const AV_POST={ koala:['','','','','','','','','','','.......NN.......','......NNNN......','......NNNN......'] };
@@ -2077,7 +2089,8 @@ const AV_ANIMALS=[
  {id:'raccoon',name:'Raccoon',lvl:13,ears:'round',mark:'mask',c:{F:'#8d8f96',I:'#e0e0e0',M:'#ececec',N:'#1e1e24',D:'#2e2e36',W:'#fff'}},
  {id:'lion',name:'Lion',lvl:14,ears:'round',mane:true,c:{F:'#f2c14e',I:'#c98a2b',M:'#fff1c9',N:'#8b4a2b',D:'#b5651d'}},
  {id:'unicorn',name:'Unicorn',lvl:16,ears:'pointy',horn:true,c:{F:'#ffffff',I:'#ffb3e6',M:'#ffffff',N:'#ff8fab',D:'#c58af9',Y:'#ffd23f'}},
- {id:'hoops',name:'Hoops Star',lvl:15,ears:'none',mark:'hair',human:true,c:{F:'#c68a5e',I:'#c68a5e',M:'#c68a5e',N:'#a46a40',D:'#1e1e24',P:'#e0857a'}},
+ {id:'person',name:'Quizzer',lvl:25,ears:'none',human:true,hairOpts:true,c:{F:'#c68a5e',I:'#c68a5e',M:'#c68a5e',N:'#a46a40',D:'#1e1e24',P:'#e0857a'}},
+ {id:'hoops',name:'Hoops Star',lvl:15,ears:'none',human:true,hairFixed:'short',c:{F:'#c68a5e',I:'#c68a5e',M:'#c68a5e',N:'#a46a40',D:'#1e1e24',P:'#e0857a'}},
  {id:'luther',name:'Martin Luther',lvl:999,event:'luther',ears:'none',mark:'lhair',human:true,skin:['#f2cfae','#d9a888'],c:{F:'#f2cfae',I:'#f2cfae',M:'#f2cfae',N:'#d9a888',D:'#6b4a2e',P:'#e8958a',G:'#26262e'}},
  {id:'dragon',name:'Dragon',lvl:18,ears:'horns',c:{F:'#4caf50',I:'#4caf50',M:'#a5d6a7',N:'#1b5e20',D:'#1b5e20',Y:'#ffe082'}},
 ];
@@ -2124,26 +2137,31 @@ function avDefault(name){ let hsh=0; for(const ch of String(name||'')) hsh=(hsh*
   return [starters[hsh%starters.length].id,'none','none',AV_BGS[hsh%8][0],AV_COLORS[(hsh>>>3)%7][0]].join('.'); }
 function avParse(code,name){ const d=avDefault(name).split('.'), p=String(code||'').split('.');
   return {a:avFind(AV_ANIMALS,p[0])?p[0]:d[0], h:avFind(AV_HATS,p[1])?p[1]:'none', f:avFind(AV_FACES,p[2])?p[2]:'none',
-    bg:AV_BGS.some(b=>b[0]===p[3])?p[3]:d[3], hc:AV_COLORS.some(c=>c[0]===p[4])?p[4]:d[4], sk:AV_SKINS.some(k=>k[0]===p[5])?p[5]:'sc'}; }
-const avCode=o=>[o.a,o.h,o.f,o.bg,o.hc,o.sk||'sc'].join('.');
+    bg:AV_BGS.some(b=>b[0]===p[3])?p[3]:d[3], hc:AV_COLORS.some(c=>c[0]===p[4])?p[4]:d[4], sk:AV_SKINS.some(k=>k[0]===p[5])?p[5]:'sc', hs:AV_HAIR[p[6]]?p[6]:'short', hcol:AV_HAIRCOLORS.some(k=>k[0]===p[7])?p[7]:'hblack'}; }
+const avCode=o=>[o.a,o.h,o.f,o.bg,o.hc,o.sk||'sc',o.hs||'short',o.hcol||'hblack'].join('.');
 const avCache={};
 function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[key]) return avCache[key];
   const o=avParse(code,name), an=avFind(AV_ANIMALS,o.a), hat=avFind(AV_HATS,o.h), face=avFind(AV_FACES,o.f);
   const hc=(AV_COLORS.find(c=>c[0]===o.hc)||AV_COLORS[0])[1], bg=(AV_BGS.find(b=>b[0]===o.bg)||AV_BGS[0])[1];
   const base=Object.assign({O:'#1a1a22',E:'#1a1a22',W:'#ffffff',P:'#ff9eb5',B:'#f5a623',Y:'#ffd23f',S:'#1a1a22'},an.c);
+  const hair=an.hairOpts?(AV_HAIR[o.hs]||AV_HAIR.short):an.hairFixed?AV_HAIR[an.hairFixed]:null;
+  if(an.hairOpts) base.D=(AV_HAIRCOLORS.find(k=>k[0]===o.hcol)||AV_HAIRCOLORS[0])[1];
   if(an.human){ const sk=an.skin?[0,an.skin[0],an.skin[1]]:(AV_SKINS.find(k=>k[0]===o.sk)||AV_SKINS[2]); base.F=base.M=base.I=sk[1]; base.N=sk[2]; }
   const grid=[...Array(16)].map(()=>Array(16).fill(null));
   const put=(rows,pal,y0)=>rows.forEach((r,i)=>{const y=(y0||0)+i; if(y<0||y>15) return; for(let x=0;x<r.length&&x<16;x++){const ch=r[x]; if(ch==='.') continue; const col=pal[ch]; if(col) grid[y][x]=col;}});
   if(an.mane) put(AV_MANE,base);
   put(AV_EARS[an.ears]||[],base);
   if(an.horn) put(['.......OO.......','......OYYO......','......OYYO......','.....OYYYYO.....','.....OYYYYO.....'],base);
+  if(hair&&hair.back) put(hair.back,base);
   put(AV_HEAD,base);
+  if(hair&&hair.top) put(hair.top,base);
   if(an.horn) put(['','','','','','.......DD.......','......DDD.......'],base);
   if(an.mark) put(AV_MARK[an.mark],base);
   put(an.human?AV_HUMANFACE:an.face==='beak'?AV_BEAKFACE:an.face==='owl'?AV_OWLFACE:an.face==='frog'?AV_FROGFACE:AV_FACE,base);
   if(an.post) put(AV_POST[an.post],base);
   if(an.front) put(AV_FRONT[an.front],base);
   if(an.human) put(AV_HUMAN_EARS,base);
+  if(hair&&hair.side) put(hair.side,base);
   if(an.id==='luther') put(AV_LUTHER,Object.assign({},base,{W:'#ffffff'}));
   if(face&&face.g.length){ const fp=Object.assign({},base,{O:'#1a1a22',C:hc}); if(face.id==='jersey') fp.K='#ffffff'; put(face.g,fp,face.y); }
   if(hat&&hat.g.length){ const fx=AV_HATFIX[hat.id]||{}, pal=Object.assign({},base,{O:'#1a1a22',C:hc}); for(const k in fx) pal[k]=fx[k]==='C'?hc:fx[k]; put(hat.g,pal,hat.y); }
@@ -2176,8 +2194,11 @@ function avatarPanel(){
   if(avTab==='hat') body=AV_HATS.map(x=>tile(avCode({...o,h:x.id}),x.name,L>=x.lvl,o.h===x.id,`data-av="h:${x.id}"`,x.lvl)).join('');
   if(avTab==='face') body=AV_FACES.map(x=>tile(avCode({...o,f:x.id}),x.name,L>=x.lvl,o.f===x.id,`data-av="f:${x.id}"`,x.lvl)).join('');
   const sw=(k,v,col,cur,need)=>{const open=!need||L>=need; return `<button class="avsw ${cur?'cur':''}" ${open?`data-av="${k}:${v}"`:'disabled'} aria-pressed="${cur}" title="${v}${open?'':' (level '+need+')'}" style="background:${col==='rainbow'?'linear-gradient(135deg,#ff8a80,#ffd180,#ccff90,#80d8ff,#ea80fc)':col}">${open?'':'🔒'}</button>`};
-  const skinRow=avFind(AV_ANIMALS,o.a).human?`<span class="hint">Skin tone</span><div class="avsws">${AV_SKINS.map(([v,c])=>sw('sk',v,c,o.sk===v)).join('')}</div>`:'';
-  const colors=`<div style="display:grid;gap:8px">${skinRow}<span class="hint">Hat, bow tie and jersey color</span><div class="avsws">${AV_COLORS.map(([v,c])=>sw('hc',v,c,o.hc===v)).join('')}</div>
+  const curA=avFind(AV_ANIMALS,o.a);
+  const skinRow=curA.human&&!curA.skin?`<span class="hint">Skin tone</span><div class="avsws">${AV_SKINS.map(([v,c])=>sw('sk',v,c,o.sk===v)).join('')}</div>`:'';
+  const hairRow=curA.hairOpts?`<span class="hint">Hairstyle</span><div class="avgrid">${AV_HAIRSTYLES.map(([v,l])=>`<button class="avpick ${o.hs===v?'cur':''}" data-av="hs:${v}" aria-pressed="${o.hs===v}">${avSvg(avCode({...o,hs:v}),44,me)}<small>${l}</small></button>`).join('')}</div>
+    <span class="hint">Hair color</span><div class="avsws">${AV_HAIRCOLORS.map(([v,c])=>sw('hcol',v,c,o.hcol===v)).join('')}</div>`:'';
+  const colors=`<div style="display:grid;gap:8px">${hairRow}${skinRow}<span class="hint">Hat, bow tie and jersey color</span><div class="avsws">${AV_COLORS.map(([v,c])=>sw('hc',v,c,o.hc===v)).join('')}</div>
     <span class="hint">Background</span><div class="avsws">${AV_BGS.map(([v,c,n])=>sw('bg',v,c,o.bg===v,n)).join('')}</div></div>`;
   const nextUp=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>!x.event&&x.lvl>L).sort((a,b)=>a.lvl-b.lvl)[0];
   return `<div class="panel avpanel" style="display:grid;gap:12px">
@@ -2194,7 +2215,7 @@ function wireAvatar(){
   document.querySelectorAll('[data-av]').forEach(b=>b.onclick=()=>{ const [k,v]=b.dataset.av.split(':'); const o=avParse(myAv(),me); o[k]=v; U.av=avCode(o); save(); sfx&&sfx('ding'); renderKeep(); });
   const r=$('#avrand'); if(r) r.onclick=()=>{ const L=levelOf(U.xp).level, pick=a=>a[Math.floor(Math.random()*a.length)];
     U.av=avCode({a:pick(AV_ANIMALS.filter(x=>avItemOpen(x,L))).id,h:pick(AV_HATS.filter(x=>x.lvl<=L)).id,f:pick(AV_FACES.filter(x=>x.lvl<=L)).id,
-      bg:pick(AV_BGS.filter(b=>!b[2]||b[2]<=L))[0],hc:pick(AV_COLORS)[0],sk:pick(AV_SKINS)[0]}); save(); renderKeep(); };
+      bg:pick(AV_BGS.filter(b=>!b[2]||b[2]<=L))[0],hc:pick(AV_COLORS)[0],sk:pick(AV_SKINS)[0],hs:pick(AV_HAIRSTYLES)[0],hcol:pick(AV_HAIRCOLORS)[0]}); save(); renderKeep(); };
 }
 
 /* ---------- themes ---------- */
