@@ -577,6 +577,11 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .evbanner .evpic .av{outline-width:3px;box-shadow:3px 3px 0 #000}
 .evbanner:not(.got) .evpic .av{filter:grayscale(.15)}
 .evtitle{font-family:var(--f-display);font-weight:400;font-size:clamp(13px,3.6vw,17px);line-height:1.5;color:var(--gold);text-shadow:2px 2px 0 #000}
+.evdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.evday{display:grid;justify-items:center;gap:2px;padding:4px 0;background:var(--tile);border:2px solid var(--win-line);font-size:12px;color:var(--win-muted)}
+.evday b{font-weight:700}.evday i{font-style:normal;font-family:var(--f-num);font-size:16px;color:var(--win-ink)}
+.evday.hit{border-color:var(--good)}.evday.hit i{color:var(--good)}
+.evday.miss i{color:var(--bad)}.evday.today{border-color:var(--gold)}.evday.today i{color:var(--gold);font-size:14px}
 .avlock.ev{background:var(--gold);color:#000}
 .avpick.evitem{border-color:var(--gold)}
 .live .ltop{display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -2025,18 +2030,33 @@ function sessXPPanel(o){ if(!o||!o.xp||!o.xp.total) return '';
     <ul class="xplog">${Object.entries(o.xp.by).sort((a,b)=>b[1]-a[1]).map(([k,a])=>`<li><span class="xpv">+${a}</span><span>${esc(XP_KINDS[k]||'Other')}</span></li>`).join('')}</ul></div>`; }
 // Limited-time avatar events: progress banner + unlocking.
 function daysLeft(end){ const p=k=>{const [y,m,d]=k.split('-').map(Number);return Date.UTC(y,m-1,d)}; return Math.round((p(end)-p(dayKey()))/864e5)+1; }
+// Days of an event window (Central dates) and progress toward its goal.
+function eventDays(e){ const out=[]; for(let k=e.start;k<=e.end;k=shiftDay(k,1)) out.push(k); return out; }
+function eventProgress(id){ const e=AV_EVENTS[id];
+  if(e.kind==='goal'){ const days=eventDays(e), today=dayKey(), hit=days.filter(k=>((U.days&&U.days[k])||0)>=DAILY).length, left=days.filter(k=>k>today).length+(((U.days&&U.days[today])||0)>=DAILY||today<e.start?0:(today>=e.start&&today<=e.end?1:0));
+    return {have:hit,need:e.need,possible:hit+left>=e.need,days}; }
+  const xp=avEventXP(id); return {have:xp,need:e.need,possible:true}; }
 function eventBanners(){ if(!U) return ''; return Object.keys(AV_EVENTS).filter(id=>avEventActive(id)).map(id=>{ const e=AV_EVENTS[id], an=AV_ANIMALS.find(a=>a.event===id);
-  const pic=avSvg(avCode(Object.assign(avParse(myAv(),me),{a:an.id,h:'none',f:'none'})),56,me), xp=avEventXP(id), dl=daysLeft(e.end);
-  if(avOwned(id)) return `<div class="panel evbanner got"><div class="evpic">${pic}</div><div style="display:grid;gap:4px;min-width:0"><span class="label">⏳ Limited-time unlock</span><b class="evtitle">You unlocked ${esc(e.name)}! 🎉</b><span class="hint">It's yours to keep. Pick it on the Progress tab under Your avatar.</span></div></div>`;
+  const pic=avSvg(avCode(Object.assign(avParse(myAv(),me),{a:an.id,h:'none',f:'none'})),56,me), pr=eventProgress(id), dl=daysLeft(e.end);
+  if(avOwned(id)) return `<div class="panel evbanner got"><div class="evpic">${pic}</div><div style="display:grid;gap:4px;min-width:0"><span class="label">⏳ Limited-time unlock</span><b class="evtitle">You unlocked ${esc(e.name.replace(/^the /,''))}! 🎉</b><span class="hint">It's yours to keep. Pick it on the Progress tab under Your avatar.</span></div></div>`;
+  let body;
+  if(e.kind==='goal'){ const today=dayKey(), wd=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const chips=pr.days.map(k=>{ const n=(U.days&&U.days[k])||0, hit=n>=DAILY, [y,m,d]=k.split('-').map(Number), lab=wd[new Date(Date.UTC(y,m-1,d)).getUTCDay()];
+      const st=hit?'hit':k<today?'miss':k===today?'today':'soon';
+      return `<span class="evday ${st}" title="${k}"><b>${lab}</b><i>${hit?'✓':st==='miss'?'✗':st==='today'?`${n}/${DAILY}`:'·'}</i></span>`; }).join('');
+    body=`<span class="hint">Hit your daily goal (${DAILY} questions) on <b>${e.need} of the ${pr.days.length} days</b> through ${esc(e.endLabel)}, and keep it forever.</span>
+      <div class="evdays">${chips}</div>
+      <span class="hint">${pr.possible?`<b>${pr.have} of ${e.need} days</b> done · ${Math.max(0,e.need-pr.have)} to go`:`Too many days missed to unlock it this time, but your daily goal still earns XP!`}</span>`; }
+  else body=`<span class="hint">Earn <b>${e.need.toLocaleString()} XP</b> by the end of ${esc(e.endLabel)} and keep this avatar forever. After that, it's gone!</span>
+    <div class="goldbar"><i style="width:${Math.min(100,100*pr.have/e.need).toFixed(1)}%"></i></div>
+    <span class="hint"><b>${Math.min(pr.have,e.need).toLocaleString()} / ${e.need.toLocaleString()} XP</b> · ${Math.max(0,e.need-pr.have).toLocaleString()} to go</span>`;
   return `<div class="panel evbanner"><div class="evpic">${pic}</div><div style="display:grid;gap:6px;min-width:0;flex:1">
     <span class="label">⏳ Limited-time unlock · ${dl<=1?'last day!':dl+' days left'}</span>
-    <b class="evtitle">Unlock ${esc(e.name)}</b>
-    <span class="hint">Earn <b>${e.need.toLocaleString()} XP</b> by the end of ${esc(e.endLabel)} and keep this avatar forever. After that, it's gone!</span>
-    <div class="goldbar"><i style="width:${Math.min(100,100*xp/e.need).toFixed(1)}%"></i></div>
-    <span class="hint"><b>${Math.min(xp,e.need).toLocaleString()} / ${e.need.toLocaleString()} XP</b> · ${Math.max(0,e.need-xp).toLocaleString()} to go</span></div></div>`; }).join(''); }
-function checkEvents(){ if(!U) return; Object.keys(AV_EVENTS).forEach(id=>{ const e=AV_EVENTS[id]; if(avOwned(id)||!avEventActive(id)||avEventXP(id)<e.need) return;
+    <b class="evtitle">Unlock ${esc(e.name)}</b>${body}</div></div>`; }).join(''); }
+function checkEvents(){ if(!U) return; Object.keys(AV_EVENTS).forEach(id=>{ const e=AV_EVENTS[id]; if(avOwned(id)||!avEventActive(id)) return; const pr=eventProgress(id); if(pr.have<e.need) return;
   U.unlocks=U.unlocks||{}; U.unlocks[id]=Date.now(); save();
-  setTimeout(()=>{ sfx('level'); celebrate(true); toast(`<b>⏳ Limited-time unlock: ${esc(e.name)}!</b><span>You earned ${e.need.toLocaleString()} XP in time. It's yours to keep. Pick it under Your avatar on the Progress tab.</span>`); },1400); }); }
+  const nm=e.name.replace(/^the /,'');
+  setTimeout(()=>{ sfx('level'); celebrate(true); toast(`<b>⏳ Limited-time unlock: ${esc(nm)}!</b><span>${e.kind==='goal'?`You hit your daily goal ${e.need} days this week.`:`You earned ${e.need.toLocaleString()} XP in time.`} It's yours to keep. Pick it under Your avatar on the Progress tab.</span>`); },1400); }); }
 function lvlChip(){ if(!U) return ''; const l=levelOf(U.xp); return `<span class="lvlchip" title="${esc(l.title)} · ${U.xp||0} XP">Lv ${l.level}</span>`; }
 
 /* ---------- avatars (16x16 pixel animals, hats and extras) ---------- */
@@ -2069,6 +2089,8 @@ const AV_MARK={
  hair:['','','','','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..'],
  // Reformer: brown hair below a soft black scholar's cap
  lhair:['','','','','','','','..DDFFFFFFFFDD..','..DD........DD..','..D..........D..']};
+// Jack-o'-lantern: a whole custom face (drawn instead of the usual head)
+const AV_PUMPKIN=['.......GG.......','......GG........','....OOOGOOOO....','..OOFFRFFRFFOO..','.OFFFRFFFFRFFFO.','OFFFFRFFFFRFFFFO','OFFFKFRFFRFKFFFO','OFFKKKFFFFKKKFFO','OFKKYKKFFKKYKKFO','OFFFFFFKKFFFFFFO','OFKFFFFFFFFFFKFO','OFKKFKKFFKKFKKFO','OFFKKYYKKYYKKFFO','.OFFRKKKKKKRFFO.','..OOFRFFFFRFOO..','....OOOOOOOO....'];
 // Reformer's cap and dark robe with a white collar (drawn after the face)
 const AV_LUTHER=['','','','...OOOOOOOOOO...','.OOGGGGGGGGGGOO.','OGGGGGGGGGGGGGGO','.OGGGGGGGGGGGGO.','..OOOOOOOOOOOO..','','','','','OO............OO','GWO..........OWG','GGWO........OWGG','GGGWOOOOOOOOWGGG'];
 const AV_HUMAN_EARS=['','','','','','','','','','O..............O','OF............FO','O..............O'];
@@ -2109,6 +2131,7 @@ const AV_ANIMALS=[
  {id:'person',name:'Quizzer',lvl:10,ears:'none',human:true,hairOpts:true,c:{F:'#c68a5e',I:'#c68a5e',M:'#c68a5e',N:'#a46a40',D:'#1e1e24',P:'#e0857a'}},
  {id:'hoops',name:'Hoops Star',lvl:15,ears:'none',human:true,hairFixed:'short',c:{F:'#c68a5e',I:'#c68a5e',M:'#c68a5e',N:'#a46a40',D:'#1e1e24',P:'#e0857a'}},
  {id:'luther',name:'Martin Luther',lvl:999,event:'luther',ears:'none',mark:'lhair',human:true,skin:['#f2cfae','#d9a888'],c:{F:'#f2cfae',I:'#f2cfae',M:'#f2cfae',N:'#d9a888',D:'#6b4a2e',P:'#e8958a',G:'#26262e'}},
+ {id:'pumpkin',name:"Jack-o'-lantern",lvl:999,event:'pumpkin',ears:'none',custom:AV_PUMPKIN,c:{F:'#f28c28',I:'#f28c28',M:'#f28c28',N:'#f28c28',D:'#c8641a',R:'#c8641a',G:'#4a7a2a',Y:'#ffd23f',K:'#4a1e00',O:'#3a1a08'}},
  {id:'dragon',name:'Dragon',lvl:18,ears:'horns',c:{F:'#4caf50',I:'#4caf50',M:'#a5d6a7',N:'#1b5e20',D:'#1b5e20',Y:'#ffe082'}},
 ];
 const AV_HATS=[
@@ -2144,7 +2167,8 @@ const AV_BGS=[['sky','#8ecae6'],['grass','#9ad08b'],['sun','#ffd166'],['rose','#
  ['gold','#ffcf33',12],['ruby','#c62828',15],['rainbow','rainbow',19]];
 const avFind=(list,id)=>list.find(x=>x.id===id);
 // Limited-time unlocks: earn the XP between start and end (Central dates, inclusive) and keep the item forever.
-const AV_EVENTS={luther:{name:'Martin Luther',need:1200,start:'2026-10-18',end:'2026-10-25',endLabel:'Sunday, Oct 25'}};
+const AV_EVENTS={luther:{name:'Martin Luther',need:1200,start:'2026-10-18',end:'2026-10-25',endLabel:'Sunday, Oct 25'},
+ pumpkin:{name:"the Jack-o'-lantern",kind:'goal',need:6,start:'2026-10-26',end:'2026-11-01',endLabel:'Sunday, Nov 1',startLabel:'Monday, Oct 26'}};
 const avOwned=id=>!!(U&&U.unlocks&&U.unlocks[id]);
 function avEventActive(id){ const e=AV_EVENTS[id]; if(!e) return false; const d=dayKey(); return d>=e.start&&d<=e.end; }
 function avEventXP(id){ const e=AV_EVENTS[id]; if(!e||!U) return 0; const x=U.xpDays||{}; let t=0; for(const k in x) if(k>=e.start&&k<=e.end) t+=x[k]||0; return t; }
@@ -2166,6 +2190,8 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   if(an.human){ const sk=an.skin?[0,an.skin[0],an.skin[1]]:(AV_SKINS.find(k=>k[0]===o.sk)||AV_SKINS[2]); base.F=base.M=base.I=sk[1]; base.N=sk[2]; }
   const grid=[...Array(16)].map(()=>Array(16).fill(null));
   const put=(rows,pal,y0)=>rows.forEach((r,i)=>{const y=(y0||0)+i; if(y<0||y>15) return; for(let x=0;x<r.length&&x<16;x++){const ch=r[x]; if(ch==='.') continue; const col=pal[ch]; if(col) grid[y][x]=col;}});
+  if(an.custom){ put(an.custom,base); }
+  else {
   if(an.mane) put(AV_MANE,base);
   put(AV_EARS[an.ears]||[],base);
   if(an.horn) put(['.......OO.......','......OYYO......','......OYYO......','.....OYYYYO.....','.....OYYYYO.....'],base);
@@ -2179,6 +2205,7 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   if(an.front) put(AV_FRONT[an.front],base);
   if(an.human) put(AV_HUMAN_EARS,base);
   if(hair&&hair.side) put(hair.side,base);
+  }
   if(an.id==='luther') put(AV_LUTHER,Object.assign({},base,{W:'#ffffff'}));
   if(face&&face.g.length){ const fp=Object.assign({},base,{O:'#1a1a22',C:hc}); if(face.id==='jersey') fp.K='#ffffff'; put(face.g,fp,face.y); }
   if(hat&&hat.g.length){ const fx=AV_HATFIX[hat.id]||{}, pal=Object.assign({},base,{O:'#1a1a22',C:hc}); for(const k in fx) pal[k]=fx[k]==='C'?hc:fx[k]; put(hat.g,pal,hat.y); }

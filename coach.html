@@ -110,6 +110,8 @@ const AV_MARK={
  hair:['','','','','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..'],
  // Reformer: brown hair below a soft black scholar's cap
  lhair:['','','','','','','','..DDFFFFFFFFDD..','..DD........DD..','..D..........D..']};
+// Jack-o'-lantern: a whole custom face (drawn instead of the usual head)
+const AV_PUMPKIN=['.......GG.......','......GG........','....OOOGOOOO....','..OOFFRFFRFFOO..','.OFFFRFFFFRFFFO.','OFFFFRFFFFRFFFFO','OFFFKFRFFRFKFFFO','OFFKKKFFFFKKKFFO','OFKKYKKFFKKYKKFO','OFFFFFFKKFFFFFFO','OFKFFFFFFFFFFKFO','OFKKFKKFFKKFKKFO','OFFKKYYKKYYKKFFO','.OFFRKKKKKKRFFO.','..OOFRFFFFRFOO..','....OOOOOOOO....'];
 // Reformer's cap and dark robe with a white collar (drawn after the face)
 const AV_LUTHER=['','','','...OOOOOOOOOO...','.OOGGGGGGGGGGOO.','OGGGGGGGGGGGGGGO','.OGGGGGGGGGGGGO.','..OOOOOOOOOOOO..','','','','','OO............OO','GWO..........OWG','GGWO........OWGG','GGGWOOOOOOOOWGGG'];
 const AV_HUMAN_EARS=['','','','','','','','','','O..............O','OF............FO','O..............O'];
@@ -147,9 +149,10 @@ const AV_ANIMALS=[
  {id:'raccoon',name:'Raccoon',lvl:13,ears:'round',mark:'mask',c:{F:'#8d8f96',I:'#e0e0e0',M:'#ececec',N:'#1e1e24',D:'#2e2e36',W:'#fff'}},
  {id:'lion',name:'Lion',lvl:14,ears:'round',mane:true,c:{F:'#f2c14e',I:'#c98a2b',M:'#fff1c9',N:'#8b4a2b',D:'#b5651d'}},
  {id:'unicorn',name:'Unicorn',lvl:16,ears:'pointy',horn:true,c:{F:'#ffffff',I:'#ffb3e6',M:'#ffffff',N:'#ff8fab',D:'#c58af9',Y:'#ffd23f'}},
- {id:'person',name:'Quizzer',lvl:25,ears:'none',human:true,hairOpts:true,c:{F:'#c68a5e',I:'#c68a5e',M:'#c68a5e',N:'#a46a40',D:'#1e1e24',P:'#e0857a'}},
+ {id:'person',name:'Quizzer',lvl:10,ears:'none',human:true,hairOpts:true,c:{F:'#c68a5e',I:'#c68a5e',M:'#c68a5e',N:'#a46a40',D:'#1e1e24',P:'#e0857a'}},
  {id:'hoops',name:'Hoops Star',lvl:15,ears:'none',human:true,hairFixed:'short',c:{F:'#c68a5e',I:'#c68a5e',M:'#c68a5e',N:'#a46a40',D:'#1e1e24',P:'#e0857a'}},
  {id:'luther',name:'Martin Luther',lvl:999,event:'luther',ears:'none',mark:'lhair',human:true,skin:['#f2cfae','#d9a888'],c:{F:'#f2cfae',I:'#f2cfae',M:'#f2cfae',N:'#d9a888',D:'#6b4a2e',P:'#e8958a',G:'#26262e'}},
+ {id:'pumpkin',name:"Jack-o'-lantern",lvl:999,event:'pumpkin',ears:'none',custom:AV_PUMPKIN,c:{F:'#f28c28',I:'#f28c28',M:'#f28c28',N:'#f28c28',D:'#c8641a',R:'#c8641a',G:'#4a7a2a',Y:'#ffd23f',K:'#4a1e00',O:'#3a1a08'}},
  {id:'dragon',name:'Dragon',lvl:18,ears:'horns',c:{F:'#4caf50',I:'#4caf50',M:'#a5d6a7',N:'#1b5e20',D:'#1b5e20',Y:'#ffe082'}},
 ];
 const AV_HATS=[
@@ -185,7 +188,8 @@ const AV_BGS=[['sky','#8ecae6'],['grass','#9ad08b'],['sun','#ffd166'],['rose','#
  ['gold','#ffcf33',12],['ruby','#c62828',15],['rainbow','rainbow',19]];
 const avFind=(list,id)=>list.find(x=>x.id===id);
 // Limited-time unlocks: earn the XP between start and end (Central dates, inclusive) and keep the item forever.
-const AV_EVENTS={luther:{name:'Martin Luther',need:1200,start:'2026-10-18',end:'2026-10-25',endLabel:'Sunday, Oct 25'}};
+const AV_EVENTS={luther:{name:'Martin Luther',need:1200,start:'2026-10-18',end:'2026-10-25',endLabel:'Sunday, Oct 25'},
+ pumpkin:{name:"the Jack-o'-lantern",kind:'goal',need:6,start:'2026-10-26',end:'2026-11-01',endLabel:'Sunday, Nov 1',startLabel:'Monday, Oct 26'}};
 const avOwned=id=>!!(U&&U.unlocks&&U.unlocks[id]);
 function avEventActive(id){ const e=AV_EVENTS[id]; if(!e) return false; const d=dayKey(); return d>=e.start&&d<=e.end; }
 function avEventXP(id){ const e=AV_EVENTS[id]; if(!e||!U) return 0; const x=U.xpDays||{}; let t=0; for(const k in x) if(k>=e.start&&k<=e.end) t+=x[k]||0; return t; }
@@ -207,6 +211,8 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   if(an.human){ const sk=an.skin?[0,an.skin[0],an.skin[1]]:(AV_SKINS.find(k=>k[0]===o.sk)||AV_SKINS[2]); base.F=base.M=base.I=sk[1]; base.N=sk[2]; }
   const grid=[...Array(16)].map(()=>Array(16).fill(null));
   const put=(rows,pal,y0)=>rows.forEach((r,i)=>{const y=(y0||0)+i; if(y<0||y>15) return; for(let x=0;x<r.length&&x<16;x++){const ch=r[x]; if(ch==='.') continue; const col=pal[ch]; if(col) grid[y][x]=col;}});
+  if(an.custom){ put(an.custom,base); }
+  else {
   if(an.mane) put(AV_MANE,base);
   put(AV_EARS[an.ears]||[],base);
   if(an.horn) put(['.......OO.......','......OYYO......','......OYYO......','.....OYYYYO.....','.....OYYYYO.....'],base);
@@ -220,6 +226,7 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   if(an.front) put(AV_FRONT[an.front],base);
   if(an.human) put(AV_HUMAN_EARS,base);
   if(hair&&hair.side) put(hair.side,base);
+  }
   if(an.id==='luther') put(AV_LUTHER,Object.assign({},base,{W:'#ffffff'}));
   if(face&&face.g.length){ const fp=Object.assign({},base,{O:'#1a1a22',C:hc}); if(face.id==='jersey') fp.K='#ffffff'; put(face.g,fp,face.y); }
   if(hat&&hat.g.length){ const fx=AV_HATFIX[hat.id]||{}, pal=Object.assign({},base,{O:'#1a1a22',C:hc}); for(const k in fx) pal[k]=fx[k]==='C'?hc:fx[k]; put(hat.g,pal,hat.y); }
