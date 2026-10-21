@@ -631,6 +631,11 @@ button.lch{cursor:pointer;width:100%}button.lch:active{transform:translate(3px,3
 .lresult.no .lbig{color:var(--bad)}.lpts{font-family:var(--f-num);font-size:30px;color:var(--good)}
 .lchs{display:flex;flex-wrap:wrap;gap:6px}.lchs button{min-width:44px;padding:8px 0;background:var(--tile);border:2px solid var(--win-line);color:var(--win-ink);font-family:var(--f-num);font-size:20px;cursor:pointer}
 .lchs button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:#000}
+.lchs button.some{border-color:var(--accent);box-shadow:inset 0 -6px 0 var(--accent)}
+.lverse{display:grid;gap:8px;padding:10px;background:var(--tile);border:2px dashed var(--win-line)}
+.lverse select{max-width:220px}
+.lvgrid{display:flex;flex-wrap:wrap;gap:5px}.lvgrid button{min-width:38px;padding:6px 0;background:var(--win);border:2px solid var(--win-line);color:var(--win-ink);font-family:var(--f-num);font-size:18px;cursor:pointer}
+.lvgrid button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:#000}
 .livecard{border-color:var(--gold)!important}
 @media (max-width:560px){.lchoices{grid-template-columns:1fr}.lch{min-height:64px}.lchoices.phone .lch{min-height:72px}}
 .lbsub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
@@ -2801,10 +2806,12 @@ function liveChoices(q){ const right=q.a[0], wc=right.split(/\s+/).length, seen=
   const list=shuffle([right,...wrong]); return {list,correct:list.indexOf(right)}; }
 
 /* ----- host ----- */
-function liveHostSetup(){ const chs=[...new Set(U.sel.map(k=>+k.split(':')[0]))].sort((a,b)=>a-b);
-  live={role:'host',phase:'setup',cfg:{chs:chs.length?chs:[1],mode:'choice',n:10,time:20,teams:true,speak:false},unsub:[]}; render(); }
+// Starts from the verses picked on the Practice tab; chapters toggle all their verses, and any chapter can be opened to pick single verses.
+function liveHostSetup(){ let sel=new Set(U.sel.filter(k=>byVerse[k])); if(!sel.size) sel=new Set(qVerses[1].map(v=>'1:'+v));
+  live={role:'host',phase:'setup',cfg:{sel,open:null,mode:'choice',n:10,time:20,teams:true,speak:false},unsub:[]}; render(); }
+const liveChState=(sel,c)=>{ const vs=qVerses[c]||[], n=vs.filter(v=>sel.has(c+':'+v)).length; return n===0?'none':n===vs.length?'all':'some'; };
 async function liveCreate(){ const L=live, cfg=L.cfg;
-  const ids=Q.filter(q=>cfg.chs.includes(q.c)).map(q=>q.id); if(!ids.length){ L.err='Pick at least one chapter.'; render(); return; }
+  const ids=Q.filter(q=>cfg.sel.has(q.c+':'+q.v)).map(q=>q.id); if(!ids.length){ L.err='Pick at least one chapter or verse.'; render(); return; }
   L.busy=true; L.err=''; render();
   try{
     let code=''; for(let i=0;i<6;i++){ const c=liveRoomCode(), h=await LDB.get('rooms/'+c+'/host'); if(!h||!(h.created>Date.now()-864e5)){ code=c; break; } }
@@ -2898,8 +2905,16 @@ function liveHostView(){ const L=live, c=L.cfg;
   if(L.phase==='setup'){ const segL=(k,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-lcfg="${k}" data-val="${v}" aria-pressed="${String(c[k])===String(v)}">${l}</button>`).join('')}</div>`;
     return `<main class="wrap live"><section>${liveTop('Host')}<div><div class="label">Host a Live Quiz</div><h2>Set up your game</h2></div>
       <div class="panel" style="display:grid;gap:14px">
-        <div style="display:grid;gap:8px"><span class="label">Chapters</span><div class="lchs">${CH.map(n=>`<button data-lch="${n}" aria-pressed="${c.chs.includes(n)}">${n}</button>`).join('')}</div>
-          <div class="row"><button class="x" id="lchall">All</button><button class="x" id="lchnone">None</button><span class="hint">${Q.filter(q=>c.chs.includes(q.c)).length} questions to draw from</span></div></div>
+        <div style="display:grid;gap:8px"><span class="label">Chapters</span>
+          <div class="lchs">${CH.map(n=>{const st=liveChState(c.sel,n);return `<button data-lch="${n}" aria-pressed="${st==='all'}" class="${st==='some'?'some':''}">${n}</button>`}).join('')}</div>
+          <div class="row"><button class="x" id="lchall">All</button><button class="x" id="lchnone">None</button><span class="hint">Tap a chapter to add or remove all of it.</span></div>
+          <div class="lverse"><div class="row" style="gap:8px;align-items:center"><span class="label">Pick verses in</span>
+            <select id="lvch" aria-label="Chapter to pick verses from"><option value="">Choose a chapter…</option>${CH.map(n=>`<option value="${n}" ${c.open===n?'selected':''}>John ${n}${liveChState(c.sel,n)==='some'?' (some)':liveChState(c.sel,n)==='all'?' (all)':''}</option>`).join('')}</select></div>
+            ${c.open?`<div class="lvgrid">${(qVerses[c.open]||[]).map(v=>`<button data-lv="${c.open}:${v}" aria-pressed="${c.sel.has(c.open+':'+v)}">${v}</button>`).join('')}</div>
+              <div class="row"><button class="x" id="lvall">All of John ${c.open}</button><button class="x" id="lvnone">None of John ${c.open}</button></div>`:''}
+            <form id="lrange" class="row" style="flex-wrap:nowrap;gap:8px"><input type="text" id="lrangein" placeholder="Or type verses, e.g. 3:1-21, 4:5-10" autocomplete="off" style="flex:1;min-width:0"><button class="btn small" type="submit">Use</button></form>
+            ${c.rangeMsg?`<span class="hint" style="color:var(--bad)">${esc(c.rangeMsg)}</span>`:''}</div>
+          <span class="hint"><b>${c.sel.size?'John '+esc(rangeLabel([...c.sel])):'Nothing picked yet'}</b> · ${Q.filter(q=>c.sel.has(q.c+':'+q.v)).length} questions to draw from</span></div>
         <div class="row" style="justify-content:space-between"><span class="label">Answers</span>${segL('mode',[['choice','Pick from 4'],['type','Type it']])}</div>
         <div class="row" style="justify-content:space-between"><span class="label">Questions</span>${segL('n',[[5,'5'],[10,'10'],[15,'15'],[20,'20']])}</div>
         <div class="row" style="justify-content:space-between"><span class="label">Seconds each</span>${segL('time',[[10,'10'],[20,'20'],[30,'30']])}</div>
@@ -2976,8 +2991,15 @@ function wireLive(){ const L=live; const on=(s,f)=>{const e=$(s); if(e) e.onclic
   const jf=$('#ljoin'); if(jf){ const i=$('#lcode'); if(!L.code) i.focus(); jf.onsubmit=e=>{e.preventDefault(); liveJoin(i.value);}; }
   on('#lhost',liveHostSetup);
   document.querySelectorAll('[data-lcfg]').forEach(b=>b.onclick=()=>{ const k=b.dataset.lcfg, v=b.dataset.val; L.cfg[k]=v==='true'?true:v==='false'?false:isNaN(+v)?v:+v; render(); });
-  document.querySelectorAll('[data-lch]').forEach(b=>b.onclick=()=>{ const n=+b.dataset.lch, s=new Set(L.cfg.chs); s.has(n)?s.delete(n):s.add(n); L.cfg.chs=[...s].sort((a,b)=>a-b); render(); });
-  on('#lchall',()=>{ L.cfg.chs=CH.slice(); render(); }); on('#lchnone',()=>{ L.cfg.chs=[]; render(); });
+  const setCh=(n,on)=>(qVerses[n]||[]).forEach(v=>on?L.cfg.sel.add(n+':'+v):L.cfg.sel.delete(n+':'+v));
+  document.querySelectorAll('[data-lch]').forEach(b=>b.onclick=()=>{ const n=+b.dataset.lch; setCh(n,liveChState(L.cfg.sel,n)!=='all'); L.cfg.rangeMsg=''; renderKeep(); });
+  on('#lchall',()=>{ CH.forEach(n=>setCh(n,true)); renderKeep(); }); on('#lchnone',()=>{ L.cfg.sel.clear(); renderKeep(); });
+  const vs=$('#lvch'); if(vs) vs.onchange=()=>{ L.cfg.open=vs.value?+vs.value:null; renderKeep(); };
+  document.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{ const k=b.dataset.lv; L.cfg.sel.has(k)?L.cfg.sel.delete(k):L.cfg.sel.add(k); renderKeep(); });
+  on('#lvall',()=>{ setCh(L.cfg.open,true); renderKeep(); }); on('#lvnone',()=>{ setCh(L.cfg.open,false); renderKeep(); });
+  const rf=$('#lrange'); if(rf) rf.onsubmit=e=>{ e.preventDefault(); const raw=$('#lrangein').value; const {out,errs}=parseRange(raw);
+    if(errs.length||!out.size){ L.cfg.rangeMsg=`Couldn't read “${errs[0]||raw}”. Try 3, 3:1-21, or 2:13-3:8.`; renderKeep(); return; }
+    L.cfg.sel=new Set([...out].filter(k=>byVerse[k])); L.cfg.rangeMsg=''; L.cfg.open=null; renderKeep(); };
   on('#lcreate',liveCreate); on('#lstart',()=>liveStartQ(0)); on('#lskip',liveReveal); on('#lnext',liveNext);
   on('#lagain',()=>{ const cfg=L.cfg; liveStop(); LDB.del('rooms/'+L.code).catch(()=>{}); live={role:'host',phase:'setup',cfg,unsub:[]}; render(); });
   on('#lclose',()=>liveExit());
