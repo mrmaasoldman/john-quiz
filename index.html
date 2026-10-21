@@ -631,6 +631,9 @@ button.lch{cursor:pointer;width:100%}button.lch:active{transform:translate(3px,3
 .lresult.no .lbig{color:var(--bad)}.lpts{font-family:var(--f-num);font-size:30px;color:var(--good)}
 .lchs{display:flex;flex-wrap:wrap;gap:6px}.lchs button{min-width:44px;padding:8px 0;background:var(--tile);border:2px solid var(--win-line);color:var(--win-ink);font-family:var(--f-num);font-size:20px;cursor:pointer}
 .lchs button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:#000}
+.lfast{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;padding:12px 16px;background:#000;border:3px solid var(--gold);color:#fff;font-size:clamp(17px,2.4vw,26px)}
+.lfast b{color:var(--gold)}.lfast .lsc{font-size:1.2em}
+.lyoufast{font-family:var(--f-num);font-size:26px;color:var(--gold)}
 .lchs button.some{border-color:var(--accent);box-shadow:inset 0 -6px 0 var(--accent)}
 .lverse{display:grid;gap:8px;padding:10px;background:var(--tile);border:2px dashed var(--win-line)}
 .lverse select{max-width:220px}
@@ -1972,7 +1975,7 @@ function musicStart(){ if(!U) return; musicSetup(); const t=currentTrack(); mus.
   setMusicLevel(musicVol()); mus.playing=true; ac();
   const p=mus.el.play(); if(p&&p.catch) p.catch(()=>{ mus.playing=false; if(tab==='progress') renderKeep(); }); }
 function musicStop(){ mus.playing=false; if(mus.el){ try{ mus.el.pause(); }catch(e){} } }
-function duckMusic(on){ if(mus.playing) setMusicLevel(on?musicVol()*.25:musicVol()); }
+function duckMusic(on){ if(mus.playing) setMusicLevel(on?musicVol()*.25:musicVol()); try{ if(liveSong) liveSong.volume=on?.15:.5; }catch(e){} }
 function setMusic(on){ lsSet('music',!!on); if(on) musicStart(); else musicStop(); }
 // browsers only allow sound after a tap, so a saved "music on" starts at the first tap or key
 ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ if(musicOn()&&U&&!mus.playing&&document.visibilityState==='visible') musicStart(); },{passive:true}));
@@ -2795,7 +2798,12 @@ const LIVE_SHAPES=[['♥','c0'],['◆','c1'],['★','c2'],['●','c3']];
 let live=null, liveJoinCode=null;
 try{ const j=new URLSearchParams(location.search).get('join'); if(j) liveJoinCode=j.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5); }catch(e){}
 const liveJoinUrl=code=>location.origin+location.pathname+'?join='+code;
-function liveStop(){ if(!live) return; (live.unsub||[]).forEach(f=>{try{f()}catch(e){}}); clearInterval(live.tick); clearTimeout(live.auto); live.unsub=[]; }
+// Game music on the host screen: "Noah and the Claw Machine" on a loop at medium volume.
+let liveSong=null, liveMuted=false;
+function liveMusicStart(){ if(liveMuted) return; if(liveSong){ liveSong.play().catch(()=>{}); return; } try{ if(typeof mus!=='undefined'&&mus.playing) musicStop(); }catch(e){}
+  try{ liveSong=new Audio('music/noah-claw-machine.mp3'); liveSong.loop=true; liveSong.volume=.5; liveSong.play().catch(()=>{}); }catch(e){ liveSong=null; } }
+function liveMusicStop(){ if(liveSong){ try{ liveSong.pause(); }catch(e){} liveSong=null; } }
+function liveStop(){ liveMusicStop(); if(!live) return; (live.unsub||[]).forEach(f=>{try{f()}catch(e){}}); clearInterval(live.tick); clearTimeout(live.auto); live.unsub=[]; }
 function liveExit(){ liveStop(); if(live&&live.role==='host'&&live.code) LDB.del('rooms/'+live.code).catch(()=>{}); live=null; render(); }
 function liveRoomCode(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c=''; for(let i=0;i<5;i++) c+=A[Math.floor(Math.random()*A.length)]; return c; }
 // Three believable wrong answers from the same chapter, closest in length first.
@@ -2810,7 +2818,7 @@ function liveChoices(q){ const right=q.a[0], wc=right.split(/\s+/).length, seen=
 function liveHostSetup(){ let sel=new Set(U.sel.filter(k=>byVerse[k])); if(!sel.size) sel=new Set(qVerses[1].map(v=>'1:'+v));
   live={role:'host',phase:'setup',cfg:{sel,open:null,mode:'choice',n:10,time:20,teams:true,speak:false},unsub:[]}; render(); }
 const liveChState=(sel,c)=>{ const vs=qVerses[c]||[], n=vs.filter(v=>sel.has(c+':'+v)).length; return n===0?'none':n===vs.length?'all':'some'; };
-async function liveCreate(){ const L=live, cfg=L.cfg;
+async function liveCreate(){ const L=live, cfg=L.cfg; liveMusicStart();
   const ids=Q.filter(q=>cfg.sel.has(q.c+':'+q.v)).map(q=>q.id); if(!ids.length){ L.err='Pick at least one chapter or verse.'; render(); return; }
   L.busy=true; L.err=''; render();
   try{
@@ -2819,7 +2827,7 @@ async function liveCreate(){ const L=live, cfg=L.cfg;
     L.order=shuffle(ids.slice()).slice(0,cfg.n); L.code=code; L.players={}; L.phase='lobby';
     await LDB.put('rooms/'+code,{host:{name:me,created:Date.now()},cfg:{mode:cfg.mode,n:L.order.length,time:cfg.time,teams:cfg.teams},state:{phase:'lobby',n:L.order.length,mode:cfg.mode}});
     L.unsub.push(LDB.listen('rooms/'+code+'/players',d=>{ L.players=d||{}; if(['lobby','question'].includes(L.phase)) liveRefresh(); }));
-  }catch(e){ L.err="Couldn't start a game. Check your internet and try again."; L.phase='setup'; }
+  }catch(e){ L.err="Couldn't start a game. Check your internet and try again."; L.phase='setup'; liveMusicStop(); }
   L.busy=false; render(); }
 const livePlayers=()=>Object.entries((live&&live.players)||{}).map(([pid,p])=>Object.assign({pid},p)).filter(p=>p&&p.name);
 async function liveStartQ(i){ const L=live; clearInterval(L.tick); clearTimeout(L.auto); if(L.ansUnsub){L.ansUnsub();L.ansUnsub=null}
@@ -2837,17 +2845,18 @@ async function liveStartQ(i){ const L=live; clearInterval(L.tick); clearTimeout(
     if(left<=0){ clearInterval(L.tick); liveReveal(); } },200); }
 async function liveReveal(){ const L=live; if(!L||L.phase!=='question') return; clearInterval(L.tick); clearTimeout(L.auto); if(L.ansUnsub){L.ansUnsub();L.ansUnsub=null}
   L.phase='reveal'; try{ speechSynthesis.cancel(); }catch(e){}
-  const q=Q[L.cur.qid], T=L.cfg.time*1000, upd={}, dist=[0,0,0,0]; let nRight=0;
+  const q=Q[L.cur.qid], T=L.cfg.time*1000, upd={}, dist=[0,0,0,0]; let nRight=0, fast=null;
   livePlayers().forEach(p=>{ const a=L.answers[p.pid]; let ok=false, given=null;
     if(a){ given=a.c; ok=L.cfg.mode==='choice'?(+a.c===L.cur.correct):grade(q,String(a.c||''))!=='wrong'; if(L.cfg.mode==='choice'&&dist[+a.c]!=null) dist[+a.c]++; }
     const streak=ok?(p.streak||0)+1:0, t=a?Math.min(T,Math.max(0,+a.t||0)):T;
     const pts=ok?Math.round(1000*(1-0.5*t/T))+Math.min(4,streak-1)*100:0; if(ok) nRight++;
+    if(ok&&a&&(!fast||t<fast.t)) fast={pid:p.pid,name:p.name,av:p.av||'',t};
     p.score=(p.score||0)+pts; p.streak=streak;
     upd[p.pid]={name:p.name,av:p.av||'',team:p.team||'',joined:p.joined||0,score:p.score,streak,last:{i:L.i,ok,pts,answered:!!a,given:given==null?null:String(given).slice(0,60)}}; });
-  L.players=Object.assign({},L.players,upd); L.dist=dist; L.nRight=nRight; L.nAns=Object.keys(L.answers).length;
+  L.players=Object.assign({},L.players,upd); L.dist=dist; L.nRight=nRight; L.fast=fast; L.nAns=Object.keys(L.answers).length;
   render();
   try{ if(Object.keys(upd).length) await LDB.patch('rooms/'+L.code+'/players',upd);
-    await LDB.put('rooms/'+L.code+'/state',{phase:'reveal',i:L.i,n:L.order.length,qid:L.cur.qid,ref:q.c+':'+q.v,q:q.q,choices:L.cur.choices||null,correct:L.cur.correct,answer:q.a.join(' or '),mode:L.cfg.mode,dist,nRight,nAns:L.nAns}); }catch(e){} }
+    await LDB.put('rooms/'+L.code+'/state',{phase:'reveal',i:L.i,n:L.order.length,qid:L.cur.qid,ref:q.c+':'+q.v,q:q.q,choices:L.cur.choices||null,correct:L.cur.correct,answer:q.a.join(' or '),mode:L.cfg.mode,dist,nRight,nAns:L.nAns,fast}); }catch(e){} }
 function liveRanks(){ const ps=livePlayers().sort((a,b)=>(b.score||0)-(a.score||0)||a.name.localeCompare(b.name)); const ranks={}; ps.forEach((p,i)=>ranks[p.pid]=i+1); return {ps,ranks}; }
 function liveTeams(ps){ const m={}; ps.forEach(p=>{ if(!p.team) return; const t=m[p.team.toLowerCase()]||(m[p.team.toLowerCase()]={name:p.team,total:0,n:0}); t.total+=p.score||0; t.n++; });
   return Object.values(m).map(t=>Object.assign(t,{avg:Math.round(t.total/t.n)})).sort((a,b)=>b.avg-a.avg); }
@@ -2889,7 +2898,9 @@ async function liveAnswer(c){ const L=live; if(!L||L.role!=='player'||!L.st||L.s
   try{ await LDB.put('rooms/'+L.code+'/answers/'+L.st.i+'/'+L.pid,{c,t}); }catch(e){ L.ans=null; L.err="Your answer didn't send. Tap it again."; render(); } }
 
 /* ----- views ----- */
-function liveTop(title){ return `<div class="ltop"><span class="label">📡 Live Quiz${title?' · '+title:''}</span><button class="btn ghost small" id="lexit">${live&&live.role==='host'&&live.phase!=='setup'?'End game':'Leave'}</button></div>`; }
+const fastLine=f=>f?`<div class="lfast">⚡ <span>Fastest correct answer:</span> ${avSvg(f.av||avDefault(f.name),32,f.name)} <b>${esc(f.name)}</b> <span class="lsc">${(f.t/1000).toFixed(1)}s</span></div>`:'';
+function liveTop(title){ const host=live&&live.role==='host'&&live.phase!=='setup';
+  return `<div class="ltop"><span class="label">📡 Live Quiz${title?' · '+title:''}</span><div class="row" style="gap:8px">${host?`<button class="btn ghost small" id="lmus" title="Game music">${liveMuted?'🔇 Music off':'🎵 Music on'}</button>`:''}<button class="btn ghost small" id="lexit">${live&&live.role==='host'&&live.phase!=='setup'?'End game':'Leave'}</button></div></div>`; }
 function liveView(){ const L=live;
   if(!liveOn()) return h(`<main class="wrap live"><section>${liveTop('')}<div class="panel" style="display:grid;gap:10px"><b class="evtitle">Live Quiz is almost ready!</b><p class="hint" style="margin:0">Mr. Maas just needs to finish connecting it. Check back soon.</p></div></section></main>`);
   if(L.role==='menu') return h(`<main class="wrap live"><section>${liveTop('')}
@@ -2942,6 +2953,7 @@ function liveHostView(){ const L=live, c=L.cfg;
     <div class="lq">${withRef(q.c,q.v,fmtQ(q.q))}?</div>
     ${c.mode==='choice'?`<div class="lchoices">${L.cur.choices.map((t,k)=>`<div class="lch ${LIVE_SHAPES[k][1]} ${k===L.cur.correct?'right':'dim'}"><span class="lsh">${LIVE_SHAPES[k][0]}</span>${esc(t)}<span class="ldist">${L.dist[k]}</span></div>`).join('')}</div>`
       :`<div class="lanswer"><span class="label">Answer</span><b>${q.a.map(fmtQ).join(' <span class="hint">or</span> ')}</b></div>`}
+    ${fastLine(L.fast)}
     <div class="row" style="justify-content:flex-end"><button class="btn" id="lnext">${L.i>=L.order.length-1?'Final results':'Leaderboard'} →</button></div></section></main>`;
   const {ps:ranked}=liveRanks(), teams=c.teams?liveTeams(ranked):[];
   if(L.phase==='board') return `<main class="wrap live host"><section>${liveTop(`After question ${L.i+1} of ${L.order.length}`)}
@@ -2976,7 +2988,8 @@ function livePlayerView(){ const L=live, st=L.st, p=L.p||{};
     return `<main class="wrap live"><section>${liveTop(`Question ${st.i+1} of ${st.n}`)}${head}
       <div class="panel lresult ${ok?'ok':'no'}"><b class="lbig">${ok?'Correct! ✓':last&&last.answered?'Not this time ✗':'No answer'}</b>
         ${ok?`<span class="lpts">+${last.pts.toLocaleString()} points${p.streak>=2?` · 🔥 ${p.streak} in a row`:''}</span>`:''}
-        <span class="hint">Answer: <b>${esc(st.answer)}</b></span></div></section></main>`; }
+        <span class="hint">Answer: <b>${esc(st.answer)}</b></span>
+        ${st.fast?(st.fast.pid===L.pid?`<span class="lyoufast">⚡ You were the fastest! ${(st.fast.t/1000).toFixed(1)}s</span>`:`<span class="hint">⚡ Fastest: <b>${esc(st.fast.name)}</b> (${(st.fast.t/1000).toFixed(1)}s)</span>`):''}</div></section></main>`; }
   const rank=st.ranks&&st.ranks[L.pid], tot=st.count||0;
   if(st.phase==='board') return `<main class="wrap live"><section>${liveTop(`After question ${st.i+1} of ${st.n}`)}${head}
     <div class="panel lwait"><span class="label">You're in</span><b class="lbig">${rank?ordinal(rank):'–'} place</b><span class="hint">out of ${tot} · ${(p.score||0).toLocaleString()} points</span></div></section></main>`;
@@ -3003,6 +3016,7 @@ function wireLive(){ const L=live; const on=(s,f)=>{const e=$(s); if(e) e.onclic
   on('#lcreate',liveCreate); on('#lstart',()=>liveStartQ(0)); on('#lskip',liveReveal); on('#lnext',liveNext);
   on('#lagain',()=>{ const cfg=L.cfg; liveStop(); LDB.del('rooms/'+L.code).catch(()=>{}); live={role:'host',phase:'setup',cfg,unsub:[]}; render(); });
   on('#lclose',()=>liveExit());
+  on('#lmus',()=>{ liveMuted=!liveMuted; if(liveMuted) liveMusicStop(); else liveMusicStart(); render(); });
   document.querySelectorAll('[data-lans]').forEach(b=>b.onclick=()=>liveAnswer(+b.dataset.lans));
   const tf=$('#ltype'); if(tf){ const i=$('#lans'); if(document.activeElement!==i) i.focus(); i.oninput=()=>{L.draft=i.value}; tf.onsubmit=e=>{e.preventDefault(); const v=i.value.trim(); if(v) liveAnswer(v);}; }
 }
