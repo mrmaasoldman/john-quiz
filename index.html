@@ -1003,6 +1003,51 @@ html[data-skin="arena"] .flash,html[data-skin="hedgehog"] .flash,html[data-skin=
 html[data-skin="arena"] .qcard.shake,html[data-skin="blocks"] .qcard.shake{animation:bigshake .4s}
 @keyframes bigshake{20%{transform:translateX(-10px) rotate(-1deg)}40%{transform:translateX(10px) rotate(1deg)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
 @media (prefers-reduced-motion:reduce){html[data-skin] .wrap.enter *,html[data-skin] .brand::before,html[data-skin] :is(.prog,.goldbar,.timer .tbar) i{animation:none!important}}
+#amb{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}#amb i,#amb b{position:absolute;display:block}
+.trophy{display:flex;gap:6px;font-size:34px;line-height:1}.trophy span{display:inline-block;animation:trophy .6s cubic-bezier(.2,1.6,.4,1) backwards}
+@keyframes trophy{from{transform:scale(0) rotate(-30deg);opacity:0}}
+html[data-skin="brick"] #amb i{top:90px;left:-260px;width:220px;height:70px;background:radial-gradient(40px 30px at 60px 42px,#fff 60%,transparent 62%),radial-gradient(50px 38px at 115px 34px,#fff 60%,transparent 62%),radial-gradient(38px 28px at 168px 44px,#fff 60%,transparent 62%);animation:drift 38s linear infinite}
+html[data-skin="brick"] #amb b{top:300px;left:-260px;width:220px;height:70px;opacity:.8;background:radial-gradient(40px 30px at 60px 42px,#fff 60%,transparent 62%),radial-gradient(50px 38px at 115px 34px,#fff 60%,transparent 62%);animation:drift 55s linear -20s infinite}
+html[data-skin="brick"] #amb::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;background:repeating-linear-gradient(90deg,#000 0 2px,transparent 2px 34px),linear-gradient(#000 2px,transparent 2px) 0 0/100% 17px,#c84c0c;opacity:.9}
+html[data-skin="space"] #amb i{inset:0;background:radial-gradient(2px 2px at 10% 20%,#fff,transparent),radial-gradient(2px 2px at 70% 40%,#bfe9ff,transparent),radial-gradient(1.5px 1.5px at 40% 75%,#fff,transparent),radial-gradient(2px 2px at 85% 85%,#ffd6f5,transparent),radial-gradient(1.5px 1.5px at 25% 55%,#fff,transparent);animation:twinkle 3s ease-in-out infinite alternate}
+html[data-skin="space"] #amb b{right:-60px;top:110px;width:180px;height:180px;border-radius:50%!important;background:radial-gradient(circle at 35% 35%,#8a6cff,#3c2890 60%,#160a36);box-shadow:0 0 60px rgba(104,68,252,.5);opacity:.55;animation:orbit 30s ease-in-out infinite alternate}
+html[data-skin="galaxy"] #amb i{left:-50%;right:-50%;bottom:-10%;height:45%;background:linear-gradient(transparent 0,#e800a8 0) 0 0/100% 0,repeating-linear-gradient(90deg,rgba(0,232,248,.55) 0 2px,transparent 2px 60px),repeating-linear-gradient(0deg,rgba(232,0,168,.55) 0 2px,transparent 2px 40px);transform:perspective(300px) rotateX(60deg);transform-origin:50% 0;animation:gridrun 1.2s linear infinite}
+html[data-skin="galaxy"] #amb b{left:50%;bottom:36%;width:220px;height:110px;margin-left:-110px;border-radius:110px 110px 0 0!important;background:repeating-linear-gradient(180deg,#ff3cac 0 10px,transparent 10px 14px),linear-gradient(#f8f800,#e800a8);-webkit-mask:linear-gradient(#000,#000);opacity:.45}
+html[data-skin="ice"] #amb i{inset:-100px 0 0;background:radial-gradient(3px 3px at 20px 30px,#fff,transparent),radial-gradient(2px 2px at 120px 80px,#fff,transparent),radial-gradient(3px 3px at 220px 10px,#fff,transparent),radial-gradient(2px 2px at 300px 120px,#fff,transparent);background-size:340px 160px;animation:snow 9s linear infinite}
+html[data-skin="ice"] #amb b{inset:-100px 0 0;opacity:.6;background:radial-gradient(4px 4px at 60px 50px,#fff,transparent),radial-gradient(3px 3px at 260px 100px,#fff,transparent);background-size:300px 200px;animation:snow2 14s linear infinite}
+html[data-skin="volcano"] #amb i{left:-10%;right:-10%;bottom:-40px;height:160px;background:radial-gradient(ellipse at 50% 100%,rgba(255,120,0,.75),rgba(200,30,0,.35) 45%,transparent 70%);animation:lavapulse 3s ease-in-out infinite}
+html[data-skin="volcano"] #amb b{inset:0;background:radial-gradient(3px 3px at 30px 100px,#ffb347,transparent),radial-gradient(2px 2px at 160px 20px,#ff7a2a,transparent),radial-gradient(3px 3px at 280px 140px,#ffd23f,transparent);background-size:320px 220px;animation:emberup 7s linear infinite}
+html[data-skin="castle"] #amb i{right:22px;top:190px;width:90px;height:90px;border-radius:50%!important;background:radial-gradient(circle at 40% 40%,#fff8e0,#f0d0a0 60%,#c8a070);box-shadow:0 0 50px rgba(255,230,180,.45);opacity:.85}
+html[data-skin="castle"] #amb b{left:0;right:0;bottom:0;height:70px;background:linear-gradient(90deg,#000 0 10%,transparent 10% 14%,#000 14% 24%,transparent 24% 28%,#000 28%) 0 0/120px 22px repeat-x,linear-gradient(#000,#000) 0 22px/100% 100% no-repeat;opacity:.85}
+html[data-skin="castle"] #amb::after{content:"";position:absolute;inset:0;background:radial-gradient(400px 300px at 10% 100%,rgba(255,150,40,.18),transparent 70%);animation:candle 2.2s ease-in-out infinite alternate}
+html[data-skin="dungeon"] #amb i{left:-80px;top:30%;width:260px;height:260px;border-radius:50%!important;background:radial-gradient(circle,rgba(255,170,60,.35),transparent 65%);animation:candle 1.4s ease-in-out infinite alternate}
+html[data-skin="dungeon"] #amb b{right:-80px;top:55%;width:260px;height:260px;border-radius:50%!important;background:radial-gradient(circle,rgba(255,170,60,.3),transparent 65%);animation:candle 1.8s ease-in-out -.6s infinite alternate}
+html[data-skin="hedgehog"] #amb i{inset:0;background:repeating-linear-gradient(0deg,transparent 0 40px,rgba(255,255,255,.18) 40px 43px,transparent 43px 97px);-webkit-mask:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent);background-size:100% 100%}
+html[data-skin="hedgehog"] #amb b{left:0;right:0;top:0;height:100%;background:linear-gradient(90deg,transparent 0 70%,rgba(255,255,255,.35) 70% 72%,transparent 72%) 0 30%/300px 3px repeat-y,linear-gradient(90deg,transparent 0 40%,rgba(255,255,255,.25) 40% 41%,transparent 41%) 0 0/180px 5px repeat-y;animation:zoom .6s linear infinite}
+html[data-skin="maze"] #amb i{left:24px;bottom:30px;width:20px;height:20px;border-radius:50%!important;background:#ffb852;box-shadow:calc(100vw - 68px) 0 0 #ffb852;animation:blink .5s steps(2) infinite}
+html[data-skin="blocks"] #amb i{left:8%;top:-120px;width:72px;height:48px;opacity:.18;background:linear-gradient(#8a2be2,#8a2be2) 0 0/72px 24px no-repeat,linear-gradient(#8a2be2,#8a2be2) 24px 24px/24px 24px no-repeat;animation:fall 16s linear infinite}
+html[data-skin="blocks"] #amb b{left:70%;top:-120px;width:48px;height:72px;opacity:.18;background:linear-gradient(#00a8a8,#00a8a8) 0 0/24px 72px no-repeat,linear-gradient(#00a8a8,#00a8a8) 24px 48px/24px 24px no-repeat;animation:fall 22s linear -9s infinite}
+html[data-skin="robot"] #amb i{left:0;right:0;height:120px;top:-120px;background:linear-gradient(transparent,rgba(60,188,252,.22),transparent);animation:scan 6s linear infinite}
+html[data-skin="arena"] #amb i{left:50%;top:20%;width:300px;height:300px;margin-left:-150px;border-radius:50%!important;background:repeating-linear-gradient(180deg,#fcd800 0 14px,#f87858 14px 18px);opacity:.35}
+html[data-skin="arena"] #amb b{left:0;right:0;bottom:0;height:60px;background:radial-gradient(18px 22px at 20px 100%,#2a0018 98%,transparent) 0 100%/40px 44px repeat-x,radial-gradient(14px 18px at 10px 100%,#2a0018 98%,transparent) 20px 100%/36px 52px repeat-x;opacity:.75;animation:crowd .8s ease-in-out infinite alternate}
+html[data-skin="legend"] #amb i{inset:0;background:radial-gradient(2.5px 2.5px at 40px 200px,#ffe07a,transparent),radial-gradient(2px 2px at 190px 120px,#fff6c8,transparent),radial-gradient(3px 3px at 290px 260px,#fcd800,transparent);background-size:340px 300px;animation:emberup 12s linear infinite}
+html[data-skin="legend"] #amb b{left:50%;top:-30%;width:120%;height:80%;margin-left:-60%;background:conic-gradient(from 180deg at 50% 0,transparent 0 160deg,rgba(255,215,90,.12) 170deg,transparent 180deg,rgba(255,215,90,.1) 190deg,transparent 200deg);animation:rays 18s ease-in-out infinite alternate}
+html[data-skin="pocket"] #amb i{inset:0;background:linear-gradient(180deg,rgba(15,56,15,.08),transparent 30%,rgba(15,56,15,.08))}
+@keyframes drift{to{transform:translateX(calc(100vw + 300px))}}
+@keyframes twinkle{to{opacity:.35}}
+@keyframes orbit{to{transform:translate(-30px,40px)}}
+@keyframes gridrun{to{background-position:0 0,0 0,0 40px}}
+@keyframes snow{to{transform:translateY(160px)}}
+@keyframes snow2{to{transform:translateY(200px)}}
+@keyframes lavapulse{50%{opacity:.6;transform:scaleY(1.15)}}
+@keyframes emberup{to{background-position:0 -220px,0 -220px,0 -220px}}
+@keyframes candle{to{opacity:.55}}
+@keyframes zoom{to{background-position:-300px 30%,-180px 0}}
+@keyframes fall{to{transform:translateY(calc(100vh + 240px))}}
+@keyframes scan{to{transform:translateY(calc(100vh + 240px))}}
+@keyframes crowd{to{transform:translateY(4px)}}
+@keyframes rays{to{transform:rotate(8deg)}}
+@media (prefers-reduced-motion:reduce){#amb,#amb *,#amb::after,.trophy span{animation:none!important}}
 </style>
 
 <div id="app"></div>
@@ -1167,7 +1212,8 @@ function celebrate(big){
 function oops(){ if(reduceMotion()) return; const f=document.createElement('div'); f.className='flash'; document.body.appendChild(f); setTimeout(()=>f.remove(),800); const q=document.querySelector('.qcard'); if(q){ q.classList.remove('shake'); void q.offsetWidth; q.classList.add('shake'); setTimeout(()=>q.classList.remove('shake'),500); } }
 function react(ok,streak){ sfx(ok?(STREAK_MSGS[streak]?'cheer':'ding'):'buzz'); if(ok) celebrate(!!STREAK_MSGS[streak]); else oops(); checkDailyGoal(); checkBadges({at:true}); }
 function nextBtn(id,isLast,word){ return `<button class="btn nextbtn" id="${id}">${isLast?'See my results':'Next '+word} <span aria-hidden="true">→</span></button>`; }
-function streakTag(n){ return n>=2?`<span class="streak ${n>=5?'hot':''}">${n} streak</span>`:'' }
+const STREAK_WORD={dungeon:'chain',brick:'coin combo',robot:'COMBO',space:'warp',castle:'strike',pocket:'combo',hedgehog:'ring rush',galaxy:'hit chain',maze:'chomp',blocks:'line clear',volcano:'on fire',ice:'freeze',arena:'hit combo',legend:'legend run'};
+function streakTag(n){ return n>=2?`<span class="streak ${n>=5?'hot':''}">${n} ${STREAK_WORD[document.documentElement.dataset.skin]||'streak'}</span>`:'' }
 function scoreTitle(r,n){ const p=n?r/n:0; if(!n) return 'Warm-up complete.'; if(p===1) return 'Flawless. Absolutely unreal.'; if(p>=.85) return 'Crushed it. Go tell somebody.'; if(p>=.65) return 'Solid work. The climb is real.'; if(p>=.4) return 'Getting there. Run it back!'; return 'Every rep counts. Next round is yours.'; }
 
 /* ---------- daily streak + read aloud ---------- */
@@ -1612,12 +1658,14 @@ function timeBreakdown(items,what){
     <span class="hint">Timed from when each ${what} appeared until you answered${what==='question'&&U.opts.answer==='think'?' (tapped Show answer)':''}. Time on other tabs doesn't count.</span>
   </div>`;
 }
+const TROPHY={overworld:'🏆',dungeon:'💎',brick:'🪙',robot:'🔋',space:'🛸',castle:'🕯️',pocket:'🎮',hedgehog:'💍',galaxy:'🌟',maze:'🍒',blocks:'🧩',volcano:'🔥',ice:'🧊',arena:'🥇',legend:'👑'};
+function trophy(p){ const e=TROPHY[document.documentElement.dataset.skin]||'🏆'; const k=p>=.85?3:p>=.6?2:1; return `<div class="trophy" aria-hidden="true">${Array.from({length:k},(_,i)=>`<span style="animation-delay:${i*.15}s">${e}</span>`).join('')}</div>`; }
 function resultsView(){
   const n=quiz.res.length, r=quiz.res.filter(x=>x.ok).length; const miss=quiz.res.filter(x=>!x.ok);
   return h(`<section>
     <div class="label">Session complete · ${esc(quiz.label)}</div>
     <h2>${scoreTitle(r,n)}</h2>
-    <div class="panel" style="display:grid;gap:8px">
+    <div class="panel" style="display:grid;gap:8px;position:relative">${trophy(n?r/n:0)}
       <div class="big">${r}<span class="muted" style="font-size:.45em"> / ${n}</span></div>
       <div class="muted">${n?pct(r,n)+'% correct':'No questions answered.'}</div>
     </div>
@@ -2246,8 +2294,28 @@ const SFX={
   buzzer(){ tone(330,.28,'square',.12); tone(495,.28,'square',.07); },
   boom(){ tone(70,.5,'sine',.25); noise(.4,.08); }
 };
+function sweep(f1,f2,dur,type,vol,when){ const a=ac(); if(!a) return; when=when||0; const o=a.createOscillator(), g=a.createGain(), t=a.currentTime+when;
+  o.type=type||'sine'; o.frequency.setValueAtTime(f1,t); o.frequency.exponentialRampToValueAtTime(f2,t+dur); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol||.12,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+.05); }
+// Each theme has its own right-answer and wrong-answer sounds.
+const THEME_SFX={
+  dungeon:{ding(){[440,554,659,880].forEach((f,i)=>tone(f,.22,'triangle',.13,i*.06));},buzz(){sweep(220,90,.4,'triangle',.16);}},
+  brick:{ding(){tone(1047,.07,'square',.07);tone(1568,.38,'square',.07,.07);},buzz(){sweep(400,120,.35,'square',.08);}},
+  robot:{ding(){[1200,1600,2000].forEach((f,i)=>tone(f,.06,'square',.06,i*.06));},buzz(){[0,.12,.24].forEach(w=>tone(180,.08,'square',.09,w));}},
+  space:{ding(){sweep(400,1600,.35,'sine',.16);tone(1600,.3,'sine',.08,.33);},buzz(){sweep(300,60,.6,'sine',.2);}},
+  castle:{ding(){tone(784,1.1,'sine',.14);tone(1568,.8,'sine',.06);tone(2352,.5,'sine',.03);},buzz(){tone(147,.6,'triangle',.16);tone(156,.6,'triangle',.12);}},
+  pocket:{ding(){tone(1047,.08,'square',.05);tone(1568,.16,'square',.05,.08);},buzz(){tone(196,.12,'square',.07);tone(147,.22,'square',.07,.12);}},
+  hedgehog:{ding(){[0,.05,.1,.15].forEach((w,i)=>tone(i%2?2093:1568,.12,'triangle',.1,w));},buzz(){sweep(900,150,.45,'sawtooth',.07);}},
+  galaxy:{ding(){sweep(600,2400,.18,'sawtooth',.06);sweep(800,3000,.18,'square',.03,.09);},buzz(){sweep(1200,80,.35,'sawtooth',.08);noise(.3,.05);}},
+  maze:{ding(){sweep(300,700,.08,'square',.06);sweep(700,300,.08,'square',.06,.09);tone(1320,.18,'square',.05,.2);},buzz(){sweep(800,100,.7,'square',.06);}},
+  blocks:{ding(){[659,880,1319].forEach((f,i)=>tone(f,.1,'square',.06,i*.05));noise(.15,.04);},buzz(){tone(110,.25,'square',.1);noise(.25,.06);}},
+  volcano:{ding(){noise(.35,.07);sweep(523,1047,.3,'triangle',.14,.05);},buzz(){sweep(160,50,.6,'sawtooth',.1);noise(.5,.08);}},
+  ice:{ding(){[2093,2637,3136,4186].forEach((f,i)=>tone(f,.4,'sine',.07,i*.05));},buzz(){noise(.18,.1);tone(1800,.05,'square',.04);}},
+  arena:{ding(){noise(.12,.12);tone(523,.12,'square',.08,.04);tone(784,.25,'square',.08,.12);},buzz(){tone(70,.35,'sine',.3);noise(.2,.1);}},
+  legend:{ding(){[523,659,784,1047].forEach((f,i)=>{tone(f,.4,'triangle',.11,i*.07);tone(f*2,.3,'sine',.03,i*.07);});},buzz(){tone(294,.4,'triangle',.12);tone(277,.45,'triangle',.1,.1);}}
+};
 const soundOn=()=>lsGet('sound',true)!==false;
-function sfx(n){ if(!soundOn()) return; try{ SFX[n]&&SFX[n](); }catch(e){} }
+function sfx(n){ if(!soundOn()) return; try{ const th=THEME_SFX[document.documentElement.dataset.skin]; const f=(th&&th[n])||SFX[n]; f&&f(); }catch(e){} }
 
 /* ---------- music: the class's own songs (mp3 files in /music) ---------- */
 const TRACKS=[
@@ -2634,7 +2702,8 @@ function themeOpen(t){ if(!t.need) return true; if(!U) return false; const n=t.n
 function themeNeedText(t){ const n=t.need||{}; return n.level?`Reach level ${n.level}`:n.badges?`Earn ${n.badges} badges`:n.bosses?`Defeat ${n.bosses} bosses`:n.streak?`Get a ${n.streak}-day streak`:''; }
 function themeUnlockedAt(L){ const t=THEMES.find(x=>x.need&&x.need.level===L); return t?` New theme unlocked: ${t.name}!`:''; }
 function themeSwatch(t){ const g=k=>t.v[k]||({'--bg':'#fcd8a8','--win':'#000','--accent':'#00a800','--frame':'#c84c0c'})[k]; return `<span class="sw"><i style="background:${g('--bg')}"></i><i style="background:${g('--win')};box-shadow:inset 0 0 0 3px ${g('--frame')}"></i><i style="background:${g('--accent')}"></i></span>`; }
-function applyTheme(){ const st=document.documentElement.style; THEME_VARS.forEach(p=>st.removeProperty(p));
+function ambLayer(){ if(!document.getElementById('amb')){ const d=document.createElement('div'); d.id='amb'; d.setAttribute('aria-hidden','true'); d.innerHTML='<i></i><b></b>'; document.body.prepend(d); } }
+function applyTheme(){ ambLayer(); const st=document.documentElement.style; THEME_VARS.forEach(p=>st.removeProperty(p));
   let t=U&&THEMES.find(x=>x.id===U.theme); if(!t||!themeOpen(t)) t=THEMES[0];
   Object.entries(t.v).forEach(([k,v])=>st.setProperty(k,v));
   const de=document.documentElement; de.dataset.skin=t.id; if(PIXEL_FONTS.has(t.id)) delete de.dataset.dfont; else de.dataset.dfont='1';
