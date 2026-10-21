@@ -1048,6 +1048,32 @@ html[data-skin="pocket"] #amb i{inset:0;background:linear-gradient(180deg,rgba(1
 @keyframes crowd{to{transform:translateY(4px)}}
 @keyframes rays{to{transform:rotate(8deg)}}
 @media (prefers-reduced-motion:reduce){#amb,#amb *,#amb::after,.trophy span{animation:none!important}}
+
+.shout{position:fixed;left:50%;z-index:60;pointer-events:none;font-family:var(--f-display);font-size:clamp(26px,8vw,42px);line-height:1;color:var(--gold);white-space:nowrap;
+  text-shadow:3px 3px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000;transform:translate(-50%,-50%);animation:shout 1.2s cubic-bezier(.2,1.4,.4,1) forwards}
+.shout.big{font-size:clamp(32px,10vw,54px)}
+@keyframes shout{0%{opacity:0;transform:translate(-50%,-50%) scale(2.6) rotate(-8deg)}18%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-4deg)}70%{opacity:1;transform:translate(-50%,-60%) scale(1) rotate(-4deg)}100%{opacity:0;transform:translate(-50%,-110%) scale(.9) rotate(-4deg)}}
+html[data-skin="brick"] .shout{color:#fcd800;text-shadow:4px 4px 0 #8c3000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000}
+html[data-skin="robot"] .shout{color:#3cbcfc;background:#001850;padding:6px 14px;border:3px solid #fcd800;text-shadow:none;animation-timing-function:steps(6)}
+html[data-skin="space"] .shout,html[data-skin="galaxy"] .shout{color:#fff;text-shadow:0 0 10px var(--accent),0 0 22px var(--accent),0 0 40px var(--frame)}
+html[data-skin="castle"] .shout,html[data-skin="legend"] .shout{background:linear-gradient(180deg,#fff6c8,#e8b923 55%,#a07400);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(3px 3px 0 #000)}
+html[data-skin="pocket"] .shout{color:#0f380f;background:#9bbc0f;border:4px solid #0f380f;padding:6px 14px;text-shadow:none}
+html[data-skin="hedgehog"] .shout{font-style:italic;color:#f8d800;text-shadow:4px 4px 0 #0a1a5c,-2px -2px 0 #000;letter-spacing:.02em}
+html[data-skin="maze"] .shout{color:#ffff00;text-shadow:0 0 0 #000,3px 3px 0 #2121de}
+html[data-skin="blocks"] .shout{color:#fff;text-shadow:3px 3px 0 #8a2be2,6px 6px 0 #00a8a8}
+html[data-skin="volcano"] .shout{background:linear-gradient(180deg,#fff2a0,#fcb000 40%,#f83800);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 10px #ff5000) drop-shadow(3px 3px 0 #000)}
+html[data-skin="ice"] .shout{color:#fff;text-shadow:0 0 12px #7cd4fc,3px 3px 0 #0c3c6c}
+html[data-skin="arena"] .shout{font-style:italic;color:#fcd800;text-shadow:4px 4px 0 #d80000,-2px -2px 0 #000,2px 2px 0 #000;font-size:clamp(34px,11vw,58px)}
+.twipe{position:fixed;inset:0;z-index:200;pointer-events:none;background:var(--hud,#000);animation:wipein .38s ease-in forwards}
+.twipe.out{animation:wipeout .45s ease-out forwards}
+@keyframes wipein{from{clip-path:circle(0% at 50% 50%)}to{clip-path:circle(75% at 50% 50%)}}
+@keyframes wipeout{from{clip-path:circle(75% at 50% 50%)}to{clip-path:circle(0% at 50% 50%)}}
+html[data-skin="brick"] .twipe,html[data-skin="blocks"] .twipe,html[data-skin="pocket"] .twipe,html[data-skin="robot"] .twipe{animation-timing-function:steps(6)}
+html[data-skin="hedgehog"] .twipe.out,html[data-skin="arena"] .twipe.out{animation-name:wipeside}
+@keyframes wipeside{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 0 100%)}}
+html[data-skin="ice"] .twipe.out,html[data-skin="legend"] .twipe.out,html[data-skin="castle"] .twipe.out{animation-name:fadeaway}
+@keyframes fadeaway{to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.shout{display:none}}
 </style>
 
 <div id="app"></div>
@@ -1182,8 +1208,20 @@ function drawBit(ctx,p){ const s=p.w;
     case 'glyph': ctx.font=`${Math.round(s*2.2)}px system-ui,"Apple Color Emoji","Segoe UI Emoji",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.g,0,0);break;
     default: ctx.fillRect(-s/2,-p.h/2,s,p.h*Math.abs(Math.cos(p.rot*2))+2);
   } }
+// A themed word stamps onto the screen on a right answer, and switching themes plays a wipe.
+const SHOUT={overworld:['NICE!','GREAT!','YES!'],dungeon:['TREASURE!','LOOT GET!','GEM FOUND!'],brick:['COIN GET!','POWER UP!','WAHOO!'],robot:['CORRECT.EXE','SYSTEM OK','BEEP BOOP!'],
+  space:['TARGET LOCKED','WARP SPEED!','ORBIT!'],castle:['HUZZAH!','FOR THE KING!','VICTORY!'],pocket:['NICE!','GOOD!','LEVEL UP!'],hedgehog:['TOO FAST!','ZOOM!','RINGS!'],
+  galaxy:['DIRECT HIT!','BLASTED!','HYPERDRIVE!'],maze:['CHOMP!','YUM!','POWER PELLET!'],blocks:['LINE CLEAR!','PERFECT FIT!','TETRA!'],volcano:['RED HOT!','ERUPTION!','ON FIRE!'],
+  ice:['ICE COLD!','FROSTY!','CHILL!'],arena:['K.O.!','PERFECT!','COMBO!'],legend:['LEGENDARY!','GLORIOUS!','EPIC!']};
+let shoutN=0;
+function shout(big){ const sk=document.documentElement.dataset.skin||'overworld', L=SHOUT[sk]||SHOUT.overworld; const card=document.querySelector('.qcard'); if(!card) return;
+  const r=card.getBoundingClientRect(); const el=document.createElement('div'); el.className='shout'+(big?' big':''); el.textContent=L[(shoutN++)%L.length];
+  el.style.top=Math.max(70,r.top+r.height*.35)+'px'; document.body.appendChild(el); setTimeout(()=>el.remove(),1300); }
+function themeWipe(done){ if(reduceMotion()){ done(); return; } const w=document.createElement('div'); w.className='twipe'; document.body.appendChild(w);
+  setTimeout(()=>{ done(); w.classList.add('out'); setTimeout(()=>w.remove(),450); },380); }
 function celebrate(big){
   if(reduceMotion()) return;
+  shout(big);
   const cv=document.createElement('canvas'); cv.id='confetti'; document.body.appendChild(cv);
   const ctx=cv.getContext('2d'), dpr=window.devicePixelRatio||1, W=innerWidth, H=innerHeight;
   cv.width=W*dpr; cv.height=H*dpr; cv.style.width=W+'px'; cv.style.height=H+'px'; ctx.scale(dpr,dpr);
@@ -3434,7 +3472,7 @@ function wire(){
   on('#retry',()=>{const ids=quiz.res.filter(x=>!x.ok).map(x=>x.id);const label=quiz.label+' (missed)';quiz={ids,i:0,res:[],state:'ask',last:null,label,wording:ids.map(id=>Q[id].q)};render()});
   on('#again',()=>{quiz=null;render()});
   // progress
-  document.querySelectorAll('[data-themeid]').forEach(b=>b.onclick=()=>{U.theme=b.dataset.themeid;save();applyTheme();renderKeep()});
+  document.querySelectorAll('[data-themeid]').forEach(b=>b.onclick=()=>{ if(b.dataset.themeid===U.theme) return; U.theme=b.dataset.themeid;save(); themeWipe(()=>{applyTheme();renderKeep();}); });
   on('#drill',()=>{const ids=Object.keys(U.stats).map(Number).filter(id=>U.stats[id][2]===0).sort((a,b)=>(U.stats[b][0]-U.stats[b][1])-(U.stats[a][0]-U.stats[a][1])).slice(0,12).sort((a,b)=>a-b);
     quiz={ids,i:0,res:[],state:'ask',last:null,label:'Needs-work drill',wording:ids.map(id=>Q[id].q)};tab='practice';render()});
   on('#copycode',()=>{const b=$('#copycode');if($('#codeout'))copyCode(b,'codeout');else{$('#importbox').hidden=false;copyCode(b,'code')}});
