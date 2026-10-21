@@ -131,6 +131,21 @@ const AV_HAIRCOLORS=[['hblack','#1e1e24'],['hdbrown','#3b2618'],['hbrown','#6b4a
 const AV_SKINS=[['sa','#f6d3b3','#e3a98a'],['sb','#e8b48c','#cc8a62'],['sc','#c68a5e','#a46a40'],['sd','#8d5a3b','#6f4229'],['se','#5c3a24','#432818']];
 const AV_MANE=['','','....DDDDDDDD....','..DDDDDDDDDDDD..','.DDDDDDDDDDDDDD.','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','.DDDDDDDDDDDDDD.','..DDDDDDDDDDDD..'];
 const AV_POST={ koala:['','','','','','','','','','','.......NN.......','......NNNN......','......NNNN......'] };
+// Extra little details drawn on top of each animal (K = whisker color, a shade of the fur).
+const AV_DETAIL={
+ whisk:['','','','','','','','','','','','..K..........K..','..KK........KK..'],
+ teeth:['','','','','','','','','','','','','','.......WW.......'],
+ tongue:['','','','','','','','','','','','','','','.......PP.......'],
+ fangs:['','','','','','','','','','','','','.....W....W.....','','','','.......'],
+ owl:['','','','','','','......D..D......','.....D.DD.D.....'],
+ lion:['','','D.D..........D.D','.D............D.','D..............D','.D............D.','D..............D','.D............D.','D..............D','.D............D.','D..............D','.D............D.','D..............D','.D............D.'],
+ uni:['','','','','','.........ROO....','..........RRB...','..........ROBG..','...........RBG..','............BG..'],
+ dragon:['','','','','','','......Y..Y......','.....Y.YY.Y.....','','','','','.....NN..NN.....'],
+ panda:['','','','','','','','','','','','','','','.......NN.......']
+};
+const AV_DETAILS={cat:['whisk'],blackcat:['whisk'],tiger:['whisk'],mouse:['whisk','teeth'],fox:['whisk'],raccoon:['whisk'],bunny:['whisk','teeth'],dog:['tongue'],spots:['tongue'],
+  dragon:['dragon','fangs'],owl:['owl'],lion:['lion','whisk'],unicorn:['uni'],koala:['teeth'],bear:['tongue']};
+function avMix(hex,to,a){ const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)); if(!/^#[0-9a-f]{6}$/i.test(hex)) return hex; const A=p(hex),B=p(to); return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*a).toString(16).padStart(2,'0')).join(''); }
 const AV_ANIMALS=[
  {id:'cat',name:'Cat',lvl:1,ears:'pointy',c:{F:'#f4a340',I:'#ffb3c1',M:'#ffe2b8',N:'#e8607a',D:'#b86a1c'}},
  {id:'dog',name:'Dog',lvl:1,ears:'none',front:'floppy',c:{F:'#c98a4b',I:'#ffb3c1',M:'#f3dcc0',N:'#2a1a12',D:'#6b4123'}},
@@ -202,6 +217,10 @@ function avParse(code,name){ const d=avDefault(name).split('.'), p=String(code||
     bg:AV_BGS.some(b=>b[0]===p[3])?p[3]:d[3], hc:AV_COLORS.some(c=>c[0]===p[4])?p[4]:d[4], sk:AV_SKINS.some(k=>k[0]===p[5])?p[5]:'sc', hs:AV_HAIR[p[6]]?p[6]:'short', hcol:AV_HAIRCOLORS.some(k=>k[0]===p[7])?p[7]:'hblack'}; }
 const avCode=o=>[o.a,o.h,o.f,o.bg,o.hc,o.sk||'sc',o.hs||'short',o.hcol||'hblack'].join('.');
 const avCache={};
+// Small twinkles in empty corners of the background (more stars on the night background).
+function avSpark(bgId,grid){ const spots=bgId==='night'?[[1,1],[14,2],[2,9],[13,8]]:[[1,1],[14,3]]; let s='';
+  for(const [x,y] of spots){ if(grid[y][x]||grid[y][x+1]||grid[y+1]&&grid[y+1][x]) continue; s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="#fff" opacity=".85"/><rect x="${x-1}" y="${y}" width="3" height="1" fill="#fff" opacity=".35"/><rect x="${x}" y="${y-1}" width="1" height="3" fill="#fff" opacity=".35"/>`; }
+  return s; }
 function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[key]) return avCache[key];
   const o=avParse(code,name), an=avFind(AV_ANIMALS,o.a), hat=avFind(AV_HATS,o.h), face=avFind(AV_FACES,o.f);
   const hc=(AV_COLORS.find(c=>c[0]===o.hc)||AV_COLORS[0])[1], bg=(AV_BGS.find(b=>b[0]===o.bg)||AV_BGS[0])[1];
@@ -227,13 +246,19 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   if(an.human) put(AV_HUMAN_EARS,base);
   if(hair&&hair.side) put(hair.side,base);
   }
+  if(!an.custom&&AV_DETAILS[an.id]){ const dp=Object.assign({},base,{K:avMix(base.F,'#000000',.35),R:'#ff6fae',B:'#7fb2ff',G:'#8be0a4',W:'#ffffff'}); if(an.id==='blackcat') dp.K='#8a8a98'; if(an.id==='bunny'||an.id==='unicorn') dp.K='#c9c9d6'; AV_DETAILS[an.id].forEach(k=>put(AV_DETAIL[k],dp)); }
+  // Shading: a darker rim along the bottom/right of the fur and a soft highlight at the top-left so heads look round.
+  if(!an.custom){ const F=base.F, O=base.O, dk=avMix(F,'#000000',.16), lt=avMix(F,'#ffffff',.3), src=grid.map(r=>r.slice());
+    for(let y=0;y<16;y++) for(let x=0;x<16;x++){ if(src[y][x]!==F) continue; const below=y<15?src[y+1][x]:null, right=x<15?src[y][x+1]:null, above=y>0?src[y-1][x]:null, left=x>0?src[y][x-1]:null;
+      if(below===O||below===null||right===O) grid[y][x]=dk; else if((above===O||above===null)&&x<9) grid[y][x]=lt; else if(left===O&&y<10) grid[y][x]=lt; } }
   if(an.id==='luther') put(AV_LUTHER,Object.assign({},base,{W:'#ffffff'}));
   if(face&&face.g.length){ const fp=Object.assign({},base,{O:'#1a1a22',C:hc}); if(face.id==='jersey') fp.K='#ffffff'; put(face.g,fp,face.y); }
   if(hat&&hat.g.length){ const fx=AV_HATFIX[hat.id]||{}, pal=Object.assign({},base,{O:'#1a1a22',C:hc}); for(const k in fx) pal[k]=fx[k]==='C'?hc:fx[k]; put(hat.g,pal,hat.y); }
   let rects='';
   for(let y=0;y<16;y++){ let x=0; while(x<16){ const c=grid[y][x]; if(!c){x++;continue} let w=1; while(x+w<16&&grid[y][x+w]===c) w++; rects+=`<rect x="${x}" y="${y}" width="${w}" height="1" fill="${c}"/>`; x+=w; } }
-  const bgFill=bg==='rainbow'?'url(#rb)':bg, defs=bg==='rainbow'?'<defs><linearGradient id="rb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a80"/><stop offset=".25" stop-color="#ffd180"/><stop offset=".5" stop-color="#ccff90"/><stop offset=".75" stop-color="#80d8ff"/><stop offset="1" stop-color="#ea80fc"/></linearGradient></defs>':'';
-  const svg=`<svg class="av" width="${px}" height="${px}" viewBox="-1 -1 18 18" shape-rendering="crispEdges" aria-hidden="true">${defs}<rect x="-1" y="-1" width="18" height="18" fill="${bgFill}"/>${rects}</svg>`;
+  const gid='avg'+String(o.bg).replace(/[^a-z0-9]/gi,'');
+  const bgFill=bg==='rainbow'?'url(#rb)':`url(#${gid})`, defs=bg!=='rainbow'?`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${avMix(bg,'#ffffff',.28)}"/><stop offset=".65" stop-color="${bg}"/><stop offset="1" stop-color="${avMix(bg,'#000000',.22)}"/></linearGradient></defs>`:bg==='rainbow'?'<defs><linearGradient id="rb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a80"/><stop offset=".25" stop-color="#ffd180"/><stop offset=".5" stop-color="#ccff90"/><stop offset=".75" stop-color="#80d8ff"/><stop offset="1" stop-color="#ea80fc"/></linearGradient></defs>':'';
+  const svg=`<svg class="av" width="${px}" height="${px}" viewBox="-1 -1 18 18" shape-rendering="crispEdges" aria-hidden="true">${defs}<rect x="-1" y="-1" width="18" height="18" fill="${bgFill}"/>${avSpark(o.bg,grid)}${rects}</svg>`;
   return (avCache[key]=svg);
 }
 const myAv=()=>U?(U.av||avDefault(me)):'';
