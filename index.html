@@ -1315,7 +1315,7 @@ function render(){
   if(tab==='verses') w.append(vc ? (vc.done? vResultsView() : vCardView()) : vSetupView());
   {const sel=app.querySelector('.tabs [aria-selected="true"]'); if(sel&&sel.scrollIntoView) try{sel.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}}
   app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(game&&game.type==='duel'&&game.phase==='reading'){stopVoice();game.phase='ready'}if(quiz&&tab==='practice'){quiz.deadline=null;if(quiz.state==='ask'&&quiz.t0&&!quiz.away)quiz.away=Date.now()}if(vc&&tab==='verses'){vc.deadline=null;if(vc.state==='ask'&&vc.t0&&!vc.away)vc.away=Date.now()}const nt=b.dataset.tab, moved=nt!==tab; tab=nt;confirmReset=false;render(); if(moved) window.scrollTo(0,0)});
-  $('#switch').onclick=()=>{liveStop();live=null;musicStop();me=null;U=null;quiz=null;vc=null;game=null;goalEdit=false;goalDraft=null;applyTheme();render()};
+  $('#switch').onclick=()=>{lsSet('last',null);liveStop();live=null;musicStop();me=null;U=null;quiz=null;vc=null;game=null;goalEdit=false;goalDraft=null;applyTheme();render()};
   $('#sndbtn').onclick=()=>{lsSet('sound',!soundOn());if(soundOn())sfx('ding');renderKeep()};
   wire();
 }
@@ -3556,6 +3556,7 @@ document.addEventListener('keydown',e=>{
   }
   if(e.key==='Enter' && quiz && !quiz.done && quiz.state==='fb' && tab==='practice' && ae && ae.id!=='ans' && ae.tagName!=='BUTTON'){e.preventDefault();nextQ()} });
 
+const last=lsGet('last',null); if(last && users.includes(last)) loadUser(last);
 render();
 cloud.status='off';
 })();
