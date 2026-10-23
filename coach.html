@@ -146,6 +146,16 @@ const AV_DETAIL={
 const AV_DETAILS={cat:['whisk'],blackcat:['whisk'],tiger:['whisk'],mouse:['whisk','teeth'],fox:['whisk'],raccoon:['whisk'],bunny:['whisk','teeth'],dog:['tongue'],spots:['tongue'],
   dragon:['dragon','fangs'],owl:['owl'],lion:['lion','whisk'],unicorn:['uni'],koala:['teeth'],bear:['tongue']};
 function avMix(hex,to,a){ const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)); if(!/^#[0-9a-f]{6}$/i.test(hex)) return hex; const A=p(hex),B=p(to); return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*a).toString(16).padStart(2,'0')).join(''); }
+// Weekly limited-time avatars (meet the daily goal 6 of 7 days that week)
+const AV_SCARECROW=["................", ".....OOOOOO.....", "....OHHHHHHO....", "....OHHHHHHO....", "....OBBBBBBO....", ".OOOOHHHHHHOOOO.", "OHHHHHHHHHHHHHHO", "SOOOOFFFFFFOOOOS", ".SSOFFFFFFFFOSS.", "S.OFFKFFFFKFFO.S", ".SOFKEKFFKEKFOS.", "S.OFFKFNNFKFFO.S", "..OPPFFNNFFFFO..", "..OPPKFKFKFKFO..", "...OFFKFKFKFO...", "..S.OOOOOOOO.S.."];
+const AV_EAGLE=["................", "................", ".....OOOOOO.....", "....OWWWWWWO....", "...OWWWWWWWWO...", "..OWWWWWWWWWWO..", "..OWOOWWWWOOWO..", "..OWYEOWWOEYWO..", "..OWWWWYYYWWWO..", "..OWWWYYYYYWWO..", "..OGWWWOYYAWGO..", "..OGWWWWOAAWGO..", ".ODOWWWWWWWWODO.", "ODDDOWWWWWWODDDO", "ODDDDOOOOOODDDDO", "ODDDDDDDDDDDDDDO"];
+const AV_TURKEY=["...OO.OOOO.OO...", "..ORROAAAAORRO..", ".ORRAOYYYYOARRO.", ".ORAYOGGGGOYARO.", "ORAYGOOOOOOGYARO", "ORAYOFFFFFFOYARO", "ORAOFFFFFFFFOARO", "ORAOFWEFFWEFOARO", ".OAOFEEFFEEFOAO.", "..OOFFFBBFFFOO..", "...OFFFRBFFFO...", "..ODFFFRRFFFDO..", "..ODDFFRFFFDDO..", "...ODDDDDDDDO...", "....OYO..OYO....", "...OYYO..OYYO..."];
+const AV_PILGRIM=["....OOOOOOOO....", "....OKKKKKKO....", "....OKKKKKKO....", "....OKKKKKKO....", "....OQQYYQQO....", ".OOOOKKKKKKOOOO.", "OKKKKKKKKKKKKKKO", ".OOODDFFFFDDOOO.", "..ODFFFFFFFFDO..", "..ODFWEFFWEFDO..", "..ODFEEFFEEFDO..", "..ODPFFNNFFPDO..", "..ODFFEFFEFFDO..", "...OOFFEEFFOO...", ".OWWWWWWWWWWWWO.", "OWWWWWOKKOWWWWWO"];
+const AV_NICHOLAS=[".......OO.......", "......ORRO......", ".....ORRRRO.....", "....ORRYYRRO....", "....ORYYYYRO....", "....ORRYYRRO....", "....OYYYYYYO....", "...OOFFFFFFOO...", "..OWFFFFFFFFWO..", "..OWFWEFFWEFWO..", "..OWFEEFFEEFWO..", "..OWPFFNNFFPWO..", "..OWWWWWWWWWWO..", "ORROWWWRRWWWORRO", "ORRROWWWWWWORRRO", "ORRRROWWWWORRRRO"];
+const AV_SNOWMAN=["....OOOOOOOO....", "....OKKKKKKO....", "....OKKKKKKO....", "....ORRRRRRO....", ".OOOOKKKKKKOOOO.", "OKKKKKKKKKKKKKKO", ".OOOWWWWWWWWOOO.", "..OWWWWWWWWWWO..", ".OWWWWWWWWWWWWO.", ".OWWWEEWWEEWWWO.", ".OWWWEEWWEEWWWO.", ".OWPWWWNNNNNWPO.", ".OWWWEWEWEWWWWO.", "..OWWWWWWWWWWO..", ".OCCDCCDCCDCCCO.", "OCCDCCOOCCDOCCDO"];
+const AV_ANGEL=["....OOOOOOOO....", "...OYLLLLLLYO...", "....OOOOOOOO....", ".....OHHHHO.....", "....OHHHHHHO....", "OO.OHFFFFFFHO.OO", "OWOOHFFFFFFHOOWO", "OWWOHWEFFWEHOWWO", "OWWOHEEFFEEHOWWO", "OWWWOPFFFFPOWWWO", ".OWWOFFEEFFOWWO.", ".OWWWOFFFFOWWWO.", "..OWOWWWWWWOWO..", "..OOWWWYYWWWOO..", "...OWWWWWWWWO...", "...OWWWWWWWWO..."];
+const AV_SANTA=["...........OOO..", "......OOOO.OWWO.", ".....ORRRROOWWO.", "....ORRRRRRROO..", "...ORRRRRRRRO...", "..OWWWWWWWWWWO..", "..OWWWWWWWWWWO..", "..OFFFFFFFFFFO..", "..OFWEFFFFWEFO..", "..OFEEFFFFEEFO..", ".OWPFFFNNFFFPWO.", ".OWWWWWWWWWWWWO.", ".OWWWWWRRWWWWWO.", "..OWWWWWWWWWWO..", "...OWWWWWWWWO...", ".....OOOOOO....."];
+const AV_PARTYPENGUIN=[".......YY.......", ".R....OCCO....G.", "......OMMO......", "..G..OCCCCO..R..", ".....OMMMMO.....", "...OOOCCCCOOO...", "..OKKKOOOOKKKO..", ".OKKKKKKKKKKKKO.", ".OKKWWWKKWWWKKO.", ".OKWWWEWWEWWWKO.", ".OKWWWEWWEWWWKO.", ".OKWPWWBBWWPWKO.", ".OKWWWWBBWWWWKO.", "..OKWWWWWWWWKO..", "...OKKKKKKKKO...", "....OOOOOOOO...."];
 const AV_ANIMALS=[
  {id:'cat',name:'Cat',lvl:1,ears:'pointy',c:{F:'#f4a340',I:'#ffb3c1',M:'#ffe2b8',N:'#e8607a',D:'#b86a1c'}},
  {id:'dog',name:'Dog',lvl:1,ears:'none',front:'floppy',c:{F:'#c98a4b',I:'#ffb3c1',M:'#f3dcc0',N:'#2a1a12',D:'#6b4123'}},
@@ -168,6 +178,15 @@ const AV_ANIMALS=[
  {id:'hoops',name:'Hoops Star',lvl:15,ears:'none',human:true,hairFixed:'short',c:{F:'#c68a5e',I:'#c68a5e',M:'#c68a5e',N:'#a46a40',D:'#1e1e24',P:'#e0857a'}},
  {id:'luther',name:'Martin Luther',lvl:999,event:'luther',ears:'none',mark:'lhair',human:true,skin:['#f2cfae','#d9a888'],c:{F:'#f2cfae',I:'#f2cfae',M:'#f2cfae',N:'#d9a888',D:'#6b4a2e',P:'#e8958a',G:'#26262e'}},
  {id:'pumpkin',name:"Jack-o'-lantern",lvl:999,event:'pumpkin',ears:'none',custom:AV_PUMPKIN,c:{F:'#f28c28',I:'#f28c28',M:'#f28c28',N:'#f28c28',D:'#c8641a',R:'#c8641a',G:'#4a7a2a',Y:'#ffd23f',K:'#4a1e00',O:'#3a1a08'}},
+ {id:"scarecrow",name:"Scarecrow",lvl:999,event:"scarecrow",ears:'none',custom:AV_SCARECROW,c:{"F": "#e3c28a", "I": "#ffffff", "M": "#ffffff", "N": "#e8833a", "D": "#888888", "O": "#2a1a0a", "H": "#8b5a2b", "B": "#c0392b", "S": "#f2c94c", "K": "#5a3a1a", "E": "#1a1a22", "P": "#5b8bd6"}},
+ {id:"eagle",name:"Bald Eagle",lvl:999,event:"eagle",ears:'none',custom:AV_EAGLE,c:{"F": "#ffffff", "I": "#ffffff", "M": "#ffffff", "N": "#ffffff", "D": "#5a3418", "O": "#1a1a22", "W": "#ffffff", "G": "#d8d8e0", "Y": "#ffc61a", "A": "#d98e00", "E": "#1a1a22"}},
+ {id:"turkey",name:"Turkey",lvl:999,event:"turkey",ears:'none',custom:AV_TURKEY,c:{"F": "#9a6234", "I": "#ffffff", "M": "#ffffff", "N": "#ffffff", "D": "#6b4122", "O": "#2a1a0a", "R": "#d64933", "A": "#f28c28", "Y": "#ffd23f", "G": "#6aa84f", "B": "#f5b82e", "E": "#1a1a22", "W": "#ffffff"}},
+ {id:"pilgrim",name:"Pilgrim",lvl:999,event:"pilgrim",ears:'none',custom:AV_PILGRIM,c:{"F": "#f2cfae", "I": "#ffffff", "M": "#ffffff", "N": "#d9a888", "D": "#6b4a2e", "O": "#1a1a22", "K": "#2b2b33", "Q": "#55555f", "Y": "#ffd23f", "P": "#e8958a", "E": "#1a1a22", "W": "#ffffff"}},
+ {id:"nicholas",name:"St. Nicholas",lvl:999,event:"nicholas",ears:'none',custom:AV_NICHOLAS,c:{"F": "#f2cfae", "I": "#ffffff", "M": "#ffffff", "N": "#d9a888", "D": "#888888", "O": "#1a1a22", "R": "#b3202a", "Y": "#ffd23f", "P": "#e8958a", "W": "#f4f4f8", "E": "#1a1a22"}},
+ {id:"snowman",name:"Snowman",lvl:999,event:"snowman",ears:'none',custom:AV_SNOWMAN,c:{"F": "#ffffff", "I": "#ffffff", "M": "#ffffff", "N": "#f28c28", "D": "#ffffff", "O": "#1a1a22", "K": "#26262e", "R": "#c0392b", "W": "#ffffff", "E": "#1a1a22", "P": "#ffc4d0", "C": "#3a7bd5"}},
+ {id:"angel",name:"Angel",lvl:999,event:"angel",ears:'none',custom:AV_ANGEL,c:{"F": "#f6d3b3", "I": "#ffffff", "M": "#ffffff", "N": "#ffffff", "D": "#888888", "O": "#3a2a10", "Y": "#ffcf33", "L": "#fff3b0", "H": "#f2c14e", "P": "#f4a3a3", "E": "#1a1a22", "W": "#ffffff"}},
+ {id:"santa",name:"Santa",lvl:999,event:"santa",ears:'none',custom:AV_SANTA,c:{"F": "#f6d3b3", "I": "#ffffff", "M": "#ffffff", "N": "#e8a08a", "D": "#888888", "O": "#1a1a22", "R": "#d42a2a", "W": "#ffffff", "P": "#f08080", "E": "#1a1a22"}},
+ {id:"partypenguin",name:"Party Penguin",lvl:999,event:"partypenguin",ears:'none',custom:AV_PARTYPENGUIN,c:{"F": "#ffffff", "I": "#ffffff", "M": "#ff4fa3", "N": "#ffffff", "D": "#888888", "O": "#1a1a22", "K": "#2b2f45", "W": "#ffffff", "E": "#1a1a22", "B": "#f5a623", "P": "#ff9eb5", "C": "#29c5f6", "Y": "#ffd23f", "R": "#ff5a5a", "G": "#5ad16a"}},
  {id:'dragon',name:'Dragon',lvl:18,ears:'horns',c:{F:'#4caf50',I:'#4caf50',M:'#a5d6a7',N:'#1b5e20',D:'#1b5e20',Y:'#ffe082'}},
 ];
 const AV_HATS=[
@@ -204,7 +223,16 @@ const AV_BGS=[['sky','#8ecae6'],['grass','#9ad08b'],['sun','#ffd166'],['rose','#
 const avFind=(list,id)=>list.find(x=>x.id===id);
 // Limited-time unlocks: earn the XP between start and end (Central dates, inclusive) and keep the item forever.
 const AV_EVENTS={luther:{name:'Martin Luther',need:1200,start:'2026-10-18',end:'2026-10-25',endLabel:'Sunday, Oct 25'},
- pumpkin:{name:"the Jack-o'-lantern",kind:'goal',need:6,start:'2026-10-26',end:'2026-11-01',endLabel:'Sunday, Nov 1',startLabel:'Monday, Oct 26'}};
+ pumpkin:{name:"the Jack-o'-lantern",kind:'goal',need:6,start:'2026-10-26',end:'2026-11-01',endLabel:'Sunday, Nov 1',startLabel:'Monday, Oct 26'},
+ scarecrow:{name:"the Scarecrow",kind:'goal',need:6,start:'2026-11-02',end:'2026-11-08',endLabel:'Sunday, Nov 8',startLabel:'Monday, Nov 2'},
+ eagle:{name:"the Bald Eagle",kind:'goal',need:6,start:'2026-11-09',end:'2026-11-15',endLabel:'Sunday, Nov 15',startLabel:'Monday, Nov 9'},
+ turkey:{name:"the Turkey",kind:'goal',need:6,start:'2026-11-16',end:'2026-11-22',endLabel:'Sunday, Nov 22',startLabel:'Monday, Nov 16'},
+ pilgrim:{name:"the Pilgrim",kind:'goal',need:6,start:'2026-11-23',end:'2026-11-29',endLabel:'Sunday, Nov 29',startLabel:'Monday, Nov 23'},
+ nicholas:{name:"St. Nicholas",kind:'goal',need:6,start:'2026-11-30',end:'2026-12-06',endLabel:'Sunday, Dec 6',startLabel:'Monday, Nov 30'},
+ snowman:{name:"the Snowman",kind:'goal',need:6,start:'2026-12-07',end:'2026-12-13',endLabel:'Sunday, Dec 13',startLabel:'Monday, Dec 7'},
+ angel:{name:"the Angel",kind:'goal',need:6,start:'2026-12-14',end:'2026-12-20',endLabel:'Sunday, Dec 20',startLabel:'Monday, Dec 14'},
+ santa:{name:"Santa",kind:'goal',need:6,start:'2026-12-21',end:'2026-12-27',endLabel:'Sunday, Dec 27',startLabel:'Monday, Dec 21'},
+ partypenguin:{name:"the Party Penguin",kind:'goal',need:6,start:'2026-12-28',end:'2027-01-03',endLabel:'Sunday, Jan 3',startLabel:'Monday, Dec 28'}};
 const avOwned=id=>!!(U&&U.unlocks&&U.unlocks[id]);
 function avEventActive(id){ const e=AV_EVENTS[id]; if(!e) return false; const d=dayKey(); return d>=e.start&&d<=e.end; }
 function avEventXP(id){ const e=AV_EVENTS[id]; if(!e||!U) return 0; const x=U.xpDays||{}; let t=0; for(const k in x) if(k>=e.start&&k<=e.end) t+=x[k]||0; return t; }
