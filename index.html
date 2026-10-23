@@ -17,7 +17,7 @@
 <body>
 <title>John Quiz Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&family=Jersey+15&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=VT323&family=Orbitron:wght@600;800&family=Silkscreen&family=Bungee&family=Cinzel:wght@700;900&family=MedievalSharp&family=Luckiest+Guy&family=Audiowide&family=Black+Ops+One&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&family=Jersey+15&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=VT323&family=Orbitron:wght@600;800&family=Silkscreen&family=Bungee&family=Cinzel:wght@700;900&family=MedievalSharp&family=Luckiest+Guy&family=Audiowide&family=Black+Ops+One&family=Fredoka:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Comfortaa:wght@600;700&display=swap">
 <style>
 /* Layout: one focused study column under a frosted top bar; the question card is the stage, everything else stays quiet. Quiz-show energy: buzzer violet, hot-pink sparks, chunky display type. */
 :root{
@@ -1074,6 +1074,86 @@ html[data-skin="hedgehog"] .twipe.out,html[data-skin="arena"] .twipe.out{animati
 html[data-skin="ice"] .twipe.out,html[data-skin="legend"] .twipe.out,html[data-skin="castle"] .twipe.out{animation-name:fadeaway}
 @keyframes fadeaway{to{opacity:0}}
 @media (prefers-reduced-motion:reduce){.shout{display:none}}
+html[data-skin="candy"] body{background-image:radial-gradient(#fff 5px,transparent 5.5px),radial-gradient(#bfe6ff 4px,transparent 4.5px)!important;background-size:44px 44px,44px 44px!important;background-position:0 0,22px 22px!important}
+html[data-skin="candy"] .panel,html[data-skin="candy"] .qcard,html[data-skin="candy"] .stat,html[data-skin="candy"] .gamecard,html[data-skin="candy"] .notice,html[data-skin="candy"] .homecard,html[data-skin="candy"] .songcard,html[data-skin="candy"] .duelmid,html[data-skin="candy"] .duelpad,html[data-skin="candy"] .bossarena,html[data-skin="candy"] .startbar,html[data-skin="candy"] .badge.on,html[data-skin="candy"] .themebtn,html[data-skin="candy"] .bosscard,html[data-skin="candy"] .toast{border-radius:26px!important;border:4px solid var(--frame)!important;box-shadow:0 0 0 4px #fff,0 9px 0 4px #ff9ccc,0 14px 26px rgba(194,48,111,.28)!important}
+html[data-skin="candy"] .btn{border-radius:999px!important;background:repeating-linear-gradient(-45deg,#ff5fa2 0 10px,#ff7ab3 10px 20px)!important;border:3px solid #fff!important;box-shadow:0 5px 0 #c2306f!important;color:#fff!important;text-shadow:1px 2px 0 #c2306f}
+html[data-skin="candy"] .btn:active{transform:translateY(5px)!important;box-shadow:0 0 0 #c2306f!important}
+html[data-skin="candy"] .seg button,html[data-skin="candy"] .tabs button,html[data-skin="candy"] .names button,html[data-skin="candy"] input[type=text],html[data-skin="candy"] textarea,html[data-skin="candy"] select,html[data-skin="candy"] .fb,html[data-skin="candy"] .lblist li,html[data-skin="candy"] .avpick,html[data-skin="candy"] .ch,html[data-skin="candy"] .v,html[data-skin="candy"] .mv,html[data-skin="candy"] .ref,html[data-skin="candy"] .xprule,html[data-skin="candy"] .xplog li,html[data-skin="candy"] .pill{border-radius:16px!important}
+html[data-skin="candy"] .panel h2,html[data-skin="candy"] .panel h3,html[data-skin="candy"] .qcard h2,html[data-skin="candy"] .qcard h3{text-shadow:2px 2px 0 #c2306f!important}
+html[data-skin="candy"] h1,html[data-skin="candy"] h2{text-shadow:3px 3px 0 #fff,5px 5px 0 #ff9ccc!important}
+html[data-skin="candy"] .label{letter-spacing:.05em}
+html[data-skin="candy"] .label::before{content:'♡ ';letter-spacing:0}
+html[data-skin="candy"] .gamecard:hover{transform:translateY(-6px) rotate(-1deg)}
+html[data-skin="rose"] body{background-image:radial-gradient(circle,#c2185b 0 3px,#f06292 3.5px 6px,#f8a5c2 6.5px 9px,transparent 9.5px),radial-gradient(ellipse 7px 3px at 50% 50%,#7cb87c 98%,transparent),radial-gradient(circle,#e8467c 0 2px,#f8a5c2 2.5px 5px,transparent 5.5px),repeating-linear-gradient(45deg,rgba(255,255,255,.25) 0 1px,transparent 1px 30px),repeating-linear-gradient(-45deg,rgba(255,255,255,.25) 0 1px,transparent 1px 30px)!important;background-size:120px 120px,120px 120px,120px 120px,auto,auto!important;background-position:0 0,14px 12px,60px 60px,0 0,0 0!important}
+html[data-skin="rose"] .panel,html[data-skin="rose"] .qcard,html[data-skin="rose"] .stat,html[data-skin="rose"] .gamecard,html[data-skin="rose"] .notice,html[data-skin="rose"] .homecard,html[data-skin="rose"] .songcard,html[data-skin="rose"] .duelmid,html[data-skin="rose"] .duelpad,html[data-skin="rose"] .bossarena,html[data-skin="rose"] .startbar,html[data-skin="rose"] .badge.on,html[data-skin="rose"] .themebtn,html[data-skin="rose"] .bosscard,html[data-skin="rose"] .toast{position:relative;border-radius:30px 6px 30px 6px!important;border:3px solid var(--frame)!important;outline:1px solid color-mix(in srgb,var(--gold) 65%,transparent);outline-offset:-9px;box-shadow:0 10px 26px rgba(74,13,34,.35),0 0 0 3px #4a0d22!important}
+html[data-skin="rose"] .panel::after{content:'❀';position:absolute;top:6px;right:14px;color:var(--gold);font-size:18px;opacity:.8;pointer-events:none}
+html[data-skin="rose"] .btn{border-radius:999px!important;background:linear-gradient(180deg,#f2668f,#c2185b)!important;border:2px solid var(--gold)!important;box-shadow:0 4px 0 #6a0f33!important;color:#fff!important;font-family:var(--f-body)!important;font-weight:700;letter-spacing:.04em}
+html[data-skin="rose"] .label{font-family:var(--f-body)!important;text-transform:uppercase;letter-spacing:.18em;font-weight:700}
+html[data-skin="rose"] .label::before{content:'✿ ';letter-spacing:0}
+html[data-skin="rose"] .seg button,html[data-skin="rose"] .tabs button,html[data-skin="rose"] .names button,html[data-skin="rose"] input[type=text],html[data-skin="rose"] textarea,html[data-skin="rose"] select,html[data-skin="rose"] .fb,html[data-skin="rose"] .lblist li,html[data-skin="rose"] .avpick,html[data-skin="rose"] .ch,html[data-skin="rose"] .v,html[data-skin="rose"] .mv,html[data-skin="rose"] .ref,html[data-skin="rose"] .xprule,html[data-skin="rose"] .xplog li,html[data-skin="rose"] .pill{border-radius:14px!important}
+html[data-skin="rose"] h1,html[data-skin="rose"] h2,html[data-skin="rose"] h3,html[data-skin="rose"] .brand b,html[data-skin="rose"] .gamecard b,html[data-skin="rose"] .evtitle,html[data-skin="rose"] .qotdname,html[data-skin="rose"] .themebtn b{font-weight:700!important}
+html[data-skin="rose"] h2{font-size:clamp(25px,6.4vw,32px)!important;line-height:1.15}
+html[data-skin="rose"] .panel h2,html[data-skin="rose"] .panel h3,html[data-skin="rose"] .qcard h2,html[data-skin="rose"] .qcard h3{text-shadow:2px 2px 0 #2a0612!important}
+html[data-skin="rose"] h1,html[data-skin="rose"] h2{text-shadow:2px 2px 0 #fff3f5!important}
+html[data-skin="rose"] .gamecard b{font-size:24px!important}
+html[data-skin="fairy"] body{background-image:radial-gradient(2px 2px at 30px 40px,#fff,transparent),radial-gradient(1.5px 1.5px at 120px 150px,#fff,transparent),radial-gradient(2.5px 2.5px at 210px 80px,#ffe0f2,transparent),radial-gradient(1.5px 1.5px at 300px 200px,#e6fff7,transparent),radial-gradient(640px 420px at 85% -5%,rgba(255,143,209,.4),transparent 70%),radial-gradient(560px 420px at -5% 105%,rgba(159,240,212,.45),transparent 70%)!important;background-size:340px 240px,340px 240px,340px 240px,340px 240px,100% 100%,100% 100%!important;background-position:0 0!important;background-attachment:fixed!important}
+html[data-skin="fairy"] .panel,html[data-skin="fairy"] .qcard,html[data-skin="fairy"] .stat,html[data-skin="fairy"] .gamecard,html[data-skin="fairy"] .notice,html[data-skin="fairy"] .homecard,html[data-skin="fairy"] .songcard,html[data-skin="fairy"] .duelmid,html[data-skin="fairy"] .duelpad,html[data-skin="fairy"] .bossarena,html[data-skin="fairy"] .startbar,html[data-skin="fairy"] .badge.on,html[data-skin="fairy"] .themebtn,html[data-skin="fairy"] .bosscard,html[data-skin="fairy"] .toast{position:relative;border-radius:22px!important;border:2px solid rgba(200,168,255,.95)!important;background:linear-gradient(160deg,rgba(255,143,209,.18),transparent 42%),var(--win)!important;box-shadow:0 0 18px rgba(255,143,209,.45),0 0 38px rgba(159,240,212,.25),inset 0 0 22px rgba(200,168,255,.22)!important}
+html[data-skin="fairy"] .panel::after{content:'✧';position:absolute;top:6px;right:12px;color:#9ff0d4;font-size:16px;pointer-events:none;animation:twinkle 1.6s ease-in-out infinite alternate}
+html[data-skin="fairy"] .btn{border-radius:999px!important;background:linear-gradient(90deg,#ff8fd1,#c8a8ff,#7ad8ff)!important;border:2px solid #fff!important;box-shadow:0 0 14px rgba(255,143,209,.7)!important;color:#2e1a5c!important;text-shadow:none!important;font-weight:700}
+html[data-skin="fairy"] .seg button,html[data-skin="fairy"] .tabs button,html[data-skin="fairy"] .names button,html[data-skin="fairy"] input[type=text],html[data-skin="fairy"] textarea,html[data-skin="fairy"] select,html[data-skin="fairy"] .fb,html[data-skin="fairy"] .lblist li,html[data-skin="fairy"] .avpick,html[data-skin="fairy"] .ch,html[data-skin="fairy"] .v,html[data-skin="fairy"] .mv,html[data-skin="fairy"] .ref,html[data-skin="fairy"] .xprule,html[data-skin="fairy"] .xplog li,html[data-skin="fairy"] .pill{border-radius:14px!important}
+html[data-skin="fairy"] .label{letter-spacing:.16em;text-transform:uppercase}
+html[data-skin="fairy"] .label::before{content:'✦ ';letter-spacing:0;color:#ff8fd1}
+html[data-skin="fairy"] h1,html[data-skin="fairy"] h2,html[data-skin="fairy"] h3,html[data-skin="fairy"] .brand b,html[data-skin="fairy"] .gamecard b,html[data-skin="fairy"] .evtitle,html[data-skin="fairy"] .qotdname,html[data-skin="fairy"] .themebtn b,html[data-skin="fairy"] .btn{font-weight:700!important}
+html[data-skin="fairy"] h1,html[data-skin="fairy"] h2{text-shadow:0 0 12px #fff,2px 2px 0 #fff!important}
+html[data-skin="fairy"] .panel h2,html[data-skin="fairy"] .panel h3,html[data-skin="fairy"] .qcard h2,html[data-skin="fairy"] .qcard h3{text-shadow:0 0 10px rgba(255,143,209,.7)!important}
+html[data-skin="candy"] .brand::before{content:"🍭";width:auto;height:auto;background:none!important;box-shadow:none!important;border-radius:0;font-size:18px;line-height:1;animation:embl 2.4s ease-in-out infinite}
+html[data-skin="rose"] .brand::before{content:"🌹";width:auto;height:auto;background:none!important;box-shadow:none!important;border-radius:0;font-size:18px;line-height:1;animation:embl 2.4s ease-in-out infinite}
+html[data-skin="fairy"] .brand::before{content:"🧚";width:auto;height:auto;background:none!important;box-shadow:none!important;border-radius:0;font-size:18px;line-height:1;animation:embl 2.4s ease-in-out infinite}
+html[data-skin="candy"] .bar{background:repeating-linear-gradient(-45deg,#ff6fae 0 18px,#ff8cc6 18px 36px)!important;border-bottom:4px solid #fff!important;box-shadow:0 4px 0 #ffb3d6}
+html[data-skin="candy"] .brand b{color:#fff!important;text-shadow:2px 2px 0 #c2306f!important}
+html[data-skin="candy"] .brand span{color:#fff!important}
+html[data-skin="candy"] .tabs{background:#fff!important;border-radius:999px!important;box-shadow:0 3px 0 #c2306f!important}
+html[data-skin="candy"] .tabs button{border-radius:999px!important;color:#8a3a6c!important;font-weight:700}
+html[data-skin="candy"] .tabs button[aria-selected="true"]{background:#ff5fa2!important;color:#fff!important}
+html[data-skin="rose"] .bar{background:linear-gradient(180deg,#5c1530,#3a0a1a)!important;border-bottom:3px solid var(--gold)!important}
+html[data-skin="rose"] .bar::after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:8px;pointer-events:none;background:radial-gradient(circle at 10px 0,#f2c46d 5px,transparent 5.5px) 0 0/20px 8px repeat-x}
+html[data-skin="rose"] .tabs{border-radius:999px!important;box-shadow:inset 0 0 0 1px #f2c46d!important}
+html[data-skin="rose"] .tabs button{border-radius:999px!important}
+html[data-skin="rose"] .tabs button[aria-selected="true"]{background:linear-gradient(180deg,#f2668f,#c2185b)!important;color:#fff!important;box-shadow:inset 0 0 0 1px #f2c46d!important}
+html[data-skin="rose"] .brand b{color:#ffd0dc!important;font-size:24px!important}
+html[data-skin="fairy"] .bar{background:linear-gradient(90deg,#2e1a5c,#4a2a8a,#2e1a5c)!important;border-bottom:2px solid #9ff0d4!important;box-shadow:0 0 18px rgba(255,143,209,.5)}
+html[data-skin="fairy"] .tabs{border-radius:999px!important;box-shadow:inset 0 0 0 1px #c8a8ff,0 0 12px rgba(200,168,255,.4)!important}
+html[data-skin="fairy"] .tabs button{border-radius:999px!important}
+html[data-skin="fairy"] .tabs button[aria-selected="true"]{background:linear-gradient(90deg,#ff8fd1,#c8a8ff)!important;color:#2e1a5c!important}
+html[data-skin="fairy"] .brand b{text-shadow:0 0 8px #ff8fd1!important}
+html[data-skin="candy"] :is(.prog,.goldbar,.timer .tbar) i{background:repeating-linear-gradient(-45deg,#ff8cc6 0 8px,#fff 8px 16px)!important}
+html[data-skin="rose"] :is(.prog,.goldbar,.timer .tbar) i{background:linear-gradient(90deg,#c2185b,#f06292,#ffb3c6)!important}
+html[data-skin="fairy"] :is(.prog,.goldbar,.timer .tbar) i{background:linear-gradient(90deg,#9ff0d4,#c8a8ff,#ff8fd1,#9ff0d4) 0 0/200% 100%!important}
+html[data-skin="fairy"] :is(.prog,.goldbar,.timer .tbar) i{animation:barflow 3s linear infinite;box-shadow:0 0 10px #ff8fd1}
+html[data-skin="candy"] :is(.prog,.goldbar,.timer .tbar),html[data-skin="rose"] :is(.prog,.goldbar,.timer .tbar),html[data-skin="fairy"] :is(.prog,.goldbar,.timer .tbar){border-radius:999px!important;overflow:hidden}
+@keyframes in_candy{from{opacity:0;transform:scale(.5)}60%{transform:scale(1.07)}80%{transform:scale(.97)}}
+html[data-skin="candy"] .wrap.enter :is(.panel,.qcard,.gamecard,.notice,.homecard){animation:in_candy .5s ease-out backwards}
+@keyframes in_rose{from{opacity:0;transform:rotate(-3deg) scale(.95);filter:blur(3px)}}
+html[data-skin="rose"] .wrap.enter :is(.panel,.qcard,.gamecard,.notice,.homecard){animation:in_rose .65s ease-out backwards}
+@keyframes in_fairy{from{opacity:0;filter:blur(8px) brightness(1.8);transform:translateY(12px)}}
+html[data-skin="fairy"] .wrap.enter :is(.panel,.qcard,.gamecard,.notice,.homecard){animation:in_fairy .7s ease-out backwards}
+html[data-skin="candy"] .flash{box-shadow:inset 0 0 0 10px #ff6b7f,inset 0 0 0 16px #fff!important}html[data-skin="rose"] .flash{box-shadow:inset 0 0 120px 30px #c2185b!important}html[data-skin="fairy"] .flash{box-shadow:inset 0 0 120px 30px #ff7a9a!important}
+html[data-skin="candy"] #amb i{top:120px;left:-240px;width:200px;height:80px;background:radial-gradient(34px 30px at 50px 48px,#ffb3d9 70%,transparent 72%),radial-gradient(44px 38px at 100px 38px,#ffc9e4 70%,transparent 72%),radial-gradient(34px 28px at 150px 50px,#ffb3d9 70%,transparent 72%);animation:drift 34s linear infinite;opacity:.9}
+html[data-skin="candy"] #amb b{top:380px;left:-240px;width:200px;height:80px;background:radial-gradient(34px 30px at 50px 48px,#bfe6ff 70%,transparent 72%),radial-gradient(44px 38px at 100px 38px,#d6f0ff 70%,transparent 72%),radial-gradient(34px 28px at 150px 50px,#bfe6ff 70%,transparent 72%);animation:drift 48s linear -18s infinite;opacity:.9}
+html[data-skin="candy"] #amb::after{content:"";position:absolute;left:0;right:0;bottom:0;height:26px;background:linear-gradient(90deg,#ff5fa2 0 3px,transparent 3px) 0 6px/23px 4px repeat-x,linear-gradient(90deg,#6cc6ff 0 3px,transparent 3px) 9px 14px/19px 4px repeat-x,linear-gradient(90deg,#ffd84d 0 3px,transparent 3px) 4px 20px/27px 4px repeat-x,#fff;opacity:.85}
+html[data-skin="rose"] #amb i{inset:-120px 0 0;background:radial-gradient(ellipse 4px 7px at 30px 30px,#f06292 95%,transparent),radial-gradient(ellipse 5px 8px at 170px 90px,#ffb3c6 95%,transparent),radial-gradient(ellipse 4px 6px at 280px 20px,#e8467c 95%,transparent);background-size:340px 180px;animation:petals 11s linear infinite}
+html[data-skin="rose"] #amb b{inset:-120px 0 0;opacity:.7;background:radial-gradient(ellipse 4px 7px at 90px 60px,#ffd0dc 95%,transparent),radial-gradient(ellipse 3px 6px at 240px 130px,#f06292 95%,transparent);background-size:300px 220px;animation:petals2 16s linear infinite}
+html[data-skin="rose"] #amb::after{content:"";position:absolute;left:0;right:0;bottom:0;height:40px;background:radial-gradient(circle,#c2185b 0 4px,#f06292 4.5px 8px,#f8a5c2 8.5px 11px,transparent 11.5px) 0 4px/56px 40px repeat-x,radial-gradient(ellipse 12px 5px,#5a9a5a 95%,transparent) 26px 22px/56px 40px repeat-x,linear-gradient(transparent 60%,#3f7a3f 60%)}
+html[data-skin="fairy"] #amb i{inset:0;background:radial-gradient(2px 2px at 12% 18%,#fff,transparent),radial-gradient(2.5px 2.5px at 68% 34%,#ffe0f2,transparent),radial-gradient(2px 2px at 38% 72%,#e6fff7,transparent),radial-gradient(2px 2px at 86% 80%,#fff,transparent),radial-gradient(1.5px 1.5px at 24% 52%,#fff,transparent);animation:twinkle 2.2s ease-in-out infinite alternate}
+html[data-skin="fairy"] #amb b{right:24px;top:190px;width:70px;height:70px;border-radius:50%!important;box-shadow:inset -16px -8px 0 0 #fff4c2,0 0 30px rgba(255,244,194,.35);opacity:.9}
+html[data-skin="fairy"] #amb::after{content:"";position:absolute;inset:0;background:radial-gradient(3px 3px at 40px 200px,#ff8fd1,transparent),radial-gradient(2.5px 2.5px at 190px 120px,#9ff0d4,transparent),radial-gradient(3px 3px at 290px 260px,#c8a8ff,transparent);background-size:340px 300px;animation:emberup 10s linear infinite}
+@keyframes petals{to{transform:translate(-40px,180px) rotate(4deg)}}@keyframes petals2{to{transform:translate(30px,220px)}}
+html[data-skin="candy"] .shout{color:#fff;text-shadow:3px 3px 0 #ff5fa2,-2px -2px 0 #c2306f,2px -2px 0 #c2306f,-2px 2px 0 #c2306f,5px 5px 0 #6cc6ff}
+html[data-skin="rose"] .shout{background:linear-gradient(180deg,#fff3f5,#f2c46d 55%,#b8860b);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(2px 2px 0 #6a0f33);font-weight:700;font-size:clamp(34px,10vw,54px)}
+html[data-skin="fairy"] .shout{color:#fff;text-shadow:0 0 10px #ff8fd1,0 0 22px #c8a8ff,0 0 36px #9ff0d4;font-weight:700}
+@media (prefers-reduced-motion:reduce){html[data-skin] .panel::after,#amb::after{animation:none!important}}
+html[data-skin="rose"] :is(.fb .hype,.toast b,.lvlchip,.streak,.lbig,.big,.btn,.nextbtn){font-family:var(--f-body)!important;font-weight:700!important;font-style:normal}
+html[data-skin="rose"] .fb .hype{font-size:clamp(16px,4.2vw,19px)!important}
 </style>
 
 <div id="app"></div>
@@ -1205,6 +1285,8 @@ function drawBit(ctx,p){ const s=p.w;
     case 'dot': case 'pellet': case 'spark': case 'ember': ctx.beginPath();ctx.arc(0,0,p.k==='spark'?s*.3:p.k==='ember'?s*.35:s*.45,0,7);ctx.fill();break;
     case 'bat': ctx.fillStyle='#000';ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-s*.6,-s*.8,-s*1.3,-s*.1);ctx.quadraticCurveTo(-s*.7,-s*.2,-s*.5,s*.3);ctx.quadraticCurveTo(-s*.2,0,0,s*.35);ctx.quadraticCurveTo(s*.2,0,s*.5,s*.3);ctx.quadraticCurveTo(s*.7,-s*.2,s*1.3,-s*.1);ctx.quadraticCurveTo(s*.6,-s*.8,0,0);ctx.fill();ctx.fillStyle=p.c;ctx.fillRect(-s*.18,-s*.1,s*.12,s*.12);ctx.fillRect(s*.06,-s*.1,s*.12,s*.12);break;
     case 'tetro': { const b=s*.55; ctx.rotate(-p.rot+p.r0); for(const [x,y] of p.shape){ ctx.fillStyle=p.c;ctx.fillRect(x*b-b,y*b-b/2,b,b); ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(x*b-b,y*b-b/2,b,b*.22); ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.strokeRect(x*b-b,y*b-b/2,b,b);} break; }
+    case 'heart': ctx.beginPath();ctx.moveTo(0,s*.9);ctx.bezierCurveTo(-s*1.3,0,-s*.6,-s*1,0,-s*.35);ctx.bezierCurveTo(s*.6,-s*1,s*1.3,0,0,s*.9);ctx.fill();ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillRect(-s*.55,-s*.45,s*.25,s*.25);break;
+    case 'petal': ctx.beginPath();ctx.ellipse(0,0,s*.45,s*.85,0,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.ellipse(-s*.12,-s*.2,s*.12,s*.35,0,0,7);ctx.fill();break;
     case 'glyph': ctx.font=`${Math.round(s*2.2)}px system-ui,"Apple Color Emoji","Segoe UI Emoji",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.g,0,0);break;
     default: ctx.fillRect(-s/2,-p.h/2,s,p.h*Math.abs(Math.cos(p.rot*2))+2);
   } }
@@ -2703,6 +2785,7 @@ function wireAvatar(){
 // Full-site color themes inspired by classic 8-bit games. Each one repaints page, windows, buttons and bars.
 const THEMES=[
  {id:'overworld',name:'Overworld',hint:'Adventure field',need:null,v:{}},
+ {id:'candy',name:'Cotton Candy',hint:'Pink clouds and sprinkles',need:{level:2},v:{'--bg':'#ffd6ec','--dot':'#ffbfdf','--ink':'#5a1840','--muted':'#8a3a6c','--label':'#d6337f','--title-shadow':'#ffffff','--hud':'#c2306f','--hud-line':'#ffd1e8','--win':'#6b2457','--frame':'#ff8cc6','--inner':'#a8e0ff','--tile':'#521a42','--win-ink':'#fff4fa','--win-muted':'#ffc9e4','--win-label':'#a8e0ff','--win-line':'#9a3a7c','--accent':'#ff5fa2','--accent-hover':'#ff7ab3','--accent-text':'#ffffff','--accent-shadow':'#ffd1e8','--accent2':'#6cc6ff','--gold':'#ffd84d','--good':'#7cf0b0','--bad':'#ff6b7f','--warn':'#ffb02e','--bar1':'#ff8cc6','--bar2':'#6cc6ff','--hp1':'#ff4d7a','--hp2':'#a31f45'}},
  {id:'dungeon',name:'Dungeon',hint:'Blue stone labyrinth',need:{level:3},v:{
   '--bg':'#1c2e5c','--dot':'#29407a','--ink':'#e0f0ff','--muted':'#9ab4e0','--label':'#64e0e0','--title-shadow':'#000',
   '--hud':'#000','--hud-line':'#5c94fc','--win':'#0a1430','--frame':'#5c94fc','--inner':'#a4e4fc','--tile':'#101c44',
@@ -2717,6 +2800,7 @@ const THEMES=[
   '--accent':'#00a800','--accent-hover':'#20c820','--accent-text':'#ffffff','--accent-shadow':'#004000',
   '--accent2':'#d82800','--gold':'#fcd800','--good':'#80d010','--bad':'#ff6b6b','--warn':'#fca044',
   '--bar1':'#fcd800','--bar2':'#c88400','--hp1':'#d82800','--hp2':'#8c1800'}},
+ {id:'rose',name:'Rose Garden',hint:'Blush petals and gold',need:{level:6},v:{'--bg':'#f6cdd6','--dot':'#efb5c3','--ink':'#4a0d22','--muted':'#7a2f48','--label':'#a3123f','--title-shadow':'#fff3f5','--hud':'#4a0d22','--hud-line':'#f2c46d','--win':'#5c1530','--frame':'#f2c46d','--inner':'#ffb3c6','--tile':'#46101f','--win-ink':'#fff3f5','--win-muted':'#f7c6d3','--win-label':'#f2c46d','--win-line':'#8a2a4a','--accent':'#e8467c','--accent-hover':'#f2668f','--accent-text':'#ffffff','--accent-shadow':'#ffd0dc','--accent2':'#9a3fd0','--gold':'#f2c46d','--good':'#9be8a8','--bad':'#ff6b6b','--warn':'#ffb347','--bar1':'#ff8fab','--bar2':'#e8467c','--hp1':'#c2185b','--hp2':'#6a0f33'}},
  {id:'robot',name:'Robot Lab',hint:'Cyan steel and energy bars',need:{badges:8},v:{
   '--bg':'#a4e4fc','--dot':'#7ccaf0','--ink':'#001850','--muted':'#00407c','--label':'#0040b0','--title-shadow':'#fcfcfc',
   '--hud':'#001850','--hud-line':'#3cbcfc','--win':'#002878','--frame':'#3cbcfc','--inner':'#fcfcfc','--tile':'#001a50',
@@ -2746,6 +2830,7 @@ const THEMES=[
   '--accent2':'#306230','--gold':'#e0f088','--good':'#c8e070','--bad':'#e8806a','--warn':'#e0f088',
   '--bar1':'#9bbc0f','--bar2':'#306230','--hp1':'#e8806a','--hp2':'#904030'}},
  {id:'hedgehog',name:'Speed Zone',hint:'Blue sky, gold rings, loops',need:{level:10},v:{'--bg':'#1c58e8','--dot':'#2d6cf0','--ink':'#ffffff','--muted':'#c8d8ff','--label':'#f8d800','--title-shadow':'#001060','--hud':'#000','--hud-line':'#f8d800','--win':'#0a1a5c','--frame':'#f8d800','--inner':'#ffffff','--tile':'#06103a','--win-ink':'#ffffff','--win-muted':'#c8d8ff','--win-label':'#f8d800','--win-line':'#2a44a8','--accent':'#f8d800','--accent-hover':'#ffe84a','--accent-text':'#0a1a5c','--accent-shadow':'#fff6a0','--accent2':'#f83800','--gold':'#f8d800','--good':'#58f070','--bad':'#ff5a5a','--warn':'#fca044','--bar1':'#f8d800','--bar2':'#c89800','--hp1':'#f83800','--hp2':'#a01800'}},
+ {id:'fairy',name:'Fairy Glow',hint:'Lavender twilight and sparkles',need:{level:11},v:{'--bg':'#d9ccff','--dot':'#c8b6ff','--ink':'#2e1a5c','--muted':'#5a4590','--label':'#7a3fd0','--title-shadow':'#ffffff','--hud':'#2e1a5c','--hud-line':'#9ff0d4','--win':'#33206b','--frame':'#c8a8ff','--inner':'#9ff0d4','--tile':'#271855','--win-ink':'#ffffff','--win-muted':'#d9ccff','--win-label':'#9ff0d4','--win-line':'#5a40a0','--accent':'#ff8fd1','--accent-hover':'#ffa8dc','--accent-text':'#2e1a5c','--accent-shadow':'#ffe0f2','--accent2':'#7ad8ff','--gold':'#ffe08a','--good':'#9ff0d4','--bad':'#ff7a9a','--warn':'#ffd27a','--bar1':'#9ff0d4','--bar2':'#ff8fd1','--hp1':'#ff5c8a','--hp2':'#9a1f4a'}},
  {id:'galaxy',name:'Star Fighter',hint:'Neon arcade in deep space',need:{level:12},v:{'--bg':'#000000','--dot':'#1a1a3a','--ink':'#ffffff','--muted':'#a0a0d0','--label':'#00e8f8','--title-shadow':'#e800a8','--hud':'#000','--hud-line':'#00e8f8','--win':'#05050f','--frame':'#00e8f8','--inner':'#e800a8','--tile':'#0e0e24','--win-ink':'#ffffff','--win-muted':'#b8b8f0','--win-label':'#f8f800','--win-line':'#282870','--accent':'#e800a8','--accent-hover':'#ff30c8','--accent-text':'#ffffff','--accent-shadow':'#500038','--accent2':'#ff3030','--gold':'#f8f800','--good':'#00f870','--bad':'#ff4848','--warn':'#fca044','--bar1':'#00e8f8','--bar2':'#0088a8','--hp1':'#ff3030','--hp2':'#901010'}},
  {id:'maze',name:'Pellet Maze',hint:'Blue maze walls and power pellets',need:{level:14},v:{'--bg':'#000000','--dot':'#3a2a30','--ink':'#ffffff','--muted':'#c0c0e8','--label':'#ffff00','--title-shadow':'#2121de','--hud':'#000','--hud-line':'#2121de','--win':'#000000','--frame':'#2121de','--inner':'#6a6aff','--tile':'#0a0a2a','--win-ink':'#ffffff','--win-muted':'#ffb8ae','--win-label':'#ffff00','--win-line':'#1a1aa0','--accent':'#ffff00','--accent-hover':'#ffff70','--accent-text':'#000000','--accent-shadow':'#fff8a0','--accent2':'#ff0000','--gold':'#ffb852','--good':'#00ff70','--bad':'#ff5aa0','--warn':'#ffb852','--bar1':'#ffff00','--bar2':'#c8c800','--hp1':'#ff0000','--hp2':'#900000'}},
  {id:'blocks',name:'Block Drop',hint:'Falling blocks on steel grey',need:{level:16},v:{'--bg':'#3c3c3c','--dot':'#4a4a4a','--ink':'#ffffff','--muted':'#c8c8c8','--label':'#fcfc54','--title-shadow':'#000000','--hud':'#000','--hud-line':'#a8a8a8','--win':'#000000','--frame':'#bcbcbc','--inner':'#5454fc','--tile':'#181818','--win-ink':'#ffffff','--win-muted':'#d0d0d0','--win-label':'#54fcfc','--win-line':'#545454','--accent':'#a800a8','--accent-hover':'#c820c8','--accent-text':'#ffffff','--accent-shadow':'#400040','--accent2':'#fc5454','--gold':'#fcfc54','--good':'#54fc54','--bad':'#fc5454','--warn':'#fca044','--bar1':'#54fcfc','--bar2':'#0098a8','--hp1':'#fc5454','--hp2':'#a80000'}},
@@ -2755,7 +2840,7 @@ const THEMES=[
  {id:'legend',name:'Golden Legend',hint:'The ending credits glow',need:{level:30},v:{'--bg':'#1a1000','--dot':'#3a2a00','--ink':'#fff4cc','--muted':'#d8c080','--label':'#fcd800','--title-shadow':'#7a5000','--hud':'#000','--hud-line':'#fcd800','--win':'#0c0800','--frame':'#fcd800','--inner':'#fff4cc','--tile':'#241800','--win-ink':'#fff8e0','--win-muted':'#e8d090','--win-label':'#fcd800','--win-line':'#6a5000','--accent':'#fcd800','--accent-hover':'#ffe870','--accent-text':'#2a1a00','--accent-shadow':'#fff4a0','--accent2':'#f83800','--gold':'#fcd800','--good':'#a8f060','--bad':'#ff6a50','--warn':'#fca044','--bar1':'#fcd800','--bar2':'#b08800','--hp1':'#f83800','--hp2':'#902000'}},
 ];
 // Each theme also swaps the title font and gets its own panel, button and background style (see the skins stylesheet).
-const THEME_FONTS={dungeon:'"MedievalSharp",Georgia,serif',brick:'"Luckiest Guy","Arial Black",sans-serif',robot:'"VT323","Courier New",monospace',space:'"Orbitron","Arial Black",sans-serif',castle:'"Cinzel",Georgia,serif',pocket:'"VT323","Courier New",monospace',hedgehog:'"Bungee","Arial Black",sans-serif',galaxy:'"Orbitron","Arial Black",sans-serif',maze:'"Silkscreen","Courier New",monospace',blocks:'"Silkscreen","Courier New",monospace',volcano:'"Bungee","Arial Black",sans-serif',ice:'"Audiowide","Arial Black",sans-serif',arena:'"Black Ops One","Arial Black",sans-serif',legend:'"Cinzel",Georgia,serif'};
+const THEME_FONTS={candy:'"Fredoka","Arial Rounded MT Bold",sans-serif',rose:'"Dancing Script","Brush Script MT",cursive',fairy:'"Comfortaa","Trebuchet MS",sans-serif',dungeon:'"MedievalSharp",Georgia,serif',brick:'"Luckiest Guy","Arial Black",sans-serif',robot:'"VT323","Courier New",monospace',space:'"Orbitron","Arial Black",sans-serif',castle:'"Cinzel",Georgia,serif',pocket:'"VT323","Courier New",monospace',hedgehog:'"Bungee","Arial Black",sans-serif',galaxy:'"Orbitron","Arial Black",sans-serif',maze:'"Silkscreen","Courier New",monospace',blocks:'"Silkscreen","Courier New",monospace',volcano:'"Bungee","Arial Black",sans-serif',ice:'"Audiowide","Arial Black",sans-serif',arena:'"Black Ops One","Arial Black",sans-serif',legend:'"Cinzel",Georgia,serif'};
 const PIXEL_FONTS=new Set(['overworld']);
 THEMES.forEach(t=>{ if(THEME_FONTS[t.id]) t.v['--f-display']=THEME_FONTS[t.id]; });
 const THEME_VARS=[...new Set(THEMES.flatMap(t=>Object.keys(t.v)))];
@@ -3556,6 +3641,16 @@ document.addEventListener('keydown',e=>{
   }
   if(e.key==='Enter' && quiz && !quiz.done && quiz.state==='fb' && tab==='practice' && ae && ae.id!=='ans' && ae.tagName!=='BUTTON'){e.preventDefault();nextQ()} });
 
+// The pink and pastel themes: burst, sounds, shouts, streak words and trophies.
+Object.assign(BURST,{candy:{k:['heart','glyph','dot','heart'],g:['🍬','🍭','💖'],c:['#ff5fa2','#6cc6ff','#ffd84d','#ffffff','#ff9ccc']},
+  rose:{k:['petal','petal','glyph'],g:['🌸','🌹','🌷'],c:['#f06292','#ffb3c6','#c2185b','#ffd0dc'],mode:'snow'},
+  fairy:{k:['star','glyph','dot'],g:['✨','🦋','💫'],c:['#9ff0d4','#ff8fd1','#c8a8ff','#ffe08a'],glow:1,mode:'rise'}});
+Object.assign(THEME_SFX,{candy:{ding(){[1319,1568,2093,2637].forEach((f,i)=>tone(f,.45,'sine',.08,i*.07));},buzz(){sweep(520,180,.3,'triangle',.14);}},
+  rose:{ding(){[523,659,784,988,1319].forEach((f,i)=>tone(f,.6,'triangle',.08,i*.05));},buzz(){tone(330,.5,'sine',.12);tone(311,.5,'sine',.08,.05);}},
+  fairy:{ding(){[1568,1976,2349,2637,3136].forEach((f,i)=>tone(f,.5,'sine',.06,i*.04));noise(.3,.02);},buzz(){sweep(1200,380,.45,'sine',.1);}}});
+Object.assign(SHOUT,{candy:['SWEET!','SO CUTE!','YUMMY!'],rose:['LOVELY!','IN BLOOM!','GORGEOUS!'],fairy:['MAGICAL!','SPARKLY!','ENCHANTING!']});
+Object.assign(STREAK_WORD,{candy:'sweet streak',rose:'in bloom',fairy:'sparkle run'});
+Object.assign(TROPHY,{candy:'🧁',rose:'🌹',fairy:'🦋'});
 const last=lsGet('last',null); if(last && users.includes(last)) loadUser(last);
 render();
 cloud.status='off';
