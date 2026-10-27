@@ -125,8 +125,10 @@ const AV_HAIR={
  long:{top:['','','','','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..'],
    side:['','','','','','','','','.DD..........DD.','DD............DD','DD............DD','DD............DD','DD............DD','DDD..........DDD','DDD..........DDD','.DD..........DD.']},
  bun:{top:['','......DDDD......','.....DDDDDD.....','......DDDD......','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..']},
+ braids:{top:['','','','','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..'],
+   side:['','','','','','','','','ODLO........OLDO','OLDO........ODLO','ODLO........OLDO','OLDO........ODLO','ODLO........OLDO','OLDO........ODLO','ORRO........ORRO','.DD..........DD.']},
  bald:{}};
-const AV_HAIRSTYLES=[['short','Short'],['spiky','Spiky'],['curly','Curly'],['long','Long'],['bun','Bun'],['bald','Bald']];
+const AV_HAIRSTYLES=[['short','Short'],['spiky','Spiky'],['curly','Curly'],['long','Long'],['bun','Bun'],['braids','Braids'],['bald','Bald']];
 const AV_HAIRCOLORS=[['hblack','#1e1e24'],['hdbrown','#3b2618'],['hbrown','#6b4a2e'],['hblond','#e8c15a'],['hred','#b5481f'],['hgray','#a8a8b0'],['hblue','#3f7fe0'],['hpink','#f06fb0']];
 const AV_SKINS=[['sa','#f6d3b3','#e3a98a'],['sb','#e8b48c','#cc8a62'],['sc','#c68a5e','#a46a40'],['sd','#8d5a3b','#6f4229'],['se','#5c3a24','#432818']];
 const AV_MANE=['','','....DDDDDDDD....','..DDDDDDDDDDDD..','.DDDDDDDDDDDDDD.','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','DDDDDDDDDDDDDDDD','.DDDDDDDDDDDDDD.','..DDDDDDDDDDDD..'];
@@ -272,7 +274,7 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   if(an.post) put(AV_POST[an.post],base);
   if(an.front) put(AV_FRONT[an.front],base);
   if(an.human) put(AV_HUMAN_EARS,base);
-  if(hair&&hair.side) put(hair.side,base);
+  if(hair&&hair.side) put(hair.side,Object.assign({},base,{L:avMix(base.D,'#ffffff',.3),R:'#ff6fae'}));
   }
   if(!an.custom&&AV_DETAILS[an.id]){ const dp=Object.assign({},base,{K:avMix(base.F,'#000000',.35),R:'#ff6fae',B:'#7fb2ff',G:'#8be0a4',W:'#ffffff'}); if(an.id==='blackcat') dp.K='#8a8a98'; if(an.id==='bunny'||an.id==='unicorn') dp.K='#c9c9d6'; AV_DETAILS[an.id].forEach(k=>put(AV_DETAIL[k],dp)); }
   // Shading: a darker rim along the bottom/right of the fur and a soft highlight at the top-left so heads look round.
