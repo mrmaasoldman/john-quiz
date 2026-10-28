@@ -127,6 +127,8 @@ const AV_HAIR={
  bun:{top:['','......DDDD......','.....DDDDDD.....','......DDDD......','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..']},
  braids:{top:['','','','','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDFFFFFFFFDD..'],
    side:['','','','','','','','','ODLO........OLDO','OLDO........ODLO','ODLO........OLDO','OLDO........ODLO','ODLO........OLDO','OLDO........ODLO','ORRO........ORRO','.DD..........DD.']},
+ jojo:{top:['','','','','....DDDDDDDD....','...DDDDDDDDDD...','..DDDDDDDDDDDD..','..DDDDDDDFFFDD..'],
+   side:['','','','','','','','','.DD..........DD.','DD............DD','DD............DD','DD............DD','DD............DD','DDD..........DDD','DDD..........DDD','.DD..........DD.']},
  bald:{}};
 const AV_HAIRSTYLES=[['short','Short'],['spiky','Spiky'],['curly','Curly'],['long','Long'],['bun','Bun'],['braids','Braids'],['bald','Bald']];
 const AV_HAIRCOLORS=[['hblack','#1e1e24'],['hdbrown','#3b2618'],['hbrown','#6b4a2e'],['hblond','#e8c15a'],['hred','#b5481f'],['hgray','#a8a8b0'],['hblue','#3f7fe0'],['hpink','#f06fb0']];
@@ -158,6 +160,8 @@ const AV_SNOWMAN=["....OOOOOOOO....", "....OKKKKKKO....", "....OKKKKKKO....", ".
 const AV_ANGEL=["....OOOOOOOO....", "...OYLLLLLLYO...", "....OOOOOOOO....", ".....OHHHHO.....", "....OHHHHHHO....", "OO.OHFFFFFFHO.OO", "OWOOHFFFFFFHOOWO", "OWWOHWEFFWEHOWWO", "OWWOHEEFFEEHOWWO", "OWWWOPFFFFPOWWWO", ".OWWOFFEEFFOWWO.", ".OWWWOFFFFOWWWO.", "..OWOWWWWWWOWO..", "..OOWWWYYWWWOO..", "...OWWWWWWWWO...", "...OWWWWWWWWO..."];
 const AV_SANTA=["...........OOO..", "......OOOO.OWWO.", ".....ORRRROOWWO.", "....ORRRRRRROO..", "...ORRRRRRRRO...", "..OWWWWWWWWWWO..", "..OWWWWWWWWWWO..", "..OFFFFFFFFFFO..", "..OFWEFFFFWEFO..", "..OFEEFFFFEEFO..", ".OWPFFFNNFFFPWO.", ".OWWWWWWWWWWWWO.", ".OWWWWWRRWWWWWO.", "..OWWWWWWWWWWO..", "...OWWWWWWWWO...", ".....OOOOOO....."];
 const AV_PARTYPENGUIN=[".......YY.......", ".R....OCCO....G.", "......OMMO......", "..G..OCCCCO..R..", ".....OMMMMO.....", "...OOOCCCCOOO...", "..OKKKOOOOKKKO..", ".OKKKKKKKKKKKKO.", ".OKKWWWKKWWWKKO.", ".OKWWWEWWEWWWKO.", ".OKWWWEWWEWWWKO.", ".OKWPWWBBWWPWKO.", ".OKWWWWBBWWWWKO.", "..OKWWWWWWWWKO..", "...OKKKKKKKKO...", "....OOOOOOOO...."];
+// Built-in extras drawn on top of a character (JoJo's pink glasses and freckles)
+const AV_OVERLAY={jojo:['','','','','','','','','...GGGG..GGGG...','...G..GGGG..G...','...G..G..G..G...','...GGGG..GGGG...','....K......K....']};
 const AV_ANIMALS=[
  {id:'cat',name:'Cat',lvl:1,ears:'pointy',c:{F:'#f4a340',I:'#ffb3c1',M:'#ffe2b8',N:'#e8607a',D:'#b86a1c'}},
  {id:'dog',name:'Dog',lvl:1,ears:'none',front:'floppy',c:{F:'#c98a4b',I:'#ffb3c1',M:'#f3dcc0',N:'#2a1a12',D:'#6b4123'}},
@@ -189,6 +193,7 @@ const AV_ANIMALS=[
  {id:"angel",name:"Angel",lvl:999,event:"angel",ears:'none',custom:AV_ANGEL,c:{"F": "#f6d3b3", "I": "#ffffff", "M": "#ffffff", "N": "#ffffff", "D": "#888888", "O": "#3a2a10", "Y": "#ffcf33", "L": "#fff3b0", "H": "#f2c14e", "P": "#f4a3a3", "E": "#1a1a22", "W": "#ffffff"}},
  {id:"santa",name:"Santa",lvl:999,event:"santa",ears:'none',custom:AV_SANTA,c:{"F": "#f6d3b3", "I": "#ffffff", "M": "#ffffff", "N": "#e8a08a", "D": "#888888", "O": "#1a1a22", "R": "#d42a2a", "W": "#ffffff", "P": "#f08080", "E": "#1a1a22"}},
  {id:"partypenguin",name:"Party Penguin",lvl:999,event:"partypenguin",ears:'none',custom:AV_PARTYPENGUIN,c:{"F": "#ffffff", "I": "#ffffff", "M": "#ff4fa3", "N": "#ffffff", "D": "#888888", "O": "#1a1a22", "K": "#2b2f45", "W": "#ffffff", "E": "#1a1a22", "B": "#f5a623", "P": "#ff9eb5", "C": "#29c5f6", "Y": "#ffd23f", "R": "#ff5a5a", "G": "#5ad16a"}},
+ {id:'jojo',name:'JoJo',lvl:1,ears:'none',human:true,hairFixed:'jojo',overlay:'jojo',skin:['#f9d9c2','#e8b39a'],oc:{G:'#ff5fa2',K:'#d9825b'},c:{F:'#f9d9c2',I:'#f9d9c2',M:'#f9d9c2',N:'#e8b39a',D:'#d2491f',P:'#f4a3a3'}},
  {id:'dragon',name:'Dragon',lvl:18,ears:'horns',c:{F:'#4caf50',I:'#4caf50',M:'#a5d6a7',N:'#1b5e20',D:'#1b5e20',Y:'#ffe082'}},
 ];
 const AV_HATS=[
@@ -281,6 +286,7 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   if(!an.custom){ const F=base.F, O=base.O, dk=avMix(F,'#000000',.16), lt=avMix(F,'#ffffff',.3), src=grid.map(r=>r.slice());
     for(let y=0;y<16;y++) for(let x=0;x<16;x++){ if(src[y][x]!==F) continue; const below=y<15?src[y+1][x]:null, right=x<15?src[y][x+1]:null, above=y>0?src[y-1][x]:null, left=x>0?src[y][x-1]:null;
       if(below===O||below===null||right===O) grid[y][x]=dk; else if((above===O||above===null)&&x<9) grid[y][x]=lt; else if(left===O&&y<10) grid[y][x]=lt; } }
+  if(an.overlay&&AV_OVERLAY[an.overlay]) put(AV_OVERLAY[an.overlay],Object.assign({},base,an.oc||{}));
   if(an.id==='luther') put(AV_LUTHER,Object.assign({},base,{W:'#ffffff'}));
   if(face&&face.g.length){ const fp=Object.assign({},base,{O:'#1a1a22',C:hc}); if(face.id==='jersey') fp.K='#ffffff'; put(face.g,fp,face.y); }
   if(hat&&hat.g.length){ const fx=AV_HATFIX[hat.id]||{}, pal=Object.assign({},base,{O:'#1a1a22',C:hc}); for(const k in fx) pal[k]=fx[k]==='C'?hc:fx[k]; put(hat.g,pal,hat.y); }
