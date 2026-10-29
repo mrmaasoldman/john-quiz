@@ -762,14 +762,12 @@ input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--win-muted
 <style id="quizsim">
 .bar-in{position:relative}
 .topsongs{position:absolute;top:6px;right:16px;z-index:2;display:inline-flex;align-items:center;gap:8px;padding:9px 18px 9px 14px;font-family:var(--f-display);font-size:17px;letter-spacing:.04em;text-decoration:none;color:#fff!important;
-  background:linear-gradient(120deg,#ff3cac,#784ba0 35%,#2b86c5 65%,#ff3cac) 0 0/300% 100%;border:3px solid #000;border-radius:999px!important;box-shadow:3px 4px 0 #000,0 0 18px rgba(255,60,172,.45);text-shadow:2px 2px 0 rgba(0,0,0,.45);white-space:nowrap;animation:musicflow 6s linear infinite}
-.topsongs .mnote{display:inline-block;font-size:20px;animation:musicbob 1.2s ease-in-out infinite;filter:drop-shadow(1px 1px 0 rgba(0,0,0,.5))}
-.topsongs .mnote.two{animation-delay:.6s;font-size:15px;margin-left:-4px}
-.topsongs:hover{transform:translateY(-2px) scale(1.04);box-shadow:3px 6px 0 #000,0 0 26px rgba(255,60,172,.7)}.topsongs:active{transform:translate(2px,2px);box-shadow:0 0 0 #000,0 0 12px rgba(255,60,172,.5)}
+  background:linear-gradient(120deg,#ff3cac,#784ba0 55%,#2b86c5);border:3px solid #000;border-radius:999px!important;box-shadow:3px 4px 0 #000,0 0 18px rgba(255,60,172,.45);text-shadow:2px 2px 0 rgba(0,0,0,.45);white-space:nowrap;background-size:100% 100%}
+.topsongs .mnote{display:inline-block;font-size:20px;filter:drop-shadow(1px 1px 0 rgba(0,0,0,.5))}
+.topsongs .mnote.two{font-size:15px;margin-left:-4px}
+.topsongs:hover{filter:brightness(1.08)}
 .bar-in>.brand{min-height:58px}
 @media (max-width:640px){.bar-in>.brand{min-height:50px}}
-@keyframes musicflow{to{background-position:-300% 0}}
-@keyframes musicbob{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-4px) rotate(8deg)}}
 @media (prefers-reduced-motion:reduce){.topsongs,.topsongs .mnote{animation:none}}
 @media (max-width:640px){.brand{max-width:calc(100% - 128px);min-width:0;overflow:hidden}.brand b{white-space:nowrap;flex:none}.brand span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.topsongs{font-family:var(--f-body);font-weight:800;letter-spacing:.02em;font-size:15px;padding:6px 13px 6px 10px;top:7px;gap:5px}.topsongs .mnote{font-size:17px}.topsongs .mnote.two{font-size:13px}}
 /* Jump Practice */
