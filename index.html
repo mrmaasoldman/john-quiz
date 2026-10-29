@@ -789,6 +789,14 @@ input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--win-muted
 .syou{display:grid!important;justify-items:center;gap:8px;text-align:center;border-color:var(--gold)!important;box-shadow:0 0 0 4px var(--gold),0 0 30px var(--gold)!important;animation:pop .35s both}
 .smine{margin-left:auto;font-size:13px;color:var(--win-muted)}
 .live.sim section{display:grid;gap:14px}
+.sfull{font-family:var(--f-read);font-size:clamp(17px,2.4vw,22px);line-height:1.45;font-weight:700}
+.srest{background:var(--gold);color:#1a1200;padding:0 4px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.sjm{margin:0 2px}
+.sjbox{display:grid!important;gap:6px}.spin{font-size:22px;letter-spacing:.2em;color:var(--gold)}
+.sjfull{display:grid!important;gap:8px}.sjans{font-family:var(--f-read);font-size:20px;color:var(--good)}
+.sjseats{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;color:var(--muted)}
+.sbuzzed.small{flex-direction:column;gap:2px;padding:10px}
+
 </style>
 <style id="skins">
 html[data-dfont] .label{font-size:12.5px;letter-spacing:.07em}
@@ -3777,6 +3785,7 @@ async function liveCreate(){ const L=live, cfg=L.cfg; if(cfg.game!=='sim') liveM
     if(!code) throw new Error('no code');
     L.order=shuffle(ids.slice()).slice(0,cfg.n); L.code=code; L.players={}; L.phase='lobby';
     await LDB.put('rooms/'+code,{host:{name:me,created:Date.now()},cfg:{mode:cfg.mode,n:L.order.length,time:cfg.time,teams:cfg.teams,game:cfg.game},state:{phase:'lobby',n:L.order.length,mode:cfg.mode,game:cfg.game}});
+    if(cfg.game==='sim'){ L.pin=String(Math.floor(1000+Math.random()*9000)); await LDB.put('rooms/'+code+'/jk',L.pin); L.unsub.push(LDB.listen('rooms/'+code+'/jcmd',d=>simCmd(d))); }
     L.unsub.push(LDB.listen('rooms/'+code+'/players',d=>{ L.players=d||{}; if(['lobby','question','sread','sshow'].includes(L.phase)) liveRefresh(); }));
   }catch(e){ L.err="Couldn't start a game. Check your internet and try again."; L.phase='setup'; liveMusicStop(); }
   L.busy=false; render(); }
@@ -3811,7 +3820,7 @@ async function liveReveal(){ const L=live; if(!L||L.phase!=='question') return; 
 function liveRanks(){ const ps=livePlayers().sort((a,b)=>(b.score||0)-(a.score||0)||a.name.localeCompare(b.name)); const ranks={}; ps.forEach((p,i)=>ranks[p.pid]=i+1); return {ps,ranks}; }
 function liveTeams(ps){ const m={}; ps.forEach(p=>{ if(!p.team) return; const t=m[p.team.toLowerCase()]||(m[p.team.toLowerCase()]={name:p.team,total:0,n:0}); t.total+=p.score||0; t.n++; });
   const sim=live&&live.cfg&&live.cfg.game==='sim'; return Object.values(m).map(t=>Object.assign(t,{avg:Math.round(t.total/t.n)})).sort((a,b)=>sim?b.total-a.total:b.avg-a.avg); }
-async function liveBoard(final){ const L=live; const {ps,ranks}=liveRanks(); L.phase=final?'done':'board'; render();
+async function liveBoard(final){ const L=live; const {ps,ranks}=liveRanks(); L.phase=final?'done':'board'; render(); if(L.cfg&&L.cfg.game==='sim') simJinfo();
   const top=ps.slice(0,final?3:5).map(p=>({name:p.name,av:p.av||'',score:p.score||0,team:p.team||''}));
   try{ await LDB.put('rooms/'+L.code+'/state',{phase:L.phase,i:L.i,n:L.order.length,top,ranks,count:ps.length,teams:L.cfg.teams?liveTeams(ps):null}); }catch(e){}
   if(final){ celebrate(true); sfx('level'); } }
@@ -3852,7 +3861,7 @@ async function liveAnswer(c){ const L=live; if(!L||L.role!=='player'||!L.st||L.s
 
 /* ----- views ----- */
 const fastLine=f=>f?`<div class="lfast">⚡ <span>Fastest correct answer:</span> ${avSvg(f.av||avDefault(f.name),32,f.name)} <b>${esc(f.name)}</b> <span class="lsc">${(f.t/1000).toFixed(1)}s</span></div>`:'';
-function liveTop(title){ const L=live, sim=!!(L&&((L.cfg&&L.cfg.game==='sim')||(L.st&&L.st.game==='sim')||(L.role==='menu'&&L.sim))), host=L&&L.role==='host'&&L.phase!=='setup'&&!sim;
+function liveTop(title){ const L=live, sim=!!(L&&((L.cfg&&L.cfg.game==='sim')||(L.st&&L.st.game==='sim')||(L.role==='menu'&&L.sim)||L.role==='judge')), host=L&&L.role==='host'&&L.phase!=='setup'&&!sim;
   return `<div class="ltop"><span class="label">${sim?'🔔 Quiz Simulator':'📡 Live Quiz'}${title?' · '+title:''}</span><div class="row" style="gap:8px">${host?`<button class="btn ghost small" id="lmus" title="Game music">${liveMuted?'🔇 Music off':'🎵 Music on'}</button>`:''}<button class="btn ghost small" id="lexit">${live&&live.role==='host'&&live.phase!=='setup'?'End game':'Leave'}</button></div></div>`; }
 function liveView(){ const L=live;
   if(!liveOn()) return h(`<main class="wrap live"><section>${liveTop('')}<div class="panel" style="display:grid;gap:10px"><b class="evtitle">Live Quiz is almost ready!</b><p class="hint" style="margin:0">Mr. Maas just needs to finish connecting it. Check back soon.</p></div></section></main>`);
@@ -3861,9 +3870,13 @@ function liveView(){ const L=live;
       <form id="ljoin" class="row" style="flex-wrap:nowrap"><input type="text" id="lcode" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" value="${esc(L.code||'')}" style="flex:1;text-transform:uppercase;letter-spacing:.2em"><button class="btn" type="submit">${L.busy?'Joining…':'Join'}</button></form>
       ${L.err?`<p style="color:var(--bad);font-weight:700;margin:0">${esc(L.err)}</p>`:''}
       <span class="hint">You'll play as <b>${esc(me)}</b>${U.team&&U.team!==NO_TEAM?` for <b>${esc(U.team)}</b>`:''}.</span></div>
+    <div class="panel" style="display:grid;gap:10px"><span class="label">⚖️ Judge a Quiz Simulator game</span><p class="hint" style="margin:0">For the host's own phone: see the whole question and the answer, and tap Correct or Wrong.</p>
+      <form id="jform" class="row" style="flex-wrap:nowrap;gap:8px"><input type="text" id="jcode" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" value="${esc(L.jcodeV||'')}" style="flex:1.4;min-width:0;text-transform:uppercase;letter-spacing:.15em"><input type="text" id="jpin" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="PIN" value="${esc(L.jpinV||'')}" style="flex:1;min-width:0;letter-spacing:.15em"><button class="btn" type="submit">Judge</button></form>
+      ${L.jerr?`<p style="color:var(--bad);font-weight:700;margin:0">${esc(L.jerr)}</p>`:''}</div>
     <div class="panel" style="display:grid;gap:10px"><span class="label">Host a game</span><p class="hint" style="margin:0">Run a game on a TV or projector. Everyone joins on their phones with a code.</p><div class="row"><button class="btn ghost" id="lhost">📡 Host a Live Quiz</button><button class="btn ghost" id="lhostsim">🔔 Host a Real Quiz Simulator</button></div><span class="hint">The Quiz Simulator works like a real meet: the question appears word by word and quizzers buzz in on their phones.</span></div>
   </section></main>`);
   if(L.role==='host') return h(liveHostView());
+  if(L.role==='judge') return h(simJudgeView());
   return h(livePlayerView()); }
 function liveHostView(){ const L=live, c=L.cfg;
   if(L.phase==='setup'){ const segL=(k,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-lcfg="${k}" data-val="${v}" aria-pressed="${String(c[k])===String(v)}">${l}</button>`).join('')}</div>`;
@@ -3899,6 +3912,7 @@ function liveHostView(){ const L=live, c=L.cfg;
   const ps=livePlayers();
   if(L.phase==='lobby') return `<main class="wrap live host"><section>${liveTop('Host')}
     <div class="panel ljoinbox"><div><span class="label">Join on your phone</span><div class="lurl">${esc(liveJoinUrl(L.code).replace(/^https?:\/\//,''))}</div><span class="hint">or open the study site → Games → Live Quiz, and type the code</span></div><div class="lcodebig">${L.code}</div></div>
+    ${c.game==='sim'?simJudgeBox():''}
     <div class="row" style="justify-content:space-between"><b class="evtitle">${ps.length} player${ps.length===1?'':'s'} in</b><button class="btn" id="lstart" ${ps.length?'':'disabled'}>Start game</button></div>
     <div class="lplayers">${ps.sort((a,b)=>(a.joined||0)-(b.joined||0)).map(p=>`<div class="lp">${avSvg(p.av||avDefault(p.name),48,p.name)}<b>${esc(p.name)}</b>${p.team?`<small>${esc(p.team)}</small>`:''}</div>`).join('')||'<p class="hint">Waiting for players…</p>'}</div>
   </section></main>`;
@@ -4001,7 +4015,7 @@ async function simStart(i){ const L=live; simStop();
   L.sim={words:text.split(/\s+/),shown:0,r:0,locked:{},buzz:null,rebound:false,jumpEnd:0,res:null};
   render();
   try{ await LDB.put('rooms/'+L.code+'/state',{game:'sim',phase:'sread',i,n:L.order.length,qid,ref:q.c+':'+q.v,text:'',done:false,r:0,locked:{},qout:L.cfg.qout}); }catch(e){}
-  simListen(); simRead(); }
+  simListen(); simRead(); simJinfo(); }
 // Reveal words at the chosen pace; when reading aloud, the spoken word pushes the reveal forward.
 function simRead(){ const L=live, S=L.sim, ms=1000/(SIM_WPS[L.cfg.speed]||2.7);
   if(L.cfg.speak&&typeof canSpeak!=='undefined'&&canSpeak&&S.shown<S.words.length){ try{ speechSynthesis.cancel();
@@ -4025,7 +4039,7 @@ function simListen(){ const L=live, S=L.sim, key=L.i+'-'+S.r; if(L.ansUnsub) L.a
     const cands=Object.entries(d).map(([pid,v])=>({pid,t:typeof(v&&v.t)==='number'?v.t:Date.now()})).filter(c=>simEligible(Object.assign({pid:c.pid},L.players[c.pid]),S.locked)).sort((a,b)=>a.t-b.t);
     if(cands.length) simBuzz(cands[0].pid); }); }
 async function simBuzz(pid){ const L=live, S=L.sim, p=L.players[pid]; if(!p) return; simStop();
-  S.buzz={pid,name:p.name,av:p.av||'',team:p.team||'',at:S.shown}; L.phase='sjudge'; L.showKey=false; sfx('buzzer'); render();
+  S.buzz={pid,name:p.name,av:p.av||'',team:p.team||'',at:S.shown}; L.phase='sjudge'; L.showKey=false; sfx('buzzer'); render(); simJinfo();
   try{ await LDB.patch('rooms/'+L.code+'/state',{phase:'sjudge',buzz:S.buzz,text:S.words.slice(0,S.shown).join(' ')}); }catch(e){} }
 async function simJudge(ok){ const L=live, S=L.sim; if(L.phase!=='sjudge'||!S.buzz) return; const c=L.cfg, pid=S.buzz.pid, q=Q[L.cur.qid];
   const p=Object.assign({score:0,correct:0,errors:0},L.players[pid]); let pts=0, note='';
@@ -4038,24 +4052,24 @@ async function simJudge(ok){ const L=live, S=L.sim; if(L.phase!=='sjudge'||!S.bu
   S.locked[pid]=1;
   const left=livePlayers().filter(x=>simEligible(x,S.locked));
   if(c.rebound&&!S.rebound&&left.length){ // everyone else gets one more chance at the whole question
-    S.rebound=true; S.r++; S.buzz=null; S.shown=S.words.length; S.jumpEnd=Date.now()+8000; L.phase='sread'; S.missed={name:p.name,note}; render();
+    S.rebound=true; S.r++; S.buzz=null; S.shown=S.words.length; S.jumpEnd=Date.now()+8000; L.phase='sread'; S.missed={name:p.name,note}; render(); simJinfo();
     try{ await LDB.patch('rooms/'+L.code+'/state',{phase:'sread',r:S.r,locked:S.locked,text:S.words.join(' '),done:true,rebound:true,buzz:null,missed:S.missed}); }catch(e){}
     simListen(); clearInterval(L.tick);
     L.tick=setInterval(()=>{ if(live!==L||L.phase!=='sread'){ clearInterval(L.tick); return; } const lft=Math.max(0,S.jumpEnd-Date.now()), el=document.getElementById('sjump'); if(el) el.textContent=Math.ceil(lft/1000); if(lft<=0){ clearInterval(L.tick); simResult(null); } },250);
     return; }
   simResult({pid,name:p.name,av:p.av||'',ok:false,pts,note}); }
 // "Keep reading": the jump didn't count (bumped the screen, jumped by accident). Nobody is penalized.
-async function simResume(){ const L=live, S=L.sim; if(L.phase!=='sjudge') return; S.buzz=null; S.r++; L.phase='sread'; render();
+async function simResume(){ const L=live, S=L.sim; if(L.phase!=='sjudge') return; S.buzz=null; S.r++; L.phase='sread'; render(); simJinfo();
   try{ await LDB.patch('rooms/'+L.code+'/state',{phase:'sread',r:S.r,buzz:null}); }catch(e){}
   simListen(); simRead(); }
-async function simResult(res){ const L=live, S=L.sim, q=Q[L.cur.qid]; simStop(); S.res=res; S.shown=S.words.length; L.phase='sshow'; render();
+async function simResult(res){ const L=live, S=L.sim, q=Q[L.cur.qid]; simStop(); S.res=res; S.shown=S.words.length; L.phase='sshow'; render(); simJinfo();
   try{ await LDB.patch('rooms/'+L.code+'/state',{phase:'sshow',res:res||null,answer:q.a.join(' or '),text:S.words.join(' '),done:true,buzz:null}); }catch(e){} }
 function simSeats(){ const L=live, c=L.cfg, S=L.sim||{locked:{}}, ps=livePlayers().sort((a,b)=>(a.team||'').localeCompare(b.team||'')||(a.joined||0)-(b.joined||0));
   return `<div class="sseats">${ps.map(p=>{ const st=p.out==='quiz'?'<span class="sout q">Quizzed out</span>':p.out==='error'?'<span class="sout e">Errored out</span>':S.locked&&S.locked[p.pid]?'<span class="sout e">Missed</span>':'';
     return `<div class="sseat ${S.buzz&&S.buzz.pid===p.pid?'on':''} ${p.out?'done':''}">${avSvg(p.av||avDefault(p.name),34,p.name)}<b>${esc(p.name)}</b>${c.teams&&p.team?`<small>${esc(p.team)}</small>`:''}
       <span class="sdots">${Array.from({length:Math.min(c.qout,6)},(_,k)=>`<i class="${k<(p.correct||0)?'on':''}"></i>`).join('')}${(p.errors||0)?` <span class="serr">${'✗'.repeat(Math.min(p.errors,5))}</span>`:''}</span><span class="lsc">${p.score||0}</span>${st}</div>`; }).join('')}</div>`; }
 function simHostView(){ const L=live, S=L.sim, q=Q[L.cur.qid], top=liveTop(`Question ${L.i+1} of ${L.order.length}`), head=`<div class="lqhead"><span class="lref">John ${q.c}:${q.v}</span>${S.rebound?'<span class="pill w">Rebound · half points</span>':''}</div>`;
-  const key=`<div class="skey">${L.showKey?`<span class="label">Answer key</span><b>${q.a.map(fmtQ).join(' <span class="hint">or</span> ')}</b><button class="x" id="skeyhide">Hide</button>`:`<button class="btn ghost small" id="skeyshow">👁 Show answer key</button><span class="hint">Only you should see this, so others can't peek before a rebound.</span>`}</div>`;
+  const key=`<div class="skey">${L.showKey?`<div style="display:grid;gap:6px;flex:1;min-width:0"><span class="label">Full question (host only)</span><div class="sfull">${simFullHtml(S.words,S.buzz?S.buzz.at:S.words.length)}</div><span class="label">Answer</span><b>${q.a.map(fmtQ).join(' <span class="hint">or</span> ')}</b></div><button class="x" id="skeyhide">Hide</button>`:`<button class="btn ghost small" id="skeyshow">👁 Show full question &amp; answer</button><span class="hint">Host only. Tap this only if the room can't see your screen, or judge from your phone instead (PIN ${L.showPin?`<b>${esc(L.pin||'')}</b>`:`<button class="x" id="spinshow">show</button>`}).</span>`}</div>`;
   if(L.phase==='sread') return `<main class="wrap live host sim"><section>${top}${head}
     ${S.missed&&S.rebound?`<div class="smiss">❌ ${esc(S.missed.name)} missed it${S.missed.note?' · '+esc(S.missed.note):''}. Everyone else: buzz in!</div>`:''}
     <div class="lq sq" id="stext">${simTextHtml(S.words,S.shown,true)}</div>
@@ -4104,6 +4118,10 @@ function simPlayerView(){ const L=live, st=L.st, p=L.p||{}, me_=L.pid;
     <div class="panel lresult ${mine?(r.ok?'ok':'no'):''}">${mine?`<b class="lbig">${r.ok?'Correct! ✓':'Not this time ✗'}</b><span class="lpts">${r.pts>0?'+':''}${r.pts} points</span>${r.note?`<b>${esc(r.note)}</b>`:''}`:r?`<b class="evtitle">${r.ok?'✅':'❌'} ${esc(r.name)} ${r.ok?'got it':'missed it'}</b>`:`<b class="evtitle">Nobody got this one</b>`}
       <span class="hint">Answer: <b>${esc(st.answer||'')}</b></span></div></section></main>`; }
 function wireSim(on){ const L=live; if(!L) return;
+  const jf=$('#jform'); if(jf) jf.onsubmit=e=>{ e.preventDefault(); simJudgeJoin($('#jcode').value,$('#jpin').value); };
+  on('#jright',()=>simSend('right')); on('#jwrong',()=>simSend('wrong')); on('#jresume',()=>simSend('resume')); on('#jskip',()=>simSend('skip'));
+  on('#jnext',()=>simSend('next')); on('#jboard',()=>simSend('board')); on('#jstart',()=>simSend('start'));
+  on('#spinshow',()=>{ L.showPin=true; render(); }); on('#spinhide',()=>{ L.showPin=false; render(); });
   on('#sbuzz',simBuzzIn); on('#sright',()=>simJudge(true)); on('#swrong',()=>simJudge(false)); on('#sresume',simResume);
   on('#sskip',()=>simResult(null)); on('#sboard',()=>liveBoard(false));
   on('#skeyshow',()=>{ L.showKey=true; render(); }); on('#skeyhide',()=>{ L.showKey=false; render(); }); }
@@ -4111,6 +4129,42 @@ function wireSim(on){ const L=live; if(!L) return;
 document.addEventListener('keydown',e=>{ const L=live; if(!L||e.repeat) return; const tag=(e.target&&e.target.tagName)||''; if(/INPUT|TEXTAREA|SELECT/.test(tag)) return;
   if(L.role==='player'&&L.st&&L.st.phase==='sread'&&(e.code==='Space'||e.key===' ')){ e.preventDefault(); simBuzzIn(); }
   if(L.role==='host'&&L.phase==='sjudge'){ if(e.key==='y'||e.key==='Y') simJudge(true); if(e.key==='n'||e.key==='N') simJudge(false); } });
+
+/* ----- judge phone: only the host sees the whole question and the answer ----- */
+function simFullHtml(words,at){ const a=words.slice(0,at).join(' '), b=words.slice(at).join(' '); return `<span>${fmtQ(a)}</span>${b?` <span class="sjm">🔔</span> <mark class="srest">${fmtQ(b)}</mark>`:''}`; }
+function simJudgeBox(){ const L=live; return `<div class="panel sjbox"><span class="label">⚖️ Judge on your phone</span><span class="hint">On your phone: Games → Quiz Simulator → <b>Judge a game</b>. Room <b>${esc(L.code)}</b> · PIN ${L.showPin?`<b class="spin">${esc(L.pin||'')}</b> <button class="x" id="spinhide">hide</button>`:`<button class="x" id="spinshow">👁 show PIN</button>`}</span><span class="hint">Your phone shows the whole question and the answer, and works as the remote for the whole game. Keep the PIN private.</span></div>`; }
+function simJinfo(){ const L=live; if(!L||L.role!=='host'||!L.code) return; const S=L.sim||{}, q=L.cur?Q[L.cur.qid]:null;
+  const info={phase:L.phase,i:L.i||0,n:L.order.length,ref:q?q.c+':'+q.v:'',full:S.words?S.words.join(' '):'',at:S.buzz?S.buzz.at:null,buzz:S.buzz?{name:S.buzz.name,av:S.buzz.av||'',team:S.buzz.team||''}:null,
+    answer:q?q.a.join(' or '):'',rebound:!!S.rebound,res:S.res||null,last:(L.i||0)>=L.order.length-1,
+    seats:livePlayers().map(p=>({name:p.name,score:p.score||0,correct:p.correct||0,errors:p.errors||0,out:p.out||''}))};
+  LDB.put('rooms/'+L.code+'/jinfo',info).catch(()=>{}); }
+function simCmd(d){ const L=live; if(!L||L.role!=='host'||!d||!d.id||d.id===L.lastCmd) return; const first=L.lastCmd===undefined; L.lastCmd=d.id; if(first&&Date.now()-(d.at||0)>5000) return;
+  if(d.c==='right'&&L.phase==='sjudge') simJudge(true);
+  else if(d.c==='wrong'&&L.phase==='sjudge') simJudge(false);
+  else if(d.c==='resume'&&L.phase==='sjudge') simResume();
+  else if(d.c==='skip'&&L.phase==='sread') simResult(null);
+  else if(d.c==='board'&&L.phase==='sshow') liveBoard(false);
+  else if(d.c==='start'&&L.phase==='lobby'&&livePlayers().length) simStart(0);
+  else if(d.c==='next'&&['sshow','board'].includes(L.phase)) liveNext(); }
+async function simJudgeJoin(code,pin){ const L=live; code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5); pin=String(pin||'').replace(/\D/g,''); L.jcodeV=code; L.jpinV=pin;
+  if(code.length!==5||pin.length!==4){ L.jerr='Type the 5-letter room code and the 4-digit PIN from the host screen.'; render(); return; }
+  try{ const k=await LDB.get('rooms/'+code+'/jk'); if(!k||String(k)!==pin){ L.jerr="That code and PIN don't match a Quiz Simulator game."; render(); return; }
+    live={role:'judge',code,info:null,unsub:[]}; live.unsub.push(LDB.listen('rooms/'+code+'/jinfo',d=>{ if(live&&live.role==='judge'){ live.info=d; render(); } }));
+    live.unsub.push(LDB.listen('rooms/'+code+'/players',d=>{ if(live&&live.role==='judge'){ live.players=d||{}; if(!live.info||live.info.phase==='lobby'||!live.info.phase) render(); } }));
+    render(); }catch(e){ L.jerr="Couldn't connect. Check your internet and try again."; render(); } }
+function simSend(c){ const L=live; if(!L||L.role!=='judge') return; sfx('tick'); LDB.put('rooms/'+L.code+'/jcmd',{c,id:Math.random().toString(36).slice(2,10),at:Date.now()}).catch(()=>{}); }
+function simJudgeView(){ const L=live, j=L.info, top=liveTop('Judge · '+L.code);
+  if(!j||!j.phase||j.phase==='lobby'){ const n=Object.keys(L.players||{}).length; return `<main class="wrap live sim"><section>${top}<div class="panel lwait"><b class="evtitle">You're the judge ⚖️</b><p class="hint" style="margin:0">${n} quizzer${n===1?'':'s'} in. Start when everyone has joined.</p><button class="btn" id="jstart" ${n?'':'disabled'}>Start game</button></div></section></main>`; }
+  const seats=`<div class="sjseats">${(j.seats||[]).map(s=>`<span><b>${esc(s.name)}</b> ${s.score} · ✓${s.correct} ✗${s.errors}${s.out?` · ${s.out==='quiz'?'quizzed out':'errored out'}`:''}</span>`).join('')}</div>`;
+  const head=`<div class="lqhead"><span class="lref">Question ${j.i+1} of ${j.n} · John ${esc(j.ref)}</span>${j.rebound?'<span class="pill w">Rebound</span>':''}</div>`;
+  const full=`<div class="panel sjfull"><span class="label">Full question</span><div class="sfull">${j.phase==='sjudge'&&j.at!=null?simFullHtml(String(j.full).split(/\s+/),j.at):fmtQ(j.full)}</div>${j.phase==='sjudge'&&j.at!=null&&j.at<String(j.full).split(/\s+/).length?'<span class="hint">🔔 is where they buzzed. The highlighted part is what they still need to finish.</span>':''}<span class="label">Answer</span><b class="sjans">${fmtQ(j.answer)}</b></div>`;
+  if(j.phase==='sread') return `<main class="wrap live sim"><section>${top}${head}<div class="panel lwait"><b class="evtitle">${j.rebound?'Rebound: waiting for a buzz…':'Reading… waiting for a buzz'}</b></div>${full}<button class="btn ghost" id="jskip">Skip question</button>${seats}</section></main>`;
+  if(j.phase==='sjudge') return `<main class="wrap live sim"><section>${top}${head}<div class="sbuzzed small"><span class="label">🔔 Buzzed in</span><b class="lbig">${esc(j.buzz?j.buzz.name:'')}</b></div>${full}
+    <div class="sjudge"><button class="btn sok" id="jright">✅ Correct</button><button class="btn sno" id="jwrong">❌ Wrong</button></div><button class="x" id="jresume">↩ Didn't count, keep reading</button>${seats}</section></main>`;
+  if(j.phase==='sshow') return `<main class="wrap live sim"><section>${top}${head}<div class="panel lwait"><b class="evtitle">${j.res?`${j.res.ok?'✅':'❌'} ${esc(j.res.name)} ${j.res.ok?'got it':'missed it'} (${j.res.pts>0?'+':''}${j.res.pts})`:'Nobody got this one'}</b></div>${full}
+    <div class="row"><button class="btn ghost" id="jboard">Scoreboard</button><button class="btn" id="jnext">${j.last?'Final results':'Next question'} →</button></div>${seats}</section></main>`;
+  if(j.phase==='board') return `<main class="wrap live sim"><section>${top}<div class="panel lwait"><b class="evtitle">Scoreboard is showing</b><button class="btn" id="jnext">${j.last?'Final results':'Next question'} →</button></div>${seats}</section></main>`;
+  return `<main class="wrap live sim"><section>${top}<div class="panel lwait"><b class="evtitle">Game over 🏆</b></div>${seats}</section></main>`; }
 
 /* ---------- wiring ---------- */
 function wire(){
