@@ -557,13 +557,6 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .lbmode{margin-top:-4px}
 .xppop{position:fixed;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;display:grid;gap:4px;justify-items:end;text-align:right;padding:8px 12px;background:#000;border:3px solid var(--gold);color:#fff;box-shadow:4px 4px 0 rgba(0,0,0,.5);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s;max-width:70vw}
 .xppop.show{opacity:1;transform:none}
-.annc{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-12px);z-index:65;width:min(440px,calc(100% - 24px));padding:14px 16px;background:#000;border:3px solid var(--gold);box-shadow:4px 4px 0 #000;color:#fff;display:grid;gap:10px;opacity:0;transition:opacity .3s,transform .35s}
-.annc.show{opacity:1;transform:translateX(-50%)}
-.annc b{font-family:var(--f-num);font-size:22px;line-height:1.1;color:var(--gold)}
-.annc p{margin:0;font-size:14px;line-height:1.45}
-.annc .row{display:flex;gap:8px;justify-content:flex-end}
-.annc .row a,.annc .row button{font:inherit;font-weight:700;font-size:14px;padding:8px 14px;border:2px solid var(--gold);background:var(--gold);color:#000;cursor:pointer;text-decoration:none}
-.annc .row button.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
 .xppop b{font-family:var(--f-num);font-size:30px;line-height:1;color:var(--gold)}
 .xppop span{font-size:13px;line-height:1.4;color:#fff}
 .xpdetails summary{cursor:pointer;list-style:none}.xpdetails summary::-webkit-details-marker{display:none}
@@ -798,6 +791,12 @@ input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--win-muted
 .syou{display:grid!important;justify-items:center;gap:8px;text-align:center;border-color:var(--gold)!important;box-shadow:0 0 0 4px var(--gold),0 0 30px var(--gold)!important;animation:pop .35s both}
 .smine{margin-left:auto;font-size:13px;color:var(--win-muted)}
 .live.sim section{display:grid;gap:14px}
+.sclock{font-family:var(--f-display);color:var(--gold);font-size:clamp(14px,2.2vw,18px)}
+.sfinish{text-align:center;font-family:var(--f-display);color:var(--gold);font-size:clamp(16px,2.6vw,22px)}
+.sansclock{text-align:center;font-family:var(--f-display);font-size:clamp(16px,2.6vw,22px);color:var(--ink)}
+.steams{display:flex;flex-wrap:wrap;gap:8px 16px;padding:8px 12px;background:var(--win);color:var(--win-ink);border:2px solid var(--win-line)}.steams small{color:var(--win-muted)}
+.sbqf{background:var(--win);color:var(--win-ink);border:2px dashed var(--win-line);padding:10px 12px;line-height:1.5}
+
 .sfull{font-family:var(--f-read);font-size:clamp(17px,2.4vw,22px);line-height:1.45;font-weight:700}
 .srest{background:var(--gold);color:#1a1200;padding:0 4px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .sjm{margin:0 2px}
@@ -1513,8 +1512,6 @@ const qCountCh = {}; Q.forEach(q=>qCountCh[q.c]=(qCountCh[q.c]||0)+1);
 
 /* ---------- storage ---------- */
 const K='johnquiz:';
-// the home-screen app opens wherever you were last: here, or on the Songs page
-try{ if(localStorage.getItem(K+'where')==='"songs"'&&!sessionStorage.getItem('jq:back')){ location.replace('songs/'); } else { localStorage.setItem(K+'where','"quiz"'); sessionStorage.removeItem('jq:back'); } }catch(e){}
 function lsGet(k,d){try{const v=localStorage.getItem(K+k);return v?JSON.parse(v):d}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(K+k,JSON.stringify(v));return true}catch(e){return false}}
 function blankUser(){return {stats:{},mem:{},sessions:[],sel:['1:'+qVerses[1].join(',1:')].join('').split(','),opts:{order:'order',limit:'all',pool:'all',memOnly:false,mix:false,words:'all',answer:'think',timer:'off'},vopts:{from:'goal',order:'shuffle',limit:'25',mode:'type',vsel:[],kind:'ref',timer:'off'},vstats:{},rstats:{},counts:{},badges:{}}}
@@ -1710,23 +1707,16 @@ function sayBtn(id,label){ return canSpeak?`<button class="btn ghost small saybt
 /* ---------- state ---------- */
 let lastEnterTab=null; let tab='practice', openCh=null, quiz=null, confirmReset=false;
 
-// one-time heads-up (per device) that listening to the songs now earns XP
-function announceSongs(){ if(lsGet('ann:songxp',false)||document.querySelector('.annc')) return; const el=document.createElement('div'); el.className='annc'; el.setAttribute('role','status');
-  el.innerHTML=`<b>🎵 New: XP for listening!</b><p>The John Songs are now right here on the site, and every song you listen to all the way through earns <b style="font:inherit;color:var(--gold)">20 XP</b>. The words light up as they're sung, so it's a great way to learn the verses.</p><div class="row"><button class="ghost" type="button" id="anncok">Got it</button><a href="songs/" id="anncgo">Open the songs</a></div>`;
-  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('show'));
-  const done=()=>{ lsSet('ann:songxp',true); el.classList.remove('show'); setTimeout(()=>el.remove(),350); };
-  el.querySelector('#anncok').onclick=done; el.querySelector('#anncgo').onclick=()=>lsSet('ann:songxp',true); }
 function render(){
   const app=$('#app'); app.innerHTML='';
   if(!me){ app.append(signInView()); const i=$('#nm'); i&&i.focus(); return; }
   if(!U.team){ app.append(teamGateView()); return; }
   if(liveJoinCode&&!live){ live={role:'menu',code:liveJoinCode,unsub:[]}; liveJoinCode=null; try{ history.replaceState(null,'',location.pathname); }catch(e){} }
   if(live){ app.append(liveView()); wireLive(); return; }
-  setTimeout(announceSongs,900);
   if(tab==='memory') tab='materials';
   app.append(h(`<header class="bar"><div class="bar-in">
     <div class="brand"><b>John Quiz</b><span>BQF · Sept 2026 set</span></div>
-    <a class="topsongs" href="${SONGS_URL}" title="Open the John Songs">🎵 Songs</a>
+    <a class="topsongs" href="${SONGS_URL}" target="_blank" rel="noopener" title="Open the songs folder">🎵 Songs</a>
     <div class="tabs" role="tablist">
       ${['practice','games','verses','scores','progress','materials'].map(t=>`<button role="tab" data-tab="${t}" aria-selected="${tab===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}
     </div>
@@ -1857,7 +1847,7 @@ function printPanel(){ const sel=new Set(U.sel.map(k=>+k.split(':')[0]));
   return `<div class="panel" style="display:grid;gap:10px"><div class="row" style="justify-content:space-between"><span class="label">Printable question sheets</span><span class="hint">Opens in Google Docs</span></div>
     <div class="printgrid">${PRINT_LINKS.map((u,i)=>`<a class="printlink ${sel.has(i+1)?'sel':''}" href="${u}" target="_blank" rel="noopener"><span aria-hidden="true">🖨️</span> John ${i+1}</a>`).join('')}</div>
     <span class="hint">To print: on a computer, choose <b>File → Print</b>. On a phone, tap <b>⋮</b> (or <b>…</b>) then <b>Share & export → Print</b>. Highlighted chapters are the ones picked on the Practice tab.</span></div>`; }
-const SONGS_URL='songs/';
+const SONGS_URL='https://drive.google.com/drive/folders/1XPC3YZAwg-NdOoXap4Z4amll050fq0pB?usp=sharing';
 let matSub='memory';
 function materialsView(){
   const seg=`<div class="seg matseg" role="tablist"><button data-matsub="memory" aria-pressed="${matSub==='memory'}"><span aria-hidden="true">🧠</span> Memory verses</button><button data-matsub="study" aria-pressed="${matSub==='study'}"><span aria-hidden="true">📚</span> Sheets &amp; songs</button></div>`;
@@ -1865,8 +1855,8 @@ function materialsView(){
   return h(`<section>
     ${seg}
     <div><div class="label">Materials</div><h2>Study sheets and songs</h2></div>
-    <a class="songcard" href="${SONGS_URL}" id="songcard"><span class="gi" aria-hidden="true">🎵</span>
-      <div style="display:grid;gap:3px;min-width:0"><b>John Songs</b><small>All 96 songs, with the words lighting up as they're sung. Tap a song and its chapter plays on repeat.</small></div><span class="hint" aria-hidden="true">↗</span></a>
+    <a class="songcard" href="${SONGS_URL}" target="_blank" rel="noopener"><span class="gi" aria-hidden="true">🎵</span>
+      <div style="display:grid;gap:3px;min-width:0"><b>John Songs</b><small>Songs for everything in John. Opens the Google Drive folder.</small></div><span class="hint" aria-hidden="true">↗</span></a>
     ${printPanel()}
   </section>`);
 }
@@ -2863,13 +2853,7 @@ const XP_RULES=[
  ['📅','Daily goal','+25','Once a day, when you hit 30 questions.'],
  ['🗓️','Daily Challenge','+20','Once a day, plus 30 more if you get every one right.'],
  ['⚡','Speed Round','+20','Each time you beat your best score.'],
- ['⚔️','Boss Battle','+50','The first time you beat a chapter boss, then +15 for each win after that.'],
- ['🎵','Song listened to','+20','Play any John Song all the way through on the Songs page.']];
-// XP earned on the Songs page is written to this quizzer's saved record; pick it up when we come back
-function absorbSongXP(){ if(!me||!U) return; const d=lsGet('u:'+me,null); const had=(U.counts&&U.counts.songs)||0, now=(d&&d.counts&&d.counts.songs)||0; if(now<=had) return; const k=now-had, gain=k*20; U.counts=U.counts||{}; U.counts.songs=now; gainXP(gain,[['song',`${k} song${k>1?'s':''} listened to`,gain]]); save(); try{ render(); }catch(e){} }
-addEventListener('storage',e=>{ if(me&&e.key===K+'u:'+me) absorbSongXP(); });
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') absorbSongXP(); });
-addEventListener('pageshow',()=>absorbSongXP());
+ ['⚔️','Boss Battle','+50','The first time you beat a chapter boss, then +15 for each win after that.']];
 function xpGuide(){ const l=levelOf(U.xp), today=(U.xpDays&&U.xpDays[dayKey()])||0, log=(U.xpLog||[]).slice(0,8);
   return `<div class="xpguide">
     <div class="xprules">${XP_RULES.map(([i,t,v,d])=>`<div class="xprule"><span class="xpi" aria-hidden="true">${i}</span><div><b>${t}</b> <span class="xpv">${v}</span><small>${d}</small></div></div>`).join('')}</div>
@@ -3845,7 +3829,7 @@ function liveChoices(q){ const right=q.a[0], wc=right.split(/\s+/).length, seen=
 /* ----- host ----- */
 // Starts from the verses picked on the Practice tab; chapters toggle all their verses, and any chapter can be opened to pick single verses.
 function liveHostSetup(){ let sel=new Set(U.sel.filter(k=>byVerse[k])); if(!sel.size) sel=new Set(qVerses[1].map(v=>'1:'+v));
-  live={role:'host',phase:'setup',cfg:{sel,open:null,mode:'choice',n:10,time:20,teams:true,speak:false,game:'live',speed:'med',pts:20,qout:4,eout:3,pen:0,rebound:true,judge:'host'},unsub:[]}; render(); }
+  live={role:'host',phase:'setup',cfg:{sel,open:null,mode:'choice',n:10,time:20,teams:true,speak:false,game:'live',speed:'med',pts:20,qout:4,eout:3,pen:0,rebound:true,judge:'host',rules:'bqf'},unsub:[]}; render(); }
 const liveChState=(sel,c)=>{ const vs=qVerses[c]||[], n=vs.filter(v=>sel.has(c+':'+v)).length; return n===0?'none':n===vs.length?'all':'some'; };
 async function liveCreate(){ const L=live, cfg=L.cfg; if(cfg.game!=='sim') liveMusicStart();
   const ids=Q.filter(q=>cfg.sel.has(q.c+':'+q.v)).map(q=>q.id); if(!ids.length){ L.err='Pick at least one chapter or verse.'; render(); return; }
@@ -3853,7 +3837,7 @@ async function liveCreate(){ const L=live, cfg=L.cfg; if(cfg.game!=='sim') liveM
   try{
     let code=''; for(let i=0;i<6;i++){ const c=liveRoomCode(), h=await LDB.get('rooms/'+c+'/host'); if(!h||!(h.created>Date.now()-864e5)){ code=c; break; } }
     if(!code) throw new Error('no code');
-    L.order=shuffle(ids.slice()).slice(0,cfg.n); L.code=code; L.players={}; L.phase='lobby';
+    L.order=cfg.game==='sim'&&cfg.n==='halves'?shuffle(ids.slice()):shuffle(ids.slice()).slice(0,cfg.n==='halves'?10:cfg.n); L.code=code; L.tadj={}; L.clk=null; L.boardNote=''; L.otSet=null; L.periodDone=false; L.players={}; L.phase='lobby';
     await LDB.put('rooms/'+code,{host:{name:me,created:Date.now()},cfg:{mode:cfg.mode,n:L.order.length,time:cfg.time,teams:cfg.teams,game:cfg.game},state:{phase:'lobby',n:L.order.length,mode:cfg.mode,game:cfg.game}});
     if(cfg.game==='sim'&&cfg.judge==='group'){ L.selfPid=Math.random().toString(36).slice(2,12); L.pid=L.selfPid; L.xpDone={};
       await LDB.put('rooms/'+code+'/players/'+L.selfPid,{score:0,streak:0,name:me,av:myAv(),team:U.team&&U.team!==NO_TEAM?U.team:'',joined:Date.now()}); }
@@ -3891,12 +3875,13 @@ async function liveReveal(){ const L=live; if(!L||L.phase!=='question') return; 
     await LDB.put('rooms/'+L.code+'/state',{phase:'reveal',i:L.i,n:L.order.length,qid:L.cur.qid,ref:q.c+':'+q.v,q:q.q,choices:L.cur.choices||null,correct:L.cur.correct,answer:q.a.join(' or '),mode:L.cfg.mode,dist,nRight,nAns:L.nAns,fast}); }catch(e){} }
 function liveRanks(){ const ps=livePlayers().sort((a,b)=>(b.score||0)-(a.score||0)||a.name.localeCompare(b.name)); const ranks={}; ps.forEach((p,i)=>ranks[p.pid]=i+1); return {ps,ranks}; }
 function liveTeams(ps){ const m={}; ps.forEach(p=>{ if(!p.team) return; const t=m[p.team.toLowerCase()]||(m[p.team.toLowerCase()]={name:p.team,total:0,n:0}); t.total+=p.score||0; t.n++; });
+  if(live&&live.tadj) Object.values(m).forEach(t=>{ const a=live.tadj[t.name.toLowerCase()]; if(a) t.total+=(a.bonus||0)-(a.ded||0); });
   const sim=live&&live.cfg&&live.cfg.game==='sim'; return Object.values(m).map(t=>Object.assign(t,{avg:Math.round(t.total/t.n)})).sort((a,b)=>sim?b.total-a.total:b.avg-a.avg); }
 async function liveBoard(final){ const L=live; const {ps,ranks}=liveRanks(); L.phase=final?'done':'board'; render(); if(L.cfg&&L.cfg.game==='sim') simJinfo();
   const top=ps.slice(0,final?3:5).map(p=>({name:p.name,av:p.av||'',score:p.score||0,team:p.team||''}));
   try{ await LDB.put('rooms/'+L.code+'/state',{phase:L.phase,i:L.i,n:L.order.length,top,ranks,count:ps.length,teams:L.cfg.teams?liveTeams(ps):null}); }catch(e){}
   if(final){ celebrate(true); sfx('level'); } }
-function liveNext(){ const L=live; if(L.cfg&&L.cfg.game==='sim'){ if(L.phase==='board') return L.i>=L.order.length-1?liveBoard(true):simStart(L.i+1); if(L.phase==='sshow') return L.i>=L.order.length-1?liveBoard(true):simStart(L.i+1); return; }
+function liveNext(){ const L=live; if(L.cfg&&L.cfg.game==='sim'){ if(L.phase==='done') return; if(simTimed()&&L.clk&&L.clk.left<=0&&(L.phase==='sshow'||L.phase==='board')&&!L.periodDone) return simPeriodEnd(); L.periodDone=false; if(L.phase==='board'||L.phase==='sshow') return L.i>=L.order.length-1?liveBoard(true):simStart(L.i+1); return; }
   if(L.phase==='reveal') return liveBoard(L.i>=L.order.length-1); if(L.phase==='board') return liveStartQ(L.i+1); }
 
 /* ----- player ----- */
@@ -3967,16 +3952,19 @@ function liveHostView(){ const L=live, c=L.cfg;
             ${c.rangeMsg?`<span class="hint" style="color:var(--bad)">${esc(c.rangeMsg)}</span>`:''}</div>
           <span class="hint"><b>${c.sel.size?'John '+esc(rangeLabel([...c.sel])):'Nothing picked yet'}</b> · ${Q.filter(q=>c.sel.has(q.c+':'+q.v)).length} questions to draw from</span></div>
         ${sim?'':`<div class="row" style="justify-content:space-between"><span class="label">Answers</span>${segL('mode',[['choice','Pick from 4'],['type','Type it']])}</div>`}
-        <div class="row" style="justify-content:space-between"><span class="label">Questions</span>${segL('n',[[5,'5'],[10,'10'],[15,'15'],[20,'20']])}</div>
-        ${sim?`<div class="row" style="justify-content:space-between"><span class="label">Who judges answers?</span>${segL('judge',[['host','Me, the host'],['group','No host: everyone votes']])}</div>
+        <div class="row" style="justify-content:space-between"><span class="label">${sim?'Quiz length':'Questions'}</span>${segL('n',sim?[['halves','2 × 6-min halves'],[5,'5 Q'],[10,'10 Q'],[20,'20 Q']]:[[5,'5'],[10,'10'],[15,'15'],[20,'20']])}</div>
+        ${sim&&c.n==='halves'?`<span class="hint">Like a real meet: two 6-minute halves. The clock runs while a question is being read and answered, and pauses between questions. If teams are tied at the end, a 2-minute overtime is played (then 1 minute at a time) with only the tied teams.</span>`:''}
+        ${sim?`<div class="row" style="justify-content:space-between"><span class="label">Rules</span>${segL('rules',[['bqf','📘 Official BQF'],['custom','Custom']])}</div>
+        ${c.rules==='bqf'?`<div class="hint sbqf"><b>Official Bible Quiz Fellowship rules (May 2026):</b> 20 points per right answer · quiz out with 5 right (+10 bonus only for a perfect quiz-out with no errors) · error out with 3 errors · a team's first 3 errors are free, errors 4–6 cost the team 10 points, after that 20 · +20 team bonus when 5, 6 and 7 different quizzers on a team answer correctly · "No question" if nobody jumps within 3 seconds · begin answering within 5 seconds and finish within 20 · no rebounds · two fouls by one quizzer make an error.</div>`:''}
+        <div class="row" style="justify-content:space-between"><span class="label">Who judges answers?</span>${segL('judge',[['host','Me, the host'],['group','No host: everyone votes']])}</div>
         ${c.judge==='group'?`<span class="hint"><b>No host:</b> you play too, right from this phone. When someone buzzes, they say the answer out loud, and everyone else's phone shows the answer so they can vote ✅ or ❌. Keep this phone open until the game ends.</span>`:''}
         <div class="row" style="justify-content:space-between"><span class="label">Reading speed</span>${segL('speed',[['slow','Slow'],['med','Medium'],['fast','Fast']])}</div>
-        <div class="row" style="justify-content:space-between"><span class="label">Points for a right answer</span>${segL('pts',[[10,'10'],[20,'20']])}</div>
+        ${c.rules==='bqf'?'':`<div class="row" style="justify-content:space-between"><span class="label">Points for a right answer</span>${segL('pts',[[10,'10'],[20,'20']])}</div>
         <div class="row" style="justify-content:space-between"><span class="label">Quiz out after</span>${segL('qout',[[3,'3 right'],[4,'4 right'],[5,'5 right']])}</div>
         <div class="row" style="justify-content:space-between"><span class="label">Error out after</span>${segL('eout',[[2,'2 wrong'],[3,'3 wrong'],[99,'Never']])}</div>
         <div class="row" style="justify-content:space-between"><span class="label">Wrong answer costs</span>${segL('pen',[[0,'0'],[10,'10 points']])}</div>
         ${c.judge==='group'?'':`<div class="row" style="justify-content:space-between"><span class="label">Rebounds</span>${segL('rebound',[['true','On'],['false','Off']])}</div>`}
-        <span class="hint">Rebound: after a wrong answer, the whole question is shown and everyone else gets one more chance to buzz for half points. Quizzing out earns a 10-point bonus.</span>`
+        <span class="hint">Rebound: after a wrong answer, the whole question is shown and everyone else gets one more chance to buzz for half points. Quizzing out earns a 10-point bonus.</span>`}`
         :`<div class="row" style="justify-content:space-between"><span class="label">Seconds each</span>${segL('time',[[10,'10'],[20,'20'],[30,'30']])}</div>`}
         <div class="row" style="justify-content:space-between"><span class="label">Team standings</span>${segL('teams',[['true','On'],['false','Off']])}</div>
         <div class="row" style="justify-content:space-between"><span class="label">Read questions aloud</span>${segL('speak',[['true','On'],['false','Off']])}</div>
@@ -4008,10 +3996,10 @@ function liveHostView(){ const L=live, c=L.cfg;
     <div class="row" style="justify-content:flex-end"><button class="btn" id="lnext">${L.i>=L.order.length-1?'Final results':'Leaderboard'} →</button></div></section></main>`;
   const {ps:ranked}=liveRanks(), teams=c.teams?liveTeams(ranked):[];
   if(L.phase==='board') return `<main class="wrap live host"><section>${liveTop(`After question ${L.i+1} of ${L.order.length}`)}
-    <h2 class="evtitle" style="font-size:22px">Leaderboard</h2>
+    <h2 class="evtitle" style="font-size:22px">${esc(L.boardNote||'Leaderboard')}</h2>
     <ol class="lboard">${ranked.slice(0,5).map((p,i)=>`<li><span class="lrk">${i+1}</span>${avSvg(p.av||avDefault(p.name),40,p.name)}<b>${esc(p.name)}</b>${p.streak>=2?`<span class="lstreak">🔥${p.streak}</span>`:''}<span class="lsc">${(p.score||0).toLocaleString()}</span></li>`).join('')}</ol>
     ${teams.length>1?`<div class="panel" style="display:grid;gap:8px"><span class="label">Teams (${c.game==='sim'?'total points':'average score'})</span>${teams.map((t,i)=>`<div class="row" style="justify-content:space-between"><b>${i+1}. ${esc(t.name)} <span class="hint">· ${t.n} player${t.n===1?'':'s'}</span></b><span class="lsc">${(c.game==='sim'?t.total:t.avg).toLocaleString()}</span></div>`).join('')}</div>`:''}
-    <div class="row" style="justify-content:flex-end"><button class="btn" id="lnext">${L.i>=L.order.length-1?'Final results':'Next question'} →</button></div></section></main>`;
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="lnext">${L.cfg.game==='sim'&&simTimed()?(L.periodDone?'Start '+simPeriodName(L.clk.half):(L.clk&&L.clk.left<=0?simEndLabel():'Next question')):L.i>=L.order.length-1?'Final results':'Next question'} →</button></div></section></main>`;
   const pod=ranked.slice(0,3);
   return `<main class="wrap live host"><section>${liveTop('Final results')}
     <h2 class="evtitle" style="font-size:24px;text-align:center">🏆 Final results</h2>
@@ -4065,7 +4053,7 @@ function wireLive(){ const L=live; const on=(s,f)=>{const e=$(s); if(e) e.onclic
   const rf=$('#lrange'); if(rf) rf.onsubmit=e=>{ e.preventDefault(); const raw=$('#lrangein').value; const {out,errs}=parseRange(raw);
     if(errs.length||!out.size){ L.cfg.rangeMsg=`Couldn't read “${errs[0]||raw}”. Try 3, 3:1-21, or 2:13-3:8.`; renderKeep(); return; }
     L.cfg.sel=new Set([...out].filter(k=>byVerse[k])); L.cfg.rangeMsg=''; L.cfg.open=null; renderKeep(); };
-  on('#lhostsim',()=>{ liveHostSetup(); live.cfg.game='sim'; render(); });
+  on('#lhostsim',()=>{ liveHostSetup(); live.cfg.game='sim'; live.cfg.n='halves'; render(); });
   wireSim(on);
   on('#lcreate',liveCreate); on('#lstart',()=>L.cfg&&L.cfg.game==='sim'?simStart(0):liveStartQ(0)); on('#lskip',liveReveal); on('#lnext',liveNext);
   on('#lagain',()=>{ const cfg=L.cfg; liveStop(); LDB.del('rooms/'+L.code).catch(()=>{}); live={role:'host',phase:'setup',cfg,unsub:[]}; render(); });
@@ -4081,14 +4069,14 @@ function wireLive(){ const L=live; const on=(s,f)=>{const e=$(s); if(e) e.onclic
    spoken answer. Tracks quiz-outs, error-outs and rebounds. The database server's clock decides the first buzz. */
 const SIM_WPS={slow:2,med:2.7,fast:3.5};
 const simQText=q=>`According to ${q.c}:${q.v}, ${q.q.replace(/^([A-Z])(?=[a-z])/,m=>m.toLowerCase())}?`;
-const simEligible=(p,locked)=>p&&p.name&&!p.out&&!(locked&&locked[p.pid]);
+const simEligible=(p,locked)=>p&&p.name&&!p.out&&!(locked&&locked[p.pid])&&!(live&&live.otSet&&!live.otSet.has(simTeamKey(p)));
 function simStop(){ const L=live; if(!L) return; clearInterval(L.tick); clearTimeout(L.auto); if(L.ansUnsub){ L.ansUnsub(); L.ansUnsub=null; } try{ speechSynthesis.cancel(); }catch(e){} }
 async function simStart(i){ const L=live; simStop();
   const qid=L.order[i], q=Q[qid], text=simQText(q);
   L.i=i; L.cur={qid}; L.phase='sread'; L.showKey=false;
   L.sim={words:text.split(/\s+/),shown:0,r:0,locked:{},buzz:null,rebound:false,jumpEnd:0,res:null};
-  const st0={game:'sim',phase:'sread',i,n:L.order.length,qid,ref:q.c+':'+q.v,text:'',done:false,r:0,locked:{},qout:L.cfg.qout,group:L.cfg.judge==='group'};
-  L.st=Object.assign({},st0); render();
+  const st0={game:'sim',phase:'sread',i,n:simTimed()?0:L.order.length,qid,ref:q.c+':'+q.v,text:'',done:false,r:0,locked:{},qout:simRules().qout,group:L.cfg.judge==='group'};
+  L.st=Object.assign({},st0); simClock(true); render();
   try{ await LDB.put('rooms/'+L.code+'/state',st0); }catch(e){}
   simListen(); simRead(); simJinfo(); }
 // Reveal words at the chosen pace; when reading aloud, the spoken word pushes the reveal forward.
@@ -4102,11 +4090,11 @@ function simRead(){ const L=live, S=L.sim, ms=1000/(SIM_WPS[L.cfg.speed]||2.7);
   clearInterval(L.tick);
   L.tick=setInterval(()=>{ if(live!==L||L.phase!=='sread'){ clearInterval(L.tick); return; }
     if(S.shown<S.words.length){ if(!L.cfg.speak||Date.now()-(S.lastAt||0)>ms*1.6) simShow(S.shown+1); }
-    else { if(!S.jumpEnd) S.jumpEnd=Date.now()+5000; const left=Math.max(0,S.jumpEnd-Date.now()), el=document.getElementById('sjump'); if(el) el.textContent=Math.ceil(left/1000);
+    else { if(!S.jumpEnd) S.jumpEnd=Date.now()+simRules().window; const left=Math.max(0,S.jumpEnd-Date.now()), el=document.getElementById('sjump'); if(el) el.textContent=Math.ceil(left/1000);
       if(left<=0){ clearInterval(L.tick); simResult(null); } } },ms); }
 function simShow(n){ const L=live, S=L.sim; n=Math.min(n,S.words.length); if(n<=S.shown) return; S.shown=n; S.lastAt=Date.now();
   const el=document.getElementById('stext'); if(el) el.innerHTML=simTextHtml(S.words,S.shown,true); else render();
-  if(S.shown>=S.words.length){ S.jumpEnd=Date.now()+5000; render(); }
+  if(S.shown>=S.words.length){ S.jumpEnd=Date.now()+simRules().window; render(); }
   simPatch({text:S.words.slice(0,S.shown).join(' '),done:S.shown>=S.words.length}).catch(()=>{}); }
 function simTextHtml(words,shown,cursor){ const t=words.slice(0,shown).join(' '); return esc(t).replace(/^(According to \d+:\d+,)/,'<span class="qref">$1</span>').replace(/\(([^()]*)\)/g,'<span class="opt-words">($1)</span>')+(cursor&&shown<words.length?'<span class="scursor">▌</span>':''); }
 function simListen(){ const L=live, S=L.sim, key=L.i+'-'+S.r; if(L.ansUnsub) L.ansUnsub();
@@ -4115,19 +4103,23 @@ function simListen(){ const L=live, S=L.sim, key=L.i+'-'+S.r; if(L.ansUnsub) L.a
     if(cands.length) simBuzz(cands[0].pid); }); }
 async function simBuzz(pid){ const L=live, S=L.sim, p=L.players[pid]; if(!p) return; simStop();
   if(L.cfg.judge==='group') return simVoteStart(pid);
-  S.buzz={pid,name:p.name,av:p.av||'',team:p.team||'',at:S.shown}; L.phase='sjudge'; L.showKey=false; sfx('buzzer'); render(); simJinfo();
+  S.buzz={pid,name:p.name,av:p.av||'',team:p.team||'',at:S.shown}; S.buzzAt=Date.now(); simAnsClock(); L.phase='sjudge'; L.showKey=false; sfx('buzzer'); render(); simJinfo();
   try{ await simPatch({phase:'sjudge',buzz:S.buzz,text:S.words.slice(0,S.shown).join(' ')}); }catch(e){} }
 async function simJudge(ok){ const L=live, S=L.sim; if(!['sjudge','svote'].includes(L.phase)||!S.buzz||S.judged) return; S.judged=true; const c=L.cfg, pid=S.buzz.pid, q=Q[L.cur.qid];
   const p=Object.assign({score:0,correct:0,errors:0},L.players[pid]); let pts=0, note='';
-  if(ok){ pts=S.rebound?Math.round(c.pts/2):c.pts; p.correct=(p.correct||0)+1; if(p.correct>=c.qout){ p.out='quiz'; pts+=10; note='Quizzed out! +10 bonus'; } sfx('cheer'); }
-  else { pts=-(c.pen||0); p.errors=(p.errors||0)+1; if(p.errors>=c.eout){ p.out='error'; note='Errored out'; } sfx('buzz'); }
+  const R=simRules();
+  if(ok){ pts=S.rebound?Math.round(R.pts/2):R.pts; p.correct=(p.correct||0)+1;
+    if(p.correct>=R.qout){ p.out='quiz'; if(!R.perfectOnly||!(p.errors||0)){ pts+=10; note=R.perfectOnly?'Quizzed out, perfect score! +10 bonus':'Quizzed out! +10 bonus'; } else note='Quizzed out'; }
+    const tn=simTeamCredit(p,pid); if(tn) note=(note?note+' · ':'')+tn; sfx('cheer'); }
+  else { p.errors=(p.errors||0)+1; if(R.teamErr){ const tn=simTeamError(p); if(tn) note=tn; } else pts=-(R.pen||0);
+    if(p.errors>=R.eout){ p.out='error'; note=(note?note+' · ':'')+'Errored out'; } sfx('buzz'); }
   p.score=(p.score||0)+pts; p.last={i:L.i,k:L.i+'-'+S.r,qid:L.cur.qid,ok,pts,judged:true};
   L.players=Object.assign({},L.players,{[pid]:p});
   try{ await LDB.patch('rooms/'+L.code+'/players',{[pid]:p}); }catch(e){}
   if(ok) return simResult({pid,name:p.name,av:p.av||'',ok:true,pts,note});
   S.locked[pid]=1;
   const left=livePlayers().filter(x=>simEligible(x,S.locked));
-  if(c.rebound&&c.judge!=='group'&&!S.rebound&&left.length){ S.judged=false; // everyone else gets one more chance at the whole question
+  if(simRules().rebound&&c.judge!=='group'&&!S.rebound&&left.length){ S.judged=false; // everyone else gets one more chance at the whole question
     S.rebound=true; S.r++; S.buzz=null; S.shown=S.words.length; S.jumpEnd=Date.now()+8000; L.phase='sread'; S.missed={name:p.name,note}; render(); simJinfo();
     try{ await simPatch({phase:'sread',r:S.r,locked:S.locked,text:S.words.join(' '),done:true,rebound:true,buzz:null,missed:S.missed}); }catch(e){}
     simListen(); clearInterval(L.tick);
@@ -4138,13 +4130,13 @@ async function simJudge(ok){ const L=live, S=L.sim; if(!['sjudge','svote'].inclu
 async function simResume(){ const L=live, S=L.sim; if(L.phase!=='sjudge') return; S.judged=false; S.buzz=null; S.r++; L.phase='sread'; render(); simJinfo();
   try{ await simPatch({phase:'sread',r:S.r,buzz:null}); }catch(e){}
   simListen(); simRead(); }
-async function simResult(res){ const L=live, S=L.sim, q=Q[L.cur.qid]; simStop(); S.res=res; S.shown=S.words.length; L.phase='sshow'; render(); simJinfo();
+async function simResult(res){ const L=live, S=L.sim, q=Q[L.cur.qid]; simStop(); simClock(false); S.res=res; S.shown=S.words.length; L.phase='sshow'; render(); simJinfo();
   try{ await simPatch({phase:'sshow',res:res||null,answer:q.a.join(' or '),text:S.words.join(' '),done:true,buzz:null}); }catch(e){} }
 function simSeats(){ const L=live, c=L.cfg, S=L.sim||{locked:{}}, ps=livePlayers().sort((a,b)=>(a.team||'').localeCompare(b.team||'')||(a.joined||0)-(b.joined||0));
-  return `<div class="sseats">${ps.map(p=>{ const st=p.out==='quiz'?'<span class="sout q">Quizzed out</span>':p.out==='error'?'<span class="sout e">Errored out</span>':S.locked&&S.locked[p.pid]?'<span class="sout e">Missed</span>':'';
+  return `${simTeamStrip()}<div class="sseats">${ps.map(p=>{ const st=p.out==='quiz'?'<span class="sout q">Quizzed out</span>':p.out==='error'?'<span class="sout e">Errored out</span>':S.locked&&S.locked[p.pid]?'<span class="sout e">Missed</span>':'';
     return `<div class="sseat ${S.buzz&&S.buzz.pid===p.pid?'on':''} ${p.out?'done':''}">${avSvg(p.av||avDefault(p.name),34,p.name)}<b>${esc(p.name)}</b>${c.teams&&p.team?`<small>${esc(p.team)}</small>`:''}
-      <span class="sdots">${Array.from({length:Math.min(c.qout,6)},(_,k)=>`<i class="${k<(p.correct||0)?'on':''}"></i>`).join('')}${(p.errors||0)?` <span class="serr">${'✗'.repeat(Math.min(p.errors,5))}</span>`:''}</span><span class="lsc">${p.score||0}</span>${st}</div>`; }).join('')}</div>`; }
-function simHostView(){ const L=live, S=L.sim, q=Q[L.cur.qid], top=liveTop(`Question ${L.i+1} of ${L.order.length}`), head=`<div class="lqhead"><span class="lref">John ${q.c}:${q.v}</span>${S.rebound?'<span class="pill w">Rebound · half points</span>':''}</div>`;
+      <span class="sdots">${Array.from({length:Math.min(simRules().qout,6)},(_,k)=>`<i class="${k<(p.correct||0)?'on':''}"></i>`).join('')}${(p.errors||0)?` <span class="serr">${'✗'.repeat(Math.min(p.errors,5))}</span>`:''}</span><span class="lsc">${p.score||0}</span>${st}</div>`; }).join('')}</div>`; }
+function simHostView(){ const L=live, S=L.sim, q=Q[L.cur.qid], top=liveTop(simQLabel(L.i)), head=`<div class="lqhead"><span class="lref">John ${q.c}:${q.v}</span>${simClockHtml()}${S.rebound?'<span class="pill w">Rebound · half points</span>':''}</div>`;
   const key=`<div class="skey">${L.showKey?`<div style="display:grid;gap:6px;flex:1;min-width:0"><span class="label">Full question (host only)</span><div class="sfull">${simFullHtml(S.words,S.buzz?S.buzz.at:S.words.length)}</div><span class="label">Answer</span><b>${q.a.map(fmtQ).join(' <span class="hint">or</span> ')}</b></div><button class="x" id="skeyhide">Hide</button>`:`<button class="btn ghost small" id="skeyshow">👁 Show full question &amp; answer</button><span class="hint">Host only. Tap this only if the room can't see your screen, or judge from your phone instead (PIN ${L.showPin?`<b>${esc(L.pin||'')}</b>`:`<button class="x" id="spinshow">show</button>`}).</span>`}</div>`;
   if(L.phase==='sread') return `<main class="wrap live host sim"><section>${top}${head}
     ${S.missed&&S.rebound?`<div class="smiss">❌ ${esc(S.missed.name)} missed it${S.missed.note?' · '+esc(S.missed.note):''}. Everyone else: buzz in!</div>`:''}
@@ -4155,17 +4147,18 @@ function simHostView(){ const L=live, S=L.sim, q=Q[L.cur.qid], top=liveTop(`Ques
   if(L.phase==='sjudge') return `<main class="wrap live host sim"><section>${top}${head}
     <div class="sbuzzed">${avSvg(S.buzz.av||avDefault(S.buzz.name),72,S.buzz.name)}<div><span class="label">🔔 Buzzed in</span><b class="lbig">${esc(S.buzz.name)}</b>${S.buzz.team?`<span class="hint">${esc(S.buzz.team)}</span>`:''}</div></div>
     <div class="lq sq">${simTextHtml(S.words,S.shown,false)}<span class="sjumpmark">🔔</span></div>
+    ${S.shown<S.words.length?'<div class="sfinish">“Finish the question.”</div>':''}${simAnsHtml()}
     ${key}
     <div class="sjudge"><button class="btn sok" id="sright">✅ Correct <small>(Y)</small></button><button class="btn sno" id="swrong">❌ Wrong <small>(N)</small></button></div>
-    <div class="row" style="justify-content:space-between"><span class="hint">They answer out loud. You decide.</span><button class="x" id="sresume">↩ Didn't count, keep reading</button></div>
+    <div class="row" style="justify-content:space-between"><span class="hint">They answer out loud. You decide.</span><span class="row" style="gap:10px"><button class="x" id="sfoul">⚠️ Foul</button><button class="x" id="sresume">↩ Didn't count, keep reading</button></span></div>
     ${simSeats()}</section></main>`;
-  const r=S.res, last=L.i>=L.order.length-1;
+  const r=S.res, last=simTimed()?!!(L.clk&&L.clk.left<=0):L.i>=L.order.length-1;
   return `<main class="wrap live host sim"><section>${top}${head}
     <div class="sres ${r&&r.ok?'ok':'no'}">${r?`${avSvg(r.av||avDefault(r.name),56,r.name)}<div><b class="lbig">${r.ok?`✅ ${esc(r.name)} got it!`:`❌ ${esc(r.name)} missed it`}</b><span class="lpts">${r.pts>0?'+':''}${r.pts} points</span>${r.note?`<span class="hint"><b>${esc(r.note)}</b></span>`:''}</div>`:`<b class="lbig">Nobody got this one</b>`}</div>
     <div class="lq sq">${simTextHtml(S.words,S.words.length,false)}</div>
     <div class="lanswer"><span class="label">Answer</span><b>${q.a.map(fmtQ).join(' <span class="hint">or</span> ')}</b></div>
     ${simSeats()}
-    <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="sboard">Scoreboard</button><button class="btn" id="lnext">${last?'Final results':'Next question'} →</button></div></section></main>`; }
+    <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="sboard">Scoreboard</button><button class="btn" id="lnext">${last?(simTimed()?simEndLabel():'Final results'):'Next question'} →</button></div></section></main>`; }
 // ----- phones -----
 function simOnState(prev,st){ const L=live; // the stream updates one shared object, so compare a signature instead of prev
   const sig=[st.phase,st.i,st.r||0,st.locked?Object.keys(st.locked).length:0,st.done?1:0].join('|');
@@ -4180,7 +4173,7 @@ async function simBuzzIn(){ const L=live, st=L&&L.st; if(!st||st.phase!=='sread'
 function simPlayerView(){ const L=live, st=L.st, p=L.p||{}, me_=L.pid;
   if(!st) return `<main class="wrap live"><section>${liveTop('')}<p class="hint">Connecting…</p></section></main>`;
   const head=`<div class="lme">${avSvg(myAv(),36,me)}<b>${esc(me)}</b><span class="smine">✓ ${p.correct||0} · ✗ ${p.errors||0}</span><span class="lsc">${p.score||0}</span></div>`;
-  const top=liveTop(`Question ${st.i+1} of ${st.n}`), txt=`<div class="lq phone sq" id="stext">${simTextHtml(String(st.text||'').split(/\s+/).filter(Boolean),1e9,false)}</div>`;
+  const top=liveTop(st.n?`Question ${st.i+1} of ${st.n}`:`Question ${st.i+1}`), txt=`<div class="lq phone sq" id="stext">${simTextHtml(String(st.text||'').split(/\s+/).filter(Boolean),1e9,false)}</div>`;
   if(st.phase==='sread'){ const key=st.i+'-'+(st.r||0); let body;
     if(p.out==='quiz') body=`<div class="panel lwait"><b class="evtitle">You quizzed out! 🎉</b><p class="hint" style="margin:0">Great job. Cheer on your team!</p></div>`;
     else if(p.out==='error') body=`<div class="panel lwait"><b class="evtitle">You errored out</b><p class="hint" style="margin:0">Hang in there and watch the rest. You'll get them next time!</p></div>`;
@@ -4199,15 +4192,15 @@ function simPlayerView(){ const L=live, st=L.st, p=L.p||{}, me_=L.pid;
     else body=`<div class="panel lwait"><b class="evtitle">✅ Vote counted</b><p class="hint" style="margin:0">Waiting for everyone else…</p></div>`;
     return `<main class="wrap live sim"><section>${top}${head}<div class="sbuzzed small"><span class="label">🔔 Buzzed in</span><b class="lbig">${esc(st.buzz?st.buzz.name:'')}</b></div>${body}</section></main>`; }
   if(st.phase==='sjudge'){ const mine=st.buzz&&st.buzz.pid===me_;
-    return `<main class="wrap live sim"><section>${top}${head}${txt}${mine?`<div class="panel syou"><b class="lbig">🎤 Your turn!</b><span>Answer out loud now.</span></div>`:`<div class="panel lwait"><span class="label">Buzzed in</span><div class="row" style="justify-content:center;gap:10px">${avSvg(st.buzz.av||avDefault(st.buzz.name),40,st.buzz.name)}<b class="evtitle">${esc(st.buzz.name)}</b></div></div>`}</section></main>`; }
+    return `<main class="wrap live sim"><section>${top}${head}${txt}${mine?`<div class="panel syou"><b class="lbig">🎤 Your turn!</b><span>Answer out loud now. If you jumped early, finish the question first.</span><span class="hint" id="sansclock">Begin within 5 seconds · 20 seconds to finish</span></div>`:`<div class="panel lwait"><span class="label">Buzzed in</span><div class="row" style="justify-content:center;gap:10px">${avSvg(st.buzz.av||avDefault(st.buzz.name),40,st.buzz.name)}<b class="evtitle">${esc(st.buzz.name)}</b></div></div>`}</section></main>`; }
   const r=st.res, mine=r&&r.pid===me_;
   return `<main class="wrap live sim"><section>${top}${head}
     <div class="panel lresult ${mine?(r.ok?'ok':'no'):''}">${mine?`<b class="lbig">${r.ok?'Correct! ✓':'Not this time ✗'}</b><span class="lpts">${r.pts>0?'+':''}${r.pts} points</span>${r.note?`<b>${esc(r.note)}</b>`:''}`:r?`<b class="evtitle">${r.ok?'✅':'❌'} ${esc(r.name)} ${r.ok?'got it':'missed it'}</b>`:`<b class="evtitle">Nobody got this one</b>`}
       <span class="hint">Answer: <b>${esc(st.answer||'')}</b></span></div>
-    ${L.role==='host'?`<div class="row" style="justify-content:flex-end"><button class="btn ghost" id="sboard">Scoreboard</button><button class="btn" id="lnext">${L.i>=L.order.length-1?'Final results':'Next question'} →</button></div>`:''}</section></main>`; }
+    ${L.role==='host'?`<div class="row" style="justify-content:flex-end"><button class="btn ghost" id="sboard">Scoreboard</button><button class="btn" id="lnext">${(simTimed()?!!(L.clk&&L.clk.left<=0):L.i>=L.order.length-1)?(simTimed()?simEndLabel():'Final results'):'Next question'} →</button></div>`:''}</section></main>`; }
 function wireSim(on){ const L=live; if(!L) return;
   const jf=$('#jform'); if(jf) jf.onsubmit=e=>{ e.preventDefault(); simJudgeJoin($('#jcode').value,$('#jpin').value); };
-  on('#jright',()=>simSend('right')); on('#jwrong',()=>simSend('wrong')); on('#jresume',()=>simSend('resume')); on('#jskip',()=>simSend('skip'));
+  on('#jright',()=>simSend('right')); on('#jfoul',()=>simSend('foul')); on('#sfoul',simFoul); on('#jwrong',()=>simSend('wrong')); on('#jresume',()=>simSend('resume')); on('#jskip',()=>simSend('skip'));
   on('#jnext',()=>simSend('next')); on('#jboard',()=>simSend('board')); on('#jstart',()=>simSend('start'));
   on('#spinshow',()=>{ L.showPin=true; render(); }); on('#spinhide',()=>{ L.showPin=false; render(); });
   on('#sbuzz',simBuzzIn); on('#svyes',()=>simVote(true)); on('#svno',()=>simVote(false)); on('#sright',()=>simJudge(true)); on('#swrong',()=>simJudge(false)); on('#sresume',simResume);
@@ -4223,13 +4216,14 @@ function simFullHtml(words,at){ const a=words.slice(0,at).join(' '), b=words.sli
 function simJudgeBox(){ const L=live; return `<div class="panel sjbox"><span class="label">⚖️ Judge on your phone</span><span class="hint">On your phone: Games → Quiz Simulator → <b>Judge a game</b>. Room <b>${esc(L.code)}</b> · PIN ${L.showPin?`<b class="spin">${esc(L.pin||'')}</b> <button class="x" id="spinhide">hide</button>`:`<button class="x" id="spinshow">👁 show PIN</button>`}</span><span class="hint">Your phone shows the whole question and the answer, and works as the remote for the whole game. Keep the PIN private.</span></div>`; }
 function simJinfo(){ const L=live; if(!L||L.role!=='host'||!L.code||L.cfg.judge==='group') return; const S=L.sim||{}, q=L.cur?Q[L.cur.qid]:null;
   const info={phase:L.phase,i:L.i||0,n:L.order.length,ref:q?q.c+':'+q.v:'',full:S.words?S.words.join(' '):'',at:S.buzz?S.buzz.at:null,buzz:S.buzz?{name:S.buzz.name,av:S.buzz.av||'',team:S.buzz.team||''}:null,
-    answer:q?q.a.join(' or '):'',rebound:!!S.rebound,res:S.res||null,last:(L.i||0)>=L.order.length-1,
+    answer:q?q.a.join(' or '):'',rebound:!!S.rebound,res:S.res||null,last:simTimed()?!!(L.clk&&L.clk.left<=0):(L.i||0)>=L.order.length-1,endLabel:simTimed()?simEndLabel():'',clock:simTimed()&&L.clk?simClockText():'',
     seats:livePlayers().map(p=>({name:p.name,score:p.score||0,correct:p.correct||0,errors:p.errors||0,out:p.out||''}))};
   LDB.put('rooms/'+L.code+'/jinfo',info).catch(()=>{}); }
 function simCmd(d){ const L=live; if(!L||L.role!=='host'||!d||!d.id||d.id===L.lastCmd) return; const first=L.lastCmd===undefined; L.lastCmd=d.id; if(first&&Date.now()-(d.at||0)>5000) return;
   if(d.c==='right'&&L.phase==='sjudge') simJudge(true);
   else if(d.c==='wrong'&&L.phase==='sjudge') simJudge(false);
   else if(d.c==='resume'&&L.phase==='sjudge') simResume();
+  else if(d.c==='foul'&&L.phase==='sjudge') simFoul();
   else if(d.c==='skip'&&L.phase==='sread') simResult(null);
   else if(d.c==='board'&&L.phase==='sshow') liveBoard(false);
   else if(d.c==='start'&&L.phase==='lobby'&&livePlayers().length) simStart(0);
@@ -4244,14 +4238,14 @@ function simSend(c){ const L=live; if(!L||L.role!=='judge') return; sfx('tick');
 function simJudgeView(){ const L=live, j=L.info, top=liveTop('Judge · '+L.code);
   if(!j||!j.phase||j.phase==='lobby'){ const n=Object.keys(L.players||{}).length; return `<main class="wrap live sim"><section>${top}<div class="panel lwait"><b class="evtitle">You're the judge ⚖️</b><p class="hint" style="margin:0">${n} quizzer${n===1?'':'s'} in. Start when everyone has joined.</p><button class="btn" id="jstart" ${n?'':'disabled'}>Start game</button></div></section></main>`; }
   const seats=`<div class="sjseats">${(j.seats||[]).map(s=>`<span><b>${esc(s.name)}</b> ${s.score} · ✓${s.correct} ✗${s.errors}${s.out?` · ${s.out==='quiz'?'quizzed out':'errored out'}`:''}</span>`).join('')}</div>`;
-  const head=`<div class="lqhead"><span class="lref">Question ${j.i+1} of ${j.n} · John ${esc(j.ref)}</span>${j.rebound?'<span class="pill w">Rebound</span>':''}</div>`;
+  const head=`<div class="lqhead"><span class="lref">${j.n?`Question ${j.i+1} of ${j.n}`:`Question ${j.i+1}`} · John ${esc(j.ref)}</span>${j.clock?`<span class="sclock">${esc(j.clock)}</span>`:''}${j.rebound?'<span class="pill w">Rebound</span>':''}</div>`;
   const full=`<div class="panel sjfull"><span class="label">Full question</span><div class="sfull">${j.phase==='sjudge'&&j.at!=null?simFullHtml(String(j.full).split(/\s+/),j.at):fmtQ(j.full)}</div>${j.phase==='sjudge'&&j.at!=null&&j.at<String(j.full).split(/\s+/).length?'<span class="hint">🔔 is where they buzzed. The highlighted part is what they still need to finish.</span>':''}<span class="label">Answer</span><b class="sjans">${fmtQ(j.answer)}</b></div>`;
   if(j.phase==='sread') return `<main class="wrap live sim"><section>${top}${head}<div class="panel lwait"><b class="evtitle">${j.rebound?'Rebound: waiting for a buzz…':'Reading… waiting for a buzz'}</b></div>${full}<button class="btn ghost" id="jskip">Skip question</button>${seats}</section></main>`;
   if(j.phase==='sjudge') return `<main class="wrap live sim"><section>${top}${head}<div class="sbuzzed small"><span class="label">🔔 Buzzed in</span><b class="lbig">${esc(j.buzz?j.buzz.name:'')}</b></div>${full}
-    <div class="sjudge"><button class="btn sok" id="jright">✅ Correct</button><button class="btn sno" id="jwrong">❌ Wrong</button></div><button class="x" id="jresume">↩ Didn't count, keep reading</button>${seats}</section></main>`;
+    <div class="sansclock" id="jansclock">Begin within 5 seconds · 20 seconds to finish</div><div class="sjudge"><button class="btn sok" id="jright">✅ Correct</button><button class="btn sno" id="jwrong">❌ Wrong</button></div><div class="row" style="gap:12px"><button class="x" id="jfoul">⚠️ Foul</button><button class="x" id="jresume">↩ Didn't count, keep reading</button></div>${seats}</section></main>`;
   if(j.phase==='sshow') return `<main class="wrap live sim"><section>${top}${head}<div class="panel lwait"><b class="evtitle">${j.res?`${j.res.ok?'✅':'❌'} ${esc(j.res.name)} ${j.res.ok?'got it':'missed it'} (${j.res.pts>0?'+':''}${j.res.pts})`:'Nobody got this one'}</b></div>${full}
-    <div class="row"><button class="btn ghost" id="jboard">Scoreboard</button><button class="btn" id="jnext">${j.last?'Final results':'Next question'} →</button></div>${seats}</section></main>`;
-  if(j.phase==='board') return `<main class="wrap live sim"><section>${top}<div class="panel lwait"><b class="evtitle">Scoreboard is showing</b><button class="btn" id="jnext">${j.last?'Final results':'Next question'} →</button></div>${seats}</section></main>`;
+    <div class="row"><button class="btn ghost" id="jboard">Scoreboard</button><button class="btn" id="jnext">${j.last?(j.endLabel||'Final results'):'Next question'} →</button></div>${seats}</section></main>`;
+  if(j.phase==='board') return `<main class="wrap live sim"><section>${top}<div class="panel lwait"><b class="evtitle">Scoreboard is showing</b><button class="btn" id="jnext">${j.last?(j.endLabel||'Final results'):'Next question'} →</button></div>${seats}</section></main>`;
   return `<main class="wrap live sim"><section>${top}<div class="panel lwait"><b class="evtitle">Game over 🏆</b></div>${seats}</section></main>`; }
 
 /* ----- no-host mode: whoever started the game plays too, and the group votes on each answer ----- */
@@ -4273,6 +4267,57 @@ function simVoteCheck(force){ const L=live, S=L.sim; if(L.phase!=='svote'||S.jud
 async function simVote(ok){ const L=live, st=L&&L.st; if(!st||st.phase!=='svote') return; const key='v'+st.i+'-'+(st.r||0); if(L.voteKey===key) return;
   L.voteKey=key; sfx('tick'); render();
   try{ await LDB.put('rooms/'+L.code+'/answers/'+key+'/'+L.pid,{t:{'.sv':'timestamp'},ok}); }catch(e){ L.voteKey=null; L.err="Your vote didn't send. Tap again."; render(); } }
+
+/* ----- Official BQF rules (May 2026): team errors, team bonuses, perfect quiz-outs, timed halves, fouls ----- */
+function simRules(){ const c=(live&&live.cfg)||{};
+  if(c.rules==='bqf') return {bqf:true,pts:20,qout:5,eout:3,perfectOnly:true,rebound:false,teamErr:true,milestone:true,window:3000,pen:0};
+  return {bqf:false,pts:c.pts||20,qout:c.qout||4,eout:c.eout||3,perfectOnly:false,rebound:!!c.rebound,teamErr:false,milestone:false,window:5000,pen:c.pen||0}; }
+const simTimed=()=>!!(live&&live.cfg&&live.cfg.n==='halves');
+const simTeamKey=p=>(p.team?p.team:'· '+p.name).toLowerCase();
+function simTeam(p){ const L=live, k=simTeamKey(p); L.tadj=L.tadj||{}; return L.tadj[k]||(L.tadj[k]={name:p.team||p.name,errors:0,ded:0,bonus:0,right:{},ms:4,fpend:null}); }
+// A team's 5th, 6th and 7th different quizzer to answer correctly each add 20 bonus points.
+function simTeamCredit(p,pid){ const R=simRules(); if(!R.milestone) return ''; const t=simTeam(p); t.right[pid]=1; const n=Object.keys(t.right).length; let note='';
+  while(n>t.ms&&t.ms<7){ t.ms++; t.bonus+=20; note=`Team bonus! ${t.ms} different quizzers right: +20`; if(!p.team) p.score=(p.score||0)+20; } return note; }
+// Team errors: the first 3 are free, errors 4-6 cost 10 points, every error after that costs 20.
+function simTeamError(p){ const t=simTeam(p); t.errors++; const d=t.errors<=3?0:t.errors<=6?10:20; t.ded+=d; if(!p.team&&d) p.score=(p.score||0)-d;
+  return d?`Team error ${t.errors}: −${d}`:`Team error ${t.errors} (first 3 are free)`; }
+// Foul: two fouls by one quizzer make an error; one foul each by two teammates make a team error. The question is read again.
+async function simFoul(){ const L=live, S=L.sim; if(L.phase!=='sjudge'||!S.buzz) return; const pid=S.buzz.pid, R=simRules();
+  const p=Object.assign({score:0,correct:0,errors:0},L.players[pid]); p.fouls=(p.fouls||0)+1; const t=simTeam(p); let note='Foul';
+  if(p.fouls%2===0){ p.errors=(p.errors||0)+1; note='Second foul = an error'; if(R.teamErr) note+=' · '+simTeamError(p); else p.score-=R.pen||0; if(p.errors>=R.eout){ p.out='error'; note+=' · Errored out'; } if(t.fpend===pid) t.fpend=null; }
+  else if(t.fpend&&t.fpend!==pid&&p.team){ note='Foul · two teammates with a foul = a team error'; if(R.teamErr) note+=' · '+simTeamError(p); t.fpend=null; }
+  else t.fpend=pid;
+  L.players=Object.assign({},L.players,{[pid]:p}); try{ await LDB.patch('rooms/'+L.code+'/players',{[pid]:p}); }catch(e){}
+  sfx('buzz'); toast(`<b>⚠️ ${esc(p.name)}: ${esc(note)}</b><span>The question will be read again. Anyone may jump.</span>`);
+  S.buzz=null; S.judged=false; S.r++; S.shown=0; S.jumpEnd=0; L.phase='sread'; render(); simJinfo();
+  try{ await simPatch({phase:'sread',r:S.r,buzz:null,text:'',done:false}); }catch(e){}
+  simListen(); simClock(true); simRead(); }
+// Answer clock: begin within 5 seconds, finish within 20.
+function simAnsText(ms){ const s=Math.floor(ms/1000); if(s<5) return `Begin answering: ${5-s}`; if(s<20) return `⏱ ${20-s} seconds to finish`; return '⏰ Time! (20 seconds are up)'; }
+function simAnsHtml(){ const S=live.sim; return `<div class="sansclock" id="sansclock">${simAnsText(Date.now()-(S.buzzAt||Date.now()))}</div>`; }
+function simAnsClock(){ const L=live; clearInterval(L.ansTick); L.ansTick=setInterval(()=>{ if(!live||live!==L||!['sjudge','svote'].includes(L.phase)){ clearInterval(L.ansTick); return; } const el=document.getElementById('sansclock'); if(el) el.textContent=simAnsText(Date.now()-(L.sim.buzzAt||Date.now())); },250); }
+// Game clock: two 6-minute halves; it runs while a question is read and answered, and pauses between questions.
+const simPeriodName=h=>h===1?'1st half':h===2?'2nd half':h===3?'Overtime':'Overtime '+(h-2);
+function simClock(on){ const L=live; if(!simTimed()) return; if(!L.clk) L.clk={half:1,left:360000,on:false,t:0};
+  const c=L.clk, now=Date.now(); if(c.on){ c.left=Math.max(0,c.left-(now-c.t)); } c.on=!!on&&c.left>0; c.t=now;
+  clearInterval(L.clkTick); if(c.on) L.clkTick=setInterval(()=>{ if(!live||live!==L){ clearInterval(L.clkTick); return; } const n2=Date.now(); c.left=Math.max(0,c.left-(n2-c.t)); c.t=n2; if(c.left<=0){ c.on=false; clearInterval(L.clkTick); }
+    const el=document.getElementById('sclock'); if(el) el.textContent=simClockText(); },250); }
+function simClockText(){ const c=live.clk; if(!c) return ''; const s=Math.ceil(c.left/1000); return `⏱ ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')} · ${simPeriodName(c.half)}`; }
+function simClockHtml(){ return simTimed()&&live.clk?`<span class="sclock" id="sclock">${simClockText()}</span>`:''; }
+function simQLabel(i){ return simTimed()?`Question ${i+1}`:`Question ${i+1} of ${live.order.length}`; }
+function simEndLabel(){ const c=live.clk; return !c||c.half===1?'Halftime':'End of '+simPeriodName(c.half); }
+function simStandings(){ const ps=livePlayers(), teams=liveTeams(ps); if(teams.length>1) return teams.map(t=>({key:t.name.toLowerCase(),name:t.name,score:t.total}));
+  return ps.map(p=>({key:simTeamKey(p),name:p.name,score:(p.score||0)})).sort((a,b)=>b.score-a.score); }
+function simPeriodEnd(){ const L=live, c=L.clk; if(!c) return liveBoard(true);
+  if(c.half===1){ L.clk={half:2,left:360000,on:false,t:0}; L.boardNote='Halftime'; L.periodDone=true; L.otSet=null; return liveBoard(false); }
+  const st=simStandings(); const top=st[0]&&st[0].score, tied=st.filter(s=>s.score===top);
+  if(tied.length>1&&st.length>1){ L.clk={half:c.half+1,left:c.half===2?120000:60000,on:false,t:0}; L.otSet=new Set(tied.map(s=>s.key)); L.boardNote=`Tie! ${simPeriodName(c.half+1)}: ${tied.map(s=>s.name).join(' vs ')}`; L.periodDone=true; return liveBoard(false); }
+  L.otSet=null; L.boardNote=''; return liveBoard(true); }
+function simTeamStrip(){ const L=live, R=simRules(); if(!R.teamErr&&!R.milestone) return ''; const ps=livePlayers(), teams=liveTeams(ps); if(teams.length<2) return '';
+  return `<div class="steams">${teams.map(t=>{ const a=(L.tadj||{})[t.name.toLowerCase()]||{}; return `<span><b>${esc(t.name)}</b> <span class="lsc">${t.total}</span> <small>errors ${a.errors||0}${(a.ded||0)?` (−${a.ded})`:''}${(a.bonus||0)?` · bonus +${a.bonus}`:''}</small></span>`; }).join('')}</div>`; }
+// Phones and the judge phone count down from when they saw the buzz.
+setInterval(()=>{ const L=live; if(!L||L.role==='host') return; const ph=(L.st&&L.st.phase)||(L.info&&L.info.phase); if(ph!=='sjudge'&&ph!=='svote'){ L.seenBuzzAt=null; return; }
+  if(!L.seenBuzzAt) L.seenBuzzAt=Date.now(); const txt=simAnsText(Date.now()-L.seenBuzzAt); ['sansclock','jansclock'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=txt; }); },250);
 
 /* ---------- wiring ---------- */
 function wire(){
