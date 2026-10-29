@@ -335,7 +335,7 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .vol svg{width:16px;height:16px;fill:var(--np-dim)}
 .vol input{width:100%;accent-color:#fff;height:4px}
 .br{display:flex;justify-content:space-between;padding:4px;border-radius:26px;gap:2px}
-.br button{flex:1;min-width:44px;height:44px;padding:0 10px;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:6px;color:rgba(255,255,255,.7);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;transition:background .2s,color .2s}
+.br button{flex:1;min-width:40px;height:44px;padding:0 10px;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:6px;color:rgba(255,255,255,.7);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;transition:background .2s,color .2s}
 .br button[aria-pressed="true"]{background:rgba(255,255,255,.22);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
 .br button.tinted[aria-pressed="true"]{color:var(--sig1)}
 .br svg{width:22px;height:22px;fill:currentColor}
@@ -530,6 +530,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
         <button id="lyr" type="button" aria-pressed="false" aria-label="Lyrics"><svg viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></svg></button>
         <button id="rep1" class="tinted" type="button" aria-pressed="false" aria-label="Repeat this song"><svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z"/></svg><span>Repeat</span></button>
         <button id="speed" type="button" aria-label="Playback speed" aria-expanded="false"><span id="speedtxt">1×</span></button>
+        <button id="tsize" type="button" aria-label="Text size" aria-expanded="false"><span style="font-size:15px;font-weight:800">Aa</span></button>
         <button id="queue" type="button" aria-pressed="false" aria-label="Up next"><svg viewBox="0 0 24 24"><path d="M3 6h12v2H3zm0 5h12v2H3zm0 5h8v2H3zm14-5v8l5-4z"/></svg></button>
       </div>
     </div>
@@ -540,6 +541,12 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
     <div class="chips rowchips"><button type="button" id="repsong" aria-pressed="false">This whole song</button><button type="button" id="repclear">Off</button></div>
     <div class="rl">Or just some verses — tap the first and last</div>
     <div class="chips vchips" id="vchips"></div>
+  </div>
+  <div class="speedpop glass" id="tpop" hidden>
+    <div class="sh"><b>Text size</b><span id="tval">Auto</span></div>
+    <div class="sl"><span style="font-size:11px">A</span><input id="tr" type="range" min="0.5" max="1.15" step="0.05" value="1" aria-label="Text size"><span style="font-size:17px">A</span></div>
+    <div class="rl" style="margin:10px 0 0">The verse always shrinks to fit the screen; this sets how big it's allowed to get. Slide left if it ever runs long on your phone.</div>
+    <div class="chips rowchips" style="margin-top:10px"><button type="button" id="tauto">Back to auto</button></div>
   </div>
   <div class="speedpop glass" id="speedpop" hidden>
     <div class="sh"><b>Speed</b><span id="speedval">1.00×</span></div>
@@ -832,9 +839,20 @@ function renderVerse(idx){
 function fitVerse(){ // the text box is the room that's left under the header; shrink the type until nothing spills out of it
   const txt=$('#vtext'), body=$('#vbody'); if(!body.clientWidth||!txt.clientHeight) return;
   const fits=()=>txt.scrollHeight<=txt.clientHeight+1&&txt.scrollWidth<=txt.clientWidth+1;
-  let lo=16, hi=innerWidth>=900?36:44, best=lo;
+  let lo=14, hi=Math.round((innerWidth>=900?36:44)*vscale), best=lo;
   while(lo<=hi){ const mid=(lo+hi)>>1; txt.style.setProperty('--vfs',mid+'px'); if(fits()){ best=mid; lo=mid+1; } else hi=mid-1; }
+  // second opinion from a line-count estimate, in case the browser's measurement is off while fonts or layout settle
+  const W=txt.clientWidth, H=txt.clientHeight, n=txt.textContent.length||1; let est=best;
+  for(;est>14;est--){ const cpl=Math.max(8,W/(est*.52)); if(Math.ceil(n/cpl)*est*1.22<=H) break; }
+  best=Math.min(best,est);
   txt.style.setProperty('--vfs',best+'px'); }
+let vscale=Math.min(1.15,Math.max(.5,+lsGet('vscale',1)||1));
+function setVScale(v,auto){ vscale=Math.min(1.15,Math.max(.5,+v||1)); lsSet('vscale',vscale); $('#tr').value=vscale; $('#tval').textContent=auto||Math.abs(vscale-1)<.001?'Auto':Math.round(vscale*100)+'%'; $('#tsize').setAttribute('aria-pressed',Math.abs(vscale-1)>=.001); fitVerse(); }
+function setTOpen(on){ const p=$('#tpop'); if(on){ p.hidden=false; void p.offsetWidth; p.classList.add('open'); } else { p.classList.remove('open'); clearTimeout(p._t); p._t=setTimeout(()=>{ if(!p.classList.contains('open')) p.hidden=true; },320); } $('#tsize').setAttribute('aria-expanded',on); }
+$('#tsize').onclick=()=>setTOpen(!$('#tpop').classList.contains('open'));
+$('#tr').oninput=e=>setVScale(e.target.value); $('#tauto').onclick=()=>setVScale(1,true);
+$('#np').addEventListener('pointerdown',e=>{ if($('#tpop').classList.contains('open')&&!e.target.closest('#tpop,#tsize')) setTOpen(false); },true);
+setVScale(vscale);
 function updateVerse(force){
   if(!song) return; const t=audio.currentTime; const idx=verseAt(t);
   if(idx!==curVerse||force){ curVerse=idx; renderVerse(idx); }
@@ -1082,7 +1100,7 @@ function openNP(){
     requestAnimationFrame(()=>{ const t=npTarget(), r=t.getBoundingClientRect(), nr=np.getBoundingClientRect(); morph($('#minith'),t,{left:r.left,top:r.top-nr.top,width:r.width,height:r.height}); }); }
 }
 function closeNP(){
-  const wasOpen=np.classList.contains('open'); np.classList.remove('open','drag'); np.style.transform=''; setQueueOpen(false); setSpeedOpen(false); setRepOpen(false); document.body.classList.remove('npopen'); if(wasOpen) npMoving();
+  const wasOpen=np.classList.contains('open'); np.classList.remove('open','drag'); np.style.transform=''; setQueueOpen(false); setSpeedOpen(false); setRepOpen(false); setTOpen(false); document.body.classList.remove('npopen'); if(wasOpen) npMoving();
   if(wasOpen&&miniRect){ morph(npTarget(),$('#minith'),miniRect); }
 }
 $('#minicard').onclick=()=>openNP(); $('#minicard').onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();openNP()} };
