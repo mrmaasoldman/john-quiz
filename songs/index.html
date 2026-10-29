@@ -78,6 +78,8 @@ html[data-vt="pop"]::view-transition-old(content){animation-name:vtOutRight} htm
 .hero .bg,.hero .bg0{position:absolute;inset:-12% 0 0;background:center/cover;transform:scale(1.04);transition:opacity .8s;will-change:transform}
 .hero .bg2{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.12),rgba(0,0,0,.28) 50%,rgba(0,0,0,.8))}
 .hero>*{position:relative}
+.hero .quizlink{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:max(20px,env(safe-area-inset-right,0px));height:40px;padding:0 14px 0 8px;border-radius:20px;display:flex;align-items:center;gap:2px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;z-index:2}
+.hero .quizlink svg{width:18px;height:18px;fill:currentColor}
 .hero .mark{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:max(20px,env(safe-area-inset-left,0px));width:44px;height:44px;border-radius:14px;background:var(--sig);display:grid;place-items:center;font-family:var(--serif);font-weight:800;font-size:26px;color:#fff;box-shadow:0 8px 24px rgba(255,92,138,.45),inset 0 1px 0 rgba(255,255,255,.5);transform:rotate(-6deg)}
 .hero .eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--sig1);margin:0;text-shadow:0 1px 8px rgba(0,0,0,.5)}
 .hero h1{font-family:var(--serif);font-size:clamp(44px,11vw,72px);font-weight:800;letter-spacing:-.02em;margin:0;line-height:.95;text-shadow:0 2px 24px rgba(0,0,0,.45)}
@@ -423,6 +425,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
   <div class="libin">
     <header class="hero" id="hero"><div class="bg0" id="herobg0"></div><div class="bg" id="herobg"></div><div class="bg2"></div>
       <div class="mark" aria-hidden="true">J</div>
+      <a class="quizlink glass gbtn" id="quizlink" href="../" hidden><svg viewBox="0 0 24 24"><path d="M15.4 7.4 10.8 12l4.6 4.6L14 18l-6-6 6-6z"/></svg>Quizzing</a>
       <div class="txt" id="herotxt" style="display:grid;gap:6px">
       <div class="eyebrow">Bible Quizzing · Gospel of John</div>
       <h1>John <em>Songs</em></h1>
@@ -1109,6 +1112,7 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ---------- boot ---------- */
+if(!/claude\.ai$/.test(location.hostname)&&/\/songs\/?(index\.html)?$/.test(location.pathname)) $('#quizlink').hidden=false;
 (async function(){
   try{ await Promise.race([document.fonts.load('800 150px Fraunces'),new Promise(r=>setTimeout(r,1500))]); }catch(e){}
   await Promise.all(CHAPTERS.map(async c=>{ ART[c]=await makeArt(c); }));
