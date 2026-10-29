@@ -1201,7 +1201,7 @@ document.addEventListener('keydown',e=>{
 const QK='johnquiz:', XP_PER_SONG=20;
 const qzGet=(k,d)=>{ try{ const v=localStorage.getItem(QK+k); return v?JSON.parse(v):d; }catch(e){ return d; } };
 const qzName=()=>{ const n=qzGet('last',null); return (typeof n==='string'&&n)?n:null; };
-const lvlNeed=L=>75*(L-1)*L, levelOf=xp=>{ xp=xp||0; let L=1; while(xp>=lvlNeed(L+1)) L++; return L; };
+const lvlNeed=L=>L<=10?75*(L-1)*L:6750+1500*(L-10), levelOf=xp=>{ xp=xp||0; let L=1; while(xp>=lvlNeed(L+1)) L++; return L; };
 let qzFmt=null; try{ qzFmt=new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}); }catch(e){}
 function qzDay(){ try{ const p={}; qzFmt.formatToParts(new Date()).forEach(x=>p[x.type]=x.value); return p.year+'-'+p.month+'-'+p.day; }catch(e){ return new Date().toISOString().slice(0,10); } }
 function qzChip(){ const el=$('#quizlink'); if(!el||el.hidden) return; const n=qzName(); const old=el.querySelector('.lv'); if(old) old.remove(); if(!n) return; const u=qzGet('u:'+n,null); if(!u) return; const lv=document.createElement('span'); lv.className='lv'; lv.textContent='Lv '+levelOf(u.xp); el.append(lv); }

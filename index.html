@@ -2867,7 +2867,7 @@ function wireMusic(){
 
 /* ---------- XP + levels ---------- */
 const TITLES=['Scroll Rookie','Verse Seeker','Page Turner','Parable Pro','Jump Starter','Buzzer Beater','Scripture Sharpshooter','Quiz Apostle','Gospel Guru','Word Warrior','Fisher of Answers','Lamp Bearer','Vine Keeper','Shepherd\'s Voice','Living Water','Bread of Life Scholar','Light of the World','Door Keeper','Good Shepherd\'s Flock','Resurrection Runner','Way Walker','Truth Teller','Life Giver','Glory Seeker','Overcomer','Witness','Beloved Disciple','Scroll Master','Gospel Champion','Legend of John'];
-const lvlNeed=L=>75*(L-1)*L; // total XP needed to reach level L
+const lvlNeed=L=>L<=10?75*(L-1)*L:6750+1500*(L-10); // total XP to reach level L: steps grow by 150 up to level 10, then every level is 1,500
 function levelOf(xp){ xp=xp||0; let L=1; while(xp>=lvlNeed(L+1)) L++; const title=TITLES[Math.min(L,TITLES.length)-1]+(L>TITLES.length?' ★'+(L-TITLES.length):'');
   return {level:L,title,into:xp-lvlNeed(L),span:lvlNeed(L+1)-lvlNeed(L)}; }
 // parts: [[kind,label,amount],...] so every XP award can be shown and explained.
@@ -2906,7 +2906,7 @@ addEventListener('pageshow',()=>absorbSongXP());
 function xpGuide(){ const l=levelOf(U.xp), today=(U.xpDays&&U.xpDays[dayKey()])||0, log=(U.xpLog||[]).slice(0,8);
   return `<div class="xpguide">
     <div class="xprules">${XP_RULES.map(([i,t,v,d])=>`<div class="xprule"><span class="xpi" aria-hidden="true">${i}</span><div><b>${t}</b> <span class="xpv">${v}</span><small>${d}</small></div></div>`).join('')}</div>
-    <p class="hint" style="margin:0">Levels: each level needs 150 more XP than the one before (level 2 = 150 XP, level 3 = 450, level 4 = 900…). You have <b>${(U.xp||0).toLocaleString()} XP</b> and need <b>${(l.span-l.into).toLocaleString()}</b> more for level ${l.level+1}. Today: <b>${today.toLocaleString()} XP</b>.</p>
+    <p class="hint" style="margin:0">Levels: up to level 10, each level needs 150 more XP than the one before (level 2 = 150 XP, level 3 = 450 … level 10 = 6,750). After that, every level is another 1,500 XP. You have <b>${(U.xp||0).toLocaleString()} XP</b> and need <b>${(l.span-l.into).toLocaleString()}</b> more for level ${l.level+1}. Today: <b>${today.toLocaleString()} XP</b>.</p>
     ${log.length?`<div style="display:grid;gap:6px"><span class="label">Your latest XP</span><ul class="xplog">${log.map(e=>`<li><span class="xpv">+${e.n}</span><span>${esc(e.w)}</span><span class="hint">${new Date(e.t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</span></li>`).join('')}</ul></div>`:''}
   </div>`; }
 function sessXPPanel(o){ if(!o||!o.xp||!o.xp.total) return '';
