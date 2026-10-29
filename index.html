@@ -651,6 +651,9 @@ button.lch{cursor:pointer;width:100%}button.lch:active{transform:translate(3px,3
 .lbsub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
 .crowns{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .matseg{margin-bottom:4px}
+.progseg{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.progseg button{display:flex!important;flex-direction:column;align-items:center;gap:2px;padding:7px 2px!important;font-size:13px!important;white-space:nowrap;min-width:0}
+.progseg button span{font-size:18px;line-height:1}
 .teampick select{width:100%}
 .signin form .btn{justify-self:stretch}
 .lbval{font-family:var(--f-display);font-size:13px;color:var(--gold);text-shadow:2px 2px 0 #000}
@@ -2159,6 +2162,7 @@ function badgesPanel(){
 
 /* ---------- progress ---------- */
 function meterColor(p){return p>=85?'var(--good)':p>=65?'var(--warn)':'var(--bad)'}
+let progSub='overview';
 function progressView(){
   const ids=Object.keys(U.stats); let att=0,rt=0; ids.forEach(k=>{att+=U.stats[k][0];rt+=U.stats[k][1]});
   const solid=ids.filter(k=>U.stats[k][2]===1).length;
@@ -2168,7 +2172,8 @@ function progressView(){
   const memCount=Object.keys(U.mem).length;
   return h(`<section>
     <div><div class="label">Progress</div><h2 style="font-size:28px;font-weight:800">How ${esc(me)} is doing</h2></div>
-    ${teamPanel()}
+    ${(()=>{const tabs=[['overview','📊','Overview'],['avatars','🙂','Avatars'],['themes','🎨','Themes'],['badges','🏅','Badges']];return `<div class="seg matseg progseg" role="tablist">${tabs.map(([k,i,l])=>`<button data-progsub="${k}" aria-pressed="${progSub===k}"><span aria-hidden="true">${i}</span> ${l}</button>`).join('')}</div>`})()}
+    ${progSub==='overview'?`${teamPanel()}
     ${(()=>{const l=levelOf(U.xp);return `<div class="panel lvlpanel"><div class="lvlbig">${l.level}<small>level</small></div>
       <div style="display:grid;gap:6px;min-width:0"><b style="font-family:var(--f-display);font-size:19px">${esc(l.title)}</b>
         <div class="goldbar"><i style="width:${(100*l.into/l.span).toFixed(1)}%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></i></div>
@@ -2185,9 +2190,10 @@ function progressView(){
           <div class="days14" title="Last 14 days">${last.map(k=>`<i class="${U.frozen&&U.frozen[k]?'frz':set.has(k)?'hit':(U.days&&U.days[k]?'some':'')} ${k===dayKey()?'today':''}" title="${k}: ${(U.days&&U.days[k])||0}"></i>`).join('')}</div>
           <span class="hint">Last 14 days</span>
         </div></div>`})()}
-    ${eventBanners()}
-    ${avatarPanel()}
-    <div class="stats">
+`:''}
+    ${progSub==='overview'||progSub==='avatars'?eventBanners():''}
+    ${progSub==='avatars'?avatarPanel():''}
+    ${progSub==='overview'?`<div class="stats">
       <div class="stat"><span class="label">Questions tried</span><b>${ids.length}</b><span class="hint">of ${Q.length}</span></div>
       <div class="stat"><span class="label">Accuracy</span><b>${att?pct(rt,att)+'%':'—'}</b><span class="hint">${rt} right of ${att} answers</span></div>
       <div class="stat"><span class="label">Got right last time</span><b>${solid}</b><span class="hint">${pct(solid,Q.length)}% of the set</span></div>
@@ -2202,11 +2208,13 @@ function progressView(){
     </table></div></div>
     ${weak.length?`<div class="panel" style="display:grid;gap:10px"><div class="row" style="justify-content:space-between"><span class="label">Needs work · missed last time</span><button class="btn small" id="drill">Drill these ${weak.length}</button></div>
       <ul class="missed">${weak.map(id=>{const q=Q[id],st=U.stats[id];return `<li><span class="r">${q.c}:${q.v}</span><span class="qq">${fmtQ(q.q)}? <span class="hint">(${st[1]}/${st[0]})</span></span></li>`}).join('')}</ul></div>`:''}
-    ${badgesPanel()}
-    <div class="panel" style="display:grid;gap:10px"><span class="label">Themes</span>
+`:''}
+    ${progSub==='badges'?badgesPanel():''}
+    ${progSub==='themes'?`<div class="panel" style="display:grid;gap:10px"><span class="label">Themes</span>
       <div class="themes">${THEMES.map(t=>{const open=themeOpen(t),cur=(THEMES.find(x=>x.id===U.theme&&themeOpen(x))||THEMES[0]).id===t.id;return `<button class="themebtn ${cur?'cur':''}" data-themeid="${t.id}" ${t.v['--f-display']?`style="--tf:${esc(t.v['--f-display'])}"`:''} ${open?'':'disabled'}>${themeSwatch(t)}<b>${esc(t.name)}</b><small>${open?(cur?'▶ In use':esc(t.hint)):'🔒 '+themeNeedText(t)}</small></button>`}).join('')}</div></div>
     ${musicPanel()}
-    <div class="panel" style="display:grid;gap:8px"><span class="label">Recent sessions</span>
+`:''}
+    ${progSub==='overview'?`<div class="panel" style="display:grid;gap:8px"><span class="label">Recent sessions</span>
       ${U.sessions.length?`<div class="tbl-wrap"><table><tbody>${U.sessions.slice(0,12).map(s=>`<tr><td class="mono" style="white-space:nowrap">${new Date(s.d).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</td><td>${esc(s.label)}</td><td class="n">${s.r}/${s.n}</td><td class="n"><span class="pill ${pct(s.r,s.n)>=85?'g':pct(s.r,s.n)>=65?'w':'b'}">${pct(s.r,s.n)}%</span></td></tr>`).join('')}</tbody></table></div>`:'<span class="muted">Finish a practice session and it shows up here.</span>'}
     </div>
     <div class="panel" style="display:grid;gap:10px">
@@ -2216,6 +2224,7 @@ function progressView(){
       <div id="importbox" hidden style="display:grid;gap:8px"><textarea id="code" placeholder="Paste a progress code or backup code here"></textarea><div class="row"><button class="btn small" id="doimport">Load this code</button><span class="hint" id="importmsg"></span></div></div>
       <div>${confirmReset?`<div class="confirm"><span>Erase all of ${esc(me)}'s scores and memory verses?</span><button class="btn small" style="background:var(--bad);color:#fff" id="resetyes">Erase</button><button class="btn ghost small" id="resetno">Keep them</button></div>`:`<button class="btn ghost small" id="reset">Reset my progress</button>`}</div>
     </div>
+`:''}
   </section>`);
 }
 
@@ -3984,6 +3993,7 @@ function wire(){
   document.querySelectorAll('.xpdetails').forEach(d=>d.ontoggle=()=>{xpOpen=d.open});
   document.querySelectorAll('[data-tbsort]').forEach(b=>b.onclick=()=>{tbSort=b.dataset.tbsort;renderKeep()});
   document.querySelectorAll('[data-matsub]').forEach(b=>b.onclick=()=>{matSub=b.dataset.matsub;render()});
+  document.querySelectorAll('[data-progsub]').forEach(b=>b.onclick=()=>{progSub=b.dataset.progsub;render()});
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
   on('#doimport',async()=>{ const msg=$('#importmsg'); try{ const d=await unpackCode($('#code').value); U=Object.assign(blankUser(),d.u); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{}); save(); applyTheme(); render(); toast('<b>Progress restored!</b><span>Welcome back. Everything is right where you left it.</span>'); }catch(e){ if(msg) msg.textContent="That code didn't load. Copy the whole code and try again."; } });
   on('#reset',()=>{confirmReset=true;render()});
