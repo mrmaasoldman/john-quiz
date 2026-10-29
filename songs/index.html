@@ -836,14 +836,21 @@ function renderVerse(idx){
   else { const x=verses[on]; if(x){ ref.innerHTML=`John ${song.ch}:${x.v} <small>Coming up</small>`; txt.className='vtext coming'; txt.innerHTML=x.words.map(w=>`<span class="w">${esc(w.w)}</span>`).join(' '); meta.textContent='• • •'; } else { ref.textContent=song.title; txt.className='vtext dots'; txt.textContent='• • •'; meta.textContent=''; } }
   fitVerse();
 }
-function fitVerse(){ // the text box is the room that's left under the header; shrink the type until nothing spills out of it
-  const txt=$('#vtext'), body=$('#vbody'); if(!body.clientWidth||!txt.clientHeight) return;
+function fitVerse(){ // give the verse box an explicit pixel height (iOS can't be trusted with %/fr chains), then shrink the type until nothing spills out
+  const txt=$('#vtext'), body=$('#vbody'), pv=$('#pverse'); if(!pv.clientWidth) return;
+  const wide=innerWidth>=900, oh=el=>el?el.offsetHeight:0, pf=v=>parseFloat(v)||0;
+  const H=$('#np').clientHeight-oh($('#npctl')); if(H<200) return;
+  const pc=getComputedStyle(pv), bodyTop=body.getBoundingClientRect().top-pv.getBoundingClientRect().top, hint=oh($('#vhint')), bodyH=H-bodyTop-pf(pc.paddingBottom)-(hint?hint+pf(pc.rowGap):0)-2;
+  body.style.height=Math.max(160,bodyH)+'px';
+  const bc=getComputedStyle(body), others=['#vref','#vdots','#vmeta'].reduce((h,id)=>h+oh($(id)),0)+(wide?oh($('.art'))+8:0);
+  const textH=Math.max(60,bodyH-pf(bc.paddingTop)-pf(bc.paddingBottom)-pf(bc.rowGap)*(wide?4:3)-others);
+  txt.style.height=textH+'px';
   const fits=()=>txt.scrollHeight<=txt.clientHeight+1&&txt.scrollWidth<=txt.clientWidth+1;
   let lo=14, hi=Math.round((innerWidth>=900?36:44)*vscale), best=lo;
   while(lo<=hi){ const mid=(lo+hi)>>1; txt.style.setProperty('--vfs',mid+'px'); if(fits()){ best=mid; lo=mid+1; } else hi=mid-1; }
   // second opinion from a line-count estimate, in case the browser's measurement is off while fonts or layout settle
-  const W=txt.clientWidth, H=txt.clientHeight, n=txt.textContent.length||1; let est=best;
-  for(;est>14;est--){ const cpl=Math.max(8,W/(est*.52)); if(Math.ceil(n/cpl)*est*1.22<=H) break; }
+  const W=txt.clientWidth, TH=txt.clientHeight, n=txt.textContent.length||1; let est=best;
+  for(;est>14;est--){ const cpl=Math.max(8,W/(est*.52)); if(Math.ceil(n/cpl)*est*1.22<=TH) break; }
   best=Math.min(best,est);
   txt.style.setProperty('--vfs',best+'px'); }
 let vscale=Math.min(1.15,Math.max(.5,+lsGet('vscale',1)||1));
