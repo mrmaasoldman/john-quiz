@@ -2363,9 +2363,19 @@ function bytesToB64(u){ let s=''; for(let i=0;i<u.length;i+=0x8000) s+=String.fr
 async function packCode(){ const json=JSON.stringify({n:me,u:U});
   if(typeof CompressionStream==='undefined') return codeFor();
   const buf=await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer(); return 'JQZ1:'+bytesToB64(new Uint8Array(buf)); }
-async function unpackCode(raw){ const s=String(raw||'').replace(/\s+/g,'');
-  if(s.startsWith('JQZ1:')){ const txt=await new Response(new Blob([b64ToBytes(s.slice(5))]).stream().pipeThrough(new DecompressionStream('gzip'))).text(); const d=JSON.parse(txt); if(!d.u||!d.u.stats) throw 0; return d; }
-  const d=JSON.parse(decodeURIComponent(escape(atob(s)))); if(!d.u||!d.u.stats) throw 0; return d; }
+// Accepts a code however it arrived: with line breaks, wrapped in quotes or an email, '+' turned into spaces, URL-safe letters, or missing '=' padding.
+function cleanB64(b){ b=String(b||'').replace(/[\s"'“”‘’`]+/g,'').replace(/-/g,'+').replace(/_/g,'/').replace(/[^A-Za-z0-9+\/=]/g,''); b=b.replace(/=+$/,''); while(b.length%4) b+='='; return b; }
+async function unpackCode(raw){ let s=String(raw||'');
+  const m=s.match(/JQZ1:\s*([A-Za-z0-9+\/=_\-]+(?:\s+[A-Za-z0-9+\/=_\-]{16,})*)/); // pull the code out of a whole email or file if that's what was pasted
+  if(m) s='JQZ1:'+m[1]; else { const m2=s.match(/eyJ[A-Za-z0-9+\/=_\-]{40,}(?:\s+[A-Za-z0-9+\/=_\-]{16,})*/); if(m2) s=m2[0]; }
+  if(s.replace(/\s+/g,'').length<20) throw new Error('short');
+  const tryGz=async b=>{ if(typeof DecompressionStream==='undefined') throw new Error('nogzip'); const txt=await new Response(new Blob([b64ToBytes(b)]).stream().pipeThrough(new DecompressionStream('gzip'))).text(); return JSON.parse(txt); };
+  const variants=[s, s.replace(/ /g,'+')]; let lastErr=null;
+  for(const v of variants){ try{ const t=v.replace(/\s+/g,''); let d;
+      if(t.startsWith('JQZ1:')) d=await tryGz(cleanB64(t.slice(5)));
+      else d=JSON.parse(decodeURIComponent(escape(atob(cleanB64(t)))));
+      if(!d||!d.u||!d.u.stats) throw new Error('shape'); return d; }catch(e){ lastErr=e; } }
+  throw lastErr||new Error('bad'); }
 function summary(name,u){
   const memCh=VERSES_IN_JOHN.map((n,i)=>{let m=0;for(let v=1;v<=n;v++)if(u.mem&&u.mem[(i+1)+':'+v])m++;return m});
   let att=0,right=0,solid=0; const st=u.stats||{};
@@ -4440,7 +4450,7 @@ function wire(){
   document.querySelectorAll('[data-matsub]').forEach(b=>b.onclick=()=>{matSub=b.dataset.matsub;render()});
   document.querySelectorAll('[data-progsub]').forEach(b=>b.onclick=()=>{progSub=b.dataset.progsub;render()});
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
-  on('#doimport',async()=>{ const msg=$('#importmsg'); try{ const d=await unpackCode($('#code').value); U=Object.assign(blankUser(),d.u); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{}); save(); applyTheme(); render(); toast('<b>Progress restored!</b><span>Welcome back. Everything is right where you left it.</span>'); }catch(e){ if(msg) msg.textContent="That code didn't load. Copy the whole code and try again."; } });
+  on('#doimport',async()=>{ const msg=$('#importmsg'); try{ const d=await unpackCode($('#code').value); U=Object.assign(blankUser(),d.u); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{}); save(); applyTheme(); render(); toast('<b>Progress restored!</b><span>Welcome back. Everything is right where you left it.</span>'); }catch(e){ const why=e&&e.message; if(msg) msg.textContent=why==='nogzip'?"This phone's browser is too old to open the code. Try it in Safari or Chrome after updating, or on a computer.":why==='short'?"That's not a whole code. Open the backup file, Select All, Copy, and paste everything here.":"That code didn't load. Make sure you copied all of it (it can be very long) — open the file, Select All, Copy."; } });
   on('#reset',()=>{confirmReset=true;render()});
   on('#resetno',()=>{confirmReset=false;render()});
   on('#resetyes',()=>{const sel=U.sel,opts=U.opts;U=blankUser();U.sel=sel;U.opts=opts;save();confirmReset=false;render()});
