@@ -1501,6 +1501,8 @@ const qCountCh = {}; Q.forEach(q=>qCountCh[q.c]=(qCountCh[q.c]||0)+1);
 
 /* ---------- storage ---------- */
 const K='johnquiz:';
+// the home-screen app opens wherever you were last: here, or on the Songs page
+try{ if(localStorage.getItem(K+'where')==='"songs"'&&!sessionStorage.getItem('jq:back')){ location.replace('songs/'); } else { localStorage.setItem(K+'where','"quiz"'); sessionStorage.removeItem('jq:back'); } }catch(e){}
 function lsGet(k,d){try{const v=localStorage.getItem(K+k);return v?JSON.parse(v):d}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(K+k,JSON.stringify(v));return true}catch(e){return false}}
 function blankUser(){return {stats:{},mem:{},sessions:[],sel:['1:'+qVerses[1].join(',1:')].join('').split(','),opts:{order:'order',limit:'all',pool:'all',memOnly:false,mix:false,words:'all',answer:'think',timer:'off'},vopts:{from:'goal',order:'shuffle',limit:'25',mode:'type',vsel:[],kind:'ref',timer:'off'},vstats:{},rstats:{},counts:{},badges:{}}}
@@ -1844,7 +1846,7 @@ function materialsView(){
   return h(`<section>
     ${seg}
     <div><div class="label">Materials</div><h2>Study sheets and songs</h2></div>
-    <a class="songcard" href="${SONGS_URL}" target="_blank" rel="noopener"><span class="gi" aria-hidden="true">🎵</span>
+    <a class="songcard" href="${SONGS_URL}" id="songcard"><span class="gi" aria-hidden="true">🎵</span>
       <div style="display:grid;gap:3px;min-width:0"><b>John Songs</b><small>Songs for everything in John. Opens the Google Drive folder.</small></div><span class="hint" aria-hidden="true">↗</span></a>
     ${printPanel()}
   </section>`);

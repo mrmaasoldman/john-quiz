@@ -1218,7 +1218,8 @@ audio.addEventListener('timeupdate',()=>{ const t=audio.currentTime; if(heardSon
   const need=(song&&song.dur||0)*0.85; if(song&&need>0&&heard>=need){ heard=0; if(!awardXP()) heard=-1e9; } });
 audio.addEventListener('seeking',()=>{ heardAt=null; });
 /* ---------- boot ---------- */
-if(!/claude\.ai$/.test(location.hostname)&&/\/songs\/?(index\.html)?$/.test(location.pathname)){ $('#quizlink').hidden=false; qzChip(); }
+if(!/claude\.ai$/.test(location.hostname)&&/\/songs\/?(index\.html)?$/.test(location.pathname)){ $('#quizlink').hidden=false; qzChip(); try{ localStorage.setItem('johnquiz:where','"songs"'); }catch(e){}
+  $('#quizlink').onclick=()=>{ try{ localStorage.setItem('johnquiz:where','"quiz"'); sessionStorage.setItem('jq:back','1'); }catch(e){} }; }
 (async function(){
   try{ await Promise.race([document.fonts.load('800 150px Fraunces'),new Promise(r=>setTimeout(r,1500))]); }catch(e){}
   await Promise.all(CHAPTERS.map(async c=>{ ART[c]=await makeArt(c); }));
