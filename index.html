@@ -1789,7 +1789,7 @@ function printPanel(){ const sel=new Set(U.sel.map(k=>+k.split(':')[0]));
   return `<div class="panel" style="display:grid;gap:10px"><div class="row" style="justify-content:space-between"><span class="label">Printable question sheets</span><span class="hint">Opens in Google Docs</span></div>
     <div class="printgrid">${PRINT_LINKS.map((u,i)=>`<a class="printlink ${sel.has(i+1)?'sel':''}" href="${u}" target="_blank" rel="noopener"><span aria-hidden="true">🖨️</span> John ${i+1}</a>`).join('')}</div>
     <span class="hint">To print: on a computer, choose <b>File → Print</b>. On a phone, tap <b>⋮</b> (or <b>…</b>) then <b>Share & export → Print</b>. Highlighted chapters are the ones picked on the Practice tab.</span></div>`; }
-const SONGS_URL='https://drive.google.com/drive/folders/1XPC3YZAwg-NdOoXap4Z4amll050fq0pB?usp=sharing';
+const SONGS_URL='songs/';
 let matSub='memory';
 function materialsView(){
   const seg=`<div class="seg matseg" role="tablist"><button data-matsub="memory" aria-pressed="${matSub==='memory'}"><span aria-hidden="true">🧠</span> Memory verses</button><button data-matsub="study" aria-pressed="${matSub==='study'}"><span aria-hidden="true">📚</span> Sheets &amp; songs</button></div>`;
@@ -1798,7 +1798,7 @@ function materialsView(){
     ${seg}
     <div><div class="label">Materials</div><h2>Study sheets and songs</h2></div>
     <a class="songcard" href="${SONGS_URL}" target="_blank" rel="noopener"><span class="gi" aria-hidden="true">🎵</span>
-      <div style="display:grid;gap:3px;min-width:0"><b>John Songs</b><small>Songs for everything in John. Opens the Google Drive folder.</small></div><span class="hint" aria-hidden="true">↗</span></a>
+      <div style="display:grid;gap:3px;min-width:0"><b>John Songs</b><small>All 96 songs, with the words lighting up as they're sung. Tap a song and its chapter plays on repeat.</small></div><span class="hint" aria-hidden="true">↗</span></a>
     ${printPanel()}
   </section>`);
 }
