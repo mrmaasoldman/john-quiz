@@ -248,11 +248,11 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .vhead b{display:block;font-family:var(--serif);font-size:21px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vhead small{display:block;font-size:14px;color:var(--np-sub)}
 .vhead .heart{color:rgba(255,255,255,.8)} .vhead .heart[aria-pressed="true"]{color:var(--accent)}
-.vbody{min-height:0;display:grid;align-content:start;justify-items:start;gap:10px;position:relative;padding:6px 0 4px}
+.vbody{min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;align-content:start;justify-items:start;gap:10px;position:relative;padding:6px 0 4px}
 .art{display:none}
 .vref{font-family:var(--serif);font-size:24px;font-weight:800;letter-spacing:0;color:var(--sig1);display:flex;align-items:baseline;gap:10px;line-height:1}
 .vref small{font-family:var(--ui);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--np-sub);font-size:12px}
-.vtext{font-family:var(--serif);font-weight:600;line-height:1.22;margin:0;font-size:var(--vfs,32px);letter-spacing:-.005em;text-wrap:pretty;max-width:100%}
+.vtext{font-family:var(--serif);font-weight:600;line-height:1.22;margin:0;font-size:var(--vfs,32px);letter-spacing:-.005em;text-wrap:pretty;max-width:100%;min-height:0;overflow:hidden}
 .vtext .w{color:rgba(255,255,255,.4)}
 .vtext .w.on{color:transparent;background-image:linear-gradient(#fff,#fff);-webkit-background-clip:text;background-clip:text}
 .vtext .w.now{background-image:linear-gradient(90deg,#fff calc(var(--p) - 8%),rgba(255,255,255,.4) calc(var(--p) + 8%));animation:wfill calc(var(--d,.4s) / var(--rate,1)) linear forwards}
@@ -412,7 +412,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
   .art{display:block;width:min(34vw,300px,calc(100dvh - 560px));height:min(34vw,300px,calc(100dvh - 560px));border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.55);overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s;position:relative;margin-bottom:8px}
   .art img{width:100%;height:100%;display:block;position:absolute;inset:0;transition:opacity .5s}
   .np.paused .art{transform:scale(.9);box-shadow:0 10px 24px rgba(0,0,0,.4)}
-  .vbody{align-content:start;padding-top:10px}
+  .vbody{align-content:start;padding-top:10px;grid-template-rows:auto auto minmax(0,1fr) auto auto}
   .plyr{padding-top:calc(8px + env(safe-area-inset-top,0px))}
   .ln{font-size:32px}
   .npclose{display:grid}
@@ -829,22 +829,26 @@ function renderVerse(idx){
   else { const x=verses[on]; if(x){ ref.innerHTML=`John ${song.ch}:${x.v} <small>Coming up</small>`; txt.className='vtext coming'; txt.innerHTML=x.words.map(w=>`<span class="w">${esc(w.w)}</span>`).join(' '); meta.textContent='• • •'; } else { ref.textContent=song.title; txt.className='vtext dots'; txt.textContent='• • •'; meta.textContent=''; } }
   fitVerse();
 }
-function fitVerse(){ // measure, don't guess: shrink the type until the whole verse really fits above the dots
-  const txt=$('#vtext'), body=$('#vbody'); if(!body.clientWidth) return;
-  const others=['#vref','#vdots','#vmeta'].reduce((h,id)=>h+($(id).offsetHeight||0),0);
-  const cs=getComputedStyle(body), wide=innerWidth>=900, art=wide?(($('.art')&&$('.art').offsetHeight)||0)+8:0;
-  const avail=Math.max(60,body.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(cs.rowGap)*(wide?4:3)-others-art-2);
+function fitVerse(){ // the text box is the room that's left under the header; shrink the type until nothing spills out of it
+  const txt=$('#vtext'), body=$('#vbody'); if(!body.clientWidth||!txt.clientHeight) return;
+  const fits=()=>txt.scrollHeight<=txt.clientHeight+1&&txt.scrollWidth<=txt.clientWidth+1;
   let lo=16, hi=innerWidth>=900?36:44, best=lo;
-  while(lo<=hi){ const mid=(lo+hi)>>1; txt.style.setProperty('--vfs',mid+'px'); if(txt.scrollHeight<=avail){ best=mid; lo=mid+1; } else hi=mid-1; }
+  while(lo<=hi){ const mid=(lo+hi)>>1; txt.style.setProperty('--vfs',mid+'px'); if(fits()){ best=mid; lo=mid+1; } else hi=mid-1; }
   txt.style.setProperty('--vfs',best+'px'); }
 function updateVerse(force){
   if(!song) return; const t=audio.currentTime; const idx=verseAt(t);
   if(idx!==curVerse||force){ curVerse=idx; renderVerse(idx); }
+  const nowMs=performance.now(); if(nowMs-fitCheckAt>700){ fitCheckAt=nowMs; if(verseOverflows()) fitVerse(); }
   if(idx>=0){ const ws=$('#vtext').querySelectorAll('.w'); let now=-1; verses[idx].words.forEach((w,k)=>{ if(t>=w.t-0.1) now=k; }); ws.forEach((el,k)=>{ el.classList.toggle('on',k<=now); el.classList.toggle('now',k===now); }); }
 }
 $('#tapR').onclick=()=>{ const i=curVerse>=0?curVerse:(-curVerse-2); const n=verses[i+1]; if(n){ audio.currentTime=Math.max(0,n.start-0.05); audio.play().catch(()=>{}); } };
 $('#tapL').onclick=()=>{ const i=curVerse>=0?curVerse:(-curVerse-1); const cur=verses[i]; if(cur&&audio.currentTime-cur.start>2.5){ audio.currentTime=Math.max(0,cur.start-0.05); return; } const p=verses[i-1]; if(p){ audio.currentTime=Math.max(0,p.start-0.05); audio.play().catch(()=>{}); } };
 addEventListener('resize',()=>{ fitVerse(); lyLayout(); LY.followed=-2; });
+// the serif font can arrive after the verse was sized (it's wider than the fallback), the viewport can shift under iOS toolbars,
+// and the number of dots can wrap — so re-fit whenever the box changes, when fonts land, and whenever the text is seen overflowing
+try{ document.fonts.ready.then(()=>fitVerse()); document.fonts.addEventListener('loadingdone',()=>fitVerse()); }catch(e){}
+try{ new ResizeObserver(()=>fitVerse()).observe($('#vbody')); }catch(e){}
+let fitCheckAt=0; function verseOverflows(){ const t=$('#vtext'); return !!t.clientHeight&&t.scrollHeight>t.clientHeight+1; }
 
 function renderLyrics(){
   buildVerses(); curVerse=-9; curLine=-2; LY.followed=-2;
