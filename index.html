@@ -111,6 +111,8 @@ textarea{font-family:var(--f-mono);font-size:12px;min-height:80px;color:var(--in
 .ch.open{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--accent2)}
 .vpanel{border-top:1px dashed var(--line);padding-top:14px;display:grid;gap:10px}
 .vgrid{display:flex;flex-wrap:wrap;gap:5px}
+.vgrid .v[data-v],.vgrid .v[data-vv]{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.vgrid .v.painting{transform:scale(1.08)}
 .v,.mv{min-width:38px;border:1.5px solid var(--line);background:var(--surface);border-radius:9px;padding:5px 0;font-family:var(--f-mono);font-size:13px;position:relative;transition:transform .1s,background .15s}
 .v:active,.mv:active{transform:scale(.92)}
 .v.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -1739,6 +1741,16 @@ function announceSongs(){ if(lsGet('ann:songxp',false)||document.querySelector('
   document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('show'));
   const done=()=>{ lsSet('ann:songxp',true); el.classList.remove('show'); setTimeout(()=>el.remove(),350); };
   el.querySelector('#anncok').onclick=done; el.querySelector('#anncgo').onclick=()=>lsSet('ann:songxp',true); }
+// Verse grids: tap a verse to flip it, or press and slide your finger across several to select (or clear) them all at once.
+function paintVerses(sel,attr,commit){ const btns=[...document.querySelectorAll(sel)]; if(!btns.length) return; const grid=btns[0].parentElement;
+  let mode=null, touched=null, pid=null;
+  const keyOf=b=>b.dataset[attr];
+  const hit=(x,y)=>{ const el=document.elementFromPoint(x,y); const b=el&&el.closest(sel); return b&&grid.contains(b)?b:null; };
+  const mark=b=>{ if(!b||touched.has(keyOf(b))) return; touched.add(keyOf(b)); b.classList.toggle('on',mode); b.classList.add('painting'); setTimeout(()=>b.classList.remove('painting'),140); try{ navigator.vibrate&&navigator.vibrate(4); }catch(e){} };
+  btns.forEach(b=>{ b.onclick=e=>e.preventDefault(); b.addEventListener('pointerdown',e=>{ if(e.button) return; e.preventDefault(); pid=e.pointerId; mode=!b.classList.contains('on'); touched=new Set(); mark(b); try{ grid.setPointerCapture(pid); }catch(x){} }); });
+  grid.addEventListener('pointermove',e=>{ if(mode===null||e.pointerId!==pid) return; mark(hit(e.clientX,e.clientY)); });
+  const end=e=>{ if(mode===null||(e&&e.pointerId!==pid)) return; const keys=[...touched]; keys.mode=mode; mode=null; touched=null; try{ grid.releasePointerCapture(pid); }catch(x){} if(keys.length) commit(keys); };
+  grid.addEventListener('pointerup',end); grid.addEventListener('pointercancel',end); }
 function render(){
   const app=$('#app'); app.innerHTML='';
   if(!me){ app.append(signInView()); const i=$('#nm'); i&&i.focus(); return; }
@@ -2747,7 +2759,7 @@ function wireVerses(){
   document.querySelectorAll('[data-vopt]').forEach(b=>b.onclick=()=>{U.vopts[b.dataset.vopt]=b.dataset.val;save();renderKeep()});
   document.querySelectorAll('[data-vch]').forEach(b=>b.onclick=()=>{const c=+b.dataset.vch;vOpenCh=vOpenCh===c?null:c;vRangeMsg='';renderKeep()});
   const setSel=f=>{const vs=new Set(U.vopts.vsel);f(vs);const kn=k=>{const [c,v]=k.split(':').map(Number);return c*1000+v};U.vopts.vsel=[...vs].sort((a,b)=>kn(a)-kn(b));vRangeMsg='';save();renderKeep()};
-  document.querySelectorAll('[data-vv]').forEach(b=>b.onclick=()=>setSel(vs=>{const k=vOpenCh+':'+b.dataset.vv;vs.has(k)?vs.delete(k):vs.add(k)}));
+  paintVerses('[data-vv]','vv',keys=>setSel(vs=>{ keys.forEach(v=>{ const k=vOpenCh+':'+v; keys.mode?vs.add(k):vs.delete(k); }); }));
   on('#vchall',()=>setSel(vs=>allVerses(vOpenCh).forEach(v=>vs.add(vOpenCh+':'+v))));
   on('#vchnone',()=>setSel(vs=>allVerses(vOpenCh).forEach(v=>vs.delete(vOpenCh+':'+v))));
   on('#vselclear',()=>setSel(vs=>vs.clear()));
@@ -4402,7 +4414,7 @@ function wire(){
   const on=(sel,fn)=>{const e=$(sel);if(e)e.onclick=fn};
   // setup
   document.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{const c=+b.dataset.ch;openCh=openCh===c?null:c;render()});
-  document.querySelectorAll('.v[data-v]').forEach(b=>b.onclick=()=>{const k=openCh+':'+b.dataset.v;const s=selSet();s.has(k)?s.delete(k):s.add(k);U.sel=[...s];save();render()});
+  paintVerses('.v[data-v]','v',keys=>{ const s=selSet(), on=keys.mode; keys.forEach(v=>{ const k=openCh+':'+v; on?s.add(k):s.delete(k); }); U.sel=[...s]; save(); render(); });
   on('#selall',()=>{U.sel=Object.keys(byVerse);save();render()});
   on('#selnone',()=>{U.sel=[];save();render()});
   on('#chall',()=>{const s=selSet();qVerses[openCh].forEach(v=>s.add(openCh+':'+v));U.sel=[...s];save();render()});
