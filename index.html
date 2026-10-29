@@ -2295,7 +2295,7 @@ function progressView(){
       <span class="label">Move or restore your progress</span>
       <span class="hint">Your progress is saved in this browser, and a backup copy goes to Mr. Maas. Lost your progress? Ask Mr. Maas for your backup code, sign in with the same name, tap <b>Paste a code</b> and paste it. To move to another device, copy your code here and paste it there. You have ${memCount} memory verse${memCount===1?'':'s'} marked.</span>
       <div class="row"><button class="btn ghost small" id="copycode">Copy my progress code</button><button class="btn ghost small" id="showimport">Paste a code</button></div>
-      <div id="importbox" hidden style="display:grid;gap:8px"><textarea id="code" placeholder="Paste a progress code or backup code here"></textarea><div class="row"><button class="btn small" id="doimport">Load this code</button><span class="hint" id="importmsg"></span></div></div>
+      <div id="importbox" hidden style="display:grid;gap:8px"><textarea id="code" placeholder="Paste a progress code or backup code here"></textarea><div class="row"><button class="btn small" id="doimport">Load this code</button><label class="btn ghost small" style="cursor:pointer">Open the backup file<input type="file" id="codefile" accept=".txt,text/plain" hidden></label><span class="hint" id="importmsg"></span></div></div>
       <div>${confirmReset?`<div class="confirm"><span>Erase all of ${esc(me)}'s scores and memory verses?</span><button class="btn small" style="background:var(--bad);color:#fff" id="resetyes">Erase</button><button class="btn ghost small" id="resetno">Keep them</button></div>`:`<button class="btn ghost small" id="reset">Reset my progress</button>`}</div>
     </div>
 `:''}
@@ -4450,6 +4450,7 @@ function wire(){
   document.querySelectorAll('[data-matsub]').forEach(b=>b.onclick=()=>{matSub=b.dataset.matsub;render()});
   document.querySelectorAll('[data-progsub]').forEach(b=>b.onclick=()=>{progSub=b.dataset.progsub;render()});
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
+  { const f=document.getElementById('codefile'); if(f) f.onchange=async()=>{ const file=f.files&&f.files[0]; if(!file) return; const txt=await file.text(); $('#code').value=txt; $('#doimport').click(); }; }
   on('#doimport',async()=>{ const msg=$('#importmsg'); try{ const d=await unpackCode($('#code').value); U=Object.assign(blankUser(),d.u); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{}); save(); applyTheme(); render(); toast('<b>Progress restored!</b><span>Welcome back. Everything is right where you left it.</span>'); }catch(e){ const why=e&&e.message; if(msg) msg.textContent=why==='nogzip'?"This phone's browser is too old to open the code. Try it in Safari or Chrome after updating, or on a computer.":why==='short'?"That's not a whole code. Open the backup file, Select All, Copy, and paste everything here.":"That code didn't load. Make sure you copied all of it (it can be very long) — open the file, Select All, Copy."; } });
   on('#reset',()=>{confirmReset=true;render()});
   on('#resetno',()=>{confirmReset=false;render()});
