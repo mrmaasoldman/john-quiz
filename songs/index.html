@@ -409,7 +409,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
   .lyhead{border-radius:0 0 14px 14px;padding-right:76px}
   .lyup{display:none}
   .vhint{display:none}
-  .art{display:block;width:min(34vw,300px,calc(100dvh - 520px));height:min(34vw,300px,calc(100dvh - 520px));border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.55);overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s;position:relative;margin-bottom:8px}
+  .art{display:block;width:min(34vw,300px,calc(100dvh - 560px));height:min(34vw,300px,calc(100dvh - 560px));border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.55);overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s;position:relative;margin-bottom:8px}
   .art img{width:100%;height:100%;display:block;position:absolute;inset:0;transition:opacity .5s}
   .np.paused .art{transform:scale(.9);box-shadow:0 10px 24px rgba(0,0,0,.4)}
   .vbody{align-content:start;padding-top:10px}
@@ -829,8 +829,14 @@ function renderVerse(idx){
   else { const x=verses[on]; if(x){ ref.innerHTML=`John ${song.ch}:${x.v} <small>Coming up</small>`; txt.className='vtext coming'; txt.innerHTML=x.words.map(w=>`<span class="w">${esc(w.w)}</span>`).join(' '); meta.textContent='• • •'; } else { ref.textContent=song.title; txt.className='vtext dots'; txt.textContent='• • •'; meta.textContent=''; } }
   fitVerse();
 }
-function fitVerse(){ const txt=$('#vtext'), body=$('#vbody'); if(!body.clientWidth) return; const W=body.clientWidth, H=Math.max(140,body.clientHeight-(innerWidth>=900?80:86)); const n=txt.textContent.length||1;
-  let f=innerWidth>=900?34:42; for(;f>=18;f-=1){ const cpl=Math.max(8,W/(f*.5)); const ln=Math.ceil(n/cpl); if(ln*f*1.22<=H) break; } txt.style.setProperty('--vfs',f+'px'); }
+function fitVerse(){ // measure, don't guess: shrink the type until the whole verse really fits above the dots
+  const txt=$('#vtext'), body=$('#vbody'); if(!body.clientWidth) return;
+  const others=['#vref','#vdots','#vmeta'].reduce((h,id)=>h+($(id).offsetHeight||0),0);
+  const cs=getComputedStyle(body), wide=innerWidth>=900, art=wide?(($('.art')&&$('.art').offsetHeight)||0)+8:0;
+  const avail=Math.max(60,body.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(cs.rowGap)*(wide?4:3)-others-art-2);
+  let lo=16, hi=innerWidth>=900?36:44, best=lo;
+  while(lo<=hi){ const mid=(lo+hi)>>1; txt.style.setProperty('--vfs',mid+'px'); if(txt.scrollHeight<=avail){ best=mid; lo=mid+1; } else hi=mid-1; }
+  txt.style.setProperty('--vfs',best+'px'); }
 function updateVerse(force){
   if(!song) return; const t=audio.currentTime; const idx=verseAt(t);
   if(idx!==curVerse||force){ curVerse=idx; renderVerse(idx); }

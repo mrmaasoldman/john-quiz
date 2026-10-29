@@ -557,6 +557,13 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .lbmode{margin-top:-4px}
 .xppop{position:fixed;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;display:grid;gap:4px;justify-items:end;text-align:right;padding:8px 12px;background:#000;border:3px solid var(--gold);color:#fff;box-shadow:4px 4px 0 rgba(0,0,0,.5);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s;max-width:70vw}
 .xppop.show{opacity:1;transform:none}
+.annc{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-12px);z-index:65;width:min(440px,calc(100% - 24px));padding:14px 16px;background:#000;border:3px solid var(--gold);box-shadow:4px 4px 0 #000;color:#fff;display:grid;gap:10px;opacity:0;transition:opacity .3s,transform .35s}
+.annc.show{opacity:1;transform:translateX(-50%)}
+.annc b{font-family:var(--f-num);font-size:22px;line-height:1.1;color:var(--gold)}
+.annc p{margin:0;font-size:14px;line-height:1.45}
+.annc .row{display:flex;gap:8px;justify-content:flex-end}
+.annc .row a,.annc .row button{font:inherit;font-weight:700;font-size:14px;padding:8px 14px;border:2px solid var(--gold);background:var(--gold);color:#000;cursor:pointer;text-decoration:none}
+.annc .row button.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
 .xppop b{font-family:var(--f-num);font-size:30px;line-height:1;color:var(--gold)}
 .xppop span{font-size:13px;line-height:1.4;color:#fff}
 .xpdetails summary{cursor:pointer;list-style:none}.xpdetails summary::-webkit-details-marker{display:none}
@@ -1650,12 +1657,19 @@ function sayBtn(id,label){ return canSpeak?`<button class="btn ghost small saybt
 /* ---------- state ---------- */
 let lastEnterTab=null; let tab='practice', openCh=null, quiz=null, confirmReset=false;
 
+// one-time heads-up (per device) that listening to the songs now earns XP
+function announceSongs(){ if(lsGet('ann:songxp',false)||document.querySelector('.annc')) return; const el=document.createElement('div'); el.className='annc'; el.setAttribute('role','status');
+  el.innerHTML=`<b>🎵 New: XP for listening!</b><p>The John Songs are now right here on the site, and every song you listen to all the way through earns <b style="font:inherit;color:var(--gold)">20 XP</b>. The words light up as they're sung, so it's a great way to learn the verses.</p><div class="row"><button class="ghost" type="button" id="anncok">Got it</button><a href="songs/" id="anncgo">Open the songs</a></div>`;
+  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('show'));
+  const done=()=>{ lsSet('ann:songxp',true); el.classList.remove('show'); setTimeout(()=>el.remove(),350); };
+  el.querySelector('#anncok').onclick=done; el.querySelector('#anncgo').onclick=()=>lsSet('ann:songxp',true); }
 function render(){
   const app=$('#app'); app.innerHTML='';
   if(!me){ app.append(signInView()); const i=$('#nm'); i&&i.focus(); return; }
   if(!U.team){ app.append(teamGateView()); return; }
   if(liveJoinCode&&!live){ live={role:'menu',code:liveJoinCode,unsub:[]}; liveJoinCode=null; try{ history.replaceState(null,'',location.pathname); }catch(e){} }
   if(live){ app.append(liveView()); wireLive(); return; }
+  setTimeout(announceSongs,900);
   if(tab==='memory') tab='materials';
   app.append(h(`<header class="bar"><div class="bar-in">
     <div class="brand"><b>John Quiz</b><span>BQF · Sept 2026 set</span></div>
