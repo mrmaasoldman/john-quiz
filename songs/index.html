@@ -119,6 +119,31 @@ html[data-vt="pop"]::view-transition-old(content){animation-name:vtOutRight} htm
 .search .x svg{width:12px;height:12px}
 
 .sect{display:flex;align-items:baseline;justify-content:space-between;margin:14px 0 10px}
+.chgroup{margin:0 0 8px}
+.chhd{display:grid;grid-template-columns:46px 1fr auto auto;gap:12px;align-items:center;width:100%;text-align:left;padding:8px 10px 8px 8px;border-radius:18px;transition:transform .15s}
+.chhd:active{transform:scale(.985)}
+.chhd .th{width:46px;height:46px;border-radius:9px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.chhd .th img{width:100%;height:100%;display:block}
+.chhd .tt{min-width:0}
+.chhd b{display:block;font-family:var(--serif);font-size:18px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chhd small{display:block;color:var(--sub);font-size:12.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chhd .go{color:var(--accent);font-size:13px;font-weight:700;padding:6px 8px;border-radius:12px}
+.chhd .chev{width:22px;height:22px;display:grid;place-items:center;color:var(--sub);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.chhd .chev svg{width:18px;height:18px;fill:currentColor}
+.chgroup.open .chhd .chev{transform:rotate(180deg)}
+.chbody{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s cubic-bezier(.2,.8,.2,1)}
+.chgroup.open .chbody{grid-template-rows:1fr}
+.chin{min-height:0;overflow:hidden;padding:0 4px}
+.chgroup.open .chin{padding-top:4px;padding-bottom:6px}
+.recent{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 10px;margin:0 -2px 4px;scrollbar-width:none}
+.recent::-webkit-scrollbar{display:none}
+.rc{flex:none;width:124px;scroll-snap-align:start;text-align:left}
+.rc .cover{width:124px;height:124px;border-radius:12px;background:var(--thumb);overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.22);transition:transform .15s;position:relative}
+.rc:active .cover{transform:scale(.97)}
+.rc .cover img{width:100%;height:100%;display:block}
+.rc .cover i{position:absolute;right:8px;top:8px;padding:3px 8px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:800;font-style:normal;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.rc b{display:block;font-weight:600;font-size:14px;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc small{color:var(--sub);font-size:12.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sect h2{font-family:var(--serif);font-size:26px;font-weight:700;letter-spacing:-.01em;margin:0}
 .sect small{color:var(--sub);font-size:13px}
 .sect button.more{color:var(--accent);font-weight:600;font-size:14px}
@@ -451,12 +476,12 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
 
     <div class="view" id="home">
       <div id="resume"></div>
-      <div id="favsect"></div>
+      <div id="recent"></div>
       <div class="sect"><h2>Chapters</h2><small id="chcount"></small></div>
       <div class="albums" id="albums"></div>
-      <div class="sect"><h2>Songs</h2><small>Tap a song to play it</small></div>
+      <div class="sect"><h2>Songs</h2><small>By chapter · tap to open</small></div>
       <div id="list"></div>
-      <p class="note">Tap a song and the words light up as they're sung. Tap a song and its chapter plays like a playlist, starting over when it ends; swipe a song to the right to play it next. In the player, tap Repeat to hear one song over and over or to repeat just a few verses, or the speed button to slow it down or speed it up. Photos courtesy of Unsplash photographers. Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway. Used by permission. All rights reserved.</p>
+      <p class="note">Tap a chapter to see its songs, then tap a song and the words light up as they're sung. Its chapter plays like a playlist, starting over when it ends; swipe a song to the right to play it next. In the player, tap Repeat to hear one song over and over or to repeat just a few verses, or the speed button to slow it down or speed it up. Photos courtesy of Unsplash photographers. Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway. Used by permission. All rights reserved.</p>
     </div>
 
     <div class="view" id="chapter" hidden></div>
@@ -729,15 +754,24 @@ function renderLibrary(){
   $('#chcount').textContent=`${CHAPTERS.length} albums`;
   $('#albums').innerHTML=CHAPTERS.map((c,k)=>`<button class="album" type="button" data-ch="${c}" style="--i:${k}"><div class="cover"><img src="${ART[c]}" alt=""></div><b>John ${c}</b><small>${SONGS.filter(s=>s.ch===c).length} song${SONGS.filter(s=>s.ch===c).length>1?'s':''} · ${CH[c].name}</small></button>`).join('');
   document.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>showChapter(+b.dataset.ch));
-  $('#list').innerHTML=CHAPTERS.map(c=>`<section class="chgroup"><div class="chap glass" id="ch${c}"><span><i style="background-image:url(art/john${c}.jpg)"></i>John ${c} · ${CH[c].name}</span><button class="more" type="button" data-chlink="${c}" style="color:var(--accent);font-weight:700;letter-spacing:0;text-transform:none;font-size:13px">See chapter ›</button></div>`+SONGS.filter(s=>s.ch===c).map((s,k)=>rowHTML(s,{i:k})).join('')+`</section>`).join('');
-  document.querySelectorAll('[data-chlink]').forEach(b=>b.onclick=()=>showChapter(+b.dataset.chlink));
-  wireRows($('#list')); renderFavs(); renderResume(); staggerIn($('#list'),$('#albums'));
+  const last=lsGet('last',null), lastCh=last&&SONGS.find(x=>x.id===last.id)?SONGS.find(x=>x.id===last.id).ch:CHAPTERS[0];
+  $('#list').innerHTML=CHAPTERS.map(c=>{ const list=SONGS.filter(s=>s.ch===c), tot=list.reduce((a,s)=>a+s.dur,0);
+    return `<section class="chgroup ${c===lastCh?'open':''}" data-chg="${c}"><button class="chhd glass" type="button" aria-expanded="${c===lastCh}"><div class="th"><img src="${ART[c]}" alt="" loading="lazy"></div><div class="tt"><b>John ${c}</b><small>${esc(CH[c].name)} · ${list.length} song${list.length>1?'s':''}</small></div><span class="go" data-chlink="${c}">Open ›</span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 15.5 4.5 8l1.4-1.4L12 12.7l6.1-6.1L19.5 8z"/></svg></span></button><div class="chbody"><div class="chin">${list.map((s,k)=>rowHTML(s,{i:k,sub:`${nVerses(s)} verses · ${fmt(s.dur)}`})).join('')}</div></div></section>`; }).join('');
+  document.querySelectorAll('[data-chlink]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); showChapter(+b.dataset.chlink); });
+  document.querySelectorAll('.chhd').forEach(h=>h.onclick=()=>{ const g=h.closest('.chgroup'), open=!g.classList.contains('open');
+    document.querySelectorAll('.chgroup.open').forEach(o=>{ if(o!==g){ o.classList.remove('open'); o.querySelector('.chhd').setAttribute('aria-expanded','false'); } });
+    g.classList.toggle('open',open); h.setAttribute('aria-expanded',open); if(open){ staggerIn(g); setTimeout(()=>{ const r=g.getBoundingClientRect(); if(r.top<60) g.scrollIntoView({behavior:'smooth',block:'start'}); },380); } });
+  wireRows($('#list')); renderRecent(); renderResume(); staggerIn($('#albums'));
 }
-function renderFavs(){
-  const list=SONGS.filter(s=>isFav(s.id)); const el=$('#favsect');
+function renderFavs(){ return;
+  const list=SONGS.filter(s=>isFav(s.id)); const el=$('#favsect'); if(!el) return;
   el.innerHTML=list.length?`<div class="sect"><h2>Favorites</h2><small>${list.length} song${list.length>1?'s':''}</small></div>`+list.map(s=>rowHTML(s)).join(''):'';
   wireRows(el); if(song) document.querySelectorAll('[data-song]').forEach(b=>b.setAttribute('aria-current',+b.dataset.song===song.i));
 }
+function renderRecent(){ const el=$('#recent'); const ids=lsGet('hist',[]).filter(id=>SONGS.some(s=>s.id===id)).slice(0,10); if(!ids.length){ el.innerHTML=''; return; }
+  el.innerHTML=`<div class="sect"><h2>Recently played</h2><small>${ids.length}</small></div><div class="recent">${ids.map(id=>{ const s=SONGS.find(x=>x.id===id); return `<button class="rc" type="button" data-rc="${s.i}"><div class="cover"><img src="${ART[s.ch]}" alt="" loading="lazy"><i>${fmt(s.dur)}</i></div><b>${esc(s.title)}</b><small>${esc(s.sub)}</small></button>`; }).join('')}</div>`;
+  el.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{ playIdx(+b.dataset.rc); openNP(); }); }
+function noteHistory(id){ const h=lsGet('hist',[]).filter(x=>x!==id); h.unshift(id); lsSet('hist',h.slice(0,12)); }
 function renderResume(){
   const last=lsGet('last',null); const el=$('#resume'); el.innerHTML='';
   if(!last||!last.t||last.t<8) return; const s=SONGS.find(x=>x.id===last.id); if(!s||last.t>(last.d||s.dur)-8) return;
@@ -961,7 +995,7 @@ function setIcons(playing){
   $('#play').setAttribute('aria-label',playing?'Pause':'Play'); $('#miniplay').setAttribute('aria-label',playing?'Pause':'Play');
   $('#np').classList.toggle('paused',!playing); document.body.classList.toggle('paused',!playing);
 }
-audio.addEventListener('play',()=>{setIcons(true); $('#resume').innerHTML='';}); audio.addEventListener('pause',()=>{setIcons(false); saveProgress(true);});
+audio.addEventListener('play',()=>{setIcons(true); $('#resume').innerHTML=''; if(song){ noteHistory(song.id); renderRecent(); }}); audio.addEventListener('pause',()=>{setIcons(false); saveProgress(true);});
 audio.addEventListener('ended',()=>{ lsSet('last',null); next(); });
 audio.addEventListener('timeupdate',tick);
 audio.addEventListener('loadedmetadata',()=>{ if(resumeAt&&resumeAt<audio.duration-5){ audio.currentTime=resumeAt; } resumeAt=null; updateTime(); });
