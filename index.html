@@ -1743,14 +1743,22 @@ function announceSongs(){ if(lsGet('ann:songxp',false)||document.querySelector('
   el.querySelector('#anncok').onclick=done; el.querySelector('#anncgo').onclick=()=>lsSet('ann:songxp',true); }
 // Verse grids: tap a verse to flip it, or press and slide your finger across several to select (or clear) them all at once.
 function paintVerses(sel,attr,commit){ const btns=[...document.querySelectorAll(sel)]; if(!btns.length) return; const grid=btns[0].parentElement;
-  let mode=null, touched=null, pid=null;
+  let mode=null, touched=null;
   const keyOf=b=>b.dataset[attr];
-  const hit=(x,y)=>{ const el=document.elementFromPoint(x,y); const b=el&&el.closest(sel); return b&&grid.contains(b)?b:null; };
+  const hit=(x,y)=>{ const el=document.elementFromPoint(x,y); const b=el&&el.closest&&el.closest(sel); return b&&grid.contains(b)?b:null; };
   const mark=b=>{ if(!b||touched.has(keyOf(b))) return; touched.add(keyOf(b)); b.classList.toggle('on',mode); b.classList.add('painting'); setTimeout(()=>b.classList.remove('painting'),140); try{ navigator.vibrate&&navigator.vibrate(4); }catch(e){} };
-  btns.forEach(b=>{ b.onclick=e=>e.preventDefault(); b.addEventListener('pointerdown',e=>{ if(e.button) return; e.preventDefault(); pid=e.pointerId; mode=!b.classList.contains('on'); touched=new Set(); mark(b); try{ grid.setPointerCapture(pid); }catch(x){} }); });
-  grid.addEventListener('pointermove',e=>{ if(mode===null||e.pointerId!==pid) return; mark(hit(e.clientX,e.clientY)); });
-  const end=e=>{ if(mode===null||(e&&e.pointerId!==pid)) return; const keys=[...touched]; keys.mode=mode; mode=null; touched=null; try{ grid.releasePointerCapture(pid); }catch(x){} if(keys.length) commit(keys); };
-  grid.addEventListener('pointerup',end); grid.addEventListener('pointercancel',end); }
+  const start=(b)=>{ mode=!b.classList.contains('on'); touched=new Set(); mark(b); };
+  const end=()=>{ if(mode===null) return; const keys=[...touched]; keys.mode=mode; mode=null; touched=null; if(keys.length) commit(keys); };
+  btns.forEach(b=>{ b.onclick=e=>e.preventDefault(); });
+  // fingers: plain touch events (the most reliable on iPhone)
+  grid.addEventListener('touchstart',e=>{ if(e.touches.length!==1) return; const b=e.target.closest&&e.target.closest(sel); if(!b) return; e.preventDefault(); start(b); },{passive:false});
+  grid.addEventListener('touchmove',e=>{ if(mode===null) return; e.preventDefault(); const t=e.touches[0]; mark(hit(t.clientX,t.clientY)); },{passive:false});
+  grid.addEventListener('touchend',e=>{ if(mode!==null){ e.preventDefault(); end(); } },{passive:false});
+  grid.addEventListener('touchcancel',()=>end());
+  // mouse
+  grid.addEventListener('mousedown',e=>{ if(e.button) return; const b=e.target.closest(sel); if(!b) return; e.preventDefault(); start(b);
+    const mv=ev=>{ if(mode!==null) mark(hit(ev.clientX,ev.clientY)); }, up=()=>{ removeEventListener('mousemove',mv); removeEventListener('mouseup',up); end(); };
+    addEventListener('mousemove',mv); addEventListener('mouseup',up); }); }
 function render(){
   const app=$('#app'); app.innerHTML='';
   if(!me){ app.append(signInView()); const i=$('#nm'); i&&i.focus(); return; }
