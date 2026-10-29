@@ -791,6 +791,13 @@ input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--win-muted
 .syou{display:grid!important;justify-items:center;gap:8px;text-align:center;border-color:var(--gold)!important;box-shadow:0 0 0 4px var(--gold),0 0 30px var(--gold)!important;animation:pop .35s both}
 .smine{margin-left:auto;font-size:13px;color:var(--win-muted)}
 .live.sim section{display:grid;gap:14px}
+.tchip{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;font-size:12px;font-weight:800;color:#fff;background:var(--tc,#555);border:2px solid #000;white-space:nowrap;line-height:1.4}
+.tchip.big{font-size:16px;padding:3px 10px}.tchip.plain{background:var(--win);color:var(--win-ink);border-color:var(--win-line)}
+.lp[data-tp]{cursor:pointer;font:inherit;color:var(--win-ink)}.lp[data-tp] b{color:var(--win-ink)}.lp[style*="--tc"]{border-color:var(--tc)!important;box-shadow:inset 0 -5px 0 var(--tc)}
+.sseat[style*="--tc"]{border-left-width:8px!important}
+.lme[style*="--tc"]{border-color:var(--tc)!important}.lme .tchip{margin-left:4px}
+.tpick{display:grid!important;gap:8px}
+
 .sclock{font-family:var(--f-display);color:var(--gold);font-size:clamp(14px,2.2vw,18px)}
 .sfinish{text-align:center;font-family:var(--f-display);color:var(--gold);font-size:clamp(16px,2.6vw,22px)}
 .sansclock{text-align:center;font-family:var(--f-display);font-size:clamp(16px,2.6vw,22px);color:var(--ink)}
@@ -3842,7 +3849,7 @@ async function liveCreate(){ const L=live, cfg=L.cfg; if(cfg.game!=='sim') liveM
     if(cfg.game==='sim'&&cfg.judge==='group'){ L.selfPid=Math.random().toString(36).slice(2,12); L.pid=L.selfPid; L.xpDone={};
       await LDB.put('rooms/'+code+'/players/'+L.selfPid,{score:0,streak:0,name:me,av:myAv(),team:U.team&&U.team!==NO_TEAM?U.team:'',joined:Date.now()}); }
     else if(cfg.game==='sim'){ L.pin=String(Math.floor(1000+Math.random()*9000)); await LDB.put('rooms/'+code+'/jk',L.pin); L.unsub.push(LDB.listen('rooms/'+code+'/jcmd',d=>simCmd(d))); }
-    L.unsub.push(LDB.listen('rooms/'+code+'/players',d=>{ L.players=d||{}; if(L.selfPid){ L.p=L.players[L.selfPid]; simPlayerXP(); } if(['lobby','question','sread','sshow'].includes(L.phase)) liveRefresh(); }));
+    L.unsub.push(LDB.listen('rooms/'+code+'/players',d=>{ L.players=d||{}; liveTeamWatch(); if(L.selfPid){ L.p=L.players[L.selfPid]; simPlayerXP(); } if(['lobby','question','sread','sshow'].includes(L.phase)) liveRefresh(); }));
   }catch(e){ L.err="Couldn't start a game. Check your internet and try again."; L.phase='setup'; liveMusicStop(); }
   L.busy=false; render(); }
 const livePlayers=()=>Object.entries((live&&live.players)||{}).map(([pid,p])=>Object.assign({pid},p)).filter(p=>p&&p.name);
@@ -3892,7 +3899,7 @@ async function liveJoin(raw){ const code=String(raw||'').toUpperCase().replace(/
     let pid=''; try{ pid=sessionStorage.getItem('live:'+code)||''; }catch(e){}
     if(!pid){ pid=Math.random().toString(36).slice(2,12); try{ sessionStorage.setItem('live:'+code,pid); }catch(e){} }
     const old=await LDB.get('rooms/'+code+'/players/'+pid);
-    await LDB.put('rooms/'+code+'/players/'+pid,Object.assign({score:0,streak:0},old||{},{name:me,av:myAv(),team:U.team&&U.team!==NO_TEAM?U.team:'',joined:(old&&old.joined)||Date.now()}));
+    await LDB.put('rooms/'+code+'/players/'+pid,Object.assign({score:0,streak:0},old||{},{name:me,av:myAv(),team:old&&old.team!=null?old.team:(U.team&&U.team!==NO_TEAM?U.team:''),home:old&&old.home!=null?old.home:(U.team&&U.team!==NO_TEAM?U.team:''),joined:(old&&old.joined)||Date.now()}));
     live={role:'player',code,pid,host:h.name||'',st:null,p:null,qi:-1,ans:null,xpDone:{},unsub:[]};
     live.unsub.push(LDB.listen('rooms/'+code+'/state',d=>liveOnState(d)));
     live.unsub.push(LDB.listen('rooms/'+code+'/players/'+pid,d=>{ if(!live||live.role!=='player') return; if(d) live.p=d; simPlayerXP(); if(live.st&&live.st.phase!=='question'&&live.st.phase!=='sread') liveRefresh(); }));
@@ -3973,10 +3980,12 @@ function liveHostView(){ const L=live, c=L.cfg;
       </div></section></main>`; }
   const ps=livePlayers();
   if(L.phase==='lobby') return `<main class="wrap live host"><section>${liveTop('Host')}
-    <div class="panel ljoinbox"><div><span class="label">Join on your phone</span><div class="lurl">${esc(liveJoinUrl(L.code).replace(/^https?:\/\//,''))}</div><span class="hint">or open the study site → Games → Live Quiz, and type the code</span></div><div class="lcodebig">${L.code}</div></div>
+    <div class="panel ljoinbox"><div><span class="label">Join on your phone</span><div class="lurl">${esc(liveJoinUrl(L.code).replace(/^https?:\/\//,''))}</div><span class="hint">or open the study site → Games → ${c.game==='sim'?'Quiz Simulator':'Live Quiz'}, and type the code</span></div><div class="lcodebig">${L.code}</div></div>
     ${c.game==='sim'&&c.judge!=='group'?simJudgeBox():''}${c.judge==='group'&&c.game==='sim'?`<p class="hint" style="margin:0">No host: you're playing too. You'll get a buzzer on this screen once the game starts.</p>`:''}
+    ${liveTeamPicker()}
     <div class="row" style="justify-content:space-between"><b class="evtitle">${ps.length} player${ps.length===1?'':'s'} in</b><button class="btn" id="lstart" ${ps.length?'':'disabled'}>Start game</button></div>
-    <div class="lplayers">${ps.sort((a,b)=>(a.joined||0)-(b.joined||0)).map(p=>`<div class="lp">${avSvg(p.av||avDefault(p.name),48,p.name)}<b>${esc(p.name)}</b>${p.team?`<small>${esc(p.team)}</small>`:''}</div>`).join('')||'<p class="hint">Waiting for players…</p>'}</div>
+    ${(L.tmode||'site')!=='site'?`<span class="hint">Tap a quizzer to move them to another team.</span>`:''}
+    <div class="lplayers">${ps.sort((a,b)=>(teamOrder(a.team)-teamOrder(b.team))||(a.joined||0)-(b.joined||0)).map(p=>`<${(L.tmode||'site')!=='site'?`button data-tp="${p.pid}"`:'div'} class="lp" style="${teamStyle(p.team)}">${avSvg(p.av||avDefault(p.name),48,p.name)}<b>${esc(p.name)}</b>${p.team?`<small>${teamChip(p.team)}</small>`:''}</${(L.tmode||'site')!=='site'?'button':'div'}>`).join('')||'<p class="hint">Waiting for players…</p>'}</div>
   </section></main>`;
   if(['sread','sjudge','sshow','svote'].includes(L.phase)) return c.judge==='group'?simPlayerView():simHostView();
   const q=L.cur?Q[L.cur.qid]:null;
@@ -4008,10 +4017,10 @@ function liveHostView(){ const L=live, c=L.cfg;
     <ol class="lboard small">${ranked.slice(3).map((p,i)=>`<li><span class="lrk">${i+4}</span>${avSvg(p.av||avDefault(p.name),28,p.name)}<b>${esc(p.name)}</b><span class="lsc">${(p.score||0).toLocaleString()}</span></li>`).join('')}</ol>
     <div class="row" style="justify-content:center"><button class="btn" id="lagain">New game</button><button class="btn ghost" id="lclose">Close room</button></div></section></main>`; }
 function livePlayerView(){ const L=live, st=L.st, p=L.p||{};
-  const head=`<div class="lme">${avSvg(myAv(),36,me)}<b>${esc(me)}</b><span class="lsc">${(p.score||0).toLocaleString()}</span></div>`;
+  const head=`<div class="lme" style="${teamStyle(p.team)}">${avSvg(myAv(),36,me)}<b>${esc(me)}</b>${p.team?teamChip(p.team):''}<span class="lsc">${(p.score||0).toLocaleString()}</span></div>`;
   if(!st) return `<main class="wrap live"><section>${liveTop(L.code)}${head}<p class="hint">Connecting…</p></section></main>`;
   if(st.phase==='ended') return `<main class="wrap live"><section>${liveTop(L.code)}${head}<div class="panel"><b class="evtitle">The game has ended.</b><p class="hint" style="margin:0">Thanks for playing!</p></div></section></main>`;
-  if(st.phase==='lobby') return `<main class="wrap live"><section>${liveTop(L.code)}${head}<div class="panel lwait"><b class="evtitle">You're in! 🎉</b><p class="hint" style="margin:0">Watch the big screen. The game starts soon.</p></div></section></main>`;
+  if(st.phase==='lobby') return `<main class="wrap live"><section>${liveTop(L.code)}${head}<div class="panel lwait"><b class="evtitle">You're in! 🎉</b>${p.team?`<p style="margin:0">Your team: ${teamChip(p.team,true)}</p>`:''}<p class="hint" style="margin:0">Watch the big screen. The game starts soon.</p></div></section></main>`;
   if(['sread','sjudge','sshow','svote'].includes(st.phase)) return simPlayerView();
   if(st.phase==='question'){ const left=Math.max(0,st.time*1000-(performance.now()-(L.t0||performance.now())));
     let body;
@@ -4132,9 +4141,9 @@ async function simResume(){ const L=live, S=L.sim; if(L.phase!=='sjudge') return
   simListen(); simRead(); }
 async function simResult(res){ const L=live, S=L.sim, q=Q[L.cur.qid]; simStop(); simClock(false); S.res=res; S.shown=S.words.length; L.phase='sshow'; render(); simJinfo();
   try{ await simPatch({phase:'sshow',res:res||null,answer:q.a.join(' or '),text:S.words.join(' '),done:true,buzz:null}); }catch(e){} }
-function simSeats(){ const L=live, c=L.cfg, S=L.sim||{locked:{}}, ps=livePlayers().sort((a,b)=>(a.team||'').localeCompare(b.team||'')||(a.joined||0)-(b.joined||0));
+function simSeats(){ const L=live, c=L.cfg, S=L.sim||{locked:{}}, ps=livePlayers().sort((a,b)=>(teamOrder(a.team)-teamOrder(b.team))||(a.team||'').localeCompare(b.team||'')||(a.joined||0)-(b.joined||0));
   return `${simTeamStrip()}<div class="sseats">${ps.map(p=>{ const st=p.out==='quiz'?'<span class="sout q">Quizzed out</span>':p.out==='error'?'<span class="sout e">Errored out</span>':S.locked&&S.locked[p.pid]?'<span class="sout e">Missed</span>':'';
-    return `<div class="sseat ${S.buzz&&S.buzz.pid===p.pid?'on':''} ${p.out?'done':''}">${avSvg(p.av||avDefault(p.name),34,p.name)}<b>${esc(p.name)}</b>${c.teams&&p.team?`<small>${esc(p.team)}</small>`:''}
+    return `<div class="sseat ${S.buzz&&S.buzz.pid===p.pid?'on':''} ${p.out?'done':''}" style="${teamStyle(p.team)}">${avSvg(p.av||avDefault(p.name),34,p.name)}<b>${esc(p.name)}</b>${c.teams&&p.team?`<small>${teamChip(p.team)}</small>`:''}
       <span class="sdots">${Array.from({length:Math.min(simRules().qout,6)},(_,k)=>`<i class="${k<(p.correct||0)?'on':''}"></i>`).join('')}${(p.errors||0)?` <span class="serr">${'✗'.repeat(Math.min(p.errors,5))}</span>`:''}</span><span class="lsc">${p.score||0}</span>${st}</div>`; }).join('')}</div>`; }
 function simHostView(){ const L=live, S=L.sim, q=Q[L.cur.qid], top=liveTop(simQLabel(L.i)), head=`<div class="lqhead"><span class="lref">John ${q.c}:${q.v}</span>${simClockHtml()}${S.rebound?'<span class="pill w">Rebound · half points</span>':''}</div>`;
   const key=`<div class="skey">${L.showKey?`<div style="display:grid;gap:6px;flex:1;min-width:0"><span class="label">Full question (host only)</span><div class="sfull">${simFullHtml(S.words,S.buzz?S.buzz.at:S.words.length)}</div><span class="label">Answer</span><b>${q.a.map(fmtQ).join(' <span class="hint">or</span> ')}</b></div><button class="x" id="skeyhide">Hide</button>`:`<button class="btn ghost small" id="skeyshow">👁 Show full question &amp; answer</button><span class="hint">Host only. Tap this only if the room can't see your screen, or judge from your phone instead (PIN ${L.showPin?`<b>${esc(L.pin||'')}</b>`:`<button class="x" id="spinshow">show</button>`}).</span>`}</div>`;
@@ -4172,7 +4181,7 @@ async function simBuzzIn(){ const L=live, st=L&&L.st; if(!st||st.phase!=='sread'
   try{ await LDB.put('rooms/'+L.code+'/answers/'+key+'/'+L.pid,{t:{'.sv':'timestamp'}}); }catch(e){ L.buzzKey=null; L.err="Your buzz didn't send. Tap again."; render(); } }
 function simPlayerView(){ const L=live, st=L.st, p=L.p||{}, me_=L.pid;
   if(!st) return `<main class="wrap live"><section>${liveTop('')}<p class="hint">Connecting…</p></section></main>`;
-  const head=`<div class="lme">${avSvg(myAv(),36,me)}<b>${esc(me)}</b><span class="smine">✓ ${p.correct||0} · ✗ ${p.errors||0}</span><span class="lsc">${p.score||0}</span></div>`;
+  const head=`<div class="lme" style="${teamStyle(p.team)}">${avSvg(myAv(),36,me)}<b>${esc(me)}</b>${p.team?teamChip(p.team):''}<span class="smine">✓ ${p.correct||0} · ✗ ${p.errors||0}</span><span class="lsc">${p.score||0}</span></div>`;
   const top=liveTop(st.n?`Question ${st.i+1} of ${st.n}`:`Question ${st.i+1}`), txt=`<div class="lq phone sq" id="stext">${simTextHtml(String(st.text||'').split(/\s+/).filter(Boolean),1e9,false)}</div>`;
   if(st.phase==='sread'){ const key=st.i+'-'+(st.r||0); let body;
     if(p.out==='quiz') body=`<div class="panel lwait"><b class="evtitle">You quizzed out! 🎉</b><p class="hint" style="margin:0">Great job. Cheer on your team!</p></div>`;
@@ -4200,6 +4209,8 @@ function simPlayerView(){ const L=live, st=L.st, p=L.p||{}, me_=L.pid;
     ${L.role==='host'?`<div class="row" style="justify-content:flex-end"><button class="btn ghost" id="sboard">Scoreboard</button><button class="btn" id="lnext">${(simTimed()?!!(L.clk&&L.clk.left<=0):L.i>=L.order.length-1)?(simTimed()?simEndLabel():'Final results'):'Next question'} →</button></div>`:''}</section></main>`; }
 function wireSim(on){ const L=live; if(!L) return;
   const jf=$('#jform'); if(jf) jf.onsubmit=e=>{ e.preventDefault(); simJudgeJoin($('#jcode').value,$('#jpin').value); };
+  document.querySelectorAll('[data-tmode]').forEach(b=>b.onclick=()=>liveSetTeams(b.dataset.tmode));
+  document.querySelectorAll('[data-tp]').forEach(b=>b.onclick=()=>liveCycleTeam(b.dataset.tp)); on('#tmix',liveMixTeams);
   on('#jright',()=>simSend('right')); on('#jfoul',()=>simSend('foul')); on('#sfoul',simFoul); on('#jwrong',()=>simSend('wrong')); on('#jresume',()=>simSend('resume')); on('#jskip',()=>simSend('skip'));
   on('#jnext',()=>simSend('next')); on('#jboard',()=>simSend('board')); on('#jstart',()=>simSend('start'));
   on('#spinshow',()=>{ L.showPin=true; render(); }); on('#spinhide',()=>{ L.showPin=false; render(); });
@@ -4314,10 +4325,32 @@ function simPeriodEnd(){ const L=live, c=L.clk; if(!c) return liveBoard(true);
   if(tied.length>1&&st.length>1){ L.clk={half:c.half+1,left:c.half===2?120000:60000,on:false,t:0}; L.otSet=new Set(tied.map(s=>s.key)); L.boardNote=`Tie! ${simPeriodName(c.half+1)}: ${tied.map(s=>s.name).join(' vs ')}`; L.periodDone=true; return liveBoard(false); }
   L.otSet=null; L.boardNote=''; return liveBoard(true); }
 function simTeamStrip(){ const L=live, R=simRules(); if(!R.teamErr&&!R.milestone) return ''; const ps=livePlayers(), teams=liveTeams(ps); if(teams.length<2) return '';
-  return `<div class="steams">${teams.map(t=>{ const a=(L.tadj||{})[t.name.toLowerCase()]||{}; return `<span><b>${esc(t.name)}</b> <span class="lsc">${t.total}</span> <small>errors ${a.errors||0}${(a.ded||0)?` (−${a.ded})`:''}${(a.bonus||0)?` · bonus +${a.bonus}`:''}</small></span>`; }).join('')}</div>`; }
+  return `<div class="steams">${teams.map(t=>{ const a=(L.tadj||{})[t.name.toLowerCase()]||{}; return `<span>${teamChip(t.name)} <span class="lsc">${t.total}</span> <small>errors ${a.errors||0}${(a.ded||0)?` (−${a.ded})`:''}${(a.bonus||0)?` · bonus +${a.bonus}`:''}</small></span>`; }).join('')}</div>`; }
 // Phones and the judge phone count down from when they saw the buzz.
 setInterval(()=>{ const L=live; if(!L||L.role==='host') return; const ph=(L.st&&L.st.phase)||(L.info&&L.info.phase); if(ph!=='sjudge'&&ph!=='svote'){ L.seenBuzzAt=null; return; }
   if(!L.seenBuzzAt) L.seenBuzzAt=Date.now(); const txt=simAnsText(Date.now()-L.seenBuzzAt); ['sansclock','jansclock'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=txt; }); },250);
+
+/* ----- game teams: the host splits the room into Red / Blue / Green (or uses everyone's own site team) ----- */
+const GAME_TEAMS=[['Red','#e53935','🔴'],['Blue','#1e88e5','🔵'],['Green','#43a047','🟢']];
+const gTeam=n=>GAME_TEAMS.find(x=>x[0]===n);
+const teamOrder=n=>{ const i=GAME_TEAMS.findIndex(x=>x[0]===n); return i<0?9:i; };
+const teamStyle=n=>{ const g=gTeam(n); return g?`--tc:${g[1]};border-color:${g[1]}!important`:''; };
+function teamChip(n,big){ if(!n) return ''; const g=gTeam(n); return g?`<span class="tchip${big?' big':''}" style="--tc:${g[1]}">${g[2]} ${esc(n)}</span>`:`<span class="tchip plain">${esc(n)}</span>`; }
+function liveTeamPicker(){ const L=live, m=L.tmode||'site'; if(L.phase!=='lobby') return '';
+  return `<div class="panel tpick"><div class="row" style="justify-content:space-between"><span class="label">Teams</span><div class="seg">${[['site','Their own teams'],['2','2 teams'],['3','3 teams']].map(([v,l])=>`<button data-tmode="${v}" aria-pressed="${m===v}">${l}</button>`).join('')}</div></div>
+    ${m==='site'?`<span class="hint">Everyone plays for the team set on their own account. Pick 2 or 3 teams to split up the room instead.</span>`:`<div class="row" style="justify-content:space-between"><span class="hint">Quizzers are split evenly as they join. A real meet has 3 teams with up to 5 quizzers each.</span><button class="x" id="tmix">🔀 Mix up teams</button></div>`}</div>`; }
+const liveTeamNames=()=>{ const m=live.tmode||'site'; return m==='site'?null:GAME_TEAMS.slice(0,+m).map(x=>x[0]); };
+async function livePatchTeams(upd){ const L=live; Object.keys(upd).forEach(pid=>{ if(L.players[pid]) L.players[pid]=Object.assign({},L.players[pid],{team:upd[pid]}); }); render();
+  await Promise.all(Object.keys(upd).map(pid=>LDB.patch('rooms/'+L.code+'/players/'+pid,{team:upd[pid]}).catch(()=>{}))); }
+function liveSetTeams(mode){ const L=live; L.tmode=mode; const names=liveTeamNames(), ps=livePlayers().sort((a,b)=>(a.joined||0)-(b.joined||0)), upd={};
+  ps.forEach((p,i)=>{ upd[p.pid]=names?names[i%names.length]:(p.home!=null?p.home:''); }); livePatchTeams(upd); }
+function liveMixTeams(){ const L=live, names=liveTeamNames(); if(!names) return; const ps=shuffle(livePlayers()), upd={}; ps.forEach((p,i)=>upd[p.pid]=names[i%names.length]); sfx('tick'); livePatchTeams(upd); }
+function liveCycleTeam(pid){ const L=live, names=liveTeamNames(), p=L.players[pid]; if(!names||!p) return; const i=names.indexOf(p.team); sfx('tick'); livePatchTeams({[pid]:names[(i+1)%names.length]}); }
+// Someone who joins after the teams were picked goes to the smallest team.
+function liveTeamWatch(){ const L=live; if(!L||L.role!=='host'||L.phase==='done'||L.phase==='setup') return; const names=liveTeamNames(); if(!names) return;
+  const ps=livePlayers(), count={}; names.forEach(n=>count[n]=0); ps.forEach(p=>{ if(count[p.team]!=null) count[p.team]++; });
+  const upd={}; ps.forEach(p=>{ if(count[p.team]==null){ const n=names.slice().sort((a,b)=>count[a]-count[b])[0]; count[n]++; upd[p.pid]=n; } });
+  if(Object.keys(upd).length) setTimeout(()=>livePatchTeams(upd),0); }
 
 /* ---------- wiring ---------- */
 function wire(){
