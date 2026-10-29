@@ -2789,7 +2789,13 @@ const XP_RULES=[
  ['📅','Daily goal','+25','Once a day, when you hit 30 questions.'],
  ['🗓️','Daily Challenge','+20','Once a day, plus 30 more if you get every one right.'],
  ['⚡','Speed Round','+20','Each time you beat your best score.'],
- ['⚔️','Boss Battle','+50','The first time you beat a chapter boss, then +15 for each win after that.']];
+ ['⚔️','Boss Battle','+50','The first time you beat a chapter boss, then +15 for each win after that.'],
+ ['🎵','Song listened to','+20','Play any John Song all the way through on the Songs page (Materials tab).']];
+// XP earned on the Songs page is written to this quizzer's saved record; pick it up when we come back
+function absorbSongXP(){ if(!me||!U) return; const d=lsGet('u:'+me,null); const had=(U.counts&&U.counts.songs)||0, now=(d&&d.counts&&d.counts.songs)||0; if(now<=had) return; const k=now-had, gain=k*20; U.counts=U.counts||{}; U.counts.songs=now; gainXP(gain,[['song',`${k} song${k>1?'s':''} listened to`,gain]]); save(); try{ render(); }catch(e){} }
+addEventListener('storage',e=>{ if(me&&e.key===K+'u:'+me) absorbSongXP(); });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') absorbSongXP(); });
+addEventListener('pageshow',()=>absorbSongXP());
 function xpGuide(){ const l=levelOf(U.xp), today=(U.xpDays&&U.xpDays[dayKey()])||0, log=(U.xpLog||[]).slice(0,8);
   return `<div class="xpguide">
     <div class="xprules">${XP_RULES.map(([i,t,v,d])=>`<div class="xprule"><span class="xpi" aria-hidden="true">${i}</span><div><b>${t}</b> <span class="xpv">${v}</span><small>${d}</small></div></div>`).join('')}</div>
