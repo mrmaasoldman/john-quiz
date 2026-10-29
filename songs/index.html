@@ -371,11 +371,23 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 /* up next sheet: drag to reorder, swipe the header down to close */
 .scrim{position:absolute;inset:0;z-index:3;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .3s}
 .scrim.on{opacity:1;pointer-events:auto}
-.upnext{position:absolute;inset:auto 0 0 0;z-index:4;max-height:80%;background:rgba(20,18,32,.74);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px) saturate(1.6);border-top:1px solid rgba(255,255,255,.22);border-radius:22px 22px 0 0;transform:translateY(105%);transition:transform .44s cubic-bezier(.32,.72,0,1);display:grid;grid-template-rows:auto auto 1fr;grid-template-columns:minmax(0,1fr);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+.upnext{position:absolute;inset:auto 0 0 0;z-index:4;max-height:80%;background:rgba(20,18,32,.74);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px) saturate(1.6);border-top:1px solid rgba(255,255,255,.22);border-radius:22px 22px 0 0;transform:translateY(105%);transition:transform .44s cubic-bezier(.32,.72,0,1);display:grid;grid-template-rows:auto auto auto auto 1fr auto;grid-template-columns:minmax(0,1fr);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.5)}
 .upnext.open{transform:translateY(0)}
 .upnext.drag{transition:none}
 .upnext .grab{margin-top:8px}
-.upnext .uh{display:flex;align-items:center;gap:6px;padding:8px 0 10px;touch-action:none;min-width:0}
+.upnext .uh{display:flex;align-items:center;gap:6px;padding:8px 0 4px;touch-action:none;min-width:0}
+.unow{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:8px 10px;border-radius:14px;background:rgba(255,255,255,.08);margin:2px 0 10px}
+.unow .th{width:44px;height:44px;border-radius:7px;overflow:hidden}
+.unow .th img{width:100%;height:100%;display:block}
+.unow small{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sig1)}
+.unow b{display:block;font-size:15px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.unow i{display:block;font-style:normal;font-size:12.5px;color:var(--np-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uctl{display:flex;gap:8px;margin-bottom:4px}
+.uctl button{flex:1;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;gap:7px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);font-size:13.5px;font-weight:700;transition:background .2s,color .2s}
+.uctl button[aria-pressed="true"]{background:var(--sig1);color:#1a1026}
+.uctl svg{width:18px;height:18px;fill:currentColor}
+.uhint{font-size:12px;line-height:1.45;color:var(--np-dim);padding:10px 2px 4px;border-top:1px solid rgba(255,255,255,.1);margin-top:6px}
+.uhint b{color:var(--np-sub)}
 .upnext .uh b{font-family:var(--serif);font-size:21px;flex:1;min-width:0}
 .upnext .uh b small{display:block;font:600 12px/1.3 var(--ui);color:var(--sig1);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qdiv{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--np-sub);padding:14px 0 6px}
@@ -574,12 +586,16 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
   <div class="scrim" id="scrim"></div>
   <div class="upnext" id="upnext" aria-label="Up next">
     <div class="grab" aria-hidden="true"></div>
-    <div class="uh" id="uh"><b>Playing Next<small id="uloop" hidden></small></b>
-      <button id="shuf" type="button" aria-pressed="false" aria-label="Shuffle"><svg viewBox="0 0 24 24"><path d="M17 4h4v4l-1.5-1.5L16 10l-1.4-1.4 3.5-3.5zM3 6h4l9.6 11H21l-1.5 1.5L21 20h-4v-4l1.5 1.5L17 16H6L3 6zm0 12 4.6-5.3 1.3 1.6L5 18z"/></svg></button>
-      <button id="rep" type="button" aria-pressed="false" aria-label="Repeat"><svg viewBox="0 0 24 24" id="repi"><path d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z"/></svg></button>
+    <div class="uh" id="uh"><b>Up Next<small id="uloop" hidden></small></b>
       <button id="uclose" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M12 15.5 4.5 8l1.4-1.4L12 12.7l6.1-6.1L19.5 8z"/></svg></button>
     </div>
+    <div class="unow" id="unow"></div>
+    <div class="uctl">
+      <button id="shuf" type="button" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M17 4h4v4l-1.5-1.5L16 10l-1.4-1.4 3.5-3.5zM3 6h4l9.6 11H21l-1.5 1.5L21 20h-4v-4l1.5 1.5L17 16H6L3 6zm0 12 4.6-5.3 1.3 1.6L5 18z"/></svg>Shuffle</button>
+      <button id="rep" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" id="repi"><path d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z"/></svg><span id="reptxt">Loop this list</span></button>
+    </div>
     <div class="ul" id="ulist"></div>
+    <div class="uhint">Tap a song to jump to it · drag <b>≡</b> to reorder · swipe left or tap <b>×</b> to remove · swipe any song in the library to the right to add it here</div>
   </div>
 </section>
 
@@ -1051,15 +1067,17 @@ if('mediaSession' in navigator){ try{ navigator.mediaSession.setActionHandler('p
 function renderQueue(){
   const ul=$('#ulist'); let html='';
   $('#uloop').textContent=src?`From ${srcName()} · on a loop`:''; $('#uloop').hidden=!src;
+  if(song) $('#unow').innerHTML=`<div class="th"><img src="${ART[song.ch]}" alt=""></div><div><small>Now playing</small><b>${esc(song.title)}</b><i>${esc(song.sub)}</i></div>`;
+  $('#reptxt').textContent=qloop?'Looping':(manual.length?'Loop my songs':'Loop this list');
   const row=(i,key,drag,cls)=>{ const s=SONGS[i]; return `<div class="qrow ${cls}" data-key="${key}">${drag?'<span class="hd" data-hd aria-label="Drag to reorder"><svg viewBox="0 0 24 24"><path d="M4 7h16v2H4zm0 4h16v2H4zm0 4h16v2H4z"/></svg></span>':'<span class="hd" aria-hidden="true"></span>'}<div class="th"><img src="${ART[s.ch]}" alt=""></div><button class="tt" type="button" data-qplay="${key}" style="text-align:left;min-width:0"><b>${esc(s.title)}</b><small>${esc(s.sub)}</small></button><span class="dur">${fmt(s.dur)}</span><button class="rm" type="button" data-qrm="${key}" aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L12 13.4l-6.3 6.3-1.4-1.4L10.6 12 4.3 5.7l1.4-1.4L12 10.6l6.3-6.3z"/></svg></button></div>`; };
-  if(manual.length) html+=`<div class="qdiv">Up Next${qloop?' · on a loop':''}</div><div class="qsec" data-sec="m">${manual.map((i,k)=>(qloop&&k===manualPos)?'':row(i,'m'+k,true,'man')).join('')}</div>`;
+  if(manual.length) html+=`<div class="qdiv">${qloop?'Looping these':'Songs you added'}</div><div class="qsec" data-sec="m">${manual.map((i,k)=>(qloop&&k===manualPos)?'':row(i,'m'+k,true,'man')).join('')}</div>`;
   if(src&&src.order.length>1&&!(qloop&&qconv)){
     const tail=src.order.slice(src.pos+1), head=src.order.slice(0,Math.max(0,src.pos));
-    html+=`<div class="qdiv">${manual.length?'Then ':''}from ${srcName()}</div>`;
+    html+=`<div class="qdiv">${manual.length?'Then the rest of ':'Coming up in '}${srcName()}</div>`;
     if(tail.length) html+=`<div class="qsec" data-sec="t">${tail.map((i,k)=>row(i,'s'+(src.pos+1+k),true,'rest')).join('')}</div>`;
     if(head.length) html+=`<div class="qdiv sub">${srcName()} starts over</div><div class="qsec" data-sec="h">${head.map((i,k)=>row(i,'s'+k,true,'wrap')).join('')}</div>`;
   }
-  ul.innerHTML=html||`<div class="empty" style="color:var(--np-sub)">Nothing queued. Tap a song to play its chapter, or swipe a song to the right to play it next.</div>`;
+  ul.innerHTML=html||`<div class="empty" style="color:var(--np-sub)">Nothing lined up yet.</div>`;
   const parse=key=>({m:key[0]==='m',k:+key.slice(1)});
   ul.querySelectorAll('[data-qplay]').forEach(b=>b.onclick=()=>{ const {m,k}=parse(b.dataset.qplay); if(m){ if(qloop){ manualPos=k; fromManual=true; load(manual[k],true); } else { const [i]=manual.splice(k,1); fromManual=true; load(i,true); } } else { src.pos=k; fromManual=false; load(src.order[k],true); } });
   const removeKey=key=>{ const {m,k}=parse(key); if(m){ manual.splice(k,1); if(k<=manualPos) manualPos--; if(manual.length<=(qconv?1:0)){ qloop=false; if(qconv){ qconv=false; manual=[]; manualPos=-1; fromManual=false; } setRepeatUI(); } } else if(src){ src.order.splice(k,1); if(k<src.pos) src.pos--; if(src.order.length<2){ refill(); toast(`${srcName()} added back`); } } renderQueue(); };
