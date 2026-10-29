@@ -1066,12 +1066,12 @@ if('mediaSession' in navigator){ try{ navigator.mediaSession.setActionHandler('p
 /* ---------- up next: tap to jump, drag the handle to reorder, × to remove ---------- */
 function renderQueue(){
   const ul=$('#ulist'); let html='';
-  $('#uloop').textContent=src?`From ${srcName()} · on a loop`:''; $('#uloop').hidden=!src;
+  $('#uloop').textContent=qloop?`Looping ${manual.length} song${manual.length>1?'s':''} · ${srcName()} is paused`:(src?`From ${srcName()} · on a loop`:''); $('#uloop').hidden=!src&&!qloop;
   if(song) $('#unow').innerHTML=`<div class="th"><img src="${ART[song.ch]}" alt=""></div><div><small>Now playing</small><b>${esc(song.title)}</b><i>${esc(song.sub)}</i></div>`;
   $('#reptxt').textContent=qloop?'Looping':(manual.length?'Loop my songs':'Loop this list');
   const row=(i,key,drag,cls)=>{ const s=SONGS[i]; return `<div class="qrow ${cls}" data-key="${key}">${drag?'<span class="hd" data-hd aria-label="Drag to reorder"><svg viewBox="0 0 24 24"><path d="M4 7h16v2H4zm0 4h16v2H4zm0 4h16v2H4z"/></svg></span>':'<span class="hd" aria-hidden="true"></span>'}<div class="th"><img src="${ART[s.ch]}" alt=""></div><button class="tt" type="button" data-qplay="${key}" style="text-align:left;min-width:0"><b>${esc(s.title)}</b><small>${esc(s.sub)}</small></button><span class="dur">${fmt(s.dur)}</span><button class="rm" type="button" data-qrm="${key}" aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L12 13.4l-6.3 6.3-1.4-1.4L10.6 12 4.3 5.7l1.4-1.4L12 10.6l6.3-6.3z"/></svg></button></div>`; };
   if(manual.length) html+=`<div class="qdiv">${qloop?'Looping these':'Songs you added'}</div><div class="qsec" data-sec="m">${manual.map((i,k)=>(qloop&&k===manualPos)?'':row(i,'m'+k,true,'man')).join('')}</div>`;
-  if(src&&src.order.length>1&&!(qloop&&qconv)){
+  if(src&&src.order.length>1&&!qloop){ // while a loop is on, only the songs that will actually play are listed
     const tail=src.order.slice(src.pos+1), head=src.order.slice(0,Math.max(0,src.pos));
     html+=`<div class="qdiv">${manual.length?'Then the rest of ':'Coming up in '}${srcName()}</div>`;
     if(tail.length) html+=`<div class="qsec" data-sec="t">${tail.map((i,k)=>row(i,'s'+(src.pos+1+k),true,'rest')).join('')}</div>`;
