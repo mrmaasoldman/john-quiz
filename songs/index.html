@@ -629,11 +629,13 @@ const lsGet=(k,d)=>{try{const v=localStorage.getItem('jsongs:'+k);return v==null
 const lsSet=(k,v)=>{try{localStorage.setItem('jsongs:'+k,JSON.stringify(v))}catch(e){}};
 
 /* ---------- lyric lines ---------- */
+// the recognizer marks each word a beat after it starts; pull everything forward so highlights land on the word
+const LEAD=0.22;
 function buildLines(s){
   const T=TIMING[s.id]||{seg:[]}, lines=[];
   const segs=((T.seg&&T.seg.length)?T.seg:Array.from({length:s.b-s.a+1},(_,k)=>({v:s.a+k,t:null}))).filter(sg=>VERSES[s.ch][sg.v]);
   segs.forEach((sg,k)=>{
-    const words=VERSES[s.ch][sg.v].split(/\s+/), times=sg.t||words.map((_,q)=>k*6+q*.4);
+    const words=VERSES[s.ch][sg.v].split(/\s+/), times=sg.t?sg.t.map(t=>Math.max(0,t-LEAD)):words.map((_,q)=>k*6+q*.4);
     let cur=[], first=true;
     const flush=()=>{ if(cur.length){ lines.push({v:sg.v,first,rep:!!sg.rep,t:cur[0].t,words:cur}); cur=[]; first=false; } };
     words.forEach((w,q)=>{ cur.push({w,t:times[q]}); const rem=words.length-q-1;
@@ -645,7 +647,7 @@ function buildLines(s){
   if(s.dur-prevEnd>9) out.push({dots:true,t:prevEnd});
   return out;
 }
-function verseStart(s,v){ const T=TIMING[s.id]; const sg=T&&T.seg&&T.seg.find(x=>x.v===v); return sg?sg.t[0]:0; }
+function verseStart(s,v){ const T=TIMING[s.id]; const sg=T&&T.seg&&T.seg.find(x=>x.v===v); return sg?Math.max(0,sg.t[0]-LEAD):0; }
 
 /* ---------- covers: a photo per chapter, chapter name set on it, colors pulled from the picture ---------- */
 const ART={}, COL={}, ART_BG={};
@@ -1028,7 +1030,7 @@ $('#rep').onclick=()=>{ if(!song) return;
   qloop=true; repeat='off'; lsSet('repeat',repeat); loopRange=null; setRepeatUI(); renderQueue(); toast(`Looping ${manual.length} song${manual.length>1?'s':''}`); }; setRepeatUI();
 $('#shuf').onclick=()=>{ shuffle=!shuffle; $('#shuf').setAttribute('aria-pressed',shuffle); if(!song||!src) return; const cur=song.i; src.order=shuffle?shuffled(listFor(src.kind,src.ch),cur):listFor(src.kind,src.ch); if(!src.order.includes(cur)) src.order.unshift(cur); src.pos=src.order.indexOf(cur); renderQueue(); };
 $('#volr').oninput=e=>audio.volume=+e.target.value;
-function rangeTimes(){ if(!loopRange||!verses.length) return null; const a=verses.find(v=>v.v===loopRange.a&&!v.rep)||verses.find(v=>v.v===loopRange.a), b=verses.find(v=>v.v===loopRange.b&&!v.rep)||verses.find(v=>v.v===loopRange.b); if(!a||!b) return null; return {start:Math.max(0,a.start-0.05),end:b.end}; }
+function rangeTimes(){ if(!loopRange||!verses.length) return null; const a=verses.find(v=>v.v===loopRange.a&&!v.rep)||verses.find(v=>v.v===loopRange.a), b=verses.find(v=>v.v===loopRange.b&&!v.rep)||verses.find(v=>v.v===loopRange.b); if(!a||!b) return null; return {start:Math.max(0,a.start-0.3),end:b.end}; }
 function setRange(a,b){ loopRange=a==null?null:{a:Math.min(a,b),b:Math.max(a,b)}; if(loopRange){ repeat='off'; lsSet('repeat',repeat); const r=rangeTimes(); if(r&&(audio.currentTime<r.start||audio.currentTime>r.end)) audio.currentTime=r.start; audio.play().catch(()=>{}); } setRepeatUI(); renderRepPop(); }
 function renderRepPop(){ if(!song) return; const vs=[...new Set(verses.filter(v=>!v.rep).map(v=>v.v))]; let first=$('#vchips').dataset.first; first=first===''||first==null?null:+first;
   $('#vchips').innerHTML=vs.map(v=>{ const inR=loopRange&&v>=loopRange.a&&v<=loopRange.b, edge=loopRange&&(v===loopRange.a||v===loopRange.b); return `<button type="button" data-v="${v}" class="${inR?'in':''}" aria-pressed="${edge||first===v}">${v}</button>`; }).join('');
