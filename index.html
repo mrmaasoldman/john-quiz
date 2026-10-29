@@ -557,6 +557,13 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .lbmode{margin-top:-4px}
 .xppop{position:fixed;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;display:grid;gap:4px;justify-items:end;text-align:right;padding:8px 12px;background:#000;border:3px solid var(--gold);color:#fff;box-shadow:4px 4px 0 rgba(0,0,0,.5);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s;max-width:70vw}
 .xppop.show{opacity:1;transform:none}
+.annc{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-12px);z-index:65;width:min(440px,calc(100% - 24px));padding:14px 16px;background:#000;border:3px solid var(--gold);box-shadow:4px 4px 0 #000;color:#fff;display:grid;gap:10px;opacity:0;transition:opacity .3s,transform .35s}
+.annc.show{opacity:1;transform:translateX(-50%)}
+.annc b{font-family:var(--f-num);font-size:22px;line-height:1.1;color:var(--gold)}
+.annc p{margin:0;font-size:14px;line-height:1.45}
+.annc .row{display:flex;gap:8px;justify-content:flex-end}
+.annc .row a,.annc .row button{font:inherit;font-weight:700;font-size:14px;padding:8px 14px;border:2px solid var(--gold);background:var(--gold);color:#000;cursor:pointer;text-decoration:none}
+.annc .row button.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
 .xppop b{font-family:var(--f-num);font-size:30px;line-height:1;color:var(--gold)}
 .xppop span{font-size:13px;line-height:1.4;color:#fff}
 .xpdetails summary{cursor:pointer;list-style:none}.xpdetails summary::-webkit-details-marker{display:none}
@@ -1519,6 +1526,8 @@ const qCountCh = {}; Q.forEach(q=>qCountCh[q.c]=(qCountCh[q.c]||0)+1);
 
 /* ---------- storage ---------- */
 const K='johnquiz:';
+// the home-screen app opens wherever you were last: here, or on the Songs page
+try{ if(localStorage.getItem(K+'where')==='"songs"'&&!sessionStorage.getItem('jq:back')){ location.replace('songs/'); } else { localStorage.setItem(K+'where','"quiz"'); sessionStorage.removeItem('jq:back'); } }catch(e){}
 function lsGet(k,d){try{const v=localStorage.getItem(K+k);return v?JSON.parse(v):d}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(K+k,JSON.stringify(v));return true}catch(e){return false}}
 function blankUser(){return {stats:{},mem:{},sessions:[],sel:['1:'+qVerses[1].join(',1:')].join('').split(','),opts:{order:'order',limit:'all',pool:'all',memOnly:false,mix:false,words:'all',answer:'think',timer:'off'},vopts:{from:'goal',order:'shuffle',limit:'25',mode:'type',vsel:[],kind:'ref',timer:'off'},vstats:{},rstats:{},counts:{},badges:{}}}
@@ -1714,16 +1723,23 @@ function sayBtn(id,label){ return canSpeak?`<button class="btn ghost small saybt
 /* ---------- state ---------- */
 let lastEnterTab=null; let tab='practice', openCh=null, quiz=null, confirmReset=false;
 
+// one-time heads-up (per device) that listening to the songs now earns XP
+function announceSongs(){ if(lsGet('ann:songxp',false)||document.querySelector('.annc')) return; const el=document.createElement('div'); el.className='annc'; el.setAttribute('role','status');
+  el.innerHTML=`<b>🎵 New: XP for listening!</b><p>The John Songs are now right here on the site, and every song you listen to all the way through earns <b style="font:inherit;color:var(--gold)">20 XP</b>. The words light up as they're sung, so it's a great way to learn the verses.</p><div class="row"><button class="ghost" type="button" id="anncok">Got it</button><a href="songs/" id="anncgo">Open the songs</a></div>`;
+  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('show'));
+  const done=()=>{ lsSet('ann:songxp',true); el.classList.remove('show'); setTimeout(()=>el.remove(),350); };
+  el.querySelector('#anncok').onclick=done; el.querySelector('#anncgo').onclick=()=>lsSet('ann:songxp',true); }
 function render(){
   const app=$('#app'); app.innerHTML='';
   if(!me){ app.append(signInView()); const i=$('#nm'); i&&i.focus(); return; }
   if(!U.team){ app.append(teamGateView()); return; }
   if(liveJoinCode&&!live){ live={role:'menu',code:liveJoinCode,unsub:[]}; liveJoinCode=null; try{ history.replaceState(null,'',location.pathname); }catch(e){} }
   if(live){ app.append(liveView()); wireLive(); return; }
+  setTimeout(announceSongs,900);
   if(tab==='memory') tab='materials';
   app.append(h(`<header class="bar"><div class="bar-in">
     <div class="brand"><b>John Quiz</b><span>BQF · Sept 2026 set</span></div>
-    <a class="topsongs" href="${SONGS_URL}" target="_blank" rel="noopener" title="Open the songs folder">🎵 Songs</a>
+    <a class="topsongs" href="${SONGS_URL}" title="Open the John Songs">🎵 Songs</a>
     <div class="tabs" role="tablist">
       ${['practice','games','verses','scores','progress','materials'].map(t=>`<button role="tab" data-tab="${t}" aria-selected="${tab===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}
     </div>
@@ -1854,7 +1870,7 @@ function printPanel(){ const sel=new Set(U.sel.map(k=>+k.split(':')[0]));
   return `<div class="panel" style="display:grid;gap:10px"><div class="row" style="justify-content:space-between"><span class="label">Printable question sheets</span><span class="hint">Opens in Google Docs</span></div>
     <div class="printgrid">${PRINT_LINKS.map((u,i)=>`<a class="printlink ${sel.has(i+1)?'sel':''}" href="${u}" target="_blank" rel="noopener"><span aria-hidden="true">🖨️</span> John ${i+1}</a>`).join('')}</div>
     <span class="hint">To print: on a computer, choose <b>File → Print</b>. On a phone, tap <b>⋮</b> (or <b>…</b>) then <b>Share & export → Print</b>. Highlighted chapters are the ones picked on the Practice tab.</span></div>`; }
-const SONGS_URL='https://drive.google.com/drive/folders/1XPC3YZAwg-NdOoXap4Z4amll050fq0pB?usp=sharing';
+const SONGS_URL='songs/';
 let matSub='memory';
 function materialsView(){
   const seg=`<div class="seg matseg" role="tablist"><button data-matsub="memory" aria-pressed="${matSub==='memory'}"><span aria-hidden="true">🧠</span> Memory verses</button><button data-matsub="study" aria-pressed="${matSub==='study'}"><span aria-hidden="true">📚</span> Sheets &amp; songs</button></div>`;
@@ -1862,8 +1878,8 @@ function materialsView(){
   return h(`<section>
     ${seg}
     <div><div class="label">Materials</div><h2>Study sheets and songs</h2></div>
-    <a class="songcard" href="${SONGS_URL}" target="_blank" rel="noopener"><span class="gi" aria-hidden="true">🎵</span>
-      <div style="display:grid;gap:3px;min-width:0"><b>John Songs</b><small>Songs for everything in John. Opens the Google Drive folder.</small></div><span class="hint" aria-hidden="true">↗</span></a>
+    <a class="songcard" href="${SONGS_URL}" id="songcard"><span class="gi" aria-hidden="true">🎵</span>
+      <div style="display:grid;gap:3px;min-width:0"><b>John Songs</b><small>All 96 songs, with the words lighting up as they're sung. Tap a song and its chapter plays on repeat.</small></div><span class="hint" aria-hidden="true">↗</span></a>
     ${printPanel()}
   </section>`);
 }
@@ -2860,7 +2876,13 @@ const XP_RULES=[
  ['📅','Daily goal','+25','Once a day, when you hit 30 questions.'],
  ['🗓️','Daily Challenge','+20','Once a day, plus 30 more if you get every one right.'],
  ['⚡','Speed Round','+20','Each time you beat your best score.'],
- ['⚔️','Boss Battle','+50','The first time you beat a chapter boss, then +15 for each win after that.']];
+ ['⚔️','Boss Battle','+50','The first time you beat a chapter boss, then +15 for each win after that.'],
+ ['🎵','Song listened to','+20','Play any John Song all the way through on the Songs page.']];
+// XP earned on the Songs page is written to this quizzer's saved record; pick it up when we come back
+function absorbSongXP(){ if(!me||!U) return; const d=lsGet('u:'+me,null); const had=(U.counts&&U.counts.songs)||0, now=(d&&d.counts&&d.counts.songs)||0; if(now<=had) return; const k=now-had, gain=k*20; U.counts=U.counts||{}; U.counts.songs=now; gainXP(gain,[['song',`${k} song${k>1?'s':''} listened to`,gain]]); save(); try{ render(); }catch(e){} }
+addEventListener('storage',e=>{ if(me&&e.key===K+'u:'+me) absorbSongXP(); });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') absorbSongXP(); });
+addEventListener('pageshow',()=>absorbSongXP());
 function xpGuide(){ const l=levelOf(U.xp), today=(U.xpDays&&U.xpDays[dayKey()])||0, log=(U.xpLog||[]).slice(0,8);
   return `<div class="xpguide">
     <div class="xprules">${XP_RULES.map(([i,t,v,d])=>`<div class="xprule"><span class="xpi" aria-hidden="true">${i}</span><div><b>${t}</b> <span class="xpv">${v}</span><small>${d}</small></div></div>`).join('')}</div>
