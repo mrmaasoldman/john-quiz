@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&display=optional">
 <style>
 /* Layout: a music app — library (hero, search, chapters, songs) and chapter pages in one scroll view; floating mini player; full-screen Now Playing with lyrics as the main screen, artwork view, and an Up Next sheet */
 :root{
@@ -672,15 +672,15 @@ function lighten([r,g,b],minL,minS){ // keep the tint readable on a dark screen
 }
 async function makeArt(ch){
   const img=await loadImg(`art/john${ch}.jpg`);
-  const c=document.createElement('canvas'); c.width=c.height=800; const x=c.getContext('2d',{willReadFrequently:true}), W=800;
+  const c=document.createElement('canvas'); c.width=c.height=640; const x=c.getContext('2d',{willReadFrequently:true}), W=640;
   if(img) x.drawImage(img,0,0,W,W); else { x.fillStyle='#334'; x.fillRect(0,0,W,W); }
   try{ const t1=document.createElement('canvas'); t1.width=t1.height=16; t1.getContext('2d').drawImage(c,0,0,16,16); const t2=document.createElement('canvas'); t2.width=t2.height=64; const x2=t2.getContext('2d'); x2.imageSmoothingEnabled=true; x2.drawImage(t1,0,0,64,64); boxBlur(t2,3,3); x2.fillStyle='rgba(0,0,0,.4)'; x2.fillRect(0,0,64,64); ART_BG[ch]=t2.toDataURL('image/png'); }catch(e){}
   let cols=[[90,110,200],[150,60,90],[40,120,140]]; try{ cols=palette(x,W); }catch(e){}
   COL[ch]={tint:lighten(cols[0],.62,.55),c:cols.map(c=>lighten(c,.42,.45))};
   let v=x.createLinearGradient(0,W*.5,0,W); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,.62)'); x.fillStyle=v; x.fillRect(0,0,W,W);
   x.shadowColor='rgba(0,0,0,.5)'; x.shadowBlur=18;
-  x.fillStyle='rgba(255,255,255,.85)'; x.font='700 30px '+getComputedStyle(document.documentElement).getPropertyValue('--ui'); x.fillText('JOHN',56,W-190);
-  x.fillStyle='#fff'; x.font='800 170px Fraunces, Georgia, serif'; x.fillText(String(ch),50,W-40);
+  x.fillStyle='rgba(255,255,255,.85)'; x.font='700 24px '+getComputedStyle(document.documentElement).getPropertyValue('--ui'); x.fillText('JOHN',45,W-152);
+  x.fillStyle='#fff'; x.font='800 136px Fraunces, Georgia, serif'; x.fillText(String(ch),40,W-32);
   return c.toDataURL('image/jpeg',.86);
 }
 
@@ -1222,14 +1222,20 @@ audio.addEventListener('seeking',()=>{ heardAt=null; });
 /* ---------- boot ---------- */
 if(!/claude\.ai$/.test(location.hostname)&&/\/songs\/?(index\.html)?$/.test(location.pathname)){ $('#quizlink').hidden=false; qzChip(); try{ localStorage.setItem('johnquiz:where','"songs"'); }catch(e){}
   $('#quizlink').onclick=()=>{ try{ localStorage.setItem('johnquiz:where','"quiz"'); sessionStorage.setItem('jq:back','1'); }catch(e){} }; }
+// swap a freshly made cover into every place the plain photo was showing
+function refreshArt(c){ const raw=`art/john${c}.jpg`; document.querySelectorAll('img').forEach(im=>{ const v=im.getAttribute('src')||''; if(v===raw||v.endsWith('/'+raw)) im.src=ART[c]; });
+  if(song&&song.ch===c){ $('#npbg').style.backgroundImage=`url(${ART_BG[c]||ART[c]})`; const col=COL[c]; if(col){ document.documentElement.style.setProperty('--tint',col.tint); AUR.cols=col.c.slice(); AUR.last=0; } } }
 (async function(){
-  try{ await Promise.race([document.fonts.load('800 150px Fraunces'),new Promise(r=>setTimeout(r,1500))]); }catch(e){}
-  await Promise.all(CHAPTERS.map(async c=>{ ART[c]=await makeArt(c); }));
+  // show the library right away with the plain photos; the numbered covers get painted in one by one behind the scenes
+  try{ await Promise.race([document.fonts.load('800 150px Fraunces'),new Promise(r=>setTimeout(r,350))]); }catch(e){}
+  CHAPTERS.forEach(c=>{ ART[c]=`art/john${c}.jpg`; });
   renderLibrary();
   const h=location.hash, m=h.match(/^#ch(\d+)$/), last=lsGet('last',null);
   let s=SONGS.find(x=>'#'+x.id===h)||(last&&SONGS.find(x=>x.id===last.id))||SONGS[0];
   setSource('chapter',s.ch,s.i); load(s.i,false,(last&&last.id===s.id&&last.t>8)?last.t:null);
   if(m&&CH[+m[1]]) showChapter(+m[1]);
+  const order=[s.ch,...CHAPTERS.filter(c=>c!==s.ch)];
+  for(const c of order){ try{ ART[c]=await makeArt(c); refreshArt(c); }catch(e){} await new Promise(r=>setTimeout(r,0)); }
 })();
 </script>
 
