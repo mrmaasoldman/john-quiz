@@ -248,10 +248,10 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .vhead b{display:block;font-family:var(--serif);font-size:21px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vhead small{display:block;font-size:14px;color:var(--np-sub)}
 .vhead .heart{color:rgba(255,255,255,.8)} .vhead .heart[aria-pressed="true"]{color:var(--accent)}
-.vbody{min-height:0;display:grid;align-content:center;justify-items:start;gap:10px;position:relative;padding:4px 0}
+.vbody{min-height:0;display:grid;align-content:start;justify-items:start;gap:10px;position:relative;padding:6px 0 4px}
 .art{display:none}
-.vref{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--sig1);display:flex;align-items:center;gap:8px}
-.vref small{font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--np-sub);font-size:13px}
+.vref{font-family:var(--serif);font-size:24px;font-weight:800;letter-spacing:0;color:var(--sig1);display:flex;align-items:baseline;gap:10px;line-height:1}
+.vref small{font-family:var(--ui);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--np-sub);font-size:12px}
 .vtext{font-family:var(--serif);font-weight:600;line-height:1.22;margin:0;font-size:var(--vfs,32px);letter-spacing:-.005em;text-wrap:pretty;max-width:100%}
 .vtext .w{color:rgba(255,255,255,.4)}
 .vtext .w.on{color:transparent;background-image:linear-gradient(#fff,#fff);-webkit-background-clip:text;background-clip:text}
@@ -290,7 +290,7 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .ln.cur .w.now{background-image:linear-gradient(90deg,#fff calc(var(--p) - 8%),rgba(255,255,255,.4) calc(var(--p) + 8%));animation:wfill calc(var(--d,.4s) / var(--rate,1)) linear forwards}
 @property --p{syntax:'<percentage>';inherits:false;initial-value:0%}
 @keyframes wfill{from{--p:0%}to{--p:108%}}
-.ln .vn{display:inline-block;font-family:var(--serif);font-weight:600;font-style:italic;font-size:.5em;line-height:1;color:var(--sig1);margin-right:.55em;vertical-align:.6em;letter-spacing:0}
+.ln .vn{display:inline-block;font-family:var(--serif);font-weight:700;font-style:italic;font-size:.68em;line-height:1;color:var(--sig1);margin-right:.5em;vertical-align:.3em;letter-spacing:0}
 .ln .vn em{font-family:var(--ui);font-style:normal;font-weight:700;font-size:.76em;opacity:.85;margin-left:.5em;letter-spacing:.06em;text-transform:uppercase}
 .ln.gap{display:flex;align-items:center;gap:8px;height:30px;transform:none;margin-bottom:26px}
 .ln.gap i{width:10px;height:10px;border-radius:50%;background:#fff;opacity:.35;transform:scale(.8)}
@@ -826,10 +826,10 @@ function renderVerse(idx){
   const on=idx>=0?idx:(-idx-1);
   dots.innerHTML=verses.map((x,k)=>`<i class="${k<on?'done':(k===on&&idx>=0)?'on':''}"></i>`).join('');
   if(idx>=0){ const x=verses[idx]; ref.innerHTML=`John ${song.ch}:${x.v}${x.rep?' <small>again</small>':''}`; txt.className='vtext'; txt.innerHTML=x.words.map((w,k)=>{ const nt=k+1<x.words.length?x.words[k+1].t:x.end; const d=Math.min(2.5,Math.max(.15,nt-w.t)); return `<span class="w" style="--d:${d.toFixed(2)}s">${esc(w.w)}</span>`; }).join(' '); meta.textContent=`Verse ${idx+1} of ${verses.length}`; }
-  else { const x=verses[on]; if(x){ ref.innerHTML=`Coming up <small>John ${song.ch}:${x.v}</small>`; txt.className='vtext coming'; txt.innerHTML=x.words.map(w=>`<span class="w">${esc(w.w)}</span>`).join(' '); meta.textContent='• • •'; } else { ref.textContent=song.title; txt.className='vtext dots'; txt.textContent='• • •'; meta.textContent=''; } }
+  else { const x=verses[on]; if(x){ ref.innerHTML=`John ${song.ch}:${x.v} <small>Coming up</small>`; txt.className='vtext coming'; txt.innerHTML=x.words.map(w=>`<span class="w">${esc(w.w)}</span>`).join(' '); meta.textContent='• • •'; } else { ref.textContent=song.title; txt.className='vtext dots'; txt.textContent='• • •'; meta.textContent=''; } }
   fitVerse();
 }
-function fitVerse(){ const txt=$('#vtext'), body=$('#vbody'); if(!body.clientWidth) return; const W=body.clientWidth, H=Math.max(140,body.clientHeight-(innerWidth>=900?80:96)); const n=txt.textContent.length||1;
+function fitVerse(){ const txt=$('#vtext'), body=$('#vbody'); if(!body.clientWidth) return; const W=body.clientWidth, H=Math.max(140,body.clientHeight-(innerWidth>=900?80:86)); const n=txt.textContent.length||1;
   let f=innerWidth>=900?34:42; for(;f>=18;f-=1){ const cpl=Math.max(8,W/(f*.5)); const ln=Math.ceil(n/cpl); if(ln*f*1.22<=H) break; } txt.style.setProperty('--vfs',f+'px'); }
 function updateVerse(force){
   if(!song) return; const t=audio.currentTime; const idx=verseAt(t);
