@@ -15,6 +15,10 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
+<script>
+// opened on the Songs part last? go straight there before any of the quiz page is drawn or loaded
+try{ if(localStorage.getItem('johnquiz:where')==='"songs"'&&!sessionStorage.getItem('jq:back')){ document.write('<style>html,body{background:#000!important}body>*{display:none!important}</style>'); window.stop(); location.replace('songs/'); } }catch(e){}
+</script>
 <title>John Quiz Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;500;600;700&family=Jersey+15&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=VT323&family=Orbitron:wght@600;800&family=Silkscreen&family=Bungee&family=Cinzel:wght@700;900&family=MedievalSharp&family=Luckiest+Guy&family=Audiowide&family=Black+Ops+One&family=Fredoka:wght@500;600;700&family=Dancing+Script:wght@600;700&family=Comfortaa:wght@600;700&family=Chewy&family=Baloo+2:wght@700;800&family=Lilita+One&family=Bangers&family=Rye&family=Graduate&family=Permanent+Marker&family=Shrikhand&family=Passion+One:wght@400;700&family=Philosopher:wght@400;700&display=swap">
