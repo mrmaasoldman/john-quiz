@@ -16,7 +16,7 @@
   --bg:#fbf9f6; --fg:#15131c; --sub:#7d7889; --sep:rgba(21,19,28,.09); --btn:rgba(21,19,28,.06); --glass:rgba(255,255,255,.55); --thumb:#e9e5ef; --hover:rgba(21,19,28,.04);
   --sig1:#ffb547; --sig2:#ff5c8a; --sig3:#6c5ce7; --sig:linear-gradient(135deg,#ffb547,#ff5c8a 55%,#6c5ce7); --accent:#ff4f79; --tint:#ffb547; --c1:#4a63c9; --c2:#9a2a4c; --c3:#1c7f8e;
   --wash1:rgba(255,181,71,.22); --wash2:rgba(108,92,231,.16); --wash3:rgba(255,92,138,.12);
-  --g-bg:rgba(255,255,255,.5); --g-hi:rgba(255,255,255,.95); --g-br:rgba(255,255,255,.7); --g-sh:rgba(40,30,80,.16); --g-sheen:rgba(255,255,255,.55);
+  --g-bg:rgba(255,255,255,.2); --g-hi:rgba(255,255,255,.95); --g-br:rgba(255,255,255,.7); --g-sh:rgba(40,30,80,.16); --g-sheen:rgba(255,255,255,.55);
   --np-fg:#ffffff; --np-sub:rgba(255,255,255,.62); --np-dim:rgba(255,255,255,.42); --np-line:rgba(255,255,255,.22); --np-glass:rgba(255,255,255,.14);
   --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
   --serif:"Fraunces","New York",Georgia,"Times New Roman",serif;
@@ -24,11 +24,11 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0b0a12; --fg:#f6f3fb; --sub:#9b95ab; --sep:rgba(255,255,255,.09); --btn:rgba(255,255,255,.08); --glass:rgba(24,22,36,.55); --thumb:#262233; --hover:rgba(255,255,255,.05); --accent:#ff6b8f;
   --wash1:rgba(255,181,71,.13); --wash2:rgba(108,92,231,.22); --wash3:rgba(255,92,138,.1);
-  --g-bg:rgba(60,55,85,.32); --g-hi:rgba(255,255,255,.35); --g-br:rgba(255,255,255,.2); --g-sh:rgba(0,0,0,.45); --g-sheen:rgba(255,255,255,.22); color-scheme:dark}}
+  --g-bg:rgba(40,36,60,.16); --g-hi:rgba(255,255,255,.4); --g-br:rgba(255,255,255,.2); --g-sh:rgba(0,0,0,.45); --g-sheen:rgba(255,255,255,.22); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0b0a12; --fg:#f6f3fb; --sub:#9b95ab; --sep:rgba(255,255,255,.09); --btn:rgba(255,255,255,.08); --glass:rgba(24,22,36,.55); --thumb:#262233; --hover:rgba(255,255,255,.05); --accent:#ff6b8f;
   --wash1:rgba(255,181,71,.13); --wash2:rgba(108,92,231,.22); --wash3:rgba(255,92,138,.1);
-  --g-bg:rgba(60,55,85,.32); --g-hi:rgba(255,255,255,.35); --g-br:rgba(255,255,255,.2); --g-sh:rgba(0,0,0,.45); --g-sheen:rgba(255,255,255,.22); color-scheme:dark}
+  --g-bg:rgba(40,36,60,.16); --g-hi:rgba(255,255,255,.4); --g-br:rgba(255,255,255,.2); --g-sh:rgba(0,0,0,.45); --g-sheen:rgba(255,255,255,.22); color-scheme:dark}
 [hidden]{display:none!important}
 *{box-sizing:border-box}
 /* iOS turns anything that looks like a time ("3:16") into a purple underlined link; undo that everywhere */
@@ -42,9 +42,22 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 button:focus{outline:none}
 svg{display:block}
 /* liquid glass: a translucent lens with a specular sheen, a bright rim and a soft refracted edge */
-.glass{position:relative;background:var(--g-bg);backdrop-filter:blur(26px) saturate(1.9);-webkit-backdrop-filter:blur(26px) saturate(1.9);border:1px solid var(--g-br);box-shadow:inset 0 1px 0 var(--g-hi),inset 0 -1px 0 rgba(255,255,255,.08),inset 0 -10px 18px -12px rgba(255,255,255,.35),0 12px 32px var(--g-sh)}
-.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(130% 90% at 18% -10%,var(--g-sheen),rgba(255,255,255,0) 52%);pointer-events:none}
-.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 2px 0 6px -4px rgba(255,255,255,.5),inset -2px 0 6px -4px rgba(255,255,255,.3);pointer-events:none}
+/* Liquid glass: nearly clear with a whisper of blur; on browsers that can, the edges bend what's behind them like a lens.
+   The light catching the rim and the sheen across the face move as you scroll or tilt the phone. */
+.glass{position:relative;background:var(--g-bg);backdrop-filter:blur(3px) saturate(1.8) brightness(1.06);-webkit-backdrop-filter:blur(3px) saturate(1.8) brightness(1.06);border:1px solid transparent;box-shadow:inset 0 1px 0 var(--g-hi),inset 0 -1px 0 rgba(255,255,255,.12),inset 0 -12px 20px -14px rgba(255,255,255,.45),inset 0 10px 18px -14px rgba(255,255,255,.35),0 10px 28px var(--g-sh)}
+html.lens .glass{backdrop-filter:url(#lglens) blur(2px) saturate(1.8) brightness(1.06)}
+/* the floating bars sit over busy lists, so they keep a touch more tint to stay readable */
+.mini .card.glass,.tabbar.glass{background:var(--g-bar,rgba(255,255,255,.66));-webkit-backdrop-filter:blur(6px) saturate(1.8) brightness(1.04);backdrop-filter:blur(6px) saturate(1.8) brightness(1.04)}
+html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) saturate(1.8) brightness(1.04)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mini .card.glass,:root:not([data-theme="light"]) .tabbar.glass{--g-bar:rgba(22,20,34,.74)}}
+:root[data-theme="dark"] .mini .card.glass,:root[data-theme="dark"] .tabbar.glass{--g-bar:rgba(22,20,34,.74)}
+.mini .card,.tabbar button{text-shadow:0 1px 6px rgba(0,0,0,.25)}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(120% 80% at calc(18% + var(--lx,0) * 30%) calc(-12% + var(--ly,0) * 22%),var(--g-sheen),rgba(255,255,255,0) 48%),
+             linear-gradient(calc(115deg + var(--lx,0) * 40deg),rgba(255,255,255,0) 38%,rgba(255,255,255,.16) 46%,rgba(255,255,255,0) 54%);mix-blend-mode:screen}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;pointer-events:none;
+  background:conic-gradient(from calc(210deg + var(--lx,0) * 60deg),rgba(255,255,255,.95),rgba(255,255,255,.12) 18%,rgba(255,255,255,.05) 35%,rgba(255,255,255,.55) 50%,rgba(255,255,255,.08) 68%,rgba(255,255,255,.12) 85%,rgba(255,255,255,.95));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
 .glass>*{position:relative}
 .gbtn{transition:transform .14s cubic-bezier(.2,.8,.2,1),filter .14s}
 .gbtn:active{transform:scale(.94);filter:brightness(1.12)}
@@ -500,6 +513,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
   </div>
 </main>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lglens" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.006 0.012" numOctaves="2" seed="7" result="n"/><feGaussianBlur in="n" stdDeviation="2" result="nb"/><feDisplacementMap in="SourceGraphic" in2="nb" scale="22" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
 <nav class="tabbar glass" id="tabbar" aria-label="Sections">
   <div class="blob" id="blob" aria-hidden="true"><i></i></div><div class="sweep" id="sweep" aria-hidden="true"></div>
   <button class="gbtn" type="button" data-tab="home" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M12 3 2 12h3v8h5v-6h4v6h5v-8h3z"/></svg><span>Library</span></button>
@@ -1220,6 +1234,15 @@ let heard=0, heardAt=null, heardSong=null;
 audio.addEventListener('timeupdate',()=>{ const t=audio.currentTime; if(heardSong!==song){ heardSong=song; heard=0; heardAt=t; return; } if(heardAt!=null&&!audio.paused){ const d=t-heardAt; if(d>0&&d<1.5) heard+=d; } heardAt=t;
   const need=(song&&song.dur||0)*0.85; if(song&&need>0&&heard>=need){ heard=0; if(!awardXP()) heard=-1e9; } });
 audio.addEventListener('seeking',()=>{ heardAt=null; });
+/* ---------- glass light: the highlights drift with scrolling, tilting and the mouse ---------- */
+(function(){ const R=document.documentElement; let tx=0,ty=0,x=0,y=0,raf=0;
+  const ua=navigator.userAgent; if(/Chrome\//.test(ua)&&!/Edg\/|OPR\//.test(ua)&&!/iPhone|iPad|iPod/.test(ua)&&!reduce) R.classList.add('lens'); // only Chromium bends the backdrop through SVG
+  const step=()=>{ x+=(tx-x)*.12; y+=(ty-y)*.12; R.style.setProperty('--lx',x.toFixed(3)); R.style.setProperty('--ly',y.toFixed(3)); raf=(Math.abs(tx-x)+Math.abs(ty-y)>.002)?requestAnimationFrame(step):0; };
+  const aim=(a,b)=>{ tx=Math.max(-1,Math.min(1,a)); ty=Math.max(-1,Math.min(1,b)); if(!raf&&!reduce) raf=requestAnimationFrame(step); };
+  $('#lib').addEventListener('scroll',e=>{ const t=e.target.scrollTop; aim(Math.sin(t/260)*.8, Math.cos(t/340)*.6); },{passive:true});
+  addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') aim(e.clientX/innerWidth*2-1, e.clientY/innerHeight*2-1); },{passive:true});
+  addEventListener('deviceorientation',e=>{ if(e.gamma==null) return; aim(e.gamma/35, (e.beta-45)/35); },{passive:true});
+})();
 /* ---------- boot ---------- */
 if(!/claude\.ai$/.test(location.hostname)&&/\/songs\/?(index\.html)?$/.test(location.pathname)){ $('#quizlink').hidden=false; qzChip(); try{ localStorage.setItem('johnquiz:where','"songs"'); }catch(e){}
   $('#quizlink').onclick=()=>{ try{ localStorage.setItem('johnquiz:where','"quiz"'); sessionStorage.setItem('jq:back','1'); }catch(e){} }; }
