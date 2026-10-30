@@ -217,7 +217,7 @@ body.npopen #chapter{transform:scale(.94) translateY(-10px)} body.morphing #chap
 .chbody{display:grid;grid-template-rows:0fr}
 /* folders open with transforms only: the list slides out from under its header while everything below it glides down; nothing re-lays-out per frame */
 .chgroup.moving{will-change:transform} .chbody.moving{overflow:hidden} .chin.moving{will-change:transform}
-.chbody.ghost{display:block;height:0;overflow:visible;position:relative} .chbody.ghost>.chin{position:absolute;left:0;right:0;top:0;will-change:transform,clip-path}
+.chgroup{position:relative} .chbody.ghost{display:block;position:absolute;left:0;right:0;top:100%;overflow:hidden;will-change:height} .chbody.ghost>.chin{will-change:transform}
 .chgroup.open .chbody{grid-template-rows:1fr}
 .chin{min-height:0;overflow:hidden;padding:0 4px}
 .chgroup.open .chin{padding-top:4px;padding-bottom:6px}
@@ -344,9 +344,9 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .np ::selection{background:transparent}
 .np *{-webkit-tap-highlight-color:transparent}
 .np button:focus,.np button:focus-visible{outline:none;box-shadow:none}
-.npbg{position:absolute;inset:-4%;background-size:cover;background-position:center}
-#aurora{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:.85;pointer-events:none}
-.npbg2{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.22),rgba(0,0,0,.42) 60%,rgba(0,0,0,.66))}
+.npbg{position:absolute;inset:-4%;height:108%;height:calc(100lvh * 1.08);background-size:cover;background-position:center}
+#aurora{position:absolute;inset:0;width:100%;height:100%;height:100lvh;display:block;opacity:.85;pointer-events:none}
+.npbg2{position:absolute;inset:0;height:100%;height:100lvh;background:linear-gradient(to bottom,rgba(0,0,0,.22),rgba(0,0,0,.42) 60%,rgba(0,0,0,.66))}
 .npin{position:relative;height:100%;display:grid;grid-template-rows:1fr auto;width:100%}
 .npscroll{position:relative;min-height:0;overflow-y:auto;overscroll-behavior:none;scroll-snap-type:y proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-y}
 .npscroll::-webkit-scrollbar{display:none}
@@ -925,7 +925,7 @@ function toggleGroup(g){
   groups.forEach(x=>{ const d=after.get(x)-before.get(x); if(Math.abs(d)<.5) return; x.classList.add('moving'); const a=x.animate([{transform:`translateY(${-d}px)`},{transform:'none'}],T); a.onfinish=()=>x.classList.remove('moving'); });
   if(open){ const body=g.querySelector('.chbody'), chin=body.querySelector('.chin'), H=body.offsetHeight; body.classList.add('moving'); chin.classList.add('moving');
     const a=chin.animate([{transform:`translateY(${-H}px)`,opacity:.4},{transform:'none',opacity:1}],T); a.onfinish=()=>{ body.classList.remove('moving'); chin.classList.remove('moving'); }; staggerIn(g); }
-  ghosts.forEach(gh=>{ const a=gh.chin.animate([{transform:'none',clipPath:'inset(0px 0px 0px 0px)',opacity:1},{transform:`translateY(${-gh.h}px)`,clipPath:`inset(${gh.h}px 0px 0px 0px)`,opacity:.5}],T);
+  ghosts.forEach(gh=>{ const a=gh.body.animate([{height:gh.h+'px'},{height:'0px'}],T); gh.chin.animate([{transform:'none',opacity:1},{transform:`translateY(${-gh.h}px)`,opacity:.6}],T);
     a.onfinish=()=>{ gh.body.classList.remove('ghost'); gh.chin.style.paddingTop=''; gh.chin.style.paddingBottom=''; }; });
 }
 function staggerIn(...els){ els.forEach(el=>{ if(!el) return; el.classList.add('in'); clearTimeout(el._inT); el._inT=setTimeout(()=>el.classList.remove('in'),900); }); }
@@ -936,7 +936,7 @@ function renderChapter(ch){
       <div class="bigbtns"><button type="button" id="chplay"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Play</button><button type="button" class="ghost" id="chshuf"><svg viewBox="0 0 24 24"><path d="M17 4h4v4l-1.5-1.5L16 10l-1.4-1.4 3.5-3.5zM3 6h4l9.6 11H21l-1.5 1.5L21 20h-4v-4l1.5 1.5L17 16H6L3 6zm0 12 4.6-5.3 1.3 1.6L5 18z"/></svg>Shuffle</button></div></div>
     ${list.map((s,k)=>rowHTML(s,{n:k+1,i:k})).join('')}
     <p class="note">Verses ${list[0].a}–${list[list.length-1].b} of John ${ch}, in order.</p></div>`;
-  $('#back').onclick=()=>{ if(history.state&&history.state.ch) history.back(); else showHome(); }; wireRows($('#chapter')); staggerIn($('#chapter'));
+  $('#back').onclick=()=>{ showHome(); if(history.state&&history.state.ch) try{ history.back(); }catch(e){} }; wireRows($('#chapter')); staggerIn($('#chapter'));
   $('#chplay').onclick=()=>{ shuffle=false; $('#shuf').setAttribute('aria-pressed','false'); setSource('chapter',ch,list[0].i); load(list[0].i,true); openNP(); };
   $('#chshuf').onclick=()=>{ shuffle=true; $('#shuf').setAttribute('aria-pressed','true'); setSource('chapter',ch,null); load(src.order[0],true); openNP(); };
   if(song) document.querySelectorAll('[data-song]').forEach(b=>b.setAttribute('aria-current',+b.dataset.song===song.i));
@@ -964,7 +964,7 @@ function showHome(){
     if(e.cancelable) e.preventDefault(); const p=Math.max(0,Math.min(1,dx/innerWidth)); chap.style.transform=`translateX(${Math.max(0,dx)}px)`;
     homeParts().forEach(h=>{ h.style.transform=`translateX(${-24*(1-p)}%)`; h.style.opacity=(.55+.45*p).toFixed(3); }); },{passive:false});
   const end=()=>{ if(mode!=='pop'){ mode=null; return; } mode=null; const v=dx/Math.max(1,performance.now()-t0);
-    if(dx>innerWidth*.3||(dx>40&&v>.5)){ if(history.state&&history.state.ch) history.back(); else showHome(); }
+    if(dx>innerWidth*.3||(dx>40&&v>.5)){ showHome(); if(history.state&&history.state.ch) try{ history.back(); }catch(e){} }
     else { const a=chap.animate([{transform:chap.style.transform},{transform:'translateX(0px)'}],{duration:300,easing:'cubic-bezier(.2,.8,.2,1)'}); homeParts().forEach(h=>{ h.animate([{transform:h.style.transform,opacity:h.style.opacity},{transform:'translateX(-24%)',opacity:.55}],{duration:300,easing:'cubic-bezier(.2,.8,.2,1)'}); h.style.transform=''; h.style.opacity=''; }); chap.style.transform=''; a.onfinish=()=>chap.classList.remove('sliding'); } };
   chap.addEventListener('touchend',end); chap.addEventListener('touchcancel',end);
 })();
@@ -1053,7 +1053,8 @@ function updateVerse(force){
 }
 $('#tapR').onclick=()=>{ const i=curVerse>=0?curVerse:(-curVerse-2); const n=verses[i+1]; if(n){ audio.currentTime=Math.max(0,n.start-0.05); audio.play().catch(()=>{}); } };
 $('#tapL').onclick=()=>{ const i=curVerse>=0?curVerse:(-curVerse-1); const cur=verses[i]; if(cur&&audio.currentTime-cur.start>2.5){ audio.currentTime=Math.max(0,cur.start-0.05); return; } const p=verses[i-1]; if(p){ audio.currentTime=Math.max(0,p.start-0.05); audio.play().catch(()=>{}); } };
-addEventListener('resize',()=>{ fitVerse(); lyLayout(); LY.followed=-2; });
+// a small height change (a browser toolbar sliding away) is not a reason to re-set the verse while you're reading it; a real resize or rotation is
+let lastVW=innerWidth, lastVH=innerHeight; addEventListener('resize',()=>{ const big=innerWidth!==lastVW||Math.abs(innerHeight-lastVH)>160; lastVW=innerWidth; lastVH=innerHeight; if(big){ fitVerse(); lyLayout(); LY.followed=-2; } else LY.needFit=true; });
 // the serif font can arrive after the verse was sized (it's wider than the fallback), the viewport can shift under iOS toolbars,
 // and the number of dots can wrap — so re-fit whenever the box changes, when fonts land, and whenever the text is seen overflowing
 try{ document.fonts.ready.then(()=>fitVerse()); document.fonts.addEventListener('loadingdone',()=>fitVerse()); }catch(e){}
@@ -1138,7 +1139,7 @@ npscroll.addEventListener('touchstart',()=>{ LY.touch=true; clearTimeout(LY.sett
 const lyRelease=()=>{ LY.touch=false; scheduleSettle(); };
 npscroll.addEventListener('touchend',lyRelease,{passive:true}); npscroll.addEventListener('touchcancel',lyRelease,{passive:true});
 plyr.addEventListener('scroll',()=>{ if(!LY.prog) LY.userAt=performance.now(); },{passive:true});
-function goLyrics(on){ if(wide()){ LY.userAt=0; LY.followed=-2; updateLyrics(); return; } if(on) intoLyrics(680); else { LY.arrive=false; LY.userAt=0; animateScroll(npscroll,0,520); } scheduleSettle(); }
+function goLyrics(on){ if(wide()){ LY.userAt=0; LY.followed=-2; updateLyrics(); return; } if(on) intoLyrics(680); else { if(LY.needFit){ LY.needFit=false; fitVerse(); } LY.arrive=false; LY.userAt=0; animateScroll(npscroll,0,520); } scheduleSettle(); }
 $('#lyr').onclick=()=>goLyrics(!lyricsVisible()||wide()); $('#vhint').onclick=()=>goLyrics(true); $('#lyup').onclick=()=>goLyrics(false);
 
 /* ---------- time & controls ---------- */
