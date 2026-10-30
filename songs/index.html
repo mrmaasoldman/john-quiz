@@ -1118,20 +1118,22 @@ let verseClick=lsGet('vclick',false), hapticsOn=true;
 // Web Audio, told to behave like music playback so the ring/silent switch doesn't mute it; ticks are scheduled on the audio clock right at each verse start
 let ACX=null; try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
 function acx(){ try{ if(!ACX) ACX=new (window.AudioContext||window.webkitAudioContext)(); if(ACX.state!=='running'){ const p=ACX.resume(); if(p&&p.catch) p.catch(()=>{}); } }catch(e){} return ACX; }
-// the sound: an EDM kick — a punchy 808 with a fast pitch drop (230 → 50 Hz), a tight click on top so it cuts through a phone speaker, soft-clipped for weight; 0.3 s
+// the sound: an EDM kick — a punchy 808 with a fast pitch drop (260 → 62 Hz), driven hard into a soft clipper and given extra upper harmonics and a loud beater click, so it stays loud on a phone speaker (which can't do sub-bass); 0.3 s, normalized to full scale
 const TICK_RATE=22050, TICK_SAMPLES=(()=>{ const n=Math.round(TICK_RATE*.3), out=new Float32Array(n); let seed=7; const rnd=()=>{ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x3fffffff-1; };
-  for(let k=0;k<n;k++){ const t=k/TICK_RATE, a=Math.min(1,t/.0015);
-    const ph=2*Math.PI*(50*t+(180/28)*(1-Math.exp(-t*28)));            // instantaneous pitch 230 Hz sliding down to 50 Hz
-    const body=Math.sin(ph)*Math.exp(-t*8.5)*1.6;                          // the 808 body
-    const harm=Math.sin(2*ph)*Math.exp(-t*20)*.25;                         // a little second harmonic so small speakers still hear the thump
-    const click=rnd()*Math.exp(-t*420)*.9+Math.sin(2*Math.PI*3400*t)*Math.exp(-t*160)*.35; // the beater click
-    out[k]=a*Math.tanh(body+harm+click)*.95; }
+  let peak=0;
+  for(let k=0;k<n;k++){ const t=k/TICK_RATE, a=Math.min(1,t/.0012);
+    const ph=2*Math.PI*(62*t+(198/26)*(1-Math.exp(-t*26)));
+    const body=Math.sin(ph)*Math.exp(-t*7.5)*2.6;                          // the 808 body, driven
+    const harm=(Math.sin(2*ph)*.55+Math.sin(3*ph)*.3)*Math.exp(-t*14);      // 2nd/3rd harmonics: this is what a small speaker actually plays
+    const click=rnd()*Math.exp(-t*380)*1.6+Math.sin(2*Math.PI*2600*t)*Math.exp(-t*120)*.7; // the beater
+    const v=Math.tanh(body+harm+click); out[k]=a*v; if(Math.abs(out[k])>peak) peak=Math.abs(out[k]); }
+  const g=.99/(peak||1); for(let k=0;k<n;k++) out[k]*=g;
   return out; })();
 const KNOCKS=[]; function unbook(){ bookedVerse=-1; clearTimeout(bookedTimer); if(ACX) KNOCKS.splice(0).forEach(o=>{ try{ o.stop(ACX.currentTime); }catch(e){} }); }
 let TICKBUF=null;
 function knock(at){ const c=acx(); if(!c) return; const t=Math.max(c.currentTime,at||c.currentTime);
   if(!TICKBUF){ TICKBUF=c.createBuffer(1,TICK_SAMPLES.length,TICK_RATE); TICKBUF.getChannelData(0).set(TICK_SAMPLES); }
-  const src=c.createBufferSource(); src.buffer=TICKBUF; const g=c.createGain(); g.gain.value=.9; src.connect(g); g.connect(c.destination); src.start(t); KNOCKS.push(src); if(KNOCKS.length>8) KNOCKS.splice(0,KNOCKS.length-8); }
+  const src=c.createBufferSource(); src.buffer=TICKBUF; const g=c.createGain(); g.gain.value=1; src.connect(g); g.connect(c.destination); src.start(t); KNOCKS.push(src); if(KNOCKS.length>8) KNOCKS.splice(0,KNOCKS.length-8); }
 
 // fallback for anything without Web Audio: a tiny WAV through a real <audio> element
 function wavURL(samples,rate){ const n=samples.length, b=new ArrayBuffer(44+n*2), v=new DataView(b); const W=(o,str)=>{ for(let k=0;k<str.length;k++) v.setUint8(o+k,str.charCodeAt(k)); };
