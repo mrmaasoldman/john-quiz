@@ -1112,15 +1112,23 @@ let verseClick=lsGet('vclick',false), hapticsOn=true;
 // Web Audio, told to behave like music playback so the ring/silent switch doesn't mute it; ticks are scheduled on the audio clock right at each verse start
 let ACX=null; try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
 function acx(){ try{ if(!ACX) ACX=new (window.AudioContext||window.webkitAudioContext)(); if(ACX.state!=='running'){ const p=ACX.resume(); if(p&&p.catch) p.catch(()=>{}); } }catch(e){} return ACX; }
-function knock(at){ const c=acx(); if(!c) return; const t=Math.max(c.currentTime,at||c.currentTime), g=c.createGain(); // a woodblock: a 1 kHz knock with a bright edge, fast decay
-  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.9,t+.003); g.gain.exponentialRampToValueAtTime(.0001,t+.11); g.connect(c.destination);
-  [[1000,1,.11],[2400,.4,.05]].forEach(([f,v,d])=>{ const o=c.createOscillator(), og=c.createGain(); o.type='sine'; o.frequency.setValueAtTime(f,t); o.frequency.exponentialRampToValueAtTime(f*.7,t+d); og.gain.value=v; o.connect(og); og.connect(g); o.start(t); o.stop(t+d+.02); KNOCKS.push(o); }); if(KNOCKS.length>8) KNOCKS.splice(0,KNOCKS.length-8); }
+// the sound: one soft kalimba note (a plucked tine: warm fundamental, a faint octave, a quick bright edge that's gone in a blink), 0.32 s, easy on the ears a thousand times over
+const TICK_RATE=22050, TICK_SAMPLES=(()=>{ const n=Math.round(TICK_RATE*.32), out=new Float32Array(n), f=659.25; // E5
+  for(let k=0;k<n;k++){ const t=k/TICK_RATE, a=Math.min(1,t/.004); // 4 ms attack so there's no click at the start
+    const v=.78*Math.exp(-t*11)*Math.sin(2*Math.PI*f*t)+.22*Math.exp(-t*16)*Math.sin(2*Math.PI*f*2.0*t+.4)+.1*Math.exp(-t*60)*Math.sin(2*Math.PI*f*4.1*t)+.06*Math.exp(-t*7)*Math.sin(2*Math.PI*f*.5*t);
+    out[k]=a*v*.95; }
+  return out; })();
 const KNOCKS=[]; function unbook(){ bookedVerse=-1; clearTimeout(bookedTimer); if(ACX) KNOCKS.splice(0).forEach(o=>{ try{ o.stop(ACX.currentTime); }catch(e){} }); }
+let TICKBUF=null;
+function knock(at){ const c=acx(); if(!c) return; const t=Math.max(c.currentTime,at||c.currentTime);
+  if(!TICKBUF){ TICKBUF=c.createBuffer(1,TICK_SAMPLES.length,TICK_RATE); TICKBUF.getChannelData(0).set(TICK_SAMPLES); }
+  const src=c.createBufferSource(); src.buffer=TICKBUF; const g=c.createGain(); g.gain.value=.9; src.connect(g); g.connect(c.destination); src.start(t); KNOCKS.push(src); if(KNOCKS.length>8) KNOCKS.splice(0,KNOCKS.length-8); }
+
 // fallback for anything without Web Audio: a tiny WAV through a real <audio> element
 function wavURL(samples,rate){ const n=samples.length, b=new ArrayBuffer(44+n*2), v=new DataView(b); const W=(o,str)=>{ for(let k=0;k<str.length;k++) v.setUint8(o+k,str.charCodeAt(k)); };
   W(0,'RIFF'); v.setUint32(4,36+n*2,true); W(8,'WAVE'); W(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); W(36,'data'); v.setUint32(40,n*2,true);
   for(let k=0;k<n;k++){ const x=Math.max(-1,Math.min(1,samples[k])); v.setInt16(44+k*2,x<0?x*32768:x*32767,true); } return URL.createObjectURL(new Blob([b],{type:'audio/wav'})); }
-let tickEl=null; try{ const rate=22050, n=Math.round(rate*.14), out=new Float32Array(n); for(let k=0;k<n;k++){ const t=k/rate; out[k]=.85*Math.exp(-t*38)*Math.sin(2*Math.PI*1000*t)+.35*Math.exp(-t*90)*Math.sin(2*Math.PI*2400*t); } tickEl=new Audio(wavURL(out,rate)); tickEl.preload='auto'; tickEl.setAttribute('playsinline',''); tickEl.load(); }catch(e){}
+let tickEl=null; try{ tickEl=new Audio(wavURL(TICK_SAMPLES,TICK_RATE)); tickEl.preload='auto'; tickEl.setAttribute('playsinline',''); tickEl.load(); }catch(e){}
 // iPhones: the real <audio> element is the dependable path (it plays whenever the songs do, silent switch or not, and iOS never "interrupts" it the way it does Web Audio)
 const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 if(IOS||/Android/.test(navigator.userAgent)) document.documentElement.classList.add('phone');
