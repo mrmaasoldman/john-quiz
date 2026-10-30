@@ -81,6 +81,7 @@ html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) sa
 .gmorph{position:fixed;left:0;top:0;z-index:30;pointer-events:none;transform-origin:0 0;will-change:transform,opacity;backdrop-filter:blur(4px) saturate(1.7) brightness(1.04)!important;-webkit-backdrop-filter:blur(4px) saturate(1.7) brightness(1.04)!important} .gmorph::after{display:none} .gmorph{box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35),0 10px 28px var(--g-sh)} .gmorph>.refl{display:none}
 .np.morphing .npbg,.np.morphing #aurora,.np.morphing .npbg2{opacity:0}
 .np.morphing{transition:none}
+body.morphing .lib,body.morphing #libdim,body.morphing .mini .card,body.morphing .tabbar{transition:none!important}
 /* ---------- juice: little bits of fun on every move ---------- */
 @keyframes jBoing{0%{transform:scale(1)}30%{transform:scale(1.25,.8)}55%{transform:scale(.88,1.15)}75%{transform:scale(1.06,.96)}100%{transform:scale(1)}}
 @keyframes jZipR{0%{transform:translateX(0)}35%{transform:translateX(9px) skewX(-14deg)}60%{transform:translateX(-3px) skewX(5deg)}100%{transform:translateX(0)}}
@@ -1229,8 +1230,12 @@ function glassMorph(opening,done,scrub){
   const npO=np.animate(opening?[{opacity:0},{opacity:0,offset:.3},{opacity:1,offset:.68},{opacity:1}]:[{opacity:1},{opacity:1,offset:.32},{opacity:0,offset:.7},{opacity:0}],{duration:D,easing:'linear',fill:'forwards'});
   const ga=g.animate(opening?[pill,sheet]:[sheet,pill],{duration:D,easing:E,fill:'forwards'});
   const gO=g.animate(opening?[{opacity:1},{opacity:1,offset:.4},{opacity:0,offset:.9},{opacity:0}]:[{opacity:0},{opacity:0,offset:.1},{opacity:1,offset:.6},{opacity:1}],{duration:D,easing:'linear',fill:'forwards'});
-  const all=[npA,npO,ga,gO], clean=()=>{ g.remove(); npA.cancel(); npO.cancel(); };
-  ga.onfinish=()=>{ clean(); done&&done(); };
+  // the library, its dim, the mini bar and the tab bar move on the very same clock, so the background never jumps ahead of the glass
+  const BG=[[$('#lib'),{transform:'none'},{transform:'scale(.94) translateY(-10px)'}],[$('#libdim'),{opacity:0},{opacity:.4}],[$('#minicard'),{transform:'translateY(0) scale(1)',opacity:1},{transform:'translateY(24px) scale(.92)',opacity:0}],[$('#tabbar'),{transform:'translateX(-50%) translateY(0)',opacity:1},{transform:'translateX(-50%) translateY(40px)',opacity:0}]];
+  document.body.classList.add('morphing');
+  const bgA=BG.map(([el,a,b])=>el.animate(opening?[a,b]:[b,a],{duration:D,easing:E,fill:'forwards'}));
+  const all=[npA,npO,ga,gO,...bgA], clean=()=>{ g.remove(); npA.cancel(); npO.cancel(); }, settle=()=>{ bgA.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); };
+  ga.onfinish=()=>{ clean(); done&&done(); settle(); };
   if(!scrub) return null;
   // a finger drives it: the shape follows the finger one-to-one (no easing), and on release a fresh spring runs from wherever it is to the end, or back to the start
   all.forEach(a=>{ a.pause(); }); npA.effect.updateTiming({easing:'linear'}); ga.effect.updateTiming({easing:'linear'});
@@ -1239,9 +1244,12 @@ function glassMorph(opening,done,scrub){
     go(forward,undo){ const cs=getComputedStyle(np), cg=getComputedStyle(g), fromNp={transform:cs.transform,opacity:cs.opacity}, fromG={transform:cg.transform,opacity:cg.opacity};
       const endNp=forward?(opening?{transform:npFull,opacity:1}:{transform:npSmall,opacity:0}):(opening?{transform:npSmall,opacity:0}:{transform:npFull,opacity:1});
       const endG=forward?(opening?{...sheet,opacity:0}:{...pill,opacity:1}):(opening?{...pill,opacity:1}:{...sheet,opacity:0});
-      const left=forward?1-prog:prog, dur=Math.max(240,Math.round(D*left)); all.forEach(a=>a.cancel());
+      const left=forward?1-prog:prog, dur=Math.max(240,Math.round(D*left));
+      const bgFrom=BG.map(([el])=>{ const c=getComputedStyle(el); return {transform:c.transform,opacity:c.opacity}; });
+      all.forEach(a=>a.cancel());
       const a1=np.animate([fromNp,endNp],{duration:dur,easing:E,fill:'forwards'}), a2=g.animate([fromG,endG],{duration:dur,easing:E,fill:'forwards'});
-      a2.onfinish=()=>{ g.remove(); a1.cancel(); if(forward) done&&done(); else undo&&undo(); }; } };
+      const toEnd=forward===opening; const a3=BG.map(([el,a,b],k)=>el.animate([bgFrom[k],{...(toEnd?b:a)}],{duration:dur,easing:E,fill:'forwards'}));
+      a2.onfinish=()=>{ g.remove(); a1.cancel(); if(forward) done&&done(); else undo&&undo(); a3.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); }; } };
 }
 function npHideNow(){ np.classList.add('morphing'); np.classList.remove('open','drag'); np.style.transform=''; np.setAttribute('aria-hidden','true'); document.body.classList.remove('npopen'); void np.offsetWidth; np.classList.remove('morphing'); }
 function openNP(scrub){ scrub=scrub===true;
@@ -1250,7 +1258,7 @@ function openNP(scrub){ scrub=scrub===true;
   const fromMini=!wasOpen&&!reduce&&!$('#mini').classList.contains('hide')&&!np.style.transform;
   const prep=()=>{ fitVerse(); lyLayout(); updateVerse(true); updateLyrics(true); if(!reduce){ AUR.last=0; drawAurora(performance.now()); } };
   if(fromMini) requestAnimationFrame(()=>requestAnimationFrame(prep)); else prep();
-  if(fromMini){ miniRect=$('#minith').getBoundingClientRect(); miniCardRect=$('#minicard').getBoundingClientRect(); np.classList.add('morphing'); }
+  if(fromMini){ miniRect=$('#minith').getBoundingClientRect(); miniCardRect=$('#minicard').getBoundingClientRect(); np.classList.add('morphing'); document.body.classList.add('morphing'); }
   np.classList.add('open'); np.setAttribute('aria-hidden','false'); document.body.classList.add('npopen'); if(!wasOpen) npMoving();
   if(fromMini){ void np.offsetWidth; np.classList.remove('morphing'); const ctl=glassMorph(true,null,scrub);
     if(!scrub) requestAnimationFrame(()=>{ const t=npTarget(), r=t.getBoundingClientRect(); morph($('#minith'),t,{left:r.left,top:r.top,width:r.width,height:r.height}); }); return ctl; }
@@ -1260,8 +1268,9 @@ function openNP(scrub){ scrub=scrub===true;
 }
 function closeNP(scrub){ scrub=scrub===true;
   const wasOpen=np.classList.contains('open'), dragged=!!np.style.transform;
+  const viaGlass=wasOpen&&!dragged&&!reduce&&miniCardRect&&!$('#mini').classList.contains('hide'); if(viaGlass) document.body.classList.add('morphing');
   setQueueOpen(false); setSpeedOpen(false); setRepOpen(false); document.body.classList.remove('npopen');
-  if(wasOpen&&!dragged&&!reduce&&miniCardRect&&!$('#mini').classList.contains('hide')){ np.classList.remove('drag'); npMoving();
+  if(viaGlass){ np.classList.remove('drag'); npMoving();
     const ctl=glassMorph(false,npHideNow,scrub);
     if(!scrub&&miniRect) morph(npTarget(),$('#minith'),miniRect); return ctl; }
   np.classList.remove('open','drag'); np.style.transform=''; if(wasOpen) npMoving();
