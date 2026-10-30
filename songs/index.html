@@ -82,6 +82,12 @@ html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) sa
 .np.morphing .npbg,.np.morphing #aurora,.np.morphing .npbg2{opacity:0}
 .np.morphing{transition:none}
 body.morphing .lib,body.morphing #libdim,body.morphing .mini .card,body.morphing .tabbar{transition:none!important}
+/* while the glass is moving, everything else holds still: no extra backdrop blurs stacking up, no looping animations repainting the big layers, no mirrors */
+body.morphing .mini .card.glass,body.morphing .tabbar.glass,body.morphing .np .glass,body.morphing .chhd.glass{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body.morphing .glass>.refl>.mirror{visibility:hidden}
+body.morphing .lib *,body.morphing .np *{animation-play-state:paused!important}
+body.morphing .glass::before,body.morphing .glass>.refl::after{mix-blend-mode:normal}
+.gmorph{contain:strict}
 /* ---------- juice: little bits of fun on every move ---------- */
 @keyframes jBoing{0%{transform:scale(1)}30%{transform:scale(1.25,.8)}55%{transform:scale(.88,1.15)}75%{transform:scale(1.06,.96)}100%{transform:scale(1)}}
 @keyframes jZipR{0%{transform:translateX(0)}35%{transform:translateX(9px) skewX(-14deg)}60%{transform:translateX(-3px) skewX(5deg)}100%{transform:translateX(0)}}
@@ -1069,6 +1075,7 @@ $('#lyr').onclick=()=>goLyrics(!lyricsVisible()||wide()); $('#vhint').onclick=()
 function updateTime(){
   const d=audio.duration||song&&song.dur||0, t=audio.currentTime||0, p=d?t/d:0;
   if(!seeking){ $('#fill').style.width=(p*100)+'%'; $('#tcur').textContent=fmt(t); $('#trem').textContent='-'+fmt(Math.max(0,d-t)); }
+  if(document.body.classList.contains('morphing')) return;
   $('#minibar').style.width=(p*100)+'%';
 }
 function tick(){
