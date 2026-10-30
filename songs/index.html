@@ -51,7 +51,7 @@ html.lens .glass{backdrop-filter:url(#lglens) blur(2px) saturate(1.8) brightness
 html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) saturate(1.8) brightness(1.04)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mini .card.glass,:root:not([data-theme="light"]) .tabbar.glass{--g-bar:rgba(22,20,34,.74)}}
 :root[data-theme="dark"] .mini .card.glass,:root[data-theme="dark"] .tabbar.glass{--g-bar:rgba(22,20,34,.74)}
-.mini .card,.tabbar button{text-shadow:0 1px 6px rgba(0,0,0,.25)}
+.mini .card,.tabbar>button{text-shadow:0 1px 6px rgba(0,0,0,.25)}
 .glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:radial-gradient(120% 80% at calc(18% + var(--lx,0) * 30%) calc(-12% + var(--ly,0) * 22%),var(--g-sheen),rgba(255,255,255,0) 48%),
              linear-gradient(calc(115deg + var(--lx,0) * 40deg),rgba(255,255,255,0) 38%,rgba(255,255,255,.16) 46%,rgba(255,255,255,0) 54%);mix-blend-mode:screen}
@@ -61,13 +61,19 @@ html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) sa
 .glass>*{position:relative}
 /* the reflection: a mirrored, softened picture of the current cover (what the room is lit by) slides across the glass as you tilt or scroll, plus a hard glint that moves with it */
 .glass>.refl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;overflow:hidden}
-.glass>.refl::before{content:"";position:absolute;inset:-25%;background-image:var(--env,none);background-size:150% auto;background-repeat:no-repeat;background-position:calc(50% + var(--lx,0) * 30%) calc(50% - var(--ly,0) * 30%);transform:scaleY(-1);filter:blur(5px) saturate(1.7) brightness(var(--g-rbr,1.6));opacity:var(--g-refl,.42);mix-blend-mode:var(--g-rblend,screen);-webkit-mask:linear-gradient(to top,rgba(0,0,0,1),rgba(0,0,0,.45) 45%,rgba(0,0,0,0) 90%);mask:linear-gradient(to top,rgba(0,0,0,1),rgba(0,0,0,.45) 45%,rgba(0,0,0,0) 90%)}
-.glass>.refl::after{content:"";position:absolute;inset:-40% -30%;background:linear-gradient(calc(102deg + var(--lx,0) * 22deg),rgba(255,255,255,0) 43%,rgba(255,255,255,.28) 47.5%,rgba(255,255,255,.85) 49.6%,rgba(255,255,255,.28) 51.8%,rgba(255,255,255,0) 56%),linear-gradient(calc(102deg + var(--lx,0) * 22deg),rgba(255,255,255,0) 60%,rgba(255,255,255,.22) 64%,rgba(255,255,255,0) 68%);transform:translateX(calc(var(--lx,0) * 42% + var(--ly,0) * 10%));mix-blend-mode:screen;opacity:var(--g-glint,.7)}
-:root[data-theme="light"] .glass>.refl::before{--g-rblend:multiply;--g-refl:.2;--g-rbr:1.15}
-:root[data-theme="light"] .glass>.refl::after{--g-glint:.55}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .glass>.refl::before{--g-rblend:multiply;--g-refl:.2;--g-rbr:1.15} :root:not([data-theme="dark"]) .glass>.refl::after{--g-glint:.55}}
-.np .glass>.refl::before{--g-rblend:screen;--g-refl:.3;--g-rbr:1.6}
-.gmorph{position:fixed;z-index:30;pointer-events:none;will-change:opacity}
+.glass>.refl::after{content:"";position:absolute;inset:-40% -30%;background:linear-gradient(calc(102deg + var(--lx,0) * 22deg),rgba(255,255,255,0) 43%,rgba(255,255,255,.28) 47.5%,rgba(255,255,255,.85) 49.6%,rgba(255,255,255,.28) 51.8%,rgba(255,255,255,0) 56%),linear-gradient(calc(102deg + var(--lx,0) * 22deg),rgba(255,255,255,0) 60%,rgba(255,255,255,.22) 64%,rgba(255,255,255,0) 68%);transform:translateX(calc(var(--lx,0) * 42% + var(--ly,0) * 10%));mix-blend-mode:screen;opacity:var(--g-glint,.22)}
+:root[data-theme="light"] .glass>.refl::after{--g-glint:.4}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .glass>.refl::after{--g-glint:.4}}
+/* the floating bars reflect what is under them: a live mirror image of the library, flipped so the strip just below the bar meets its bottom edge */
+.glass>.refl>.mirror{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;pointer-events:none;filter:blur(1.8px) saturate(1.6);opacity:var(--g-mir,.6)}
+.mirlib{position:static!important;height:auto!important;overflow:visible!important;transform:none!important;transition:none!important;animation:none!important;background:none!important;view-transition-name:none}
+.mirlib .glass{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:transparent!important;box-shadow:none!important}
+.mirlib .glass::before,.mirlib .glass::after,.mirlib .refl{display:none}
+.mirlib *{animation:none!important;transition:none!important} .mirlib{font-size:16px;text-shadow:none}
+.mini .card.glass>.refl,.tabbar.glass>.refl{-webkit-mask:linear-gradient(to top,rgba(0,0,0,1) 0,rgba(0,0,0,.7) 45%,rgba(0,0,0,.15) 100%);mask:linear-gradient(to top,rgba(0,0,0,1) 0,rgba(0,0,0,.7) 45%,rgba(0,0,0,.15) 100%)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .glass>.refl>.mirror{--g-mir:.45}} :root[data-theme="light"] .glass>.refl>.mirror{--g-mir:.45}
+.gmorph{position:fixed;left:0;top:0;z-index:30;pointer-events:none;transform-origin:0 0;will-change:transform,opacity;backdrop-filter:blur(6px) saturate(1.8) brightness(1.04)!important;-webkit-backdrop-filter:blur(6px) saturate(1.8) brightness(1.04)!important} .gmorph::after{display:none} .gmorph{box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35),0 10px 28px var(--g-sh)} .gmorph>.refl{display:none}
+.np.morphing .npbg,.np.morphing #aurora,.np.morphing .npbg2{opacity:0}
 .np.morphing{transition:none}
 /* ---------- juice: little bits of fun on every move ---------- */
 @keyframes jBoing{0%{transform:scale(1)}30%{transform:scale(1.25,.8)}55%{transform:scale(.88,1.15)}75%{transform:scale(1.06,.96)}100%{transform:scale(1)}}
@@ -277,34 +283,34 @@ html[data-vt="pop"]::view-transition-old(content){animation-name:vtOutRight} htm
 .mini{position:fixed;left:0;right:0;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:5;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));pointer-events:none}
 .mini .card{pointer-events:auto;max-width:900px;margin:0 auto;height:62px;border-radius:31px;display:grid;grid-template-columns:46px 1fr auto;gap:12px;align-items:center;padding:0 8px 0 8px;touch-action:none;transform:translateY(0);transition:transform .4s cubic-bezier(.32,.72,0,1),opacity .3s;overflow:hidden}
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:6;height:58px;border-radius:29px;display:flex;align-items:center;padding:4px;gap:2px;width:min(420px,calc(100% - 24px));transition:transform .4s cubic-bezier(.2,.8,.2,1),opacity .3s;overflow:hidden}
-.tabbar .blob{position:absolute;top:4px;left:4px;height:50px;width:calc((100% - 8px)/3);border-radius:25px;transition:transform .3s cubic-bezier(.3,1.25,.5,1);pointer-events:none}
-.tabbar .blob i{display:block;width:100%;height:100%;border-radius:inherit;background:var(--btn);box-shadow:inset 0 1px 0 var(--g-hi),inset 0 0 0 1px rgba(255,255,255,.12)}
-.tabbar .blob.stretch i{animation:blobStretch .3s cubic-bezier(.2,.8,.2,1)}
+.tabbar>.blob{position:absolute;top:4px;left:4px;height:50px;width:calc((100% - 8px)/3);border-radius:25px;transition:transform .3s cubic-bezier(.3,1.25,.5,1);pointer-events:none}
+.tabbar>.blob i{display:block;width:100%;height:100%;border-radius:inherit;background:var(--btn);box-shadow:inset 0 1px 0 var(--g-hi),inset 0 0 0 1px rgba(255,255,255,.12)}
+.tabbar>.blob.stretch i{animation:blobStretch .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes blobStretch{40%{transform:scaleX(1.2) scaleY(.92)}}
-.tabbar .sweep{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);transform:translateX(-130%);pointer-events:none}
-.tabbar .sweep.go{animation:sweep .42s cubic-bezier(.2,.8,.2,1)}
+.tabbar>.sweep{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);transform:translateX(-130%);pointer-events:none}
+.tabbar>.sweep.go{animation:sweep .42s cubic-bezier(.2,.8,.2,1)}
 @keyframes sweep{to{transform:translateX(130%)}}
-.tabbar button{flex:1;height:50px;border-radius:25px;display:grid;justify-items:center;align-content:center;gap:2px;font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.01em;transition:color .15s,transform .15s;position:relative}
-.tabbar button svg{width:22px;height:22px;fill:currentColor;transition:transform .22s cubic-bezier(.3,1.25,.5,1)}
-.tabbar button[aria-pressed="true"]{color:var(--accent)}
-.tabbar button[aria-pressed="true"] svg{transform:translateY(-1px) scale(1.08)}
+.tabbar>button{flex:1;height:50px;border-radius:25px;display:grid;justify-items:center;align-content:center;gap:2px;font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.01em;transition:color .15s,transform .15s;position:relative}
+.tabbar>button svg{width:22px;height:22px;fill:currentColor;transition:transform .22s cubic-bezier(.3,1.25,.5,1)}
+.tabbar>button[aria-pressed="true"]{color:var(--accent)}
+.tabbar>button[aria-pressed="true"] svg{transform:translateY(-1px) scale(1.08)}
 body.npopen .lib{transform:scale(.94) translateY(-10px)}
 #libdim{position:fixed;inset:0;z-index:7;background:#000;opacity:0;pointer-events:none;transition:opacity .5s cubic-bezier(.32,.72,0,1)}
 body.npopen #libdim{opacity:.4}
 body.npopen .mini .card{transform:translateY(24px) scale(.92);opacity:0}
 body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
-.tabbar button[aria-pressed="true"] span{background:var(--sig);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tabbar>button[aria-pressed="true"] span{background:var(--sig);-webkit-background-clip:text;background-clip:text;color:transparent}
 .mini.hide .card{transform:translateY(120%);opacity:0}
-.mini .th{width:46px;height:46px;border-radius:23px;background:var(--thumb);overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.mini .th img{width:100%;height:100%;display:block}
-.mini .tt{min-width:0;font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mini .tt small{display:block;color:var(--sub);font-size:12.5px;font-weight:400}
-.mini .ctl{display:flex;gap:4px}
-.mini .ctl button{width:44px;height:44px;display:grid;place-items:center;border-radius:22px}
-.mini .ctl button:first-child{background:var(--sig);color:#fff;box-shadow:0 4px 12px rgba(255,92,138,.4)} .mini .ctl button:first-child svg{fill:#fff}
-.mini .ctl svg{width:24px;height:24px;fill:var(--fg)}
-.mini .bar{position:absolute;left:66px;right:116px;bottom:4px;height:2px;background:var(--sep);border-radius:3px;overflow:hidden}
-.mini .bar i{display:block;height:100%;width:0;background:var(--sig1)}
+.mini .card>.th{width:46px;height:46px;border-radius:23px;background:var(--thumb);overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.mini .card>.th img{width:100%;height:100%;display:block}
+.mini .card>.tt{min-width:0;font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini .card>.tt small{display:block;color:var(--sub);font-size:12.5px;font-weight:400}
+.mini .card>.ctl{display:flex;gap:4px}
+.mini .card>.ctl button{width:44px;height:44px;display:grid;place-items:center;border-radius:22px}
+.mini .card>.ctl button:first-child{background:var(--sig);color:#fff;box-shadow:0 4px 12px rgba(255,92,138,.4)} .mini .ctl button:first-child svg{fill:#fff}
+.mini .card>.ctl svg{width:24px;height:24px;fill:var(--fg)}
+.mini .card>.bar{position:absolute;left:66px;right:116px;bottom:4px;height:2px;background:var(--sep);border-radius:3px;overflow:hidden}
+.mini .card>.bar i{display:block;height:100%;width:0;background:var(--sig1)}
 
 /* ---------- now playing: a sheet with two pages — the whole current verse, then the scrolling lyrics ---------- */
 .np{position:fixed;inset:0;z-index:20;transform:translateY(104%);transition:transform .5s cubic-bezier(.32,.72,0,1);background:#0b0b10;color:var(--np-fg);will-change:transform;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -761,7 +767,7 @@ function load(idx,autoplay,startAt){
   const art=ART[song.ch];
   if(prev&&prev.ch!==song.ch){ $('#npart0').src=ART[prev.ch]; $('#npart').style.opacity=0; requestAnimationFrame(()=>{ $('#npart').src=art; $('#npart').style.opacity=1; }); } else { $('#npart').src=art; $('#npart0').src=art; }
   $('#minith').src=$('#lyart').src=$('#lyart2').src=art;
-  $('#npbg').style.backgroundImage=`url(${ART_BG[song.ch]||art})`; setEnv(ART_BG[song.ch]||art);
+  $('#npbg').style.backgroundImage=`url(${ART_BG[song.ch]||art})`;
   const col=COL[song.ch]; if(col){ document.documentElement.style.setProperty('--tint',col.tint); AUR.cols=col.c.slice(); AUR.last=0; }
   $('#minitt').innerHTML=`${esc(song.title)}<small>${esc(song.sub)}</small>`;
   $('#nptitle').textContent=song.title; $('#npsub').textContent=song.sub; $('#lytitle').textContent=song.title;
@@ -1204,17 +1210,20 @@ let miniCardRect=null;
 const NP_FADE=()=>[...np.querySelectorAll(':scope>.npbg,:scope>#aurora,:scope>.npbg2,:scope>#npin,:scope>#npclose')];
 // the glass pill of the mini player swells into the whole sheet: the sheet is clipped to the pill's shape and grows, while a clear glass copy rides on top and thins out as the player fills in
 function glassMorph(opening,done){
-  const D=560, E='cubic-bezier(.32,.72,0,1)', r=miniCardRect, W=innerWidth, H=innerHeight;
+  const D=520, E='cubic-bezier(.32,.72,0,1)', r=miniCardRect, W=innerWidth, H=innerHeight;
   if(reduce||!r||!r.width){ done&&done(); return; }
-  const small=`inset(${r.top}px ${Math.max(0,W-r.right)}px ${Math.max(0,H-r.bottom)}px ${r.left}px round ${r.height/2}px)`, full='inset(0px 0px 0px 0px round 0px)';
-  const g=document.createElement('div'); g.className='glass gmorph'; glassify(g); document.body.append(g);
-  // real geometry rather than scale(), so the rim, blur and reflection stay true while it grows
-  const pill={left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',borderRadius:(r.height/2)+'px'}, sheet={left:'0px',top:'0px',width:W+'px',height:H+'px',borderRadius:'0px'};
-  const clip=np.animate(opening?[{clipPath:small},{clipPath:full}]:[{clipPath:full},{clipPath:small}],{duration:D,easing:E,fill:'forwards'});
-  const bgA=np.animate(opening?[{backgroundColor:'rgba(11,11,16,0)'},{backgroundColor:'rgba(11,11,16,0)',offset:.3},{backgroundColor:'#0b0b10'}]:[{backgroundColor:'#0b0b10'},{backgroundColor:'rgba(11,11,16,0)',offset:.7},{backgroundColor:'rgba(11,11,16,0)'}],{duration:D,easing:'ease-out',fill:'forwards'});
-  const fades=NP_FADE().map(el=>{ const o=getComputedStyle(el).opacity; return el.animate(opening?[{opacity:0},{opacity:0,offset:.22},{opacity:o}]:[{opacity:o},{opacity:0,offset:.55},{opacity:0}],{duration:D,easing:'ease-out',fill:'forwards'}); });
-  const ga=g.animate(opening?[{...pill,opacity:1},{opacity:1,offset:.45},{...sheet,opacity:0}]:[{...sheet,opacity:0},{opacity:1,offset:.5},{...pill,opacity:1}],{duration:D,easing:E,fill:'forwards'});
-  ga.onfinish=()=>{ g.remove(); [clip,bgA,...fades].forEach(a=>a.cancel()); done&&done(); };
+  // a glass copy the size of the pill scales up to the screen; the player itself scales up from the pill's spot, invisible at first, then fades in
+  const g=document.createElement('div'); g.className='glass gmorph'; document.body.append(g);
+  Object.assign(g.style,{width:r.width+'px',height:r.height+'px',borderRadius:(r.height/2)+'px'});
+  const pill={transform:`translate(${r.left}px,${r.top}px) scale(1,1)`}, sheet={transform:`translate(0px,0px) scale(${W/r.width},${H/r.height})`};
+  const cx=r.left+r.width/2, cy=r.top+r.height/2, sx=r.width/W, sy=r.height/H;
+  const npSmall=`translate(${cx-W/2}px,${cy-H/2}px) scale(${sx},${sy})`, npFull='translate(0px,0px) scale(1,1)';
+  // shape moves on the spring curve; the cross-fade runs on its own straight clock so it stays a cross-fade
+  const npA=np.animate(opening?[{transform:npSmall},{transform:npFull}]:[{transform:npFull},{transform:npSmall}],{duration:D,easing:E,fill:'forwards'});
+  const npO=np.animate(opening?[{opacity:0},{opacity:0,offset:.3},{opacity:1,offset:.68},{opacity:1}]:[{opacity:1},{opacity:1,offset:.32},{opacity:0,offset:.7},{opacity:0}],{duration:D,easing:'linear',fill:'forwards'});
+  const ga=g.animate(opening?[pill,sheet]:[sheet,pill],{duration:D,easing:E,fill:'forwards'});
+  const gO=g.animate(opening?[{opacity:1},{opacity:1,offset:.4},{opacity:0,offset:.9},{opacity:0}]:[{opacity:0},{opacity:0,offset:.1},{opacity:1,offset:.6},{opacity:1}],{duration:D,easing:'linear',fill:'forwards'});
+  ga.onfinish=()=>{ g.remove(); npA.cancel(); npO.cancel(); done&&done(); };
 }
 function openNP(){
   const wasOpen=np.classList.contains('open');
@@ -1326,10 +1335,18 @@ document.querySelectorAll('.tabbar [data-tab]').forEach(b=>b.addEventListener('c
 (function(){ const _pn=playNext, _al=addLast; let lastRow=null; document.addEventListener('pointerdown',e=>{ const r=e.target.closest('.row,.rc,[data-song]'); if(r) lastRow=r; },true);
   const target=()=>np.classList.contains('open')?$('#queue'):$('#minith'), fly=i=>{ const s=SONGS[i]; const from=(lastRow&&lastRow.querySelector('.th img,.cover img,img'))||lastRow; flyTo(from,target(),ART[s.ch]); };
   window.playNext=i=>{ fly(i); return _pn(i); }; window.addLast=i=>{ fly(i); return _al(i); }; })();
+/* the two floating bars carry a live mirror of the library under them */
+const MIR=[];
+function mirrorMake(host){ const refl=host.querySelector(':scope>.refl'); if(!refl) return; const m=document.createElement('div'); m.className='mirror'; m.setAttribute('aria-hidden','true'); refl.append(m); MIR.push({host,m}); }
+let mirT=0; function mirrorSync(){ clearTimeout(mirT); mirT=setTimeout(()=>{ const lib=$('#lib'); MIR.forEach(({m})=>{ const c=lib.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.querySelectorAll('.refl,.mirror,canvas,video').forEach(e=>e.remove()); c.querySelectorAll('[loading]').forEach(e=>e.removeAttribute('loading')); c.className='lib mirlib'; c.inert=true; m.replaceChildren(c); }); mirrorPos(); },120); }
+function mirrorPos(){ const lib=$('#lib'), st=lib.scrollTop, lr=lib.getBoundingClientRect(); if(!lr.width) return;
+  MIR.forEach(({host,m})=>{ const r=host.getBoundingClientRect(); if(!r.width) return; m.style.width=lr.width+'px'; m.style.transform=`translate(${lr.left-r.left}px,${r.height+r.bottom-lr.top+st}px) scaleY(-1)`; }); }
 /* every pane of glass gets a reflection layer */
 function glassify(el){ if(!el.querySelector(':scope>.refl')){ const r=document.createElement('i'); r.className='refl'; r.setAttribute('aria-hidden','true'); el.prepend(r); } return el; }
 document.querySelectorAll('.glass').forEach(glassify);
-function setEnv(url){ document.documentElement.style.setProperty('--env',`url("${url}")`); }
+if(!reduce){ mirrorMake($('#minicard')); mirrorMake($('#tabbar'));
+  new MutationObserver(mirrorSync).observe($('#lib'),{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-pressed','aria-expanded','src','style']});
+  $('#lib').addEventListener('scroll',mirrorPos,{passive:true}); addEventListener('resize',mirrorPos); mirrorSync(); }
 /* ---------- glass light: the highlights drift with scrolling, tilting and the mouse ---------- */
 (function(){ const R=document.documentElement; let tx=0,ty=0,x=0,y=0,raf=0;
   const ua=navigator.userAgent; if(/Chrome\//.test(ua)&&!/Edg\/|OPR\//.test(ua)&&!/iPhone|iPad|iPod/.test(ua)&&!reduce) R.classList.add('lens'); // only Chromium bends the backdrop through SVG
@@ -1348,7 +1365,7 @@ if(!/claude\.ai$/.test(location.hostname)&&/\/songs\/?(index\.html)?$/.test(loca
   $('#quizlink').onclick=()=>{ try{ localStorage.setItem('johnquiz:where','"quiz"'); sessionStorage.setItem('jq:back','1'); }catch(e){} }; }
 // swap a freshly made cover into every place the plain photo was showing
 function refreshArt(c){ const raw=`art/john${c}.jpg`; document.querySelectorAll('img').forEach(im=>{ const v=im.getAttribute('src')||''; if(v===raw||v.endsWith('/'+raw)) im.src=ART[c]; });
-  if(song&&song.ch===c){ $('#npbg').style.backgroundImage=`url(${ART_BG[c]||ART[c]})`; setEnv(ART_BG[c]||ART[c]); const col=COL[c]; if(col){ document.documentElement.style.setProperty('--tint',col.tint); AUR.cols=col.c.slice(); AUR.last=0; } } }
+  if(song&&song.ch===c){ $('#npbg').style.backgroundImage=`url(${ART_BG[c]||ART[c]})`; const col=COL[c]; if(col){ document.documentElement.style.setProperty('--tint',col.tint); AUR.cols=col.c.slice(); AUR.last=0; } } }
 (async function(){
   // show the library right away with the plain photos; the numbered covers get painted in one by one behind the scenes
   try{ await Promise.race([document.fonts.load('800 150px Fraunces'),new Promise(r=>setTimeout(r,350))]); }catch(e){}
