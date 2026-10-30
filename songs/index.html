@@ -1118,11 +1118,14 @@ let verseClick=lsGet('vclick',false), hapticsOn=true;
 // Web Audio, told to behave like music playback so the ring/silent switch doesn't mute it; ticks are scheduled on the audio clock right at each verse start
 let ACX=null; try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
 function acx(){ try{ if(!ACX) ACX=new (window.AudioContext||window.webkitAudioContext)(); if(ACX.state!=='running'){ const p=ACX.resume(); if(p&&p.catch) p.catch(()=>{}); } }catch(e){} return ACX; }
-// the sound: one soft kalimba note (a plucked tine: warm fundamental, a faint octave, a quick bright edge that's gone in a blink), 0.32 s, easy on the ears a thousand times over
-const TICK_RATE=22050, TICK_SAMPLES=(()=>{ const n=Math.round(TICK_RATE*.32), out=new Float32Array(n), f=659.25; // E5
-  for(let k=0;k<n;k++){ const t=k/TICK_RATE, a=Math.min(1,t/.004); // 4 ms attack so there's no click at the start
-    const v=.78*Math.exp(-t*11)*Math.sin(2*Math.PI*f*t)+.22*Math.exp(-t*16)*Math.sin(2*Math.PI*f*2.0*t+.4)+.1*Math.exp(-t*60)*Math.sin(2*Math.PI*f*4.1*t)+.06*Math.exp(-t*7)*Math.sin(2*Math.PI*f*.5*t);
-    out[k]=a*v*.95; }
+// the sound: an EDM kick — a punchy 808 with a fast pitch drop (230 → 50 Hz), a tight click on top so it cuts through a phone speaker, soft-clipped for weight; 0.3 s
+const TICK_RATE=22050, TICK_SAMPLES=(()=>{ const n=Math.round(TICK_RATE*.3), out=new Float32Array(n); let seed=7; const rnd=()=>{ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x3fffffff-1; };
+  for(let k=0;k<n;k++){ const t=k/TICK_RATE, a=Math.min(1,t/.0015);
+    const ph=2*Math.PI*(50*t+(180/28)*(1-Math.exp(-t*28)));            // instantaneous pitch 230 Hz sliding down to 50 Hz
+    const body=Math.sin(ph)*Math.exp(-t*8.5)*1.6;                          // the 808 body
+    const harm=Math.sin(2*ph)*Math.exp(-t*20)*.25;                         // a little second harmonic so small speakers still hear the thump
+    const click=rnd()*Math.exp(-t*420)*.9+Math.sin(2*Math.PI*3400*t)*Math.exp(-t*160)*.35; // the beater click
+    out[k]=a*Math.tanh(body+harm+click)*.95; }
   return out; })();
 const KNOCKS=[]; function unbook(){ bookedVerse=-1; clearTimeout(bookedTimer); if(ACX) KNOCKS.splice(0).forEach(o=>{ try{ o.stop(ACX.currentTime); }catch(e){} }); }
 let TICKBUF=null;
