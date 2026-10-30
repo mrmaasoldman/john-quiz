@@ -430,7 +430,7 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .speedpop .chips button:active{transform:scale(.94)}
 .speedpop .sl{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:12px;font-weight:700;color:var(--np-sub)}
 .speedpop .sl input{width:100%;accent-color:#fff;height:4px}
-.hapt{position:fixed;left:0;bottom:0;width:1px;height:1px;overflow:hidden;opacity:.01;z-index:-1}
+.hapt{position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:.01;z-index:-1}
 .speedpop .rl{font-size:12px;font-weight:600;color:var(--np-sub);margin:2px 0 8px}
 .speedpop .vchips{flex-wrap:wrap;margin-bottom:4px;max-height:132px;overflow-y:auto}
 .speedpop .vchips button{flex:0 0 auto;min-width:40px;padding:0 10px}
@@ -1103,7 +1103,12 @@ $('#clickon').onclick=()=>{ setVerseClick(true); acx(); verseTick(); haptic(); }
 // haptics: Android vibrates; iPhones (17.4+) tick when a native switch flips, so a hidden one is flipped on each tap
 const HAPT=$('#haptsw'), HAPTL=$('#haptlb'); let haptT=0;
 function haptic(kind){ if(!hapticsOn) return; const n=performance.now(); if(n-haptT<45) return; haptT=n;
-  try{ if(navigator.vibrate){ navigator.vibrate(kind==='soft'?6:10); } else if(HAPT){ HAPT.checked=!HAPT.checked; HAPTL.click(); } }catch(e){} }
+  try{ if(navigator.vibrate){ navigator.vibrate(kind==='soft'?6:10); } else if(HAPT){ HAPT.click(); } }catch(e){}
+  if(window.scrollY||window.scrollX) window.scrollTo(0,0); }
+// the hidden switch must never take focus or pull the page up to show itself (that shifts the whole app under the status bar)
+if(HAPT){ HAPT.addEventListener('focus',()=>{ try{ HAPT.blur(); }catch(e){} if(window.scrollY||window.scrollX) window.scrollTo(0,0); }); }
+addEventListener('scroll',()=>{ if(window.scrollY||window.scrollX) window.scrollTo(0,0); },{passive:true});
+addEventListener('focusin',e=>{ if(e.target&&e.target.id==='haptsw'){ e.target.blur(); } });
 function setHaptics(on){ hapticsOn=!!on; lsSet('haptics',hapticsOn); $('#hapton').setAttribute('aria-pressed',hapticsOn); $('#haptoff').setAttribute('aria-pressed',!hapticsOn); }
 $('#hapton').onclick=()=>{ setHaptics(true); haptic(); }; $('#haptoff').onclick=()=>{ setHaptics(false); }; try{ setHaptics(hapticsOn); }catch(e){}
 function updateVerse(force){
