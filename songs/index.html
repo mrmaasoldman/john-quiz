@@ -140,6 +140,15 @@ html[data-vt="pop"]::view-transition-old(content){animation-name:vtOutRight} htm
 ::view-transition-group(mini),::view-transition-group(tabbar),::view-transition-group(np){animation-duration:0s}
 .in .row,.in .album{animation:rowIn .36s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 20ms)}
 .view{animation:viewIn .16s cubic-bezier(.2,.8,.2,1)}
+/* a chapter page is its own sheet that slides in over the library (so the library keeps its scroll spot, and a swipe to the right peels the page away) */
+#chapter{position:fixed;inset:0;z-index:4;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;animation:none;padding:0 max(16px,env(safe-area-inset-right,0px)) calc(170px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:radial-gradient(70% 36% at 85% 32%,var(--wash2),transparent 70%),radial-gradient(55% 30% at 8% 48%,var(--wash1),transparent 70%),radial-gradient(60% 30% at 60% 78%,var(--wash3),transparent 70%),var(--bg);box-shadow:-14px 0 34px rgba(0,0,0,.28);will-change:transform;transform-origin:50% 100%;transition:transform .5s cubic-bezier(.32,.72,0,1)}
+#chapter[hidden]{display:none}
+#chapter>.chwrap{max-width:900px;margin:0 auto}
+#chapter.sliding{transition:none}
+body.inchapter .hero,body.inchapter #home{transform:translateX(-24%);opacity:.55;pointer-events:none}
+.hero,#home{will-change:transform,opacity}
+body.npopen #chapter{transform:scale(.94) translateY(-10px)} body.morphing #chapter{transition:none!important}
+.mirlib .view[data-ch]{position:static!important;height:auto!important;overflow:visible!important;box-shadow:none!important;background:none!important;transform:none!important;padding:0!important}
 @keyframes viewIn{from{opacity:0;transform:translateY(5px)}}
 .quiet .row{animation:none}
 @media (hover:hover){.album .cover{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}.album:hover .cover{transform:translateY(-4px) scale(1.02);box-shadow:0 16px 34px rgba(0,0,0,.3)}}
@@ -820,7 +829,7 @@ let suppressClickUntil=0;
 /* swipe a row sideways: it slides with the finger, a pane grows behind it, and past the threshold the action fires on release */
 function swipeable(el,o){ let sx=0,sy=0,d=0,mode=null,id=null,will=false;
   const TH=()=>Math.min(132,el.offsetWidth*0.38);
-  el.addEventListener('pointerdown',e=>{ mode=null; if(e.pointerType==='mouse'||e.button||(o.ignore&&e.target.closest(o.ignore))){ mode='x'; return; } sx=e.clientX; sy=e.clientY; d=0; id=e.pointerId; will=false; });
+  el.addEventListener('pointerdown',e=>{ mode=null; if(e.pointerType==='mouse'||e.button||e.clientX<28||(o.ignore&&e.target.closest(o.ignore))){ mode='x'; return; } /* the left edge belongs to the page's swipe-back */ sx=e.clientX; sy=e.clientY; d=0; id=e.pointerId; will=false; });
   el.addEventListener('pointermove',e=>{ if(mode==='x'||mode==='v'||e.pointerId!==id) return; const ddx=e.clientX-sx, ddy=e.clientY-sy;
     if(!mode){ if(Math.abs(ddx)<8&&Math.abs(ddy)<8) return; if(Math.abs(ddx)>Math.abs(ddy)*1.3&&Math.sign(ddx)===o.dir){ mode='h'; try{ el.setPointerCapture(id); }catch(x){} el.classList.add('swiping'); el.classList.remove('snap'); o.onStart&&o.onStart(); } else { mode='v'; return; } }
     const th=TH(); d=ddx*o.dir; if(d<0) d=0; if(d>th) d=th+(d-th)*0.28;
@@ -850,11 +859,11 @@ function renderLibrary(){
   $('#meta').textContent=`${SONGS.length} songs · ${CHAPTERS.length} chapters · ${fmtLong(SONGS.reduce((a,s)=>a+s.dur,0))}`;
   $('#chcount').textContent=`${CHAPTERS.length} albums`;
   $('#albums').innerHTML=CHAPTERS.map((c,k)=>`<button class="album" type="button" data-ch="${c}" style="--i:${k}"><div class="cover"><img src="${ART[c]}" alt=""></div><b>John ${c}</b><small>${SONGS.filter(s=>s.ch===c).length} song${SONGS.filter(s=>s.ch===c).length>1?'s':''} · ${CH[c].name}</small></button>`).join('');
-  document.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>showChapter(+b.dataset.ch));
+  document.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>showChapter(+b.dataset.ch,b.querySelector('.cover img, .th img')||b.querySelector('img')));
   const last=lsGet('last',null), lastCh=last&&SONGS.find(x=>x.id===last.id)?SONGS.find(x=>x.id===last.id).ch:CHAPTERS[0];
   $('#list').innerHTML=CHAPTERS.map(c=>{ const list=SONGS.filter(s=>s.ch===c), tot=list.reduce((a,s)=>a+s.dur,0);
     return `<section class="chgroup ${c===lastCh?'open':''}" data-chg="${c}"><button class="chhd glass" type="button" aria-expanded="${c===lastCh}"><div class="th"><img src="${ART[c]}" alt="" loading="lazy"></div><div class="tt"><b>John ${c}</b><small>${esc(CH[c].name)} · ${list.length} song${list.length>1?'s':''}</small></div><span class="go" data-chlink="${c}">Open ›</span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 15.5 4.5 8l1.4-1.4L12 12.7l6.1-6.1L19.5 8z"/></svg></span></button><div class="chbody"><div class="chin">${list.map((s,k)=>rowHTML(s,{i:k,sub:`${nVerses(s)} verses · ${fmt(s.dur)}`})).join('')}</div></div></section>`; }).join('');
-  document.querySelectorAll('[data-chlink]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); showChapter(+b.dataset.chlink); });
+  document.querySelectorAll('[data-chlink]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const g=b.closest('.chgroup'); showChapter(+b.dataset.chlink,g&&g.querySelector('.chhd .th img')); });
   document.querySelectorAll('.chhd').forEach(h=>h.onclick=()=>toggleGroup(h.closest('.chgroup')));
   wireRows($('#list')); renderRecent(); renderResume(); staggerIn($('#albums'));
 }
@@ -882,7 +891,20 @@ $('#shuffleall').onclick=()=>{ shuffle=true; $('#shuf').setAttribute('aria-press
 })();
 
 /* chapter page */
-function showChapter(ch){ const wasChapter=view==='chapter'; transitionDOM(()=>renderChapter(ch),wasChapter?'fade':'push'); }
+const PAGE_T={duration:460,easing:'cubic-bezier(.32,.72,0,1)'};
+function homeParts(){ return [$('#hero'),$('#home')]; }
+function showChapter(ch,fromEl){
+  const chap=$('#chapter'), wasChapter=view==='chapter';
+  if(wasChapter){ renderChapter(ch); chap.scrollTop=0; staggerIn(chap); return; }
+  renderChapter(ch); view='chapter'; chap.hidden=false; chap.scrollTop=0; chap.classList.remove('sliding'); chap.style.transform='';
+  document.body.classList.add('inchapter'); mirrorSync();
+  if(reduce) return;
+  // the page slides in from the right; the library eases back and dims; the cover you tapped flies into place
+  const to=chap.querySelector('.chhead .cover'), r=to&&to.getBoundingClientRect(); // measured before the page starts moving
+  chap.animate([{transform:'translateX(100%)'},{transform:'none'}],PAGE_T);
+  homeParts().forEach(h=>h.animate([{transform:'none',opacity:1},{transform:'translateX(-24%)',opacity:.55}],PAGE_T));
+  if(fromEl&&to&&r.width) morph(fromEl,to,{left:r.left,top:r.top,width:r.width,height:r.height},null,ART[ch]);
+}
 // opening a folder: measure, flip the state, measure again, then play the difference back with transforms (one layout, no per-frame reflow)
 function toggleGroup(g){
   const open=!g.classList.contains('open'), T={duration:400,easing:'cubic-bezier(.2,.8,.2,1)'}, groups=[...document.querySelectorAll('.chgroup')];
@@ -905,19 +927,43 @@ function toggleGroup(g){
 function staggerIn(...els){ els.forEach(el=>{ if(!el) return; el.classList.add('in'); clearTimeout(el._inT); el._inT=setTimeout(()=>el.classList.remove('in'),900); }); }
 function renderChapter(ch){
   view='chapter'; $('#chapter').dataset.ch=ch; const list=SONGS.filter(s=>s.ch===ch); const total=list.reduce((a,s)=>a+s.dur,0);
-  $('#chapter').innerHTML=`<button class="back" id="back" type="button"><svg viewBox="0 0 24 24"><path d="M15.4 7.4 10.8 12l4.6 4.6L14 18l-6-6 6-6z"/></svg>Library</button>
+  $('#chapter').innerHTML=`<div class="chwrap"><button class="back" id="back" type="button"><svg viewBox="0 0 24 24"><path d="M15.4 7.4 10.8 12l4.6 4.6L14 18l-6-6 6-6z"/></svg>Library</button>
     <div class="chhead"><div class="cover"><img src="${ART[ch]}" alt=""></div><h2>John ${ch}</h2><div class="sub">${CH[ch].name}</div><div class="meta">${list.length} song${list.length>1?'s':''} · verses ${list[0].a}–${list[list.length-1].b} · ${fmtLong(total)}</div>
       <div class="bigbtns"><button type="button" id="chplay"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Play</button><button type="button" class="ghost" id="chshuf"><svg viewBox="0 0 24 24"><path d="M17 4h4v4l-1.5-1.5L16 10l-1.4-1.4 3.5-3.5zM3 6h4l9.6 11H21l-1.5 1.5L21 20h-4v-4l1.5 1.5L17 16H6L3 6zm0 12 4.6-5.3 1.3 1.6L5 18z"/></svg>Shuffle</button></div></div>
     ${list.map((s,k)=>rowHTML(s,{n:k+1,i:k})).join('')}
-    <p class="note">Verses ${list[0].a}–${list[list.length-1].b} of John ${ch}, in order.</p>`;
+    <p class="note">Verses ${list[0].a}–${list[list.length-1].b} of John ${ch}, in order.</p></div>`;
   $('#back').onclick=()=>{ if(history.state&&history.state.ch) history.back(); else showHome(); }; wireRows($('#chapter')); staggerIn($('#chapter'));
   $('#chplay').onclick=()=>{ shuffle=false; $('#shuf').setAttribute('aria-pressed','false'); setSource('chapter',ch,list[0].i); load(list[0].i,true); openNP(); };
   $('#chshuf').onclick=()=>{ shuffle=true; $('#shuf').setAttribute('aria-pressed','true'); setSource('chapter',ch,null); load(src.order[0],true); openNP(); };
   if(song) document.querySelectorAll('[data-song]').forEach(b=>b.setAttribute('aria-current',+b.dataset.song===song.i));
-  applyTab('home');
+  if(tab!=='home') applyTab('home');
   try{ if(!history.state||history.state.ch!==ch) history.pushState({ch}); }catch(e){}
 }
-function showHome(){ transitionDOM(()=>{ view='home'; applyTab('home'); },'pop'); }
+function showHome(){
+  const chap=$('#chapter'); if(view!=='chapter') return; view='home';
+  const finish=()=>{ chap.hidden=true; chap.classList.remove('sliding'); chap.style.transform=''; homeParts().forEach(h=>{ h.style.transform=''; h.style.opacity=''; }); document.body.classList.remove('inchapter'); if(tab!=='home') applyTab('home'); mirrorSync(); };
+  if(reduce||chap.hidden){ finish(); return; }
+  // from wherever the page is (a finger may have pulled it part way) out to the right
+  const cs=getComputedStyle(chap), from=cs.transform==='none'?'translateX(0px)':cs.transform;
+  chap.classList.add('sliding'); const a=chap.animate([{transform:from},{transform:'translateX(100%)'}],PAGE_T);
+  homeParts().forEach(h=>{ const c=getComputedStyle(h); h.animate([{transform:c.transform==='none'?'translateX(0px)':c.transform,opacity:c.opacity},{transform:'none',opacity:1}],PAGE_T); });
+  const ch=+chap.dataset.ch, tile=document.querySelector(`#albums [data-ch="${ch}"] .cover`), from2=chap.querySelector('.chhead .cover');
+  if(tile&&from2){ const r=tile.getBoundingClientRect(); if(r.width&&r.right>0&&r.left<innerWidth&&r.bottom>0&&r.top<innerHeight){ const b=from2.getBoundingClientRect(); if(b.width) morph(from2,tile,{left:r.left,top:r.top,width:r.width,height:r.height},null,ART[ch]); } }
+  a.onfinish=finish;
+}
+// swipe the chapter page to the right to leave it (follows the finger; lets go into the same slide)
+(function(){ const chap=$('#chapter'); let x0=0,y0=0,t0=0,dx=0,mode=null;
+  // songs rows swipe right on their own (to queue), so over a row only the left edge peels the page; anywhere else, any rightward drag does
+  chap.addEventListener('touchstart',e=>{ if(e.touches.length!==1){ mode=null; return; } x0=e.touches[0].clientX; y0=e.touches[0].clientY; t0=performance.now(); dx=0; mode=(e.target.closest('.row,.bigbtns,.scrub,input')&&x0>=28)?null:'maybe'; },{passive:true});
+  chap.addEventListener('touchmove',e=>{ if(!mode) return; const t=e.touches[0]; dx=t.clientX-x0; const dy=t.clientY-y0;
+    if(mode==='maybe'){ if(Math.abs(dy)>Math.abs(dx)||dx<8){ if(Math.abs(dy)>8) mode=null; return; } mode='pop'; chap.classList.add('sliding'); }
+    if(e.cancelable) e.preventDefault(); const p=Math.max(0,Math.min(1,dx/innerWidth)); chap.style.transform=`translateX(${Math.max(0,dx)}px)`;
+    homeParts().forEach(h=>{ h.style.transform=`translateX(${-24*(1-p)}%)`; h.style.opacity=(.55+.45*p).toFixed(3); }); },{passive:false});
+  const end=()=>{ if(mode!=='pop'){ mode=null; return; } mode=null; const v=dx/Math.max(1,performance.now()-t0);
+    if(dx>innerWidth*.3||(dx>40&&v>.5)){ if(history.state&&history.state.ch) history.back(); else showHome(); }
+    else { const a=chap.animate([{transform:chap.style.transform},{transform:'translateX(0px)'}],{duration:300,easing:'cubic-bezier(.2,.8,.2,1)'}); homeParts().forEach(h=>{ h.animate([{transform:h.style.transform,opacity:h.style.opacity},{transform:'translateX(-24%)',opacity:.55}],{duration:300,easing:'cubic-bezier(.2,.8,.2,1)'}); h.style.transform=''; h.style.opacity=''; }); chap.style.transform=''; a.onfinish=()=>chap.classList.remove('sliding'); } };
+  chap.addEventListener('touchend',end); chap.addEventListener('touchcancel',end);
+})();
 addEventListener('popstate',e=>{ const st=e.state; if(st&&st.ch&&CH[st.ch]){ if(view!=='chapter'||+$('#chapter').dataset.ch!==st.ch) showChapter(st.ch); } else if(view==='chapter') showHome(); });
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function transitionDOM(fn,kind){ if(document.startViewTransition&&!reduce){ document.documentElement.dataset.vt=kind; const t=document.startViewTransition(fn); t.finished.finally(()=>{ delete document.documentElement.dataset.vt; }); } else fn(); }
@@ -926,7 +972,7 @@ const TABS=['home','fav','search'];
 function moveBlob(t,animate){ const b=$('#blob'); b.style.transform=`translateX(${TABS.indexOf(t)*100}%)`; if(animate){ b.classList.remove('stretch'); void b.offsetWidth; b.classList.add('stretch'); const sw=$('#sweep'); sw.classList.remove('go'); void sw.offsetWidth; sw.classList.add('go'); } }
 function setTab(t){ applyTab(t); }
 function applyTab(t){ const changed=t!==tab; tab=t; document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tab===t)); moveBlob(t,changed);
-  $('#hero').hidden=!(t==='home'&&view!=='chapter'); $('#home').hidden=!(t==='home'&&view!=='chapter'); $('#chapter').hidden=!(t==='home'&&view==='chapter'); $('#searchview').hidden=t!=='search'; $('#favview').hidden=t!=='fav';
+  $('#hero').hidden=t!=='home'; $('#home').hidden=t!=='home'; $('#chapter').hidden=!(t==='home'&&view==='chapter'); document.body.classList.toggle('inchapter',t==='home'&&view==='chapter'); $('#searchview').hidden=t!=='search'; $('#favview').hidden=t!=='fav';
   if(t==='fav') renderFavView(); if(t==='search'){ runSearch(); if(changed&&matchMedia('(hover:hover) and (pointer:fine)').matches) $('#q').focus(); }
   $('#lib').scrollTop=0; }
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{ if(b.dataset.tab==='home'&&tab==='home'&&view==='chapter') showHome(); else if(b.dataset.tab===tab) $('#lib').scrollTo({top:0,behavior:'smooth'}); else setTab(b.dataset.tab); });
@@ -1229,10 +1275,10 @@ function drawAurora(now){
 (function auroraLoop(now){ if(np.classList.contains('open')&&!np.classList.contains('anim')&&!np.classList.contains('drag')&&!reduce) drawAurora(now||0); requestAnimationFrame(auroraLoop); })(0);
 let npAnimT=0; function npMoving(){ np.classList.add('anim'); clearTimeout(npAnimT); npAnimT=setTimeout(()=>np.classList.remove('anim'),620); }
 np.addEventListener('transitionend',e=>{ if(e.target===np&&e.propertyName==='transform'){ clearTimeout(npAnimT); np.classList.remove('anim'); } });
-function morph(from,to,b,done){
-  if(reduce||!from||!to||!song){ done&&done(); return; }
+function morph(from,to,b,done,src){
+  if(reduce||!from||!to||(!song&&!src)){ done&&done(); return; }
   const a=from.getBoundingClientRect(); if(!a.width||!b||!b.width){ done&&done(); return; }
-  const g=document.createElement('img'); g.src=ART[song.ch]; g.className='morphimg'; document.body.append(g);
+  const g=document.createElement('img'); g.src=src||ART[song.ch]; g.className='morphimg'; document.body.append(g);
   const ra=getComputedStyle(from).borderRadius, rb=getComputedStyle(to).borderRadius;
   Object.assign(g.style,{left:b.left+'px',top:b.top+'px',width:b.width+'px',height:b.height+'px',borderRadius:rb});
   to.style.visibility='hidden';
@@ -1258,7 +1304,7 @@ function glassMorph(opening,done,scrub){
   const ga=g.animate(opening?[pill,sheet]:[sheet,pill],{duration:D,easing:E,fill:'forwards'});
   const gO=g.animate(opening?[{opacity:1},{opacity:1,offset:.4},{opacity:0,offset:.9},{opacity:0}]:[{opacity:0},{opacity:0,offset:.1},{opacity:1,offset:.6},{opacity:1}],{duration:D,easing:'linear',fill:'forwards'});
   // the library, its dim, the mini bar and the tab bar move on the very same clock, so the background never jumps ahead of the glass
-  const BG=[[$('#lib'),{transform:'none'},{transform:'scale(.94) translateY(-10px)'}],[$('#libdim'),{opacity:0},{opacity:.4}],[$('#minicard'),{transform:'translateY(0) scale(1)',opacity:1},{transform:'translateY(24px) scale(.92)',opacity:0}],[$('#tabbar'),{transform:'translateX(-50%) translateY(0)',opacity:1},{transform:'translateX(-50%) translateY(40px)',opacity:0}]];
+  const BG=[[$('#lib'),{transform:'none'},{transform:'scale(.94) translateY(-10px)'}],[$('#libdim'),{opacity:0},{opacity:.4}],[$('#minicard'),{transform:'translateY(0) scale(1)',opacity:1},{transform:'translateY(24px) scale(.92)',opacity:0}],[$('#tabbar'),{transform:'translateX(-50%) translateY(0)',opacity:1},{transform:'translateX(-50%) translateY(40px)',opacity:0}]].concat(view==='chapter'?[[$('#chapter'),{transform:'none'},{transform:'scale(.94) translateY(-10px)'}]]:[]);
   document.body.classList.add('morphing');
   const bgA=BG.map(([el,a,b])=>el.animate(opening?[a,b]:[b,a],{duration:D,easing:E,fill:'forwards'}));
   const all=[npA,npO,ga,gO,...bgA], clean=()=>{ g.remove(); npA.cancel(); npO.cancel(); }, settle=()=>{ bgA.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); };
@@ -1404,17 +1450,19 @@ document.querySelectorAll('.tabbar [data-tab]').forEach(b=>b.addEventListener('c
 /* the two floating bars carry a live mirror of the library under them */
 const MIR=[];
 function mirrorMake(host){ const refl=host.querySelector(':scope>.refl'); if(!refl) return; const m=document.createElement('div'); m.className='mirror'; m.setAttribute('aria-hidden','true'); refl.append(m); MIR.push({host,m}); }
-let mirT=0; function mirrorSync(){ clearTimeout(mirT); mirT=setTimeout(()=>{ const lib=$('#lib'); MIR.forEach(({m})=>{ const c=lib.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.querySelectorAll('.refl,.mirror,canvas,video').forEach(e=>e.remove()); c.querySelectorAll('[loading]').forEach(e=>e.removeAttribute('loading')); c.className='lib mirlib'; c.inert=true; m.replaceChildren(c); }); mirrorMeasure(); },120); }
+const mirSrc=()=>view==='chapter'&&!$('#chapter').hidden?$('#chapter'):$('#lib');
+let mirT=0; function mirrorSync(){ clearTimeout(mirT); mirT=setTimeout(()=>{ const lib=mirSrc(); MIR.forEach(({m})=>{ const c=lib.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.querySelectorAll('.refl,.mirror,canvas,video').forEach(e=>e.remove()); c.querySelectorAll('[loading]').forEach(e=>e.removeAttribute('loading')); c.className='lib mirlib'; c.inert=true; m.replaceChildren(c); }); mirrorMeasure(); },120); }
 let mirGeo=null;
-function mirrorMeasure(){ const lib=$('#lib'), lr=lib.getBoundingClientRect(); if(!lr.width) return; mirGeo={left:lr.left,top:lr.top,width:lr.width,bars:MIR.map(({host,m})=>{ const r=host.getBoundingClientRect(); return {m,r}; })}; mirrorPos(); }
-function mirrorPos(){ if(!mirGeo||document.body.classList.contains('npopen')) return; const st=$('#lib').scrollTop, G=mirGeo;
+function mirrorMeasure(){ const lib=mirSrc(), lr=lib.getBoundingClientRect(); if(!lr.width) return; mirGeo={left:lr.left,top:lr.top,width:lr.width,bars:MIR.map(({host,m})=>{ const r=host.getBoundingClientRect(); return {m,r}; })}; mirrorPos(); }
+function mirrorPos(){ if(!mirGeo||document.body.classList.contains('npopen')) return; const st=mirSrc().scrollTop, G=mirGeo;
   G.bars.forEach(({m,r})=>{ if(!r.width) return; m.style.width=G.width+'px'; m.style.transform=`translate3d(${G.left-r.left}px,${r.height+r.bottom-G.top+st}px,0) scaleY(-1)`; }); }
 /* every pane of glass gets a reflection layer */
 function glassify(el){ if(!el.querySelector(':scope>.refl')){ const r=document.createElement('i'); r.className='refl'; r.setAttribute('aria-hidden','true'); el.prepend(r); } return el; }
+document.body.append($('#chapter'));
 document.querySelectorAll('.glass').forEach(glassify);
 if(!reduce){ mirrorMake($('#minicard')); mirrorMake($('#tabbar'));
-  new MutationObserver(mirrorSync).observe($('#lib'),{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-pressed','aria-expanded','src','style']});
-  let mirRaf=0; $('#lib').addEventListener('scroll',()=>{ if(!mirRaf) mirRaf=requestAnimationFrame(()=>{ mirRaf=0; mirrorPos(); }); },{passive:true}); addEventListener('resize',()=>setTimeout(mirrorMeasure,80)); setTimeout(mirrorMeasure,600); mirrorSync(); }
+  const mo=new MutationObserver(mirrorSync); mo.observe($('#lib'),{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-pressed','aria-expanded','src']}); mo.observe($('#chapter'),{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-pressed','src']});
+  let mirRaf=0; const onS=()=>{ if(!mirRaf) mirRaf=requestAnimationFrame(()=>{ mirRaf=0; mirrorPos(); }); }; $('#lib').addEventListener('scroll',onS,{passive:true}); $('#chapter').addEventListener('scroll',onS,{passive:true}); addEventListener('resize',()=>setTimeout(mirrorMeasure,80)); setTimeout(mirrorMeasure,600); mirrorSync(); }
 /* ---------- glass light: the highlights drift with tilting and the mouse (not with scrolling: restyling every pane per scrolled frame cost too much) ---------- */
 (function(){ const R=document.documentElement; let tx=0,ty=0,x=0,y=0,raf=0,lastT=0;
   const ua=navigator.userAgent; if(/Chrome\//.test(ua)&&!/Edg\/|OPR\//.test(ua)&&!/iPhone|iPad|iPod|Android/.test(ua)&&!reduce) R.classList.add('lens'); // only desktop Chromium bends the backdrop through SVG
