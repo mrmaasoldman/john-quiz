@@ -385,8 +385,9 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 @keyframes hintBob{50%{transform:translateY(-4px)}}
 /* lyrics page: flows on under the verse page in the same scroller — a sticky header, then big lines that follow the song */
 .plyr{position:relative;min-height:100%;max-width:560px;margin:0 auto;width:100%;padding:0 max(20px,env(safe-area-inset-right,0px)) 0 max(20px,env(safe-area-inset-left,0px))}
-.lyhead.glass{position:sticky;top:calc(6px + env(safe-area-inset-top,0px));z-index:3;display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:6px 6px 6px 6px;border-radius:999px;background:rgba(22,20,34,.62);backdrop-filter:blur(12px) saturate(1.8) brightness(1.05);-webkit-backdrop-filter:blur(12px) saturate(1.8) brightness(1.05);border:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(255,255,255,.1),0 10px 30px rgba(0,0,0,.35)}
-.plyr{padding-top:calc(6px + env(safe-area-inset-top,0px))}
+.lyhead.glass{position:absolute;left:max(20px,env(safe-area-inset-left,0px));right:max(20px,env(safe-area-inset-right,0px));top:calc(6px + env(safe-area-inset-top,0px));max-width:520px;margin:0 auto;z-index:6;display:flex;align-items:center;gap:10px;padding:6px;border-radius:999px;background:rgba(22,20,34,.62);backdrop-filter:blur(12px) saturate(1.8) brightness(1.05);-webkit-backdrop-filter:blur(12px) saturate(1.8) brightness(1.05);border:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(255,255,255,.1),0 10px 30px rgba(0,0,0,.35);opacity:0;transform:translateY(-14px);pointer-events:none;transition:opacity .28s,transform .28s cubic-bezier(.2,.8,.2,1)}
+.np.lyvis .lyhead.glass{opacity:1;transform:none;pointer-events:auto} .np.qopen .lyhead.glass{opacity:0;pointer-events:none}
+.plyr{padding-top:calc(74px + env(safe-area-inset-top,0px))}
 .lyhead .sm{width:44px;height:44px;border-radius:22px;overflow:hidden;flex:none;padding:0;background:#222;box-shadow:0 3px 10px rgba(0,0,0,.4)}
 .lyhead .sm img{width:100%;height:100%;display:block}
 .lyhead .tt{min-width:0;flex:1}
@@ -534,7 +535,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
   .pverse{grid-template-rows:auto auto 1fr}
   .plyr{max-width:none;margin:0;height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
   .plyr::-webkit-scrollbar{display:none}
-  .lyhead.glass{margin-right:64px}
+  .lyhead.glass{left:calc(50% + 20px);right:84px;max-width:none;opacity:1;transform:none;pointer-events:auto;top:calc(8px + env(safe-area-inset-top,0px))}
   .lyup{display:none}
   .vhint{display:none}
   .art{display:block;width:min(34vw,300px,calc(100dvh - 560px));height:min(34vw,300px,calc(100dvh - 560px));border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.55);overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s;position:relative;margin-bottom:8px}
@@ -615,6 +616,11 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
   <div class="npbg" id="npbg"></div>
   <canvas id="aurora" aria-hidden="true"></canvas>
   <div class="npbg2"></div>
+  <div class="lyhead glass" id="lyhead">
+    <button class="sm" id="lycover" type="button" aria-label="Close"><img id="lyart2" alt=""></button>
+    <div class="tt"><b id="lytitle">—</b><small>Lyrics</small></div>
+    <button class="lyup" id="lyup" type="button" aria-label="Back to the verse"><svg viewBox="0 0 24 24"><path d="M12 8.5 4.5 16l1.4 1.4L12 11.3l6.1 6.1L19.5 16z"/></svg>Verse</button>
+  </div>
   <button class="npclose gbtn" id="npclose" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M12 15.5 4.5 8l1.4-1.4L12 12.7l6.1-6.1L19.5 8z"/></svg></button>
   <div class="npin" id="npin">
     <div class="npscroll" id="npscroll">
@@ -637,11 +643,6 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
         <button class="vhint" id="vhint" type="button">Swipe up for all the lyrics <svg viewBox="0 0 24 24"><path d="M12 8.5 4.5 16l1.4 1.4L12 11.3l6.1 6.1L19.5 16z"/></svg></button>
       </div>
       <section class="plyr" id="plyr" aria-label="Lyrics">
-        <div class="lyhead glass" id="lyhead">
-          <button class="sm" id="lycover" type="button" aria-label="Close"><img id="lyart2" alt=""></button>
-          <div class="tt"><b id="lytitle">—</b><small>Lyrics</small></div>
-          <button class="lyup" id="lyup" type="button" aria-label="Back to the verse"><svg viewBox="0 0 24 24"><path d="M12 8.5 4.5 16l1.4 1.4L12 11.3l6.1 6.1L19.5 16z"/></svg>Verse</button>
-        </div>
         <div class="lyrics" id="lyrics"></div>
       </section>
     </div>
@@ -1179,7 +1180,7 @@ function settle(){
 npscroll.addEventListener('scroll',()=>{
   const st=npscroll.scrollTop; LY.dir=st>LY.prevSt?1:(st<LY.prevSt?-1:LY.dir); LY.prevSt=st;
   if(!LY.prog) LY.userAt=performance.now();
-  const vis=lyricsVisible(); $('#lyr').setAttribute('aria-pressed',vis&&!wide());
+  const vis=lyricsVisible(); $('#lyr').setAttribute('aria-pressed',vis&&!wide()); np.classList.toggle('lyvis',vis&&!wide());
   if(vis&&!LY.wasVis&&!LY.prog) LY.arrive=true; LY.wasVis=vis;
   scheduleSettle();
 },{passive:true});
@@ -1292,7 +1293,7 @@ function renderQueue(){
     h.addEventListener('pointermove',move); h.addEventListener('pointerup',up); h.addEventListener('pointercancel',up);
   }));
 }
-function setQueueOpen(on){ $('#upnext').classList.toggle('open',on); $('#scrim').classList.toggle('on',on); $('#queue').setAttribute('aria-pressed',on); }
+function setQueueOpen(on){ np.classList.toggle('qopen',on); $('#upnext').classList.toggle('open',on); $('#scrim').classList.toggle('on',on); $('#queue').setAttribute('aria-pressed',on); }
 $('#queue').onclick=()=>setQueueOpen(!$('#upnext').classList.contains('open')); $('#uclose').onclick=()=>setQueueOpen(false); $('#scrim').onclick=()=>setQueueOpen(false);
 function playNext(i){ haptic(); if(!song){ playIdx(i); return; } const k=manual.indexOf(i); if(k>=0){ manual.splice(k,1); if(k<=manualPos) manualPos--; } if(qloop){ manual.splice(manualPos+1,0,i); } else manual.unshift(i); renderQueue(); toast(`Playing next: ${SONGS[i].title}`); }
 function addLast(i){ haptic(); if(!song){ playIdx(i); return; } manual.push(i); renderQueue(); toast(`Added to Up Next: ${SONGS[i].title}`); }
@@ -1386,7 +1387,7 @@ function npHideNow(){ haptic('soft'); np.classList.add('morphing'); np.classList
 function openNP(scrub){ scrub=scrub===true;
   if(NPM.ctl){ if(!NPM.opening){ document.body.classList.add('npopen'); np.classList.add('open'); np.setAttribute('aria-hidden','false'); npMoving(); NPM.ctl.head(true,()=>{ document.body.classList.add('npopen'); }); } return null; } // it's mid-move: just head up
   const wasOpen=np.classList.contains('open');
-  if(!wasOpen&&!wide()){ cancelAnimationFrame(LY.anim); LY.prog=false; npscroll.scrollTop=0; LY.wasVis=false; LY.arrive=false; }
+  if(!wasOpen&&!wide()){ cancelAnimationFrame(LY.anim); LY.prog=false; npscroll.scrollTop=0; LY.wasVis=false; LY.arrive=false; np.classList.remove('lyvis'); }
   const fromMini=!wasOpen&&!reduce&&!$('#mini').classList.contains('hide')&&!np.style.transform;
   const prep=()=>{ fitVerse(); lyLayout(); updateVerse(true); updateLyrics(true); if(!reduce){ AUR.last=0; drawAurora(performance.now()); } };
   if(fromMini) requestAnimationFrame(()=>requestAnimationFrame(prep)); else prep();
