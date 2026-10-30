@@ -59,11 +59,13 @@ html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) sa
   background:conic-gradient(from calc(210deg + var(--lx,0) * 60deg),rgba(255,255,255,.95),rgba(255,255,255,.12) 18%,rgba(255,255,255,.05) 35%,rgba(255,255,255,.55) 50%,rgba(255,255,255,.08) 68%,rgba(255,255,255,.12) 85%,rgba(255,255,255,.95));
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
 .glass>*{position:relative}
+.lib .glass::before,#chapter .glass::before{mix-blend-mode:normal;opacity:.7}
 /* panes that sit on the flat page wash (not over scrolling content) skip the backdrop blur: nothing to blur, and it costs a full re-blur every scrolled frame */
 .chhd.glass,.box.glass,.big.glass,.br.glass,.resume.glass,.search label.glass{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--g-flat,rgba(255,255,255,.5))}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--g-flat:rgba(44,40,64,.42)}} :root[data-theme="dark"]{--g-flat:rgba(44,40,64,.42)}
 /* everything that moves is promoted ahead of time so the first frame doesn't stall on a layer being built */
-.mini .card,.tabbar,#libdim,.upnext,.toast,.speedpop,.reppop,.sheet .box,.rc,.row .th,.tabbar>.blob{will-change:transform,opacity}
+.mini .card,.tabbar,#libdim,.upnext,.toast,.speedpop,.reppop,.sheet .box,.tabbar>.blob{will-change:transform,opacity}
+.hero.paging,#home.paging{will-change:transform,opacity}
 .lib{backface-visibility:hidden}
 /* the reflection: a mirrored, softened picture of the current cover (what the room is lit by) slides across the glass as you tilt or scroll, plus a hard glint that moves with it */
 .glass>.refl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;overflow:hidden}
@@ -146,7 +148,6 @@ html[data-vt="pop"]::view-transition-old(content){animation-name:vtOutRight} htm
 #chapter>.chwrap{max-width:900px;margin:0 auto}
 #chapter.sliding{transition:none}
 body.inchapter .hero,body.inchapter #home{transform:translateX(-24%);opacity:.55;pointer-events:none}
-.hero,#home{will-change:transform,opacity}
 body.npopen #chapter{transform:scale(.94) translateY(-10px)} body.morphing #chapter{transition:none!important}
 .mirlib .view[data-ch]{position:static!important;height:auto!important;overflow:visible!important;box-shadow:none!important;background:none!important;transform:none!important;padding:0!important}
 @keyframes viewIn{from{opacity:0;transform:translateY(5px)}}
@@ -217,7 +218,7 @@ body.npopen #chapter{transform:scale(.94) translateY(-10px)} body.morphing #chap
 .chbody{display:grid;grid-template-rows:0fr}
 /* folders open with transforms only: the list slides out from under its header while everything below it glides down; nothing re-lays-out per frame */
 .chgroup.moving{will-change:transform} .chbody.moving{overflow:hidden} .chin.moving{will-change:transform}
-.chgroup{position:relative} .chbody.ghost{display:block;position:absolute;left:0;right:0;top:100%;overflow:hidden;will-change:height} .chbody.ghost>.chin{will-change:transform}
+.chgroup{position:relative} .chbody.ghost{display:block;position:absolute;left:0;right:0;top:100%;overflow:hidden;z-index:0} .chbody.ghost>.chin{padding:4px 4px 6px}
 .chgroup.open .chbody{grid-template-rows:1fr}
 .chin{min-height:0;overflow:hidden;padding:0 4px}
 .chgroup.open .chin{padding-top:4px;padding-bottom:6px}
@@ -902,31 +903,39 @@ function showChapter(ch,fromEl){
   document.body.classList.add('inchapter'); mirrorSync();
   if(reduce) return;
   // the page slides in from the right; the library eases back and dims; the cover you tapped flies into place
+  homeParts().forEach(h=>h.classList.add('paging')); document.body.classList.add('paging'); setTimeout(()=>{ homeParts().forEach(h=>h.classList.remove('paging')); document.body.classList.remove('paging'); },PAGE_T.duration+60);
   const to=chap.querySelector('.chhead .cover'), r=to&&to.getBoundingClientRect(); // measured before the page starts moving
   chap.animate([{transform:'translateX(100%)'},{transform:'none'}],PAGE_T);
   homeParts().forEach(h=>h.animate([{transform:'none',opacity:1},{transform:'translateX(-24%)',opacity:.55}],PAGE_T));
   if(fromEl&&to&&r.width) morph(fromEl,to,{left:r.left,top:r.top,width:r.width,height:r.height},null,ART[ch]);
 }
-// opening a folder: measure, flip the state, measure again, then play the difference back with transforms (one layout, no per-frame reflow)
+// folders: one layout, then transforms. Opening: the list slides out from under its header while everything below glides down.
+// Tapping it shut: the list rolls back up under the header. Opening another: the old list just fades where it is.
+const FOLD={anims:[],t:0};
+function settleFolds(){ FOLD.anims.forEach(a=>{ try{ a.cancel(); }catch(e){} }); FOLD.anims=[];
+  document.querySelectorAll('#lib .chgroup.moving,#lib .chbody.moving,#lib .chin.moving').forEach(e=>e.classList.remove('moving'));
+  document.querySelectorAll('#lib .chbody.ghost').forEach(b=>{ b.classList.remove('ghost'); b.style.height=''; }); }
 function toggleGroup(g){
-  const open=!g.classList.contains('open'), T={duration:400,easing:'cubic-bezier(.2,.8,.2,1)'}, groups=[...document.querySelectorAll('#lib .chgroup')];
-  const closing=groups.filter(o=>o!==g&&o.classList.contains('open'));
+  const open=!g.classList.contains('open'), D=380, E='cubic-bezier(.22,.9,.3,1)', groups=[...document.querySelectorAll('#lib .chgroup')];
   const setState=(x,on)=>{ x.classList.toggle('open',on); x.querySelector('.chhd').setAttribute('aria-expanded',on); };
-  if(reduce){ closing.forEach(o=>setState(o,false)); setState(g,open); return; }
-  // what's leaving keeps a ghost of its list so it can slide up under the header instead of vanishing
-  const leaving=open?closing:[...closing,g];
-  const ghosts=leaving.map(o=>{ const body=o.querySelector('.chbody'), chin=body.querySelector('.chin'), h=body.offsetHeight; return {o,body,chin,h}; });
-  const before=new Map(groups.map(x=>[x,x.getBoundingClientRect().top]));
-  // a tap in the middle of the last animation: stop it where it is so the new measurements are honest
-  groups.forEach(x=>{ x.getAnimations({subtree:true}).forEach(a=>{ if(a.effect&&a.effect.getTiming().duration===400) a.cancel(); }); x.classList.remove('moving'); x.querySelectorAll('.chbody.ghost').forEach(b=>{ b.classList.remove('ghost'); const c=b.querySelector('.chin'); if(c){ c.style.paddingTop=''; c.style.paddingBottom=''; c.classList.remove('moving'); } }); x.querySelectorAll('.chbody.moving,.chin.moving').forEach(b=>b.classList.remove('moving')); });
-  leaving.forEach(o=>setState(o,false)); if(open) setState(g,true);
-  ghosts.forEach(({body,chin})=>{ body.classList.add('ghost'); chin.style.paddingTop='4px'; chin.style.paddingBottom='6px'; });
-  const after=new Map(groups.map(x=>[x,x.getBoundingClientRect().top]));
-  groups.forEach(x=>{ const d=after.get(x)-before.get(x); if(Math.abs(d)<.5) return; x.classList.add('moving'); const a=x.animate([{transform:`translateY(${-d}px)`},{transform:'none'}],T); a.onfinish=()=>x.classList.remove('moving'); });
+  const prev=groups.filter(o=>o!==g&&o.classList.contains('open'));
+  if(reduce){ prev.forEach(o=>setState(o,false)); setState(g,open); return; }
+  settleFolds();
+  const onScreen=r=>r.bottom>-120&&r.top<innerHeight+120;
+  const leaving=(open?prev:[g]).map(o=>{ const body=o.querySelector('.chbody'); return {o,body,chin:body.querySelector('.chin'),h:body.offsetHeight,on:onScreen(body.getBoundingClientRect())}; });
+  const before=new Map(groups.map(x=>[x,x.getBoundingClientRect()]));
+  leaving.forEach(({o})=>setState(o,false)); if(open) setState(g,true);
+  leaving.forEach(l=>{ if(l.on){ l.body.classList.add('ghost'); l.body.style.height=l.h+'px'; } });
+  const after=new Map(groups.map(x=>[x,x.getBoundingClientRect()]));
+  document.body.classList.add('folding'); clearTimeout(FOLD.t); FOLD.t=setTimeout(()=>{ document.body.classList.remove('folding'); mirrorSync(); },D+80);
+  const run=(el,kf,o)=>{ const a=el.animate(kf,{duration:D,easing:E,...o}); FOLD.anims.push(a); return a; };
+  groups.forEach(x=>{ const a=before.get(x), b=after.get(x), d=b.top-a.top; if(Math.abs(d)<.5||!(onScreen(a)||onScreen(b))) return;
+    x.classList.add('moving'); run(x,[{transform:`translateY(${-d}px)`},{transform:'none'}]).onfinish=()=>x.classList.remove('moving'); });
   if(open){ const body=g.querySelector('.chbody'), chin=body.querySelector('.chin'), H=body.offsetHeight; body.classList.add('moving'); chin.classList.add('moving');
-    const a=chin.animate([{transform:`translateY(${-H}px)`,opacity:.4},{transform:'none',opacity:1}],T); a.onfinish=()=>{ body.classList.remove('moving'); chin.classList.remove('moving'); }; staggerIn(g); }
-  ghosts.forEach(gh=>{ const a=gh.body.animate([{height:gh.h+'px'},{height:'0px'}],T); gh.chin.animate([{transform:'none',opacity:1},{transform:`translateY(${-gh.h}px)`,opacity:.6}],T);
-    a.onfinish=()=>{ gh.body.classList.remove('ghost'); gh.chin.style.paddingTop=''; gh.chin.style.paddingBottom=''; }; });
+    run(chin,[{transform:`translateY(${-H}px)`,opacity:.45},{transform:'none',opacity:1}]).onfinish=()=>{ body.classList.remove('moving'); chin.classList.remove('moving'); }; staggerIn(g); }
+  leaving.forEach(l=>{ if(!l.on) return; const done=()=>{ l.body.classList.remove('ghost'); l.body.style.height=''; };
+    if(open){ run(l.chin,[{opacity:1},{opacity:0}],{duration:200,easing:'ease-out',fill:'forwards'}).onfinish=done; }
+    else { run(l.body,[{height:l.h+'px'},{height:'0px'}]); run(l.chin,[{transform:'none',opacity:1},{transform:`translateY(${-l.h}px)`,opacity:.6}]).onfinish=done; } });
 }
 function staggerIn(...els){ els.forEach(el=>{ if(!el) return; el.classList.add('in'); clearTimeout(el._inT); el._inT=setTimeout(()=>el.classList.remove('in'),900); }); }
 function renderChapter(ch){
@@ -949,6 +958,7 @@ function showHome(){
   if(reduce||chap.hidden){ finish(); return; }
   // from wherever the page is (a finger may have pulled it part way) out to the right
   const cs=getComputedStyle(chap), from=cs.transform==='none'?'translateX(0px)':cs.transform;
+  homeParts().forEach(h=>h.classList.add('paging')); document.body.classList.add('paging'); setTimeout(()=>{ homeParts().forEach(h=>h.classList.remove('paging')); document.body.classList.remove('paging'); },PAGE_T.duration+60);
   chap.classList.add('sliding'); const a=chap.animate([{transform:from},{transform:'translateX(100%)'}],PAGE_T); chapPop=a;
   homeParts().forEach(h=>{ const c=getComputedStyle(h); h.animate([{transform:c.transform==='none'?'translateX(0px)':c.transform,opacity:c.opacity},{transform:'none',opacity:1}],PAGE_T); });
   const ch=+chap.dataset.ch, tile=document.querySelector(`#albums [data-ch="${ch}"] .cover`), from2=chap.querySelector('.chhead .cover');
@@ -1461,7 +1471,7 @@ document.querySelectorAll('.tabbar [data-tab]').forEach(b=>b.addEventListener('c
 const MIR=[];
 function mirrorMake(host){ const refl=host.querySelector(':scope>.refl'); if(!refl) return; const m=document.createElement('div'); m.className='mirror'; m.setAttribute('aria-hidden','true'); refl.append(m); MIR.push({host,m}); }
 const mirSrc=()=>view==='chapter'&&!$('#chapter').hidden?$('#chapter'):$('#lib');
-let mirT=0; function mirrorSync(){ clearTimeout(mirT); mirT=setTimeout(()=>{ const lib=mirSrc(); MIR.forEach(({m})=>{ const c=lib.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.querySelectorAll('.refl,.mirror,canvas,video').forEach(e=>e.remove()); c.querySelectorAll('[loading]').forEach(e=>e.removeAttribute('loading')); c.className='lib mirlib'; c.inert=true; m.replaceChildren(c); }); mirrorMeasure(); },120); }
+let mirT=0; function mirrorSync(){ clearTimeout(mirT); mirT=setTimeout(()=>{ if(document.body.classList.contains('folding')||document.body.classList.contains('morphing')||document.body.classList.contains('paging')){ mirrorSync(); return; } const lib=mirSrc(); MIR.forEach(({m})=>{ const c=lib.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.querySelectorAll('.refl,.mirror,canvas,video').forEach(e=>e.remove()); c.querySelectorAll('[loading]').forEach(e=>e.removeAttribute('loading')); c.className='lib mirlib'; c.inert=true; m.replaceChildren(c); }); mirrorMeasure(); },360); }
 let mirGeo=null;
 function mirrorMeasure(){ const lib=mirSrc(), lr=lib.getBoundingClientRect(); if(!lr.width) return; mirGeo={left:lr.left,top:lr.top,width:lr.width,bars:MIR.map(({host,m})=>{ const r=host.getBoundingClientRect(); return {m,r}; })}; mirrorPos(); }
 function mirrorPos(){ if(!mirGeo||document.body.classList.contains('npopen')) return; const st=mirSrc().scrollTop, G=mirGeo;
