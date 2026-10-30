@@ -1759,7 +1759,8 @@ function announceSongs(){ if(lsGet('ann:songxp',false)||document.querySelector('
   const done=()=>{ lsSet('ann:songxp',true); el.classList.remove('show'); setTimeout(()=>el.remove(),350); };
   el.querySelector('#anncok').onclick=done; el.querySelector('#anncgo').onclick=()=>lsSet('ann:songxp',true); }
 // Verse grids: tap a verse to flip it, or press and slide your finger across several to select (or clear) them all at once.
-function paintVerses(sel,attr,commit){ const btns=[...document.querySelectorAll(sel)]; if(!btns.length) return; const grid=btns[0].parentElement;
+function paintVerses(sel,attr,commit){ const btns=[...document.querySelectorAll(sel)]; if(!btns.length) return; const grids=[...new Set(btns.map(b=>b.parentElement))]; // one grid per chapter on the Materials tab
+  const grid={ contains:b=>grids.some(g=>g.contains(b)), addEventListener:(t,f,o)=>grids.forEach(g=>g.addEventListener(t,f,o)) };
   let mode=null, touched=null;
   const keyOf=b=>b.dataset[attr];
   const hit=(x,y)=>{ const el=document.elementFromPoint(x,y); const b=el&&el.closest&&el.closest(sel); return b&&grid.contains(b)?b:null; };
@@ -4498,8 +4499,8 @@ function wire(){
   on('#resetno',()=>{confirmReset=false;render()});
   on('#resetyes',()=>{const sel=U.sel,opts=U.opts;U=blankUser();U.sel=sel;U.opts=opts;save();confirmReset=false;render()});
   // memory
-  document.querySelectorAll('[data-mem]').forEach(b=>b.onclick=()=>{const k=b.dataset.mem;if(U.mem[k])delete U.mem[k];else U.mem[k]=1;save();checkBadges();
-    b.classList.toggle('on',!!U.mem[k]);b.setAttribute('aria-pressed',!!U.mem[k]);refreshMemHead()});
+  // memory verses: tap one, or press and slide across a bunch to mark (or clear) them all at once
+  paintVerses('[data-mem]','mem',keys=>{ const on=keys.mode; keys.forEach(k=>{ if(on) U.mem[k]=1; else delete U.mem[k]; const b=document.querySelector(`[data-mem="${k}"]`); if(b){ b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); } }); save(); checkBadges(); refreshMemHead(); });
   document.querySelectorAll('[data-memall]').forEach(b=>b.onclick=()=>{const c=+b.dataset.memall,n=VERSES_IN_JOHN[c-1],gk=goalKeys(U);
     let t=[...Array(n)].map((_,k)=>k+1); const tg=gk?t.filter(v=>gk.has(c+':'+v)):t; if(tg.length)t=tg;
     const all=t.every(v=>U.mem[c+':'+v]); t.forEach(v=>{if(all)delete U.mem[c+':'+v];else U.mem[c+':'+v]=1}); save();checkBadges();renderKeep()});
