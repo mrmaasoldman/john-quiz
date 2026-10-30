@@ -197,6 +197,7 @@ html[data-vt="pop"]::view-transition-old(content){animation-name:vtOutRight} htm
 .row.will::before{filter:brightness(1.08)}
 .row .th{width:52px;height:52px;border-radius:8px;background:var(--thumb);overflow:hidden;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.2)}
 .row .th img{width:100%;height:100%;display:block}
+.row .th,.row .n{cursor:zoom-in}
 .row .th .eq{position:absolute;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;gap:3px;padding-bottom:12px}
 .row[aria-current="true"] .th .eq{display:flex}
 .row .n{width:52px;text-align:center;color:var(--sub);font-variant-numeric:tabular-nums;font-size:15px}
@@ -506,7 +507,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
       <div class="albums" id="albums"></div>
       <div class="sect"><h2>Songs</h2><small>By chapter · tap to open</small></div>
       <div id="list"></div>
-      <p class="note">Tap a chapter to see its songs, then tap a song and the words light up as they're sung. Its chapter plays like a playlist, starting over when it ends; swipe a song to the right to play it next, and the repeat button in Up Next loops just the songs you added. In the player, tap Repeat to hear one song over and over or to repeat just a few verses, or the speed button to slow it down or speed it up. Photos courtesy of Unsplash photographers. Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway. Used by permission. All rights reserved.</p>
+      <p class="note">Tap a chapter to see its songs, then tap a song to play it (tap its picture to open the player, where the words light up as they're sung). Its chapter plays like a playlist, starting over when it ends; swipe a song to the right to play it next, and the repeat button in Up Next loops just the songs you added. In the player, tap Repeat to hear one song over and over or to repeat just a few verses, or the speed button to slow it down or speed it up. Photos courtesy of Unsplash photographers. Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway. Used by permission. All rights reserved.</p>
     </div>
 
     <div class="view" id="chapter" hidden></div>
@@ -777,7 +778,7 @@ function wireRows(root){ const ctx=root.id==='favlist'?'favs':'chapter';
     swipeable(b,{dir:1,onStart:cancel,onCommit:()=>playNext(+b.dataset.song)});
     b.addEventListener('contextmenu',e=>{ e.preventDefault(); clearTimeout(timer); fired=true; openSheet(SONGS[+b.dataset.song]); });
     b.onclick=e=>{ if(fired){ fired=false; return; } if(e.target.closest('[data-fav]')){ toggleFav(e.target.closest('[data-fav]').dataset.fav); return; }
-      const i=+b.dataset.song, at=b.dataset.at!=null?+b.dataset.at:undefined; if(song&&song.i===i&&at==null){ toggle(); } else playIdx(i,at,ctx); openNP(); };
+      const i=+b.dataset.song, at=b.dataset.at!=null?+b.dataset.at:undefined; const pic=!!e.target.closest('.th,.n'); if(song&&song.i===i&&at==null){ if(pic) openNP(); else toggle(); } else { playIdx(i,at,ctx); if(pic) openNP(); } };
   });
 }
 function setHero(ch){ const el=$('#herobg'), old=$('#herobg0'); if(el.dataset.ch==ch) return; old.style.backgroundImage=el.style.backgroundImage; el.style.opacity=0; el.style.backgroundImage=`url(art/john${ch}.jpg)`; el.dataset.ch=ch; requestAnimationFrame(()=>requestAnimationFrame(()=>el.style.opacity=1)); }
@@ -802,7 +803,7 @@ function renderFavs(){ return;
 }
 function renderRecent(){ const el=$('#recent'); const ids=lsGet('hist',[]).filter(id=>SONGS.some(s=>s.id===id)).slice(0,10); if(!ids.length){ el.innerHTML=''; return; }
   el.innerHTML=`<div class="sect"><h2>Recently played</h2><small>${ids.length}</small></div><div class="recent">${ids.map(id=>{ const s=SONGS.find(x=>x.id===id); return `<button class="rc" type="button" data-rc="${s.i}"><div class="cover"><img src="${ART[s.ch]}" alt="" loading="lazy"><i>${fmt(s.dur)}</i></div><b>${esc(s.title)}</b><small>${esc(s.sub)}</small></button>`; }).join('')}</div>`;
-  el.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{ playIdx(+b.dataset.rc); openNP(); }); }
+  el.querySelectorAll('[data-rc]').forEach(b=>b.onclick=e=>{ const i=+b.dataset.rc, pic=!!e.target.closest('.cover'); if(song&&song.i===i){ if(pic) openNP(); else toggle(); } else { playIdx(i); if(pic) openNP(); } }); }
 function noteHistory(id){ const h=lsGet('hist',[]).filter(x=>x!==id); h.unshift(id); lsSet('hist',h.slice(0,12)); }
 function renderResume(){
   const last=lsGet('last',null); const el=$('#resume'); el.innerHTML='';
