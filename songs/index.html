@@ -1122,7 +1122,7 @@ let tickArmed=false;
 function armTick(){ if(tickArmed||!tickEl||!verseClick) return; tickArmed=true; try{ tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickArmed=false; }); }catch(e){ tickArmed=false; } }
 // how long this phone takes between asking for the knock and it coming out (measured each time, averaged), so the next one is asked for that much sooner
 let tickLat=IOS?.16:.04, tickAsk=0; if(tickEl){ tickEl.addEventListener('playing',()=>{ if(tickAsk){ const l=(performance.now()-tickAsk)/1000; if(l>0&&l<.6) tickLat=tickLat*.6+l*.4; tickAsk=0; } }); tickEl.addEventListener('ended',()=>{ try{ tickEl.currentTime=0; }catch(e){} }); }
-const tickNudge=IOS?-.51:-.45; // the knock sits just under half a second ahead of the sung word (that's where it feels right); phones a hair more, their song clock reads behind
+const tickNudge=IOS?-.66:-.6; // the knock sits just under half a second ahead of the sung word (that's where it feels right); phones a hair more, their song clock reads behind
 function elTick(){ try{ if(!tickEl) return; tickAsk=performance.now(); tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickAsk=0; }); }catch(e){} }
 function verseTick(){ if(IOS||!(window.AudioContext||window.webkitAudioContext)){ elTick(); return; } if(ACX&&ACX.state==='running') knock(); else elTick(); }
 // look a little ahead of the song and book each verse start, so the knock lands on the beat rather than a quarter-second late
