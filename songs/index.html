@@ -530,6 +530,10 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .sheet .box button.it{height:48px;border-radius:14px;display:flex;align-items:center;gap:12px;padding:0 14px;font-weight:600;font-size:15px;color:var(--fg);text-align:left}
 .sheet .box button.it:active{background:var(--btn)}
 .sheet .box button.it svg{width:20px;height:20px;fill:currentColor;color:var(--accent)}
+.intro{align-items:center;background:rgba(0,0,0,.5)} .intro .box.glass{padding:14px 12px 10px;background:rgba(24,22,36,.94)!important;backdrop-filter:blur(18px) saturate(1.6)!important;-webkit-backdrop-filter:blur(18px) saturate(1.6)!important;color:#f6f3fb;box-shadow:0 24px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.3)} .intro .ihd small,.intro .ihow{color:rgba(246,243,251,.82)} .intro .it{color:#fff!important} .intro #introok{color:rgba(246,243,251,.6)!important}
+.intro .ihd{display:flex;gap:12px;align-items:flex-start;padding:4px 6px 8px} .intro .ihd b{display:block;font-family:var(--serif);font-size:19px;margin-bottom:3px} .intro .ihd small{display:block;color:var(--sub);font-size:13.5px;line-height:1.4}
+.intro .iknock{flex:none;width:44px;height:44px;border-radius:14px;background:var(--sig);color:#fff;display:grid;place-items:center;font-size:22px;box-shadow:0 6px 16px rgba(255,92,138,.35)}
+.intro .ihow{margin:2px 0 8px;padding:0 6px 0 24px;color:var(--fg);font-size:14px;line-height:1.45;display:grid;gap:6px} .intro .ihow b{font-weight:700}
 .toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);z-index:50;padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;color:var(--fg);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:50}
@@ -703,6 +707,12 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
 </section>
 
 <div class="sheet" id="sheet"><div class="box glass" id="sheetbox"></div></div>
+<div class="sheet intro" id="intro" aria-label="Verse click" hidden><div class="box glass">
+  <div class="ihd"><span class="iknock" aria-hidden="true">♩</span><div><b>New: the verse click</b><small>A little knock between verses, to help you hear where one ends and the next begins.</small></div></div>
+  <ol class="ihow"><li>Open the player and tap <b>Repeat</b> (↻) at the bottom.</li><li>Under <b>Verse click</b>, tap <b>On</b> — you'll hear one right away.</li><li>If it lands late or early on your phone, use <b>Click timing</b> to nudge it.</li></ol>
+  <button class="it" type="button" id="introon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Turn it on now</button>
+  <button class="it" type="button" id="introok" style="justify-content:center;color:var(--sub)">Maybe later</button>
+</div></div>
 <div class="toast glass" id="toast"></div>
 
 
@@ -1591,6 +1601,11 @@ function refreshArt(c){ const raw=`art/john${c}.jpg`; document.querySelectorAll(
   { // a different chapter's photo behind the title every visit (never the same one twice in a row)
     let prev=lsGet('heroch',0), pick; do{ pick=CHAPTERS[Math.random()*CHAPTERS.length|0]; }while(CHAPTERS.length>1&&pick===prev); lsSet('heroch',pick); setHero(pick); }
   renderLibrary();
+  // the first visit since the verse click arrived: one card that says what it is and where it lives (never again after that)
+  if(!lsGet('seen:click',false)){ setTimeout(()=>{ if(!lsGet('seen:click',false)){ const el=$('#intro'); el.hidden=false; requestAnimationFrame(()=>el.classList.add('open')); } },1400);
+    const done=()=>{ lsSet('seen:click',true); const el=$('#intro'); el.classList.remove('open'); setTimeout(()=>{ el.hidden=true; },300); };
+    $('#introok').onclick=done; $('#introon').onclick=()=>{ done(); setVerseClick(true); if(!IOS) acx(); tickArmed=true; elTick(); toast('Verse click is on — Repeat ↻ in the player to change it'); };
+    $('#intro').addEventListener('click',e=>{ if(e.target===$('#intro')) done(); }); }
   const h=location.hash, m=h.match(/^#ch(\d+)$/), last=lsGet('last',null);
   let s=SONGS.find(x=>'#'+x.id===h)||(last&&SONGS.find(x=>x.id===last.id))||SONGS[0];
   setSource('chapter',s.ch,s.i); load(s.i,false,(last&&last.id===s.id&&last.t>8)?last.t:null);
