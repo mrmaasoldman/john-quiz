@@ -79,7 +79,7 @@ html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) sa
 .mirlib *{animation:none!important;transition:none!important} .mirlib{font-size:16px;text-shadow:none}
 .mini .card.glass>.refl,.tabbar.glass>.refl{-webkit-mask:linear-gradient(to top,rgba(0,0,0,1) 0,rgba(0,0,0,.7) 45%,rgba(0,0,0,.15) 100%);mask:linear-gradient(to top,rgba(0,0,0,1) 0,rgba(0,0,0,.7) 45%,rgba(0,0,0,.15) 100%)}
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .glass>.refl>.mirror{--g-mir:.45}} :root[data-theme="light"] .glass>.refl>.mirror{--g-mir:.45}
-.gmorph{position:fixed;left:0;top:0;z-index:30;pointer-events:none;transform-origin:0 0;will-change:transform,opacity;backdrop-filter:blur(4px) saturate(1.7) brightness(1.04)!important;-webkit-backdrop-filter:blur(4px) saturate(1.7) brightness(1.04)!important} .gmorph::after{display:none} .gmorph{box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35),0 10px 28px var(--g-sh)} .gmorph>.refl{display:none}
+.gmorph{position:fixed;left:0;top:0;z-index:30;pointer-events:none;transform-origin:0 0;will-change:transform,opacity;backdrop-filter:blur(4px) saturate(1.7) brightness(1.04)!important;-webkit-backdrop-filter:blur(4px) saturate(1.7) brightness(1.04)!important} .gmorph::after{display:none} .gmorph::before{opacity:.35} .gmorph{box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35),0 10px 28px var(--g-sh)} .gmorph>.refl{display:none}
 .np.morphing .npbg,.np.morphing #aurora,.np.morphing .npbg2{opacity:0}
 .np.morphing{transition:none}
 .np.closing{pointer-events:none} /* a player on its way out takes no taps */
@@ -90,6 +90,9 @@ body.morphing .glass>.refl>.mirror{opacity:0}
 body.morphing .eq i,body.morphing .vtext .w.now,body.morphing .ln.cur .w.now,body.morphing .vhint,body.morphing .in .row,body.morphing .in .album,body.morphing .ln.gap.cur,body.morphing .ln.gap.cur i,body.morphing .art{animation-play-state:paused!important} /* named, not `*`: a universal selector re-styles every node on each toggle */
 body.morphing .glass::before,body.morphing .glass>.refl::after{mix-blend-mode:normal}
 .gmorph{contain:strict}
+html.phone .gmorph{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:linear-gradient(rgba(60,54,88,.42),rgba(22,20,34,.66))!important}
+/* phones: the sheet beneath the glass fades in as a whole, so its own blurs don't re-render under the moving copy */
+html.phone body.morphing .np .glass{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 /* ---------- juice: little bits of fun on every move ---------- */
 @keyframes jBoing{0%{transform:scale(1)}30%{transform:scale(1.25,.8)}55%{transform:scale(.88,1.15)}75%{transform:scale(1.06,.96)}100%{transform:scale(1)}}
 @keyframes jZipR{0%{transform:translateX(0)}35%{transform:translateX(9px) skewX(-14deg)}60%{transform:translateX(-3px) skewX(5deg)}100%{transform:translateX(0)}}
@@ -140,7 +143,7 @@ html[data-vt="fade"]::view-transition-old(content){animation-name:vtFadeOut} htm
 html[data-vt="push"]::view-transition-old(content){animation-name:vtOutLeft} html[data-vt="push"]::view-transition-new(content){animation-name:vtInRight}
 html[data-vt="pop"]::view-transition-old(content){animation-name:vtOutRight} html[data-vt="pop"]::view-transition-new(content){animation-name:vtInLeft}
 ::view-transition-group(mini),::view-transition-group(tabbar),::view-transition-group(np){animation-duration:0s}
-.in .row,.in .album{animation:rowIn .36s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 20ms)}
+.in .row,.in .album{animation:rowIn .3s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(var(--i,0) * 14ms)}
 .view{animation:viewIn .16s cubic-bezier(.2,.8,.2,1)}
 /* a chapter page is its own sheet that slides in over the library (so the library keeps its scroll spot, and a swipe to the right peels the page away) */
 #chapter{position:fixed;inset:0;z-index:4;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;animation:none;padding:0 max(16px,env(safe-area-inset-right,0px)) calc(170px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:radial-gradient(70% 36% at 85% 32%,var(--wash2),transparent 70%),radial-gradient(55% 30% at 8% 48%,var(--wash1),transparent 70%),radial-gradient(60% 30% at 60% 78%,var(--wash3),transparent 70%),var(--bg);box-shadow:-14px 0 34px rgba(0,0,0,.28);will-change:transform;transform-origin:50% 100%;transition:transform .5s cubic-bezier(.32,.72,0,1)}
@@ -420,7 +423,7 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .lyrics.swap,.vbody.swap,.vhead .tt.swap{animation:fadeUp .45s cubic-bezier(.2,.8,.2,1)}
 .npctl{position:relative;display:grid;gap:10px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));padding-top:6px;max-width:560px;margin:0 auto;width:100%;touch-action:none}
 .npctl::before{content:"";position:absolute;left:-50vw;right:-50vw;top:-72px;bottom:0;background:linear-gradient(to bottom,transparent,rgba(11,11,16,.38) 72px);pointer-events:none}
-.speedpop{position:absolute;left:50%;transform:translateX(-50%) translateY(8px);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:9;width:min(360px,calc(100% - 32px));border-radius:22px;padding:14px 16px 12px;color:#fff;background:rgba(30,26,42,.82);opacity:0;pointer-events:none;transition:opacity .22s,transform .3s cubic-bezier(.2,.8,.2,1)}
+.speedpop{position:absolute;left:50%;transform:translateX(-50%) translateY(8px);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:9;width:min(360px,calc(100% - 32px));border-radius:22px;padding:14px 16px 12px;color:#fff;background:rgba(30,26,42,.82);opacity:0;pointer-events:none;transition:opacity .22s,transform .34s cubic-bezier(.22,1,.36,1)}
 .speedpop.open{opacity:1;pointer-events:auto;transform:translateX(-50%)}
 .speedpop .sh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
 .speedpop .sh b{font-family:var(--serif);font-size:19px}
@@ -961,7 +964,7 @@ function settleFolds(){ FOLD.anims.forEach(a=>{ try{ a.cancel(); }catch(e){} });
   document.querySelectorAll('#lib .chgroup.moving,#lib .chbody.moving,#lib .chin.moving').forEach(e=>e.classList.remove('moving'));
   document.querySelectorAll('#lib .chbody.ghost').forEach(b=>{ b.classList.remove('ghost'); b.style.height=''; }); }
 function toggleGroup(g){ haptic('soft');
-  const open=!g.classList.contains('open'), D=380, E='cubic-bezier(.22,.9,.3,1)', groups=[...document.querySelectorAll('#lib .chgroup')];
+  const open=!g.classList.contains('open'), D=400, E='cubic-bezier(.22,1,.36,1)', groups=[...document.querySelectorAll('#lib .chgroup')];
   const setState=(x,on)=>{ x.classList.toggle('open',on); x.querySelector('.chhd').setAttribute('aria-expanded',on); };
   const prev=groups.filter(o=>o!==g&&o.classList.contains('open'));
   if(reduce){ prev.forEach(o=>setState(o,false)); setState(g,open); return; }
@@ -1118,6 +1121,7 @@ function wavURL(samples,rate){ const n=samples.length, b=new ArrayBuffer(44+n*2)
 let tickEl=null; try{ const rate=22050, n=Math.round(rate*.14), out=new Float32Array(n); for(let k=0;k<n;k++){ const t=k/rate; out[k]=.85*Math.exp(-t*38)*Math.sin(2*Math.PI*1000*t)+.35*Math.exp(-t*90)*Math.sin(2*Math.PI*2400*t); } tickEl=new Audio(wavURL(out,rate)); tickEl.preload='auto'; tickEl.setAttribute('playsinline',''); tickEl.load(); }catch(e){}
 // iPhones: the real <audio> element is the dependable path (it plays whenever the songs do, silent switch or not, and iOS never "interrupts" it the way it does Web Audio)
 const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+if(IOS||/Android/.test(navigator.userAgent)) document.documentElement.classList.add('phone');
 let tickArmed=false;
 function armTick(){ if(tickArmed||!tickEl||!verseClick) return; tickArmed=true; try{ tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickArmed=false; }); }catch(e){ tickArmed=false; } }
 // how long this phone takes between asking for the knock and it coming out (measured each time, averaged), so the next one is asked for that much sooner
@@ -1402,7 +1406,7 @@ function morph(from,to,b,done,src){
   const ra=getComputedStyle(from).borderRadius, rb=getComputedStyle(to).borderRadius;
   Object.assign(g.style,{left:b.left+'px',top:b.top+'px',width:b.width+'px',height:b.height+'px',borderRadius:rb});
   to.style.visibility='hidden';
-  const an=g.animate([{transform:`translate(${a.left-b.left}px,${a.top-b.top}px) scale(${a.width/b.width},${a.height/b.height})`,borderRadius:ra},{transform:'none',borderRadius:rb}],{duration:500,easing:'cubic-bezier(.32,.72,0,1)',fill:'forwards'});
+  const an=g.animate([{transform:`translate(${a.left-b.left}px,${a.top-b.top}px) scale(${a.width/b.width},${a.height/b.height})`,borderRadius:ra},{transform:'none',borderRadius:rb}],{duration:520,easing:'cubic-bezier(.32,.72,0,1)',fill:'forwards'});
   an.onfinish=()=>{ to.style.visibility=''; g.remove(); done&&done(); };
 }
 function npTarget(){ return innerWidth>=900?$('.art'):$('#vcover'); }
