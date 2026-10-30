@@ -1499,13 +1499,7 @@ if(!reduce){ mirrorMake($('#minicard')); mirrorMake($('#tabbar'));
     if(Math.abs(tx-x)+Math.abs(ty-y)<.006){ x=tx; y=ty; } R.style.setProperty('--lx',x.toFixed(2)); R.style.setProperty('--ly',y.toFixed(2)); if(x!==tx||y!==ty) raf=requestAnimationFrame(step); };
   const aim=(a,b)=>{ const nx=Math.max(-1,Math.min(1,a)), ny=Math.max(-1,Math.min(1,b)); if(Math.abs(nx-tx)+Math.abs(ny-ty)<.02) return; tx=nx; ty=ny; if(!raf&&!reduce) raf=requestAnimationFrame(step); };
   let mt=0; addEventListener('pointermove',e=>{ if(e.pointerType!=='mouse') return; const n=performance.now(); if(n-mt<50) return; mt=n; aim(e.clientX/innerWidth*2-1, e.clientY/innerHeight*2-1); },{passive:true});
-  let ot=0; addEventListener('deviceorientation',e=>{ if(e.gamma==null) return; const n=performance.now(); if(n-ot<50) return; ot=n; aim(e.gamma/30, (e.beta-45)/30); },{passive:true});
-  // iPhones only report tilt once the page has asked. Ask once, remember the answer, and never nag: a "no" (or a dismissed prompt) is final,
-  // and a "yes" is re-confirmed quietly on later visits (Safari answers silently while it still remembers the choice)
-  const canAsk=window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function';
-  const askTilt=()=>{ if(!canAsk) return; const prev=lsGet('motion',null); if(prev==='denied'||prev==='skipped') return;
-    try{ DeviceOrientationEvent.requestPermission().then(r=>{ lsSet('motion',r==='granted'?'granted':'denied'); }).catch(()=>{ if(prev!=='granted') lsSet('motion','skipped'); }); }catch(e){} };
-  if(canAsk) addEventListener('touchend',askTilt,{once:true,passive:true});
+  // no motion sensors: on phones the reflections move with the page instead, so nothing ever asks for permission
 })();
 /* ---------- boot ---------- */
 if(!/claude\.ai$/.test(location.hostname)&&/\/songs\/?(index\.html)?$/.test(location.pathname)){ $('#quizlink').hidden=false; qzChip(); try{ localStorage.setItem('johnquiz:where','"songs"'); }catch(e){}
