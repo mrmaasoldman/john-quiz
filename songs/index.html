@@ -676,6 +676,8 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
     <div class="chips vchips" id="vchips"></div>
     <div class="rl" style="margin-top:12px">Verse click — a little tick where each verse starts</div>
     <div class="chips rowchips"><button type="button" id="clickon" aria-pressed="false">On</button><button type="button" id="clickoff" aria-pressed="true">Off</button></div>
+    <div class="rl" style="margin-top:10px">Click timing — if the knock lands late, nudge it earlier</div>
+    <div class="chips rowchips"><button type="button" id="nudgeE">◀ Earlier</button><button type="button" id="nudgeval" disabled style="flex:0 0 auto;min-width:84px;justify-content:center;font-variant-numeric:tabular-nums">0.00 s</button><button type="button" id="nudgeL">Later ▶</button></div>
     <div class="rl" style="margin-top:12px">Haptics — a little buzz on taps (tap On to feel it)</div>
     <div class="chips rowchips"><button type="button" id="hapton" aria-pressed="true">On</button><button type="button" id="haptoff" aria-pressed="false">Off</button></div>
   </div>
@@ -1097,13 +1099,19 @@ let tickEl=null; try{ const rate=22050, n=Math.round(rate*.14), out=new Float32A
 const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 let tickArmed=false;
 function armTick(){ if(tickArmed||!tickEl||!verseClick) return; tickArmed=true; try{ tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickArmed=false; }); }catch(e){ tickArmed=false; } }
-function elTick(){ try{ if(!tickEl) return; tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
+// how long this phone takes between asking for the knock and it coming out (measured each time, averaged), so the next one is asked for that much sooner
+let tickLat=IOS?.16:.04, tickAsk=0; if(tickEl){ tickEl.addEventListener('playing',()=>{ if(tickAsk){ const l=(performance.now()-tickAsk)/1000; if(l>0&&l<.6) tickLat=tickLat*.6+l*.4; tickAsk=0; } }); tickEl.addEventListener('ended',()=>{ try{ tickEl.currentTime=0; }catch(e){} }); }
+let tickNudge=lsGet('tickNudge',IOS?-.1:0); // the listener's own fine-tune, in seconds (negative = earlier)
+function elTick(){ try{ if(!tickEl) return; tickAsk=performance.now(); tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickAsk=0; }); }catch(e){} }
 function verseTick(){ if(IOS||!(window.AudioContext||window.webkitAudioContext)){ elTick(); return; } if(ACX&&ACX.state==='running') knock(); else elTick(); }
 // look a little ahead of the song and book each verse start, so the knock lands on the beat rather than a quarter-second late
 let bookedVerse=-1, bookedTimer=0;
 function bookTicks(){ if(!verseClick||!song||audio.paused||seeking||!verses.length) return; const c=IOS?null:acx(); const t=audio.currentTime, rate=audio.playbackRate||1;
-  for(let k=0;k<verses.length;k++){ const st=verses[k].start; const d=(st-t)/rate; if(d>-.05&&d<.7){ if(bookedVerse===k) return; bookedVerse=k; clearTimeout(bookedTimer);
-      if(c&&c.state==='running') knock(c.currentTime+Math.max(0,d)); else bookedTimer=setTimeout(verseTick,Math.max(0,d*1000-60)); return; } } }
+  // the knock belongs on the first sung word (verse.start is pulled a little early for the highlight), nudged by the listener's fine-tune
+  for(let k=0;k<verses.length;k++){ const st=verses[k].start+LEAD+tickNudge; const d=(st-t)/rate; if(d>-.05&&d<.9){ if(bookedVerse===k) return; bookedVerse=k; clearTimeout(bookedTimer);
+      if(c&&c.state==='running') knock(c.currentTime+Math.max(0,d)); else bookedTimer=setTimeout(verseTick,Math.max(0,(d-tickLat)*1000)); return; } } }
+function setNudge(v){ tickNudge=Math.max(-.6,Math.min(.6,Math.round(v*20)/20)); lsSet('tickNudge',tickNudge); const el=$('#nudgeval'); if(el) el.textContent=(tickNudge>0?'+':'')+tickNudge.toFixed(2)+' s'; bookedVerse=-1; }
+$('#nudgeE').onclick=()=>{ setNudge(tickNudge-.05); haptic(); }; $('#nudgeL').onclick=()=>{ setNudge(tickNudge+.05); haptic(); }; try{ setNudge(tickNudge); }catch(e){}
 audio.addEventListener('seeking',unbook); audio.addEventListener('pause',unbook);
 function setVerseClick(on){ verseClick=!!on; lsSet('vclick',verseClick); $('#clickon').setAttribute('aria-pressed',verseClick); $('#clickoff').setAttribute('aria-pressed',!verseClick); bookedVerse=-1; }
 $('#clickon').onclick=()=>{ setVerseClick(true); if(!IOS) acx(); tickArmed=true; elTick(); haptic(); }; $('#clickoff').onclick=()=>{ setVerseClick(false); haptic(); }; try{ setVerseClick(verseClick); }catch(e){}
