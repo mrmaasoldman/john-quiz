@@ -712,7 +712,7 @@ function load(idx,autoplay,startAt){
   if(!np.classList.contains('open')) npscroll.scrollTop=0;
   $('#mini').classList.remove('hide');
   document.querySelectorAll('[data-song]').forEach(b=>b.setAttribute('aria-current',+b.dataset.song===idx));
-  setHero(song.ch); renderFavState(); renderLyrics(); updateTime(); renderQueue();
+  renderFavState(); renderLyrics(); updateTime(); renderQueue();
   document.title=`${song.title} · John Songs`;
   if('mediaSession' in navigator){ try{ navigator.mediaSession.metadata=new MediaMetadata({title:song.title,artist:'Bible Quizzing · '+song.sub,album:'John Songs',artwork:[{src:art,sizes:'800x800',type:'image/jpeg'}]}); }catch(e){} }
   if(autoplay) audio.play().catch(()=>{});
@@ -1230,6 +1230,8 @@ function refreshArt(c){ const raw=`art/john${c}.jpg`; document.querySelectorAll(
   // show the library right away with the plain photos; the numbered covers get painted in one by one behind the scenes
   try{ await Promise.race([document.fonts.load('800 150px Fraunces'),new Promise(r=>setTimeout(r,350))]); }catch(e){}
   CHAPTERS.forEach(c=>{ ART[c]=`art/john${c}.jpg`; });
+  { // a different chapter's photo behind the title every visit (never the same one twice in a row)
+    let prev=lsGet('heroch',0), pick; do{ pick=CHAPTERS[Math.random()*CHAPTERS.length|0]; }while(CHAPTERS.length>1&&pick===prev); lsSet('heroch',pick); setHero(pick); }
   renderLibrary();
   const h=location.hash, m=h.match(/^#ch(\d+)$/), last=lsGet('last',null);
   let s=SONGS.find(x=>'#'+x.id===h)||(last&&SONGS.find(x=>x.id===last.id))||SONGS[0];
