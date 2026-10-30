@@ -59,6 +59,12 @@ html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) sa
   background:conic-gradient(from calc(210deg + var(--lx,0) * 60deg),rgba(255,255,255,.95),rgba(255,255,255,.12) 18%,rgba(255,255,255,.05) 35%,rgba(255,255,255,.55) 50%,rgba(255,255,255,.08) 68%,rgba(255,255,255,.12) 85%,rgba(255,255,255,.95));
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
 .glass>*{position:relative}
+/* panes that sit on the flat page wash (not over scrolling content) skip the backdrop blur: nothing to blur, and it costs a full re-blur every scrolled frame */
+.chhd.glass,.box.glass,.big.glass,.br.glass,.resume.glass,.search label.glass{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--g-flat,rgba(255,255,255,.5))}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--g-flat:rgba(44,40,64,.42)}} :root[data-theme="dark"]{--g-flat:rgba(44,40,64,.42)}
+/* everything that moves is promoted ahead of time so the first frame doesn't stall on a layer being built */
+.mini .card,.tabbar,#libdim,.upnext,.toast,.speedpop,.reppop,.sheet .box,.rc,.row .th,.tabbar>.blob{will-change:transform,opacity}
+.lib{backface-visibility:hidden}
 /* the reflection: a mirrored, softened picture of the current cover (what the room is lit by) slides across the glass as you tilt or scroll, plus a hard glint that moves with it */
 .glass>.refl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;overflow:hidden}
 .glass>.refl::after{content:"";position:absolute;inset:-40% -30%;background:linear-gradient(calc(102deg + var(--lx,0) * 22deg),rgba(255,255,255,0) 43%,rgba(255,255,255,.28) 47.5%,rgba(255,255,255,.85) 49.6%,rgba(255,255,255,.28) 51.8%,rgba(255,255,255,0) 56%),linear-gradient(calc(102deg + var(--lx,0) * 22deg),rgba(255,255,255,0) 60%,rgba(255,255,255,.22) 64%,rgba(255,255,255,0) 68%);transform:translateX(calc(var(--lx,0) * 42% + var(--ly,0) * 10%));mix-blend-mode:screen;opacity:var(--g-glint,.22)}
@@ -72,7 +78,7 @@ html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) sa
 .mirlib *{animation:none!important;transition:none!important} .mirlib{font-size:16px;text-shadow:none}
 .mini .card.glass>.refl,.tabbar.glass>.refl{-webkit-mask:linear-gradient(to top,rgba(0,0,0,1) 0,rgba(0,0,0,.7) 45%,rgba(0,0,0,.15) 100%);mask:linear-gradient(to top,rgba(0,0,0,1) 0,rgba(0,0,0,.7) 45%,rgba(0,0,0,.15) 100%)}
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .glass>.refl>.mirror{--g-mir:.45}} :root[data-theme="light"] .glass>.refl>.mirror{--g-mir:.45}
-.gmorph{position:fixed;left:0;top:0;z-index:30;pointer-events:none;transform-origin:0 0;will-change:transform,opacity;backdrop-filter:blur(6px) saturate(1.8) brightness(1.04)!important;-webkit-backdrop-filter:blur(6px) saturate(1.8) brightness(1.04)!important} .gmorph::after{display:none} .gmorph{box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35),0 10px 28px var(--g-sh)} .gmorph>.refl{display:none}
+.gmorph{position:fixed;left:0;top:0;z-index:30;pointer-events:none;transform-origin:0 0;will-change:transform,opacity;backdrop-filter:blur(4px) saturate(1.7) brightness(1.04)!important;-webkit-backdrop-filter:blur(4px) saturate(1.7) brightness(1.04)!important} .gmorph::after{display:none} .gmorph{box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35),0 10px 28px var(--g-sh)} .gmorph>.refl{display:none}
 .np.morphing .npbg,.np.morphing #aurora,.np.morphing .npbg2{opacity:0}
 .np.morphing{transition:none}
 /* ---------- juice: little bits of fun on every move ---------- */
@@ -1241,8 +1247,9 @@ function npHideNow(){ np.classList.add('morphing'); np.classList.remove('open','
 function openNP(scrub){ scrub=scrub===true;
   const wasOpen=np.classList.contains('open');
   if(!wasOpen&&!wide()){ cancelAnimationFrame(LY.anim); LY.prog=false; npscroll.scrollTop=0; LY.wasVis=false; LY.arrive=false; }
-  fitVerse(); lyLayout(); updateVerse(true); updateLyrics(true); if(!reduce){ AUR.last=0; drawAurora(performance.now()); }
   const fromMini=!wasOpen&&!reduce&&!$('#mini').classList.contains('hide')&&!np.style.transform;
+  const prep=()=>{ fitVerse(); lyLayout(); updateVerse(true); updateLyrics(true); if(!reduce){ AUR.last=0; drawAurora(performance.now()); } };
+  if(fromMini) requestAnimationFrame(()=>requestAnimationFrame(prep)); else prep();
   if(fromMini){ miniRect=$('#minith').getBoundingClientRect(); miniCardRect=$('#minicard').getBoundingClientRect(); np.classList.add('morphing'); }
   np.classList.add('open'); np.setAttribute('aria-hidden','false'); document.body.classList.add('npopen'); if(!wasOpen) npMoving();
   if(fromMini){ void np.offsetWidth; np.classList.remove('morphing'); const ctl=glassMorph(true,null,scrub);
@@ -1361,24 +1368,25 @@ document.querySelectorAll('.tabbar [data-tab]').forEach(b=>b.addEventListener('c
 /* the two floating bars carry a live mirror of the library under them */
 const MIR=[];
 function mirrorMake(host){ const refl=host.querySelector(':scope>.refl'); if(!refl) return; const m=document.createElement('div'); m.className='mirror'; m.setAttribute('aria-hidden','true'); refl.append(m); MIR.push({host,m}); }
-let mirT=0; function mirrorSync(){ clearTimeout(mirT); mirT=setTimeout(()=>{ const lib=$('#lib'); MIR.forEach(({m})=>{ const c=lib.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.querySelectorAll('.refl,.mirror,canvas,video').forEach(e=>e.remove()); c.querySelectorAll('[loading]').forEach(e=>e.removeAttribute('loading')); c.className='lib mirlib'; c.inert=true; m.replaceChildren(c); }); mirrorPos(); },120); }
-function mirrorPos(){ const lib=$('#lib'), st=lib.scrollTop, lr=lib.getBoundingClientRect(); if(!lr.width) return;
-  MIR.forEach(({host,m})=>{ const r=host.getBoundingClientRect(); if(!r.width) return; m.style.width=lr.width+'px'; m.style.transform=`translate(${lr.left-r.left}px,${r.height+r.bottom-lr.top+st}px) scaleY(-1)`; }); }
+let mirT=0; function mirrorSync(){ clearTimeout(mirT); mirT=setTimeout(()=>{ const lib=$('#lib'); MIR.forEach(({m})=>{ const c=lib.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.querySelectorAll('.refl,.mirror,canvas,video').forEach(e=>e.remove()); c.querySelectorAll('[loading]').forEach(e=>e.removeAttribute('loading')); c.className='lib mirlib'; c.inert=true; m.replaceChildren(c); }); mirrorMeasure(); },120); }
+let mirGeo=null;
+function mirrorMeasure(){ const lib=$('#lib'), lr=lib.getBoundingClientRect(); if(!lr.width) return; mirGeo={left:lr.left,top:lr.top,width:lr.width,bars:MIR.map(({host,m})=>{ const r=host.getBoundingClientRect(); return {m,r}; })}; mirrorPos(); }
+function mirrorPos(){ if(!mirGeo||document.body.classList.contains('npopen')) return; const st=$('#lib').scrollTop, G=mirGeo;
+  G.bars.forEach(({m,r})=>{ if(!r.width) return; m.style.width=G.width+'px'; m.style.transform=`translate3d(${G.left-r.left}px,${r.height+r.bottom-G.top+st}px,0) scaleY(-1)`; }); }
 /* every pane of glass gets a reflection layer */
 function glassify(el){ if(!el.querySelector(':scope>.refl')){ const r=document.createElement('i'); r.className='refl'; r.setAttribute('aria-hidden','true'); el.prepend(r); } return el; }
 document.querySelectorAll('.glass').forEach(glassify);
 if(!reduce){ mirrorMake($('#minicard')); mirrorMake($('#tabbar'));
   new MutationObserver(mirrorSync).observe($('#lib'),{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-pressed','aria-expanded','src','style']});
-  $('#lib').addEventListener('scroll',mirrorPos,{passive:true}); addEventListener('resize',mirrorPos); mirrorSync(); }
-/* ---------- glass light: the highlights drift with scrolling, tilting and the mouse ---------- */
-(function(){ const R=document.documentElement; let tx=0,ty=0,x=0,y=0,raf=0;
-  const ua=navigator.userAgent; if(/Chrome\//.test(ua)&&!/Edg\/|OPR\//.test(ua)&&!/iPhone|iPad|iPod/.test(ua)&&!reduce) R.classList.add('lens'); // only Chromium bends the backdrop through SVG
-  const step=()=>{ x+=(tx-x)*.12; y+=(ty-y)*.12; R.style.setProperty('--lx',x.toFixed(3)); R.style.setProperty('--ly',y.toFixed(3)); raf=(Math.abs(tx-x)+Math.abs(ty-y)>.002)?requestAnimationFrame(step):0; };
-  const aim=(a,b)=>{ tx=Math.max(-1,Math.min(1,a)); ty=Math.max(-1,Math.min(1,b)); if(!raf&&!reduce) raf=requestAnimationFrame(step); };
-  $('#lib').addEventListener('scroll',e=>{ const t=e.target.scrollTop; aim(Math.sin(t/260)*.8, Math.cos(t/340)*.6); },{passive:true});
-  addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') aim(e.clientX/innerWidth*2-1, e.clientY/innerHeight*2-1); },{passive:true});
-  addEventListener('deviceorientation',e=>{ if(e.gamma==null) return; aim(e.gamma/30, (e.beta-45)/30); },{passive:true});
-  $('#npscroll').addEventListener('scroll',e=>{ const t=e.target.scrollTop; aim(Math.sin(t/220)*.9, Math.cos(t/300)*.7); },{passive:true});
+  let mirRaf=0; $('#lib').addEventListener('scroll',()=>{ if(!mirRaf) mirRaf=requestAnimationFrame(()=>{ mirRaf=0; mirrorPos(); }); },{passive:true}); addEventListener('resize',()=>setTimeout(mirrorMeasure,80)); setTimeout(mirrorMeasure,600); mirrorSync(); }
+/* ---------- glass light: the highlights drift with tilting and the mouse (not with scrolling: restyling every pane per scrolled frame cost too much) ---------- */
+(function(){ const R=document.documentElement; let tx=0,ty=0,x=0,y=0,raf=0,lastT=0;
+  const ua=navigator.userAgent; if(/Chrome\//.test(ua)&&!/Edg\/|OPR\//.test(ua)&&!/iPhone|iPad|iPod|Android/.test(ua)&&!reduce) R.classList.add('lens'); // only desktop Chromium bends the backdrop through SVG
+  const step=(now)=>{ raf=0; if(now-lastT<40){ raf=requestAnimationFrame(step); return; } lastT=now; x+=(tx-x)*.18; y+=(ty-y)*.18;
+    if(Math.abs(tx-x)+Math.abs(ty-y)<.006){ x=tx; y=ty; } R.style.setProperty('--lx',x.toFixed(2)); R.style.setProperty('--ly',y.toFixed(2)); if(x!==tx||y!==ty) raf=requestAnimationFrame(step); };
+  const aim=(a,b)=>{ const nx=Math.max(-1,Math.min(1,a)), ny=Math.max(-1,Math.min(1,b)); if(Math.abs(nx-tx)+Math.abs(ny-ty)<.02) return; tx=nx; ty=ny; if(!raf&&!reduce) raf=requestAnimationFrame(step); };
+  let mt=0; addEventListener('pointermove',e=>{ if(e.pointerType!=='mouse') return; const n=performance.now(); if(n-mt<50) return; mt=n; aim(e.clientX/innerWidth*2-1, e.clientY/innerHeight*2-1); },{passive:true});
+  let ot=0; addEventListener('deviceorientation',e=>{ if(e.gamma==null) return; const n=performance.now(); if(n-ot<50) return; ot=n; aim(e.gamma/30, (e.beta-45)/30); },{passive:true});
   // iPhones only report tilt once the page has asked; ask on the first touch
   const askTilt=()=>{ try{ if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function') DeviceOrientationEvent.requestPermission().catch(()=>{}); }catch(e){} };
   addEventListener('touchend',askTilt,{once:true,passive:true});
