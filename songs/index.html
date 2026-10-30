@@ -448,7 +448,13 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .scrub .fill{position:absolute;left:0;top:12px;height:4px;border-radius:4px;background:#fff;width:0;transition:height .15s,top .15s}
 .scrub.on .trk,.scrub.on .fill{height:8px;top:10px}
 .times{display:flex;justify-content:space-between;font-size:12px;color:var(--np-dim);font-variant-numeric:tabular-nums;margin-top:-6px;font-weight:600}
-.tr{display:flex;align-items:center;justify-content:center;gap:30px;padding:0}
+.tr{display:flex;align-items:center;justify-content:center;gap:30px;padding:0;position:relative}
+/* the verse-click switch: its own small key, off to the right of the transport so it never crowds the main controls */
+.tr .clickbtn{position:absolute;right:0;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:20px;background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.08);transition:transform .15s,background .2s,color .2s}
+.tr .clickbtn svg{width:22px;height:22px;fill:rgba(255,255,255,.55)}
+.tr .clickbtn[aria-pressed="true"]{background:var(--sig);box-shadow:0 6px 16px rgba(255,92,138,.35),inset 0 1px 0 rgba(255,255,255,.4)} .tr .clickbtn[aria-pressed="true"] svg{fill:#fff}
+.tr .clickbtn:active{transform:translateY(-50%) scale(.88)}
+@media (max-width:360px){.tr{gap:22px}}
 .tr button{width:56px;height:56px;display:grid;place-items:center;border-radius:28px;transition:transform .12s}
 .tr button:active{transform:scale(.88);background:rgba(255,255,255,.12)}
 .tr svg{width:32px;height:32px;fill:#fff}
@@ -663,6 +669,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
         <button id="prev" type="button" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M20 19V5l-9 7zM11 19V5l-9 7zM2 5h2v14H2z"/></svg></button>
         <button id="play" class="play" type="button" aria-label="Play"><svg viewBox="0 0 24 24" id="pi"><path d="M8 5v14l11-7z"/></svg></button>
         <button id="next" type="button" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M4 5v14l9-7zM13 5v14l9-7zM22 5h-2v14h2z"/></svg></button>
+        <button id="clickbtn" class="clickbtn gbtn" type="button" aria-pressed="false" aria-label="Verse click" title="Verse click"><svg viewBox="0 0 24 24"><path d="M12 3a1 1 0 0 1 1 1v9.3a3.5 3.5 0 1 1-2-3.16V4a1 1 0 0 1 1-1zm0 9.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/><path d="M15.5 6.2a1 1 0 0 1 1.4 0l1.4 1.4a1 1 0 1 1-1.4 1.4l-1.4-1.4a1 1 0 0 1 0-1.4z" opacity=".7"/></svg></button>
       </div>
       <div class="vol" id="vol"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9z"/></svg><input id="volr" type="range" min="0" max="1" step=".01" value="1" aria-label="Volume"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg></div>
       <div class="br glass">
@@ -679,10 +686,6 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
     <div class="chips rowchips"><button type="button" id="repsong" aria-pressed="false">This whole song</button><button type="button" id="repclear">Off</button></div>
     <div class="rl">Or just some verses — tap the first and last</div>
     <div class="chips vchips" id="vchips"></div>
-    <div class="rl" style="margin-top:12px">Verse click — a little tick where each verse starts</div>
-    <div class="chips rowchips"><button type="button" id="clickon" aria-pressed="false">On</button><button type="button" id="clickoff" aria-pressed="true">Off</button></div>
-    <div class="rl" style="margin-top:10px">Click timing — if the knock lands late, nudge it earlier</div>
-    <div class="chips rowchips"><button type="button" id="nudgeE">◀ Earlier</button><button type="button" id="nudgeval" disabled style="flex:0 0 auto;min-width:84px;justify-content:center;font-variant-numeric:tabular-nums">0.00 s</button><button type="button" id="nudgeL">Later ▶</button></div>
   </div>
   <label class="hapt" id="haptlb" aria-hidden="true"><input type="checkbox" switch id="haptsw" tabindex="-1"></label>
   <div class="speedpop glass" id="speedpop" hidden>
@@ -709,7 +712,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
 <div class="sheet" id="sheet"><div class="box glass" id="sheetbox"></div></div>
 <div class="sheet intro" id="intro" aria-label="Verse click" hidden><div class="box glass">
   <div class="ihd"><span class="iknock" aria-hidden="true">♩</span><div><b>New: the verse click</b><small>A little knock between verses, to help you hear where one ends and the next begins.</small></div></div>
-  <ol class="ihow"><li>Open the player and tap <b>Repeat</b> (↻) at the bottom.</li><li>Under <b>Verse click</b>, tap <b>On</b> — you'll hear one right away.</li><li>If it lands late or early on your phone, use <b>Click timing</b> to nudge it.</li></ol>
+  <ol class="ihow"><li>Open the player (tap the song bar or a song's picture).</li><li>Tap the small <b>♩</b> key to the right of the play buttons — it lights up and you'll hear one knock.</li><li>Tap it again to turn it off.</li></ol>
   <button class="it" type="button" id="introon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Turn it on now</button>
   <button class="it" type="button" id="introok" style="justify-content:center;color:var(--sub)">Maybe later</button>
 </div></div>
@@ -1111,20 +1114,21 @@ let tickArmed=false;
 function armTick(){ if(tickArmed||!tickEl||!verseClick) return; tickArmed=true; try{ tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickArmed=false; }); }catch(e){ tickArmed=false; } }
 // how long this phone takes between asking for the knock and it coming out (measured each time, averaged), so the next one is asked for that much sooner
 let tickLat=IOS?.16:.04, tickAsk=0; if(tickEl){ tickEl.addEventListener('playing',()=>{ if(tickAsk){ const l=(performance.now()-tickAsk)/1000; if(l>0&&l<.6) tickLat=tickLat*.6+l*.4; tickAsk=0; } }); tickEl.addEventListener('ended',()=>{ try{ tickEl.currentTime=0; }catch(e){} }); }
-let tickNudge=lsGet('tickNudge',IOS?-.1:0); // the listener's own fine-tune, in seconds (negative = earlier)
+const tickNudge=IOS?-.06:0; // a hair ahead of the word on phones, where the song's clock reads slightly behind
 function elTick(){ try{ if(!tickEl) return; tickAsk=performance.now(); tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickAsk=0; }); }catch(e){} }
 function verseTick(){ if(IOS||!(window.AudioContext||window.webkitAudioContext)){ elTick(); return; } if(ACX&&ACX.state==='running') knock(); else elTick(); }
 // look a little ahead of the song and book each verse start, so the knock lands on the beat rather than a quarter-second late
-let bookedVerse=-1, bookedTimer=0;
-function bookTicks(){ if(!verseClick||!song||audio.paused||seeking||!verses.length) return; const c=IOS?null:acx(); const t=audio.currentTime, rate=audio.playbackRate||1;
+let bookedVerse=-1, bookedTimer=0, posT=0, posAt=0;
+audio.addEventListener('timeupdate',()=>{ posT=audio.currentTime; posAt=performance.now(); }); audio.addEventListener('seeked',()=>{ posT=audio.currentTime; posAt=performance.now(); });
+function posNow(){ if(audio.paused||!posAt) return audio.currentTime; const guess=posT+(performance.now()-posAt)/1000*(audio.playbackRate||1); const raw=audio.currentTime; return Math.max(raw,Math.min(guess,raw+.5)); }
+function bookTicks(){ if(!verseClick||!song||audio.paused||seeking||!verses.length) return; const c=IOS?null:acx(); const t=posNow(), rate=audio.playbackRate||1;
   // the knock belongs on the first sung word (verse.start is pulled a little early for the highlight), nudged by the listener's fine-tune
-  for(let k=0;k<verses.length;k++){ const st=verses[k].start+LEAD+tickNudge; const d=(st-t)/rate; if(d>-.05&&d<.9){ if(bookedVerse===k) return; bookedVerse=k; clearTimeout(bookedTimer);
+  for(let k=0;k<verses.length;k++){ const st=verses[k].start+LEAD+tickNudge; const d=(st-t)/rate; if(d>-.05&&d<1.1){ if(bookedVerse===k) return; bookedVerse=k; clearTimeout(bookedTimer);
       if(c&&c.state==='running') knock(c.currentTime+Math.max(0,d)); else bookedTimer=setTimeout(verseTick,Math.max(0,(d-tickLat)*1000)); return; } } }
-function setNudge(v){ tickNudge=Math.max(-.6,Math.min(.6,Math.round(v*20)/20)); lsSet('tickNudge',tickNudge); const el=$('#nudgeval'); if(el) el.textContent=(tickNudge>0?'+':'')+tickNudge.toFixed(2)+' s'; bookedVerse=-1; }
-$('#nudgeE').onclick=()=>{ setNudge(tickNudge-.05); haptic(); }; $('#nudgeL').onclick=()=>{ setNudge(tickNudge+.05); haptic(); }; try{ setNudge(tickNudge); }catch(e){}
+
 audio.addEventListener('seeking',unbook); audio.addEventListener('pause',unbook);
-function setVerseClick(on){ verseClick=!!on; lsSet('vclick',verseClick); $('#clickon').setAttribute('aria-pressed',verseClick); $('#clickoff').setAttribute('aria-pressed',!verseClick); bookedVerse=-1; }
-$('#clickon').onclick=()=>{ setVerseClick(true); if(!IOS) acx(); tickArmed=true; elTick(); haptic(); }; $('#clickoff').onclick=()=>{ setVerseClick(false); haptic(); }; try{ setVerseClick(verseClick); }catch(e){}
+function setVerseClick(on){ verseClick=!!on; lsSet('vclick',verseClick); $('#clickbtn').setAttribute('aria-pressed',verseClick); bookedVerse=-1; }
+$('#clickbtn').onclick=()=>{ const on=!verseClick; setVerseClick(on); haptic(); if(on){ if(!IOS) acx(); tickArmed=true; elTick(); toast('Verse click on'); } else toast('Verse click off'); }; try{ setVerseClick(verseClick); }catch(e){}
 // phones only let sound start from a touch: the first touch anywhere wakes the audio clock up
 ['touchend','pointerup','click'].forEach(ev=>addEventListener(ev,()=>{ if(verseClick&&!IOS) acx(); },{passive:true}));
 // haptics: Android vibrates; iPhones (17.4+) tick when a native switch flips, so a hidden one is flipped on each tap
@@ -1144,7 +1148,7 @@ function hapticOverlay(el){ if(!HAPT_IOS||!el||el.querySelector(':scope>.htap'))
   sw.addEventListener('click',e=>e.stopPropagation()); // the label re-sends the tap to its switch; the control must not hear it twice
   sw.addEventListener('focus',()=>{ try{ sw.blur(); }catch(e){} });
   el.append(lb); }
-function hapticOverlays(root){ if(!HAPT_IOS) return; (root||document).querySelectorAll('.tabbar>button,#play,#miniplay,#next,#prev,#mininext,#npfav,.chhd,.bigbtns button,.br button,[data-fav],#back,#uclose,#queue,.uctl button,.chips button,#npclose,#lyup').forEach(hapticOverlay); }
+function hapticOverlays(root){ if(!HAPT_IOS) return; (root||document).querySelectorAll('.tabbar>button,#play,#miniplay,#next,#prev,#mininext,#npfav,.chhd,.bigbtns button,.br button,[data-fav],#back,#uclose,#queue,.uctl button,.chips button,#npclose,#lyup,#clickbtn').forEach(hapticOverlay); }
 try{ hapticOverlays(); }catch(e){}
 function updateVerse(force){
   if(!song) return; const t=audio.currentTime; const idx=verseAt(t);
