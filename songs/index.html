@@ -435,7 +435,6 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 /* iPhone haptics: a real (invisible) iOS switch lies over each tappable control; your finger flips it as you tap, and iOS taps back */
 .htap{position:absolute;inset:0;border-radius:inherit;z-index:7;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;margin:0;padding:0}
 .htap>input{position:absolute;left:0;top:0;width:1px;height:1px;margin:0;visibility:hidden}
-body.nohapt .htap{display:none}
 .chhd,[data-fav],.bigbtns button,.br button,.chips button,#back,#uclose,.uctl button,#lyup,#next,#prev,#play,#mininext,#miniplay,#npfav{position:relative}
 .speedpop .rl{font-size:12px;font-weight:600;color:var(--np-sub);margin:2px 0 8px}
 .speedpop .vchips{flex-wrap:wrap;margin-bottom:4px;max-height:132px;overflow-y:auto}
@@ -680,8 +679,6 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
     <div class="chips rowchips"><button type="button" id="clickon" aria-pressed="false">On</button><button type="button" id="clickoff" aria-pressed="true">Off</button></div>
     <div class="rl" style="margin-top:10px">Click timing — if the knock lands late, nudge it earlier</div>
     <div class="chips rowchips"><button type="button" id="nudgeE">◀ Earlier</button><button type="button" id="nudgeval" disabled style="flex:0 0 auto;min-width:84px;justify-content:center;font-variant-numeric:tabular-nums">0.00 s</button><button type="button" id="nudgeL">Later ▶</button></div>
-    <div class="rl" style="margin-top:12px">Haptics — a little buzz on taps (tap On to feel it)</div>
-    <div class="chips rowchips"><button type="button" id="hapton" aria-pressed="true">On</button><button type="button" id="haptoff" aria-pressed="false">Off</button></div>
   </div>
   <label class="hapt" id="haptlb" aria-hidden="true"><input type="checkbox" switch id="haptsw" tabindex="-1"></label>
   <div class="speedpop glass" id="speedpop" hidden>
@@ -1085,7 +1082,7 @@ function fitVerse(){ // give the verse box an explicit pixel height (iOS can't b
   txt.style.setProperty('--vfs',best+'px'); }
 const vscale=1;
 /* ---------- verse click & haptics ---------- */
-let verseClick=lsGet('vclick',false), hapticsOn=lsGet('haptics',true);
+let verseClick=lsGet('vclick',false), hapticsOn=true;
 // Web Audio, told to behave like music playback so the ring/silent switch doesn't mute it; ticks are scheduled on the audio clock right at each verse start
 let ACX=null; try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
 function acx(){ try{ if(!ACX) ACX=new (window.AudioContext||window.webkitAudioContext)(); if(ACX.state!=='running'){ const p=ACX.resume(); if(p&&p.catch) p.catch(()=>{}); } }catch(e){} return ACX; }
@@ -1129,7 +1126,7 @@ function haptic(kind){ if(!hapticsOn) return; const n=performance.now(); if(n-ha
 if(HAPT){ HAPT.addEventListener('focus',()=>{ try{ HAPT.blur(); }catch(e){} if(window.scrollY||window.scrollX) window.scrollTo(0,0); }); }
 addEventListener('scroll',()=>{ if(window.scrollY||window.scrollX) window.scrollTo(0,0); },{passive:true});
 addEventListener('focusin',e=>{ if(e.target&&e.target.id==='haptsw'){ e.target.blur(); } });
-function setHaptics(on){ hapticsOn=!!on; lsSet('haptics',hapticsOn); $('#hapton').setAttribute('aria-pressed',hapticsOn); $('#haptoff').setAttribute('aria-pressed',!hapticsOn); document.body.classList.toggle('nohapt',!hapticsOn); }
+function setHaptics(on){ hapticsOn=true; }
 // iOS only taps back for a real finger on a real switch, so every main control gets an invisible one laid over it
 const HAPT_IOS=(/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))&&!navigator.vibrate;
 function hapticOverlay(el){ if(!HAPT_IOS||!el||el.querySelector(':scope>.htap')) return; const lb=document.createElement('label'); lb.className='htap'; lb.setAttribute('aria-hidden','true');
@@ -1138,7 +1135,7 @@ function hapticOverlay(el){ if(!HAPT_IOS||!el||el.querySelector(':scope>.htap'))
   sw.addEventListener('focus',()=>{ try{ sw.blur(); }catch(e){} });
   el.append(lb); }
 function hapticOverlays(root){ if(!HAPT_IOS) return; (root||document).querySelectorAll('.tabbar>button,#play,#miniplay,#next,#prev,#mininext,#npfav,.chhd,.bigbtns button,.br button,[data-fav],#back,#uclose,#queue,.uctl button,.chips button,#npclose,#lyup').forEach(hapticOverlay); }
-$('#hapton').onclick=()=>{ setHaptics(true); haptic(); }; $('#haptoff').onclick=()=>{ setHaptics(false); }; try{ setHaptics(hapticsOn); hapticOverlays(); }catch(e){}
+try{ hapticOverlays(); }catch(e){}
 function updateVerse(force){
   if(!song) return; const t=audio.currentTime; const idx=verseAt(t);
   if(idx!==curVerse||force){ const prev=curVerse; curVerse=idx; renderVerse(idx); if(!force&&idx>=0&&prev!==idx&&!audio.paused&&!seeking){ haptic('soft'); } }
