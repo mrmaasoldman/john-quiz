@@ -893,8 +893,10 @@ $('#shuffleall').onclick=()=>{ shuffle=true; $('#shuf').setAttribute('aria-press
 /* chapter page */
 const PAGE_T={duration:460,easing:'cubic-bezier(.32,.72,0,1)'};
 function homeParts(){ return [$('#hero'),$('#home')]; }
+let chapPop=null;
 function showChapter(ch,fromEl){
   const chap=$('#chapter'), wasChapter=view==='chapter';
+  if(chapPop){ chapPop.onfinish=null; chapPop.cancel(); chapPop=null; }
   if(wasChapter){ renderChapter(ch); chap.scrollTop=0; staggerIn(chap); return; }
   renderChapter(ch); view='chapter'; chap.hidden=false; chap.scrollTop=0; chap.classList.remove('sliding'); chap.style.transform='';
   document.body.classList.add('inchapter'); mirrorSync();
@@ -907,7 +909,7 @@ function showChapter(ch,fromEl){
 }
 // opening a folder: measure, flip the state, measure again, then play the difference back with transforms (one layout, no per-frame reflow)
 function toggleGroup(g){
-  const open=!g.classList.contains('open'), T={duration:400,easing:'cubic-bezier(.2,.8,.2,1)'}, groups=[...document.querySelectorAll('.chgroup')];
+  const open=!g.classList.contains('open'), T={duration:400,easing:'cubic-bezier(.2,.8,.2,1)'}, groups=[...document.querySelectorAll('#lib .chgroup')];
   const closing=groups.filter(o=>o!==g&&o.classList.contains('open'));
   const setState=(x,on)=>{ x.classList.toggle('open',on); x.querySelector('.chhd').setAttribute('aria-expanded',on); };
   if(reduce){ closing.forEach(o=>setState(o,false)); setState(g,open); return; }
@@ -915,6 +917,8 @@ function toggleGroup(g){
   const leaving=open?closing:[...closing,g];
   const ghosts=leaving.map(o=>{ const body=o.querySelector('.chbody'), chin=body.querySelector('.chin'), h=body.offsetHeight; return {o,body,chin,h}; });
   const before=new Map(groups.map(x=>[x,x.getBoundingClientRect().top]));
+  // a tap in the middle of the last animation: stop it where it is so the new measurements are honest
+  groups.forEach(x=>{ x.getAnimations({subtree:true}).forEach(a=>{ if(a.effect&&a.effect.getTiming().duration===400) a.cancel(); }); x.classList.remove('moving'); x.querySelectorAll('.chbody.ghost').forEach(b=>{ b.classList.remove('ghost'); const c=b.querySelector('.chin'); if(c){ c.style.paddingTop=''; c.style.paddingBottom=''; c.classList.remove('moving'); } }); x.querySelectorAll('.chbody.moving,.chin.moving').forEach(b=>b.classList.remove('moving')); });
   leaving.forEach(o=>setState(o,false)); if(open) setState(g,true);
   ghosts.forEach(({body,chin})=>{ body.classList.add('ghost'); chin.style.paddingTop='4px'; chin.style.paddingBottom='6px'; });
   const after=new Map(groups.map(x=>[x,x.getBoundingClientRect().top]));
@@ -945,11 +949,11 @@ function showHome(){
   if(reduce||chap.hidden){ finish(); return; }
   // from wherever the page is (a finger may have pulled it part way) out to the right
   const cs=getComputedStyle(chap), from=cs.transform==='none'?'translateX(0px)':cs.transform;
-  chap.classList.add('sliding'); const a=chap.animate([{transform:from},{transform:'translateX(100%)'}],PAGE_T);
+  chap.classList.add('sliding'); const a=chap.animate([{transform:from},{transform:'translateX(100%)'}],PAGE_T); chapPop=a;
   homeParts().forEach(h=>{ const c=getComputedStyle(h); h.animate([{transform:c.transform==='none'?'translateX(0px)':c.transform,opacity:c.opacity},{transform:'none',opacity:1}],PAGE_T); });
   const ch=+chap.dataset.ch, tile=document.querySelector(`#albums [data-ch="${ch}"] .cover`), from2=chap.querySelector('.chhead .cover');
   if(tile&&from2){ const r=tile.getBoundingClientRect(); if(r.width&&r.right>0&&r.left<innerWidth&&r.bottom>0&&r.top<innerHeight){ const b=from2.getBoundingClientRect(); if(b.width) morph(from2,tile,{left:r.left,top:r.top,width:r.width,height:r.height},null,ART[ch]); } }
-  a.onfinish=finish;
+  a.onfinish=()=>{ chapPop=null; finish(); };
 }
 // swipe the chapter page to the right to leave it (follows the finger; lets go into the same slide)
 (function(){ const chap=$('#chapter'); let x0=0,y0=0,t0=0,dx=0,mode=null;
@@ -1308,24 +1312,28 @@ function glassMorph(opening,done,scrub){
   document.body.classList.add('morphing');
   const bgA=BG.map(([el,a,b])=>el.animate(opening?[a,b]:[b,a],{duration:D,easing:E,fill:'forwards'}));
   const all=[npA,npO,ga,gO,...bgA], clean=()=>{ g.remove(); npA.cancel(); npO.cancel(); }, settle=()=>{ bgA.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); };
-  ga.onfinish=()=>{ clean(); done&&done(); settle(); };
-  if(!scrub) return null;
-  // a finger drives it: the shape follows the finger one-to-one (no easing), and on release a fresh spring runs from wherever it is to the end, or back to the start
-  all.forEach(a=>{ a.pause(); }); npA.effect.updateTiming({easing:'linear'}); ga.effect.updateTiming({easing:'linear'});
-  let prog=0;
-  return { seek(p){ prog=Math.max(0,Math.min(1,p)); const t=prog*D; all.forEach(a=>{ a.currentTime=t; }); },
-    go(forward,undo){ const cs=getComputedStyle(np), cg=getComputedStyle(g), fromNp={transform:cs.transform,opacity:cs.opacity}, fromG={transform:cg.transform,opacity:cg.opacity};
-      const endNp=forward?(opening?{transform:npFull,opacity:1}:{transform:npSmall,opacity:0}):(opening?{transform:npSmall,opacity:0}:{transform:npFull,opacity:1});
-      const endG=forward?(opening?{...sheet,opacity:0}:{...pill,opacity:1}):(opening?{...pill,opacity:1}:{...sheet,opacity:0});
-      const left=forward?1-prog:prog, dur=Math.max(240,Math.round(D*left));
+  let ctlRef=null; ga.onfinish=()=>{ if(ctlRef&&NPM.ctl===ctlRef) NPM.ctl=null; clean(); done&&done(); settle(); };
+  // a finger can drive it (paused, scrubbed by progress), and any tap while it moves just changes where it's heading
+  if(scrub){ all.forEach(a=>{ a.pause(); }); npA.effect.updateTiming({easing:'linear'}); ga.effect.updateTiming({easing:'linear'}); }
+  let prog=0, legs=null, heading=opening, arrive=done;
+  const ctl={ seek(p){ prog=Math.max(0,Math.min(1,p)); const t=prog*D; all.forEach(a=>{ a.currentTime=t; }); },
+    head(toOpen,cb){ if(legs&&heading===toOpen){ arrive=cb; return; } heading=toOpen; arrive=cb; NPM.ctl=ctl; NPM.opening=toOpen;
+      const cs=getComputedStyle(np), cg=getComputedStyle(g), fromNp={transform:cs.transform,opacity:cs.opacity}, fromG={transform:cg.transform,opacity:cg.opacity};
       const bgFrom=BG.map(([el])=>{ const c=getComputedStyle(el); return {transform:c.transform,opacity:c.opacity}; });
-      all.forEach(a=>a.cancel());
+      let left; if(!legs){ if(!scrub) prog=Math.max(0,Math.min(1,(ga.currentTime||0)/D)); left=(toOpen===opening)?1-prog:prog; ga.onfinish=null; all.forEach(a=>a.cancel()); } else { left=.6; legs.forEach(a=>a.cancel()); }
+      const dur=Math.max(240,Math.round(D*left));
+      const endNp=toOpen?{transform:npFull,opacity:1}:{transform:npSmall,opacity:0}, endG=toOpen?{...sheet,opacity:0}:{...pill,opacity:1};
       const a1=np.animate([fromNp,endNp],{duration:dur,easing:E,fill:'forwards'}), a2=g.animate([fromG,endG],{duration:dur,easing:E,fill:'forwards'});
-      const toEnd=forward===opening; const a3=BG.map(([el,a,b],k)=>el.animate([bgFrom[k],{...(toEnd?b:a)}],{duration:dur,easing:E,fill:'forwards'}));
-      a2.onfinish=()=>{ g.remove(); a1.cancel(); if(forward) done&&done(); else undo&&undo(); a3.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); }; } };
+      const a3=BG.map(([el,a,b],k)=>el.animate([bgFrom[k],{...(toOpen?b:a)}],{duration:dur,easing:E,fill:'forwards'}));
+      legs=[a1,a2,...a3];
+      a2.onfinish=()=>{ if(NPM.ctl===ctl) NPM.ctl=null; g.remove(); a1.cancel(); arrive&&arrive(); a3.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); }; },
+    go(forward,undo){ ctl.head(forward?opening:!opening, forward?done:undo); } };
+  ctlRef=ctl; NPM.ctl=ctl; NPM.opening=opening; return scrub?ctl:null;
 }
+const NPM={ctl:null,opening:false};
 function npHideNow(){ np.classList.add('morphing'); np.classList.remove('open','drag'); np.style.transform=''; np.setAttribute('aria-hidden','true'); document.body.classList.remove('npopen'); void np.offsetWidth; np.classList.remove('morphing'); }
 function openNP(scrub){ scrub=scrub===true;
+  if(NPM.ctl){ if(!NPM.opening){ document.body.classList.add('npopen'); np.classList.add('open'); np.setAttribute('aria-hidden','false'); npMoving(); NPM.ctl.head(true,()=>{ document.body.classList.add('npopen'); }); } return null; } // it's mid-move: just head up
   const wasOpen=np.classList.contains('open');
   if(!wasOpen&&!wide()){ cancelAnimationFrame(LY.anim); LY.prog=false; npscroll.scrollTop=0; LY.wasVis=false; LY.arrive=false; }
   const fromMini=!wasOpen&&!reduce&&!$('#mini').classList.contains('hide')&&!np.style.transform;
@@ -1340,6 +1348,7 @@ function openNP(scrub){ scrub=scrub===true;
     requestAnimationFrame(()=>{ const t=npTarget(), r=t.getBoundingClientRect(), nr=np.getBoundingClientRect(); morph($('#minith'),t,{left:r.left,top:r.top-nr.top,width:r.width,height:r.height}); }); }
 }
 function closeNP(scrub){ scrub=scrub===true;
+  if(NPM.ctl){ if(NPM.opening){ setQueueOpen(false); setSpeedOpen(false); setRepOpen(false); document.body.classList.remove('npopen'); npMoving(); NPM.ctl.head(false,npHideNow); } return null; } // it's mid-move: just head down
   const wasOpen=np.classList.contains('open'), dragged=!!np.style.transform;
   const viaGlass=wasOpen&&!dragged&&!reduce&&miniCardRect&&!$('#mini').classList.contains('hide'); if(viaGlass) document.body.classList.add('morphing');
   setQueueOpen(false); setSpeedOpen(false); setRepOpen(false); document.body.classList.remove('npopen');
