@@ -82,11 +82,12 @@ html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) sa
 .gmorph{position:fixed;left:0;top:0;z-index:30;pointer-events:none;transform-origin:0 0;will-change:transform,opacity;backdrop-filter:blur(4px) saturate(1.7) brightness(1.04)!important;-webkit-backdrop-filter:blur(4px) saturate(1.7) brightness(1.04)!important} .gmorph::after{display:none} .gmorph{box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35),0 10px 28px var(--g-sh)} .gmorph>.refl{display:none}
 .np.morphing .npbg,.np.morphing #aurora,.np.morphing .npbg2{opacity:0}
 .np.morphing{transition:none}
+.np.closing{pointer-events:none} /* a player on its way out takes no taps */
 body.morphing .lib,body.morphing #libdim,body.morphing .mini .card,body.morphing .tabbar{transition:none!important}
 /* while the glass is moving, everything else holds still: no extra backdrop blurs stacking up, no looping animations repainting the big layers, no mirrors */
 body.morphing .mini .card.glass,body.morphing .tabbar.glass,body.morphing .np .glass,body.morphing .chhd.glass{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-body.morphing .glass>.refl>.mirror{visibility:hidden}
-body.morphing .lib *,body.morphing .np *{animation-play-state:paused!important}
+body.morphing .glass>.refl>.mirror{opacity:0}
+body.morphing .eq i,body.morphing .vtext .w.now,body.morphing .ln.cur .w.now,body.morphing .vhint,body.morphing .in .row,body.morphing .in .album,body.morphing .ln.gap.cur,body.morphing .ln.gap.cur i,body.morphing .art{animation-play-state:paused!important} /* named, not `*`: a universal selector re-styles every node on each toggle */
 body.morphing .glass::before,body.morphing .glass>.refl::after{mix-blend-mode:normal}
 .gmorph{contain:strict}
 /* ---------- juice: little bits of fun on every move ---------- */
@@ -435,6 +436,7 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .htap{position:absolute;inset:0;border-radius:inherit;z-index:7;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;margin:0;padding:0}
 .htap>input{position:absolute;left:0;top:0;width:1px;height:1px;margin:0;visibility:hidden}
 body.nohapt .htap{display:none}
+.chhd,[data-fav],.bigbtns button,.br button,.chips button,#back,#uclose,.uctl button,#lyup,#next,#prev,#play,#mininext,#miniplay,#npfav{position:relative}
 .speedpop .rl{font-size:12px;font-weight:600;color:var(--np-sub);margin:2px 0 8px}
 .speedpop .vchips{flex-wrap:wrap;margin-bottom:4px;max-height:132px;overflow-y:auto}
 .speedpop .vchips button{flex:0 0 auto;min-width:40px;padding:0 10px}
@@ -766,7 +768,8 @@ function boxBlur(cv,r,passes){ const x=cv.getContext('2d'), w=cv.width, h=cv.hei
 function loadImg(src){ return new Promise(r=>{ const i=new Image(); i.onload=()=>r(i); i.onerror=()=>r(null); i.src=src; }); }
 function palette(x,W){
   const d=x.getImageData(0,0,W,W).data, B=Array.from({length:12},()=>({w:0,r:0,g:0,b:0}));
-  for(let i=0;i<d.length;i+=4*37){ const r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/510; if(l<.06||l>.96) continue;
+  const step=W>=256?4*37:4;
+  for(let i=0;i<d.length;i+=step){ const r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/510; if(l<.06||l>.96) continue;
     const sat=mx===mn?0:(mx-mn)/255/(1-Math.abs(2*l-1)); let h=0; if(mx!==mn){ h=mx===r?((g-b)/(mx-mn))%6:mx===g?(b-r)/(mx-mn)+2:(r-g)/(mx-mn)+4; h=(h*60+360)%360; }
     const w=.08+sat*sat, k=Math.floor(h/30)%12; B[k].w+=w; B[k].r+=r*w; B[k].g+=g*w; B[k].b+=b*w; }
   const top=B.filter(b=>b.w>0).sort((a,b)=>b.w-a.w).slice(0,3).map(b=>[b.r/b.w,b.g/b.w,b.b/b.w].map(Math.round));
@@ -783,7 +786,7 @@ async function makeArt(ch){
   const c=document.createElement('canvas'); c.width=c.height=640; const x=c.getContext('2d',{willReadFrequently:true}), W=640;
   if(img) x.drawImage(img,0,0,W,W); else { x.fillStyle='#334'; x.fillRect(0,0,W,W); }
   try{ const t1=document.createElement('canvas'); t1.width=t1.height=16; t1.getContext('2d').drawImage(c,0,0,16,16); const t2=document.createElement('canvas'); t2.width=t2.height=64; const x2=t2.getContext('2d'); x2.imageSmoothingEnabled=true; x2.drawImage(t1,0,0,64,64); boxBlur(t2,3,3); x2.fillStyle='rgba(0,0,0,.4)'; x2.fillRect(0,0,64,64); ART_BG[ch]=t2.toDataURL('image/png'); }catch(e){}
-  let cols=[[90,110,200],[150,60,90],[40,120,140]]; try{ cols=palette(x,W); }catch(e){}
+  let cols=[[90,110,200],[150,60,90],[40,120,140]]; try{ const pc=document.createElement('canvas'); pc.width=pc.height=64; const px=pc.getContext('2d',{willReadFrequently:true}); px.drawImage(c,0,0,64,64); cols=palette(px,64); }catch(e){}
   COL[ch]={tint:lighten(cols[0],.62,.55),c:cols.map(c=>lighten(c,.42,.45))};
   let v=x.createLinearGradient(0,W*.5,0,W); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,.62)'); x.fillStyle=v; x.fillRect(0,0,W,W);
   x.shadowColor='rgba(0,0,0,.5)'; x.shadowBlur=18;
@@ -1133,7 +1136,7 @@ function hapticOverlay(el){ if(!HAPT_IOS||!el||el.querySelector(':scope>.htap'))
   const sw=document.createElement('input'); sw.type='checkbox'; sw.setAttribute('switch',''); sw.tabIndex=-1; lb.append(sw);
   sw.addEventListener('click',e=>e.stopPropagation()); // the label re-sends the tap to its switch; the control must not hear it twice
   sw.addEventListener('focus',()=>{ try{ sw.blur(); }catch(e){} });
-  if(getComputedStyle(el).position==='static') el.style.position='relative'; el.append(lb); }
+  el.append(lb); }
 function hapticOverlays(root){ if(!HAPT_IOS) return; (root||document).querySelectorAll('.tabbar>button,#play,#miniplay,#next,#prev,#mininext,#npfav,.chhd,.bigbtns button,.br button,[data-fav],#back,#uclose,#queue,.uctl button,.chips button,#npclose,#lyup').forEach(hapticOverlay); }
 $('#hapton').onclick=()=>{ setHaptics(true); haptic(); }; $('#haptoff').onclick=()=>{ setHaptics(false); }; try{ setHaptics(hapticsOn); hapticOverlays(); }catch(e){}
 function updateVerse(force){
@@ -1370,7 +1373,7 @@ function drawAurora(now){
   const B=[[.28+.16*Math.sin(t*.11),.22+.14*Math.cos(t*.13),.8],[.78+.12*Math.sin(t*.09+2),.42+.16*Math.sin(t*.1+1),.85],[.45+.22*Math.cos(t*.08+4),.95+.1*Math.sin(t*.12+3),.9]];
   B.forEach((b,i)=>{ const R=b[2]*Math.max(w,h); const g=x.createRadialGradient(b[0]*w,b[1]*h,0,b[0]*w,b[1]*h,R); g.addColorStop(0,AUR.cols[i].replace(')',' / .62)')); g.addColorStop(.55,AUR.cols[i].replace(')',' / .18)')); g.addColorStop(1,AUR.cols[i].replace(')',' / 0)')); x.fillStyle=g; x.fillRect(0,0,w,h); });
 }
-(function auroraLoop(now){ if(np.classList.contains('open')&&!np.classList.contains('anim')&&!np.classList.contains('drag')&&!reduce) drawAurora(now||0); requestAnimationFrame(auroraLoop); })(0);
+(function auroraLoop(now){ const open=np.classList.contains('open'); if(open&&!np.classList.contains('anim')&&!np.classList.contains('drag')&&!reduce) drawAurora(now||0); if(open) requestAnimationFrame(auroraLoop); else setTimeout(()=>requestAnimationFrame(auroraLoop),300); })(0);
 let npAnimT=0; function npMoving(){ np.classList.add('anim'); clearTimeout(npAnimT); npAnimT=setTimeout(()=>np.classList.remove('anim'),620); }
 np.addEventListener('transitionend',e=>{ if(e.target===np&&e.propertyName==='transform'){ clearTimeout(npAnimT); np.classList.remove('anim'); } });
 function morph(from,to,b,done,src){
@@ -1427,9 +1430,9 @@ function glassMorph(opening,done,scrub){
 const NPM={ctl:null,opening:false};
 // safety net: if a move ever fails to report back (an interrupted animation, a backgrounded app), the busy flags clear themselves
 setInterval(()=>{ const b=document.body.classList; ['morphing','folding','paging'].forEach(c=>{ if(!b.contains(c)||(c==='morphing'&&np.classList.contains('drag'))){ delete NPM['t_'+c]; return; } NPM['t_'+c]=(NPM['t_'+c]||0)+1; if(NPM['t_'+c]>=3){ b.remove(c); np.classList.remove('morphing'); delete NPM['t_'+c]; if(c==='morphing'){ document.querySelectorAll('.gmorph').forEach(g=>g.remove()); NPM.ctl=null; } } }); },900);
-function npHideNow(){ haptic('soft'); np.classList.add('morphing'); np.classList.remove('open','drag'); np.style.transform=''; np.setAttribute('aria-hidden','true'); document.body.classList.remove('npopen'); void np.offsetWidth; np.classList.remove('morphing'); }
+function npHideNow(){ haptic('soft'); np.classList.remove('closing'); np.classList.add('morphing'); np.classList.remove('open','drag'); np.style.transform=''; np.setAttribute('aria-hidden','true'); document.body.classList.remove('npopen'); void np.offsetWidth; np.classList.remove('morphing'); }
 function openNP(scrub){ scrub=scrub===true;
-  if(NPM.ctl){ if(!NPM.opening){ document.body.classList.add('npopen'); np.classList.add('open'); np.setAttribute('aria-hidden','false'); npMoving(); NPM.ctl.head(true,()=>{ document.body.classList.add('npopen'); }); } return null; } // it's mid-move: just head up
+  if(NPM.ctl){ if(!NPM.opening){ np.classList.remove('closing'); document.body.classList.add('npopen'); np.classList.add('open'); np.setAttribute('aria-hidden','false'); npMoving(); NPM.ctl.head(true,()=>{ document.body.classList.add('npopen'); }); } return null; } // it's mid-move: just head up
   const wasOpen=np.classList.contains('open');
   if(!wasOpen&&!wide()){ cancelAnimationFrame(LY.anim); LY.prog=false; npscroll.scrollTop=0; LY.wasVis=false; LY.arrive=false; np.classList.remove('lyvis'); }
   const fromMini=!wasOpen&&!reduce&&!$('#mini').classList.contains('hide')&&!np.style.transform;
@@ -1448,7 +1451,7 @@ function closeNP(scrub){ scrub=scrub===true;
   const wasOpen=np.classList.contains('open'), dragged=!!np.style.transform;
   const viaGlass=wasOpen&&!dragged&&!reduce&&miniCardRect&&!$('#mini').classList.contains('hide'); if(viaGlass) document.body.classList.add('morphing');
   setQueueOpen(false); setSpeedOpen(false); setRepOpen(false); document.body.classList.remove('npopen');
-  if(viaGlass){ np.classList.remove('drag'); npMoving();
+  if(viaGlass){ np.classList.remove('drag'); np.classList.add('closing'); npMoving();
     const ctl=glassMorph(false,npHideNow,scrub);
     if(!scrub&&miniRect) morph(npTarget(),$('#minith'),miniRect); return ctl; }
   np.classList.remove('open','drag'); np.style.transform=''; if(wasOpen) npMoving();
@@ -1475,7 +1478,7 @@ $('#npclose').onclick=closeNP; $('#lyclose').onclick=closeNP; $('#vcover').oncli
   },{passive:false});
   let ctl=null, ctlTried=false;
   const end=()=>{ if(mode==='sheet'){ const v=dy/Math.max(1,performance.now()-t0), go=dy>120||(dy>40&&v>.6); np.classList.remove('drag');
-      if(ctl){ const c=ctl; ctl=null; npMoving(); if(go) c.go(true); else c.go(false,()=>{ document.body.classList.add('npopen'); }); }
+      if(ctl){ const c=ctl; ctl=null; npMoving(); if(go) c.go(true); else c.go(false,()=>{ np.classList.remove('closing'); document.body.classList.add('npopen'); }); }
       else if(go) closeNP(); else np.style.transform=''; }
     else if(mode==='up'){ up.classList.remove('drag'); up.style.transform=''; if(dy>90) setQueueOpen(false); } mode=null; ctlTried=false; };
   np.addEventListener('touchend',end); np.addEventListener('touchcancel',end);
@@ -1484,7 +1487,7 @@ $('#npclose').onclick=closeNP; $('#lyclose').onclick=closeNP; $('#vcover').oncli
   hdr.addEventListener('mousedown',e=>{ if(e.target.closest('button')) return; md=true; my0=e.clientY; mdy=0; });
   let mctl=null, mtried=false;
   addEventListener('mousemove',e=>{ if(!md) return; mdy=e.clientY-my0; if(mdy>0){ if(!mctl&&!mtried){ mtried=true; mctl=closeNP(true)||null; } if(mctl){ np.classList.add('drag'); mctl.seek(mdy/(innerHeight*.6)); } else { np.classList.add('drag'); np.style.transform=`translateY(${mdy}px)`; } } });
-  addEventListener('mouseup',()=>{ if(!md) return; md=false; mtried=false; np.classList.remove('drag'); if(mctl){ const c=mctl; mctl=null; npMoving(); if(mdy>120) c.go(true); else c.go(false,()=>document.body.classList.add('npopen')); } else if(mdy>120) closeNP(); else np.style.transform=''; });
+  addEventListener('mouseup',()=>{ if(!md) return; md=false; mtried=false; np.classList.remove('drag'); if(mctl){ const c=mctl; mctl=null; npMoving(); if(mdy>120) c.go(true); else c.go(false,()=>{ np.classList.remove('closing'); document.body.classList.add('npopen'); }); } else if(mdy>120) closeNP(); else np.style.transform=''; });
   // mini player: drag up to open
   const mc=$('#minicard'); let m0=0, mdyT=0, on=false, mt0=0, octl=null, otried=false;
   mc.addEventListener('touchstart',e=>{ m0=e.touches[0].clientY; mdyT=0; on=true; mt0=performance.now(); },{passive:true});
@@ -1557,7 +1560,7 @@ document.addEventListener('click',e=>{ if(e.target.closest('.row[data-song],.rc[
 const MIR=[];
 function mirrorMake(host){ const refl=host.querySelector(':scope>.refl'); if(!refl) return; const m=document.createElement('div'); m.className='mirror'; m.setAttribute('aria-hidden','true'); refl.append(m); MIR.push({host,m}); }
 const mirSrc=()=>view==='chapter'&&!$('#chapter').hidden?$('#chapter'):$('#lib');
-let mirT=0; function mirrorSync(){ clearTimeout(mirT); mirT=setTimeout(()=>{ if(document.body.classList.contains('folding')||document.body.classList.contains('morphing')||document.body.classList.contains('paging')){ mirrorSync(); return; } const lib=mirSrc(); MIR.forEach(({m})=>{ const c=lib.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.querySelectorAll('.refl,.mirror,canvas,video').forEach(e=>e.remove()); c.querySelectorAll('[loading]').forEach(e=>e.removeAttribute('loading')); c.className='lib mirlib'; c.inert=true; m.replaceChildren(c); }); mirrorMeasure(); },360); }
+let mirT=0; function mirrorSync(){ clearTimeout(mirT); mirT=setTimeout(()=>{ if(document.body.classList.contains('folding')||document.body.classList.contains('morphing')||document.body.classList.contains('paging')){ mirrorSync(); return; } const lib=mirSrc(); MIR.forEach(({m})=>{ const c=lib.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.querySelectorAll('.refl,.mirror,canvas,video,.htap,.hapt,svg,.eq,.chgroup:not(.open) .chin,.note,.uhint').forEach(e=>e.remove()); /* the mirror is blurred and faint: closed folders' rows and icon chrome add nothing but layout cost */ c.querySelectorAll('[loading]').forEach(e=>e.removeAttribute('loading')); c.className='lib mirlib'; c.inert=true; m.replaceChildren(c); }); mirrorMeasure(); },360); }
 let mirGeo=null;
 function mirrorMeasure(){ const lib=mirSrc(), lr=lib.getBoundingClientRect(); if(!lr.width) return; mirGeo={left:lr.left,top:lr.top,width:lr.width,bars:MIR.map(({host,m})=>{ const r=host.getBoundingClientRect(); return {m,r}; })}; mirrorPos(); }
 function mirrorPos(){ if(!mirGeo||document.body.classList.contains('npopen')) return; const st=mirSrc().scrollTop, G=mirGeo;
@@ -1567,7 +1570,7 @@ function glassify(el){ if(!el.querySelector(':scope>.refl')){ const r=document.c
 document.body.append($('#chapter'));
 document.querySelectorAll('.glass').forEach(glassify);
 if(!reduce){ mirrorMake($('#minicard')); mirrorMake($('#tabbar'));
-  const mo=new MutationObserver(mirrorSync); mo.observe($('#lib'),{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-pressed','aria-expanded','src']}); mo.observe($('#chapter'),{childList:true,subtree:true,attributes:true,attributeFilter:['class','aria-pressed','src']});
+  const mo=new MutationObserver(mirrorSync); mo.observe($('#lib'),{childList:true,subtree:true,attributes:true,attributeFilter:['aria-pressed','aria-expanded','src']}); mo.observe($('#chapter'),{childList:true,subtree:true,attributes:true,attributeFilter:['aria-pressed','src']});
   let mirRaf=0; const onS=()=>{ if(!mirRaf) mirRaf=requestAnimationFrame(()=>{ mirRaf=0; mirrorPos(); }); }; $('#lib').addEventListener('scroll',onS,{passive:true}); $('#chapter').addEventListener('scroll',onS,{passive:true}); addEventListener('resize',()=>setTimeout(mirrorMeasure,80)); setTimeout(mirrorMeasure,600); mirrorSync(); }
 /* ---------- glass light: the highlights drift with tilting and the mouse (not with scrolling: restyling every pane per scrolled frame cost too much) ---------- */
 (function(){ const R=document.documentElement; let tx=0,ty=0,x=0,y=0,raf=0,lastT=0;
@@ -1582,7 +1585,7 @@ if(!reduce){ mirrorMake($('#minicard')); mirrorMake($('#tabbar'));
 if(!/claude\.ai$/.test(location.hostname)&&/\/songs\/?(index\.html)?$/.test(location.pathname)){ $('#quizlink').hidden=false; qzChip(); try{ localStorage.setItem('johnquiz:where','"songs"'); }catch(e){}
   $('#quizlink').onclick=()=>{ try{ localStorage.setItem('johnquiz:where','"quiz"'); sessionStorage.setItem('jq:back','1'); }catch(e){} }; }
 // swap a freshly made cover into every place the plain photo was showing
-function refreshArt(c){ const raw=`art/john${c}.jpg`; document.querySelectorAll('img').forEach(im=>{ const v=im.getAttribute('src')||''; if(v===raw||v.endsWith('/'+raw)) im.src=ART[c]; });
+function refreshArt(c){ const raw=`art/john${c}.jpg`; document.querySelectorAll(`img[src$="${raw}"]`).forEach(im=>{ im.src=ART[c]; });
   if(song&&song.ch===c){ $('#npbg').style.backgroundImage=`url(${ART_BG[c]||ART[c]})`; const col=COL[c]; if(col){ document.documentElement.style.setProperty('--tint',col.tint); AUR.cols=col.c.slice(); AUR.last=0; } } }
 (async function(){
   // show the library right away with the plain photos; the numbered covers get painted in one by one behind the scenes
@@ -1596,7 +1599,8 @@ function refreshArt(c){ const raw=`art/john${c}.jpg`; document.querySelectorAll(
   setSource('chapter',s.ch,s.i); load(s.i,false,(last&&last.id===s.id&&last.t>8)?last.t:null);
   if(m&&CH[+m[1]]) showChapter(+m[1]);
   const order=[s.ch,...CHAPTERS.filter(c=>c!==s.ch)];
-  for(const c of order){ try{ ART[c]=await makeArt(c); refreshArt(c); }catch(e){} await new Promise(r=>setTimeout(r,0)); }
+  const idle=()=>new Promise(r=>('requestIdleCallback' in window)?requestIdleCallback(()=>r(),{timeout:600}):setTimeout(r,90));
+  for(const c of order){ await idle(); try{ ART[c]=await makeArt(c); refreshArt(c); }catch(e){} }
 })();
 </script>
 
