@@ -1074,14 +1074,14 @@ let verseClick=lsGet('vclick',false);
 function wavURL(samples,rate){ const n=samples.length, b=new ArrayBuffer(44+n*2), v=new DataView(b); const W=(o,str)=>{ for(let k=0;k<str.length;k++) v.setUint8(o+k,str.charCodeAt(k)); };
   W(0,'RIFF'); v.setUint32(4,36+n*2,true); W(8,'WAVE'); W(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); W(36,'data'); v.setUint32(40,n*2,true);
   for(let k=0;k<n;k++){ const x=Math.max(-1,Math.min(1,samples[k])); v.setInt16(44+k*2,x<0?x*32768:x*32767,true); } return URL.createObjectURL(new Blob([b],{type:'audio/wav'})); }
-const TICK=(()=>{ const rate=22050, n=Math.round(rate*.14), out=new Float32Array(n); // a woodblock: a 1 kHz knock with a bright 2.4 kHz edge, fast decay
+const TICK=(()=>{ try{ const rate=22050, n=Math.round(rate*.14), out=new Float32Array(n); // a woodblock: a 1 kHz knock with a bright 2.4 kHz edge, fast decay
   for(let k=0;k<n;k++){ const t=k/rate, env=Math.exp(-t*38), e2=Math.exp(-t*90); out[k]=.85*env*Math.sin(2*Math.PI*1000*t)+.35*e2*Math.sin(2*Math.PI*2400*t)+.12*e2*(Math.random()*2-1); }
-  return wavURL(out,rate); })();
-const SILENT=wavURL(new Float32Array(400),8000);
-const tickEl=new Audio(SILENT); tickEl.preload='auto'; let tickReady=false;
-function tickUnlock(){ if(tickReady) return; tickReady=true; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickReady=false; }); tickEl.addEventListener('ended',()=>{ tickEl.src=TICK; },{once:true}); setTimeout(()=>{ if(tickEl.src!==TICK) tickEl.src=TICK; },400); }
-function tick(){ if(!tickReady){ tickUnlock(); return; } try{ if(tickEl.src!==TICK) tickEl.src=TICK; tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
-function setVerseClick(on){ verseClick=!!on; lsSet('vclick',verseClick); $('#clickon').setAttribute('aria-pressed',verseClick); $('#clickoff').setAttribute('aria-pressed',!verseClick); if(verseClick){ tickReady=true; tickEl.src=TICK; tick(); } }
+  return wavURL(out,rate); }catch(e){ return ''; } })();
+let SILENT=''; try{ SILENT=wavURL(new Float32Array(400),8000); }catch(e){}
+let tickEl=null; try{ tickEl=new Audio(SILENT); tickEl.preload='auto'; }catch(e){} let tickReady=false;
+function tickUnlock(){ if(tickReady||!tickEl||!TICK) return; tickReady=true; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickReady=false; }); tickEl.addEventListener('ended',()=>{ tickEl.src=TICK; },{once:true}); setTimeout(()=>{ if(tickEl.src!==TICK) tickEl.src=TICK; },400); }
+function tick(){ if(!tickEl||!TICK) return; if(!tickReady){ tickUnlock(); return; } try{ if(tickEl.src!==TICK) tickEl.src=TICK; tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
+function setVerseClick(on){ verseClick=!!on; lsSet('vclick',verseClick); $('#clickon').setAttribute('aria-pressed',verseClick); $('#clickoff').setAttribute('aria-pressed',!verseClick); if(verseClick&&tickEl&&TICK){ tickReady=true; tickEl.src=TICK; tick(); } }
 $('#clickon').onclick=()=>{ setVerseClick(true); haptic(); }; $('#clickoff').onclick=()=>{ setVerseClick(false); haptic(); }; setVerseClick(verseClick);
 // the first tap on anything unlocks the click player (phones only let a sound start from a tap)
 addEventListener('pointerup',()=>{ if(verseClick) tickUnlock(); },{passive:true});
@@ -1339,7 +1339,7 @@ const NP_FADE=()=>[...np.querySelectorAll(':scope>.npbg,:scope>#aurora,:scope>.n
 // the glass pill of the mini player swells into the whole sheet: the sheet is clipped to the pill's shape and grows, while a clear glass copy rides on top and thins out as the player fills in
 function glassMorph(opening,done,scrub){
   const D=520, E='cubic-bezier(.32,.72,0,1)', r=miniCardRect, W=innerWidth, H=innerHeight;
-  if(reduce||!r||!r.width){ done&&done(); return null; }
+  if(reduce||!r||!r.width){ document.body.classList.remove('morphing'); np.classList.remove('morphing'); done&&done(); return null; }
   // a glass copy the size of the pill scales up to the screen; the player itself scales up from the pill's spot, invisible at first, then fades in
   const g=document.createElement('div'); g.className='glass gmorph'; document.body.append(g);
   Object.assign(g.style,{width:r.width+'px',height:r.height+'px',borderRadius:(r.height/2)+'px'});
@@ -1375,6 +1375,8 @@ function glassMorph(opening,done,scrub){
   ctlRef=ctl; NPM.ctl=ctl; NPM.opening=opening; return scrub?ctl:null;
 }
 const NPM={ctl:null,opening:false};
+// safety net: if a move ever fails to report back (an interrupted animation, a backgrounded app), the busy flags clear themselves
+setInterval(()=>{ const b=document.body.classList; ['morphing','folding','paging'].forEach(c=>{ if(!b.contains(c)||(c==='morphing'&&np.classList.contains('drag'))){ delete NPM['t_'+c]; return; } NPM['t_'+c]=(NPM['t_'+c]||0)+1; if(NPM['t_'+c]>=3){ b.remove(c); np.classList.remove('morphing'); delete NPM['t_'+c]; if(c==='morphing'){ document.querySelectorAll('.gmorph').forEach(g=>g.remove()); NPM.ctl=null; } } }); },900);
 function npHideNow(){ haptic('soft'); np.classList.add('morphing'); np.classList.remove('open','drag'); np.style.transform=''; np.setAttribute('aria-hidden','true'); document.body.classList.remove('npopen'); void np.offsetWidth; np.classList.remove('morphing'); }
 function openNP(scrub){ scrub=scrub===true;
   if(NPM.ctl){ if(!NPM.opening){ document.body.classList.add('npopen'); np.classList.add('open'); np.setAttribute('aria-hidden','false'); npMoving(); NPM.ctl.head(true,()=>{ document.body.classList.add('npopen'); }); } return null; } // it's mid-move: just head up
