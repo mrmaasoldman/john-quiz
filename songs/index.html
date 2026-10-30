@@ -429,6 +429,7 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .speedpop .chips button:active{transform:scale(.94)}
 .speedpop .sl{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:12px;font-weight:700;color:var(--np-sub)}
 .speedpop .sl input{width:100%;accent-color:#fff;height:4px}
+.hapt{position:fixed;left:-200px;top:-200px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
 .speedpop .rl{font-size:12px;font-weight:600;color:var(--np-sub);margin:2px 0 8px}
 .speedpop .vchips{flex-wrap:wrap;margin-bottom:4px;max-height:132px;overflow-y:auto}
 .speedpop .vchips button{flex:0 0 auto;min-width:40px;padding:0 10px}
@@ -668,7 +669,10 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
     <div class="chips rowchips"><button type="button" id="repsong" aria-pressed="false">This whole song</button><button type="button" id="repclear">Off</button></div>
     <div class="rl">Or just some verses — tap the first and last</div>
     <div class="chips vchips" id="vchips"></div>
+    <div class="rl" style="margin-top:12px">Verse click — a little tick where each verse starts</div>
+    <div class="chips rowchips"><button type="button" id="clickon" aria-pressed="false">On</button><button type="button" id="clickoff" aria-pressed="true">Off</button></div>
   </div>
+  <label class="hapt" aria-hidden="true"><input type="checkbox" switch id="haptsw" tabindex="-1"></label>
   <div class="speedpop glass" id="speedpop" hidden>
     <div class="sh"><b>Speed</b><span id="speedval">1.00×</span></div>
     <div class="chips" id="speedchips"></div>
@@ -816,11 +820,11 @@ function next(){ if(!song) return;
   if(src){ if(src.order.length<2&&!(src.order.length===1&&src.order[0]!==song.i)) refill(); const n=src.order.length; if(!n){ audio.pause(); audio.currentTime=0; return; } src.pos=(src.pos+1)%n; fromManual=false; load(src.order[src.pos],true); return; }
   audio.pause(); audio.currentTime=0; }
 function prev(){ if(!song) return; if(audio.currentTime>3||!src||fromManual||src.order.length<2){ audio.currentTime=0; return; } const n=src.order.length; src.pos=(src.pos-1+n)%n; load(src.order[src.pos],true); }
-function toggle(){ if(!song){ playIdx(0); return; } audio.paused?audio.play().catch(()=>{}):audio.pause(); }
+function toggle(){ if(verseClick) acx(); if(!song){ playIdx(0); return; } audio.paused?audio.play().catch(()=>{}):audio.pause(); }
 
 /* ---------- favorites & resume ---------- */
 const isFav=id=>favs.includes(id);
-function toggleFav(id){ favs=isFav(id)?favs.filter(x=>x!==id):[...favs,id]; lsSet('fav',favs); renderFavState(); renderFavs(); if(tab==='fav') renderFavView(); }
+function toggleFav(id){ haptic(); favs=isFav(id)?favs.filter(x=>x!==id):[...favs,id]; lsSet('fav',favs); renderFavState(); renderFavs(); if(tab==='fav') renderFavView(); }
 function renderFavState(){ document.querySelectorAll('[data-fav]').forEach(b=>b.setAttribute('aria-pressed',isFav(b.dataset.fav))); if(song) $('#npfav').setAttribute('aria-pressed',isFav(song.id)); }
 $('#npfav').onclick=()=>song&&toggleFav(song.id);
 let lastSave=0;
@@ -837,7 +841,7 @@ function swipeable(el,o){ let sx=0,sy=0,d=0,mode=null,id=null,will=false;
     if(!mode){ if(Math.abs(ddx)<8&&Math.abs(ddy)<8) return; if(Math.abs(ddx)>Math.abs(ddy)*1.3&&Math.sign(ddx)===o.dir){ mode='h'; try{ el.setPointerCapture(id); }catch(x){} el.classList.add('swiping'); el.classList.remove('snap'); o.onStart&&o.onStart(); } else { mode='v'; return; } }
     const th=TH(); d=ddx*o.dir; if(d<0) d=0; if(d>th) d=th+(d-th)*0.28;
     el.style.transform=`translateX(${d*o.dir}px)`; el.style.setProperty('--dx',d+'px'); el.style.setProperty('--dxo',Math.min(1,Math.max(0,(d-78)/40)).toFixed(2));
-    const w=d>=th; if(w!==will){ will=w; el.classList.toggle('will',w); el.style.setProperty('--dxs',w?'1.12':'1'); if(w) try{ navigator.vibrate&&navigator.vibrate(8); }catch(x){} }
+    const w=d>=th; if(w!==will){ will=w; el.classList.toggle('will',w); el.style.setProperty('--dxs',w?'1.12':'1'); if(w) haptic(); }
   });
   const end=()=>{ if(mode!=='h'){ mode=null; return; } mode=null; const commit=will; will=false; suppressClickUntil=performance.now()+500;
     el.classList.remove('swiping','will'); el.classList.add('snap'); el.style.transform=''; el.style.setProperty('--dx','0px'); el.style.setProperty('--dxo','0'); el.style.setProperty('--dxs','1');
@@ -847,7 +851,7 @@ function swipeable(el,o){ let sx=0,sy=0,d=0,mode=null,id=null,will=false;
 document.addEventListener('click',e=>{ if(performance.now()<suppressClickUntil){ e.stopPropagation(); e.preventDefault(); } },true);
 function wireRows(root){ const ctx=root.id==='favlist'?'favs':'chapter';
   root.querySelectorAll('[data-song]').forEach(b=>{ let timer=null, fired=false, px=0, py=0;
-    b.addEventListener('pointerdown',e=>{ fired=false; px=e.clientX; py=e.clientY; clearTimeout(timer); timer=setTimeout(()=>{ fired=true; suppressClickUntil=performance.now()+900; openSheet(SONGS[+b.dataset.song]); try{ navigator.vibrate&&navigator.vibrate(8) }catch(x){} },480); });
+    b.addEventListener('pointerdown',e=>{ fired=false; px=e.clientX; py=e.clientY; clearTimeout(timer); timer=setTimeout(()=>{ fired=true; suppressClickUntil=performance.now()+900; openSheet(SONGS[+b.dataset.song]); try{ haptic() }catch(x){} },480); });
     const cancel=()=>clearTimeout(timer);
     b.addEventListener('pointerup',cancel); b.addEventListener('pointerleave',cancel); b.addEventListener('pointercancel',cancel);
     b.addEventListener('pointermove',e=>{ if(Math.abs(e.clientX-px)+Math.abs(e.clientY-py)>10) cancel(); });
@@ -922,7 +926,7 @@ const FOLD={anims:[],t:0};
 function settleFolds(){ FOLD.anims.forEach(a=>{ try{ a.cancel(); }catch(e){} }); FOLD.anims=[];
   document.querySelectorAll('#lib .chgroup.moving,#lib .chbody.moving,#lib .chin.moving').forEach(e=>e.classList.remove('moving'));
   document.querySelectorAll('#lib .chbody.ghost').forEach(b=>{ b.classList.remove('ghost'); b.style.height=''; }); }
-function toggleGroup(g){
+function toggleGroup(g){ haptic('soft');
   const open=!g.classList.contains('open'), D=380, E='cubic-bezier(.22,.9,.3,1)', groups=[...document.querySelectorAll('#lib .chgroup')];
   const setState=(x,on)=>{ x.classList.toggle('open',on); x.querySelector('.chhd').setAttribute('aria-expanded',on); };
   const prev=groups.filter(o=>o!==g&&o.classList.contains('open'));
@@ -994,7 +998,7 @@ let tab='home';
 const TABS=['home','fav','search'];
 function moveBlob(t,animate){ const b=$('#blob'); b.style.transform=`translateX(${TABS.indexOf(t)*100}%)`; if(animate){ b.classList.remove('stretch'); void b.offsetWidth; b.classList.add('stretch'); const sw=$('#sweep'); sw.classList.remove('go'); void sw.offsetWidth; sw.classList.add('go'); } }
 function setTab(t){ applyTab(t); }
-function applyTab(t){ const changed=t!==tab; tab=t; document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tab===t)); moveBlob(t,changed);
+function applyTab(t){ const changed=t!==tab; if(changed) haptic('soft'); tab=t; document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tab===t)); moveBlob(t,changed);
   $('#hero').hidden=t!=='home'; $('#home').hidden=t!=='home'; $('#chapter').hidden=!(t==='home'&&view==='chapter'); document.body.classList.toggle('inchapter',t==='home'&&view==='chapter'); $('#searchview').hidden=t!=='search'; $('#favview').hidden=t!=='fav';
   if(t==='fav') renderFavView(); if(t==='search'){ runSearch(); if(changed&&matchMedia('(hover:hover) and (pointer:fine)').matches) $('#q').focus(); }
   $('#lib').scrollTop=0; }
@@ -1064,9 +1068,20 @@ function fitVerse(){ // give the verse box an explicit pixel height (iOS can't b
   best=Math.min(best,est);
   txt.style.setProperty('--vfs',best+'px'); }
 const vscale=1;
+/* ---------- verse click & haptics ---------- */
+let verseClick=lsGet('vclick',false), ACX=null;
+function acx(){ try{ if(!ACX) ACX=new (window.AudioContext||window.webkitAudioContext)(); if(ACX.state==='suspended') ACX.resume(); }catch(e){} return ACX; }
+// a short woody tick: two quick sine blips with a fast decay (no file needed)
+function tick(){ const c=acx(); if(!c) return; const t=c.currentTime, g=c.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(.45,t+.004); g.gain.exponentialRampToValueAtTime(.0001,t+.07); g.connect(c.destination);
+  [[1850,0],[2600,.012]].forEach(([f,d])=>{ const o=c.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(f,t+d); o.frequency.exponentialRampToValueAtTime(f*.55,t+d+.06); o.connect(g); o.start(t+d); o.stop(t+d+.08); }); }
+function setVerseClick(on){ verseClick=!!on; lsSet('vclick',verseClick); $('#clickon').setAttribute('aria-pressed',verseClick); $('#clickoff').setAttribute('aria-pressed',!verseClick); if(verseClick){ acx(); tick(); } }
+$('#clickon').onclick=()=>{ setVerseClick(true); haptic(); }; $('#clickoff').onclick=()=>{ setVerseClick(false); haptic(); }; setVerseClick(verseClick);
+// haptics: Android vibrates; iPhones tick when a native switch flips, so a hidden one is flipped for us
+const HAPT=$('#haptsw'); let haptT=0;
+function haptic(kind){ const n=performance.now(); if(n-haptT<45) return; haptT=n; try{ if(navigator.vibrate){ navigator.vibrate(kind==='soft'?6:10); } else if(HAPT&&'switch' in HAPT){ HAPT.click(); } }catch(e){} }
 function updateVerse(force){
   if(!song) return; const t=audio.currentTime; const idx=verseAt(t);
-  if(idx!==curVerse||force){ curVerse=idx; renderVerse(idx); }
+  if(idx!==curVerse||force){ const prev=curVerse; curVerse=idx; renderVerse(idx); if(!force&&idx>=0&&prev!==idx&&!audio.paused&&!seeking){ if(verseClick) tick(); haptic('soft'); } }
   const nowMs=performance.now(); if(nowMs-fitCheckAt>700){ fitCheckAt=nowMs; if(verseOverflows()) fitVerse(); }
   if(idx>=0){ const ws=$('#vtext').querySelectorAll('.w'); let now=-1; verses[idx].words.forEach((w,k)=>{ if(t>=w.t-0.1) now=k; }); ws.forEach((el,k)=>{ el.classList.toggle('on',k<=now); el.classList.toggle('now',k===now); }); }
 }
@@ -1265,8 +1280,8 @@ function renderQueue(){
 }
 function setQueueOpen(on){ $('#upnext').classList.toggle('open',on); $('#scrim').classList.toggle('on',on); $('#queue').setAttribute('aria-pressed',on); }
 $('#queue').onclick=()=>setQueueOpen(!$('#upnext').classList.contains('open')); $('#uclose').onclick=()=>setQueueOpen(false); $('#scrim').onclick=()=>setQueueOpen(false);
-function playNext(i){ if(!song){ playIdx(i); return; } const k=manual.indexOf(i); if(k>=0){ manual.splice(k,1); if(k<=manualPos) manualPos--; } if(qloop){ manual.splice(manualPos+1,0,i); } else manual.unshift(i); renderQueue(); toast(`Playing next: ${SONGS[i].title}`); }
-function addLast(i){ if(!song){ playIdx(i); return; } manual.push(i); renderQueue(); toast(`Added to Up Next: ${SONGS[i].title}`); }
+function playNext(i){ haptic(); if(!song){ playIdx(i); return; } const k=manual.indexOf(i); if(k>=0){ manual.splice(k,1); if(k<=manualPos) manualPos--; } if(qloop){ manual.splice(manualPos+1,0,i); } else manual.unshift(i); renderQueue(); toast(`Playing next: ${SONGS[i].title}`); }
+function addLast(i){ haptic(); if(!song){ playIdx(i); return; } manual.push(i); renderQueue(); toast(`Added to Up Next: ${SONGS[i].title}`); }
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),1800); }
 
 /* long-press (or right-click) a song for more */
@@ -1351,7 +1366,7 @@ function glassMorph(opening,done,scrub){
   ctlRef=ctl; NPM.ctl=ctl; NPM.opening=opening; return scrub?ctl:null;
 }
 const NPM={ctl:null,opening:false};
-function npHideNow(){ np.classList.add('morphing'); np.classList.remove('open','drag'); np.style.transform=''; np.setAttribute('aria-hidden','true'); document.body.classList.remove('npopen'); void np.offsetWidth; np.classList.remove('morphing'); }
+function npHideNow(){ haptic('soft'); np.classList.add('morphing'); np.classList.remove('open','drag'); np.style.transform=''; np.setAttribute('aria-hidden','true'); document.body.classList.remove('npopen'); void np.offsetWidth; np.classList.remove('morphing'); }
 function openNP(scrub){ scrub=scrub===true;
   if(NPM.ctl){ if(!NPM.opening){ document.body.classList.add('npopen'); np.classList.add('open'); np.setAttribute('aria-hidden','false'); npMoving(); NPM.ctl.head(true,()=>{ document.body.classList.add('npopen'); }); } return null; } // it's mid-move: just head up
   const wasOpen=np.classList.contains('open');
@@ -1360,7 +1375,7 @@ function openNP(scrub){ scrub=scrub===true;
   const prep=()=>{ fitVerse(); lyLayout(); updateVerse(true); updateLyrics(true); if(!reduce){ AUR.last=0; drawAurora(performance.now()); } };
   if(fromMini) requestAnimationFrame(()=>requestAnimationFrame(prep)); else prep();
   if(fromMini){ miniRect=$('#minith').getBoundingClientRect(); miniCardRect=$('#minicard').getBoundingClientRect(); np.classList.add('morphing'); document.body.classList.add('morphing'); }
-  np.classList.add('open'); np.setAttribute('aria-hidden','false'); document.body.classList.add('npopen'); if(!wasOpen) npMoving();
+  np.classList.add('open'); np.setAttribute('aria-hidden','false'); document.body.classList.add('npopen'); if(!wasOpen){ npMoving(); haptic('soft'); }
   if(fromMini){ void np.offsetWidth; np.classList.remove('morphing'); const ctl=glassMorph(true,null,scrub);
     if(!scrub) requestAnimationFrame(()=>{ const t=npTarget(), r=t.getBoundingClientRect(); morph($('#minith'),t,{left:r.left,top:r.top,width:r.width,height:r.height}); }); return ctl; }
   requestAnimationFrame(()=>{ np.classList.remove('drag'); np.style.transform=''; });
@@ -1459,7 +1474,7 @@ function sparks(el,n=8,heart=false){ if(!el||reduce) return; const r=el.getBound
   for(let i=0;i<n;i++){ const a=(i/n)*Math.PI*2+Math.random()*.6, d=28+Math.random()*26, g=document.createElement('i'); g.className='jspark'+(heart?' h':''); g.style.cssText=`left:${cx-4}px;top:${cy-4}px;background:${cols[i%cols.length]};--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d}px;animation-delay:${Math.random()*60}ms`; document.body.append(g); g.onanimationend=()=>g.remove(); } }
 function flyTo(from,to,src){ if(reduce||!from||!to) return; const a=from.getBoundingClientRect(), b=to.getBoundingClientRect(); if(!a.width||!b.width) return; const g=document.createElement('img'); g.src=src; g.className='jfly'; const sz=Math.min(44,a.width); g.style.cssText=`width:${sz}px;height:${sz}px;--x0:${a.left+a.width/2-sz/2}px;--y0:${a.top+a.height/2-sz/2}px;--x1:${b.left+b.width/2-sz/2}px;--y1:${b.top+b.height/2-sz/2}px`; document.body.append(g); g.onanimationend=()=>{ g.remove(); juice(to,'j-boing'); }; }
 // play & pause: the button boings and a ring puffs out; the big cover gives a little nod
-['#play','#miniplay'].forEach(id=>$(id).addEventListener('click',()=>{ juice($(id),'j-boing'); ring($(id)); },true));
+['#play','#miniplay'].forEach(id=>$(id).addEventListener('click',()=>{ juice($(id),'j-boing'); ring($(id)); haptic(); },true));
 audio.addEventListener('play',()=>{ juice($('#vcover'),'j-nod'); juice($('.art'),'j-nod'); });
 // skipping: the arrows zip the way the songs go
 $('#next').addEventListener('click',()=>juice($('#next'),'j-zipr'),true); $('#mininext').addEventListener('click',()=>juice($('#mininext'),'j-zipr'),true); $('#prev').addEventListener('click',()=>juice($('#prev'),'j-zipl'),true);
