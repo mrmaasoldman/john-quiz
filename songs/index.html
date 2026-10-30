@@ -827,7 +827,7 @@ function next(){ if(!song) return;
   if(src){ if(src.order.length<2&&!(src.order.length===1&&src.order[0]!==song.i)) refill(); const n=src.order.length; if(!n){ audio.pause(); audio.currentTime=0; return; } src.pos=(src.pos+1)%n; fromManual=false; load(src.order[src.pos],true); return; }
   audio.pause(); audio.currentTime=0; }
 function prev(){ if(!song) return; if(audio.currentTime>3||!src||fromManual||src.order.length<2){ audio.currentTime=0; return; } const n=src.order.length; src.pos=(src.pos-1+n)%n; load(src.order[src.pos],true); }
-function toggle(){ if(verseClick) acx(); if(!song){ playIdx(0); return; } audio.paused?audio.play().catch(()=>{}):audio.pause(); }
+function toggle(){ if(verseClick&&!IOS) acx(); if(!song){ playIdx(0); return; } audio.paused?audio.play().catch(()=>{}):audio.pause(); }
 
 /* ---------- favorites & resume ---------- */
 const isFav=id=>favs.includes(id);
@@ -1088,18 +1088,23 @@ const KNOCKS=[]; function unbook(){ bookedVerse=-1; clearTimeout(bookedTimer); i
 function wavURL(samples,rate){ const n=samples.length, b=new ArrayBuffer(44+n*2), v=new DataView(b); const W=(o,str)=>{ for(let k=0;k<str.length;k++) v.setUint8(o+k,str.charCodeAt(k)); };
   W(0,'RIFF'); v.setUint32(4,36+n*2,true); W(8,'WAVE'); W(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); W(36,'data'); v.setUint32(40,n*2,true);
   for(let k=0;k<n;k++){ const x=Math.max(-1,Math.min(1,samples[k])); v.setInt16(44+k*2,x<0?x*32768:x*32767,true); } return URL.createObjectURL(new Blob([b],{type:'audio/wav'})); }
-let tickEl=null; try{ const rate=22050, n=Math.round(rate*.14), out=new Float32Array(n); for(let k=0;k<n;k++){ const t=k/rate; out[k]=.85*Math.exp(-t*38)*Math.sin(2*Math.PI*1000*t)+.35*Math.exp(-t*90)*Math.sin(2*Math.PI*2400*t); } tickEl=new Audio(wavURL(out,rate)); tickEl.preload='auto'; }catch(e){}
-function verseTick(){ if(window.AudioContext||window.webkitAudioContext){ knock(); return; } try{ if(tickEl){ tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{}); } }catch(e){} }
-// look a little ahead of the song and book each verse start on the audio clock, so the knock lands on the beat rather than a quarter-second late
+let tickEl=null; try{ const rate=22050, n=Math.round(rate*.14), out=new Float32Array(n); for(let k=0;k<n;k++){ const t=k/rate; out[k]=.85*Math.exp(-t*38)*Math.sin(2*Math.PI*1000*t)+.35*Math.exp(-t*90)*Math.sin(2*Math.PI*2400*t); } tickEl=new Audio(wavURL(out,rate)); tickEl.preload='auto'; tickEl.setAttribute('playsinline',''); tickEl.load(); }catch(e){}
+// iPhones: the real <audio> element is the dependable path (it plays whenever the songs do, silent switch or not, and iOS never "interrupts" it the way it does Web Audio)
+const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+let tickArmed=false;
+function armTick(){ if(tickArmed||!tickEl||!verseClick) return; tickArmed=true; try{ tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickArmed=false; }); }catch(e){ tickArmed=false; } }
+function elTick(){ try{ if(!tickEl) return; tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
+function verseTick(){ if(IOS||!(window.AudioContext||window.webkitAudioContext)){ elTick(); return; } if(ACX&&ACX.state==='running') knock(); else elTick(); }
+// look a little ahead of the song and book each verse start, so the knock lands on the beat rather than a quarter-second late
 let bookedVerse=-1, bookedTimer=0;
-function bookTicks(){ if(!verseClick||!song||audio.paused||seeking||!verses.length) return; const c=acx(); const t=audio.currentTime, rate=audio.playbackRate||1;
+function bookTicks(){ if(!verseClick||!song||audio.paused||seeking||!verses.length) return; const c=IOS?null:acx(); const t=audio.currentTime, rate=audio.playbackRate||1;
   for(let k=0;k<verses.length;k++){ const st=verses[k].start; const d=(st-t)/rate; if(d>-.05&&d<.7){ if(bookedVerse===k) return; bookedVerse=k; clearTimeout(bookedTimer);
-      if(c&&c.state==='running') knock(c.currentTime+Math.max(0,d)); else bookedTimer=setTimeout(verseTick,Math.max(0,d*1000)); return; } } }
+      if(c&&c.state==='running') knock(c.currentTime+Math.max(0,d)); else bookedTimer=setTimeout(verseTick,Math.max(0,d*1000-60)); return; } } }
 audio.addEventListener('seeking',unbook); audio.addEventListener('pause',unbook);
 function setVerseClick(on){ verseClick=!!on; lsSet('vclick',verseClick); $('#clickon').setAttribute('aria-pressed',verseClick); $('#clickoff').setAttribute('aria-pressed',!verseClick); bookedVerse=-1; }
-$('#clickon').onclick=()=>{ setVerseClick(true); acx(); verseTick(); haptic(); }; $('#clickoff').onclick=()=>{ setVerseClick(false); haptic(); }; try{ setVerseClick(verseClick); }catch(e){}
+$('#clickon').onclick=()=>{ setVerseClick(true); if(!IOS) acx(); tickArmed=true; elTick(); haptic(); }; $('#clickoff').onclick=()=>{ setVerseClick(false); haptic(); }; try{ setVerseClick(verseClick); }catch(e){}
 // phones only let sound start from a touch: the first touch anywhere wakes the audio clock up
-['touchend','pointerup','click'].forEach(ev=>addEventListener(ev,()=>{ if(verseClick) acx(); },{passive:true}));
+['touchend','pointerup','click'].forEach(ev=>addEventListener(ev,()=>{ if(verseClick&&!IOS) acx(); },{passive:true}));
 // haptics: Android vibrates; iPhones (17.4+) tick when a native switch flips, so a hidden one is flipped on each tap
 const HAPT=$('#haptsw'), HAPTL=$('#haptlb'); let haptT=0;
 function haptic(kind){ if(!hapticsOn) return; const n=performance.now(); if(n-haptT<45) return; haptT=n;
@@ -1509,7 +1514,7 @@ function sparks(el,n=8,heart=false){ if(!el||reduce) return; const r=el.getBound
   for(let i=0;i<n;i++){ const a=(i/n)*Math.PI*2+Math.random()*.6, d=28+Math.random()*26, g=document.createElement('i'); g.className='jspark'+(heart?' h':''); g.style.cssText=`left:${cx-4}px;top:${cy-4}px;background:${cols[i%cols.length]};--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d}px;animation-delay:${Math.random()*60}ms`; document.body.append(g); g.onanimationend=()=>g.remove(); } }
 function flyTo(from,to,src){ if(reduce||!from||!to) return; const a=from.getBoundingClientRect(), b=to.getBoundingClientRect(); if(!a.width||!b.width) return; const g=document.createElement('img'); g.src=src; g.className='jfly'; const sz=Math.min(44,a.width); g.style.cssText=`width:${sz}px;height:${sz}px;--x0:${a.left+a.width/2-sz/2}px;--y0:${a.top+a.height/2-sz/2}px;--x1:${b.left+b.width/2-sz/2}px;--y1:${b.top+b.height/2-sz/2}px`; document.body.append(g); g.onanimationend=()=>{ g.remove(); juice(to,'j-boing'); }; }
 // play & pause: the button boings and a ring puffs out; the big cover gives a little nod
-['#play','#miniplay'].forEach(id=>$(id).addEventListener('click',()=>{ juice($(id),'j-boing'); ring($(id)); haptic(); },true));
+['#play','#miniplay'].forEach(id=>$(id).addEventListener('click',()=>{ juice($(id),'j-boing'); ring($(id)); haptic(); armTick(); },true));
 audio.addEventListener('play',()=>{ juice($('#vcover'),'j-nod'); juice($('.art'),'j-nod'); });
 // skipping: the arrows zip the way the songs go
 $('#next').addEventListener('click',()=>juice($('#next'),'j-zipr'),true); $('#mininext').addEventListener('click',()=>juice($('#mininext'),'j-zipr'),true); $('#prev').addEventListener('click',()=>juice($('#prev'),'j-zipl'),true);
@@ -1521,7 +1526,8 @@ $('#speed').addEventListener('click',()=>juice($('#speed'),'j-dash'),true); $('#
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-fav],#npfav,[data-act="fav"]'); if(!b) return; const id=b.dataset.fav||(b.id==='npfav'&&song?song.id:null); const was=id!=null?isFav(id):b.textContent.includes('Remove'); if(was) juice(b,'j-sulk'); else { juice(b,'j-heart'); sparks(b,9,true); } },true);
 // the tab bar icons hop as you land on them; the big Play/Shuffle buttons jiggle
 document.querySelectorAll('.tabbar [data-tab]').forEach(b=>b.addEventListener('click',()=>juice(b.querySelector('svg'),'j-hop'),true));
-['#playall','#shuffleall','#chplay','#chshuf','#resumebtn'].forEach(id=>document.addEventListener('click',e=>{ const b=e.target.closest(id); if(b){ juice(b,'j-tilt'); sparks(b,6); } },true));
+['#playall','#shuffleall','#chplay','#chshuf','#resumebtn'].forEach(id=>document.addEventListener('click',e=>{ const b=e.target.closest(id); if(b){ juice(b,'j-tilt'); sparks(b,6); armTick(); } },true));
+document.addEventListener('click',e=>{ if(e.target.closest('.row[data-song],.rc[data-rc]')) armTick(); },true);
 // adding to Up Next: the song's cover flies into the queue button (or the mini player) and it catches it with a bounce
 (function(){ const _pn=playNext, _al=addLast; let lastRow=null; document.addEventListener('pointerdown',e=>{ const r=e.target.closest('.row,.rc,[data-song]'); if(r) lastRow=r; },true);
   const target=()=>np.classList.contains('open')?$('#queue'):$('#minith'), fly=i=>{ const s=SONGS[i]; const from=(lastRow&&lastRow.querySelector('.th img,.cover img,img'))||lastRow; flyTo(from,target(),ART[s.ch]); };
