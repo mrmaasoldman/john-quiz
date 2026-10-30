@@ -205,7 +205,10 @@ html[data-vt="pop"]::view-transition-old(content){animation-name:vtOutRight} htm
 .chhd .chev{width:22px;height:22px;display:grid;place-items:center;color:var(--sub);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
 .chhd .chev svg{width:18px;height:18px;fill:currentColor}
 .chgroup.open .chhd .chev{transform:rotate(180deg)}
-.chbody{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s cubic-bezier(.2,.8,.2,1)}
+.chbody{display:grid;grid-template-rows:0fr}
+/* folders open with transforms only: the list slides out from under its header while everything below it glides down; nothing re-lays-out per frame */
+.chgroup.moving{will-change:transform} .chbody.moving{overflow:hidden} .chin.moving{will-change:transform}
+.chbody.ghost{display:block;height:0;overflow:visible;position:relative} .chbody.ghost>.chin{position:absolute;left:0;right:0;top:0;will-change:transform,clip-path}
 .chgroup.open .chbody{grid-template-rows:1fr}
 .chin{min-height:0;overflow:hidden;padding:0 4px}
 .chgroup.open .chin{padding-top:4px;padding-bottom:6px}
@@ -852,9 +855,7 @@ function renderLibrary(){
   $('#list').innerHTML=CHAPTERS.map(c=>{ const list=SONGS.filter(s=>s.ch===c), tot=list.reduce((a,s)=>a+s.dur,0);
     return `<section class="chgroup ${c===lastCh?'open':''}" data-chg="${c}"><button class="chhd glass" type="button" aria-expanded="${c===lastCh}"><div class="th"><img src="${ART[c]}" alt="" loading="lazy"></div><div class="tt"><b>John ${c}</b><small>${esc(CH[c].name)} · ${list.length} song${list.length>1?'s':''}</small></div><span class="go" data-chlink="${c}">Open ›</span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 15.5 4.5 8l1.4-1.4L12 12.7l6.1-6.1L19.5 8z"/></svg></span></button><div class="chbody"><div class="chin">${list.map((s,k)=>rowHTML(s,{i:k,sub:`${nVerses(s)} verses · ${fmt(s.dur)}`})).join('')}</div></div></section>`; }).join('');
   document.querySelectorAll('[data-chlink]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); showChapter(+b.dataset.chlink); });
-  document.querySelectorAll('.chhd').forEach(h=>h.onclick=()=>{ const g=h.closest('.chgroup'), open=!g.classList.contains('open');
-    document.querySelectorAll('.chgroup.open').forEach(o=>{ if(o!==g){ o.classList.remove('open'); o.querySelector('.chhd').setAttribute('aria-expanded','false'); } });
-    g.classList.toggle('open',open); h.setAttribute('aria-expanded',open); if(open) staggerIn(g); });
+  document.querySelectorAll('.chhd').forEach(h=>h.onclick=()=>toggleGroup(h.closest('.chgroup')));
   wireRows($('#list')); renderRecent(); renderResume(); staggerIn($('#albums'));
 }
 function renderFavs(){ return;
@@ -882,6 +883,25 @@ $('#shuffleall').onclick=()=>{ shuffle=true; $('#shuf').setAttribute('aria-press
 
 /* chapter page */
 function showChapter(ch){ const wasChapter=view==='chapter'; transitionDOM(()=>renderChapter(ch),wasChapter?'fade':'push'); }
+// opening a folder: measure, flip the state, measure again, then play the difference back with transforms (one layout, no per-frame reflow)
+function toggleGroup(g){
+  const open=!g.classList.contains('open'), T={duration:400,easing:'cubic-bezier(.2,.8,.2,1)'}, groups=[...document.querySelectorAll('.chgroup')];
+  const closing=groups.filter(o=>o!==g&&o.classList.contains('open'));
+  const setState=(x,on)=>{ x.classList.toggle('open',on); x.querySelector('.chhd').setAttribute('aria-expanded',on); };
+  if(reduce){ closing.forEach(o=>setState(o,false)); setState(g,open); return; }
+  // what's leaving keeps a ghost of its list so it can slide up under the header instead of vanishing
+  const leaving=open?closing:[...closing,g];
+  const ghosts=leaving.map(o=>{ const body=o.querySelector('.chbody'), chin=body.querySelector('.chin'), h=body.offsetHeight; return {o,body,chin,h}; });
+  const before=new Map(groups.map(x=>[x,x.getBoundingClientRect().top]));
+  leaving.forEach(o=>setState(o,false)); if(open) setState(g,true);
+  ghosts.forEach(({body,chin})=>{ body.classList.add('ghost'); chin.style.paddingTop='4px'; chin.style.paddingBottom='6px'; });
+  const after=new Map(groups.map(x=>[x,x.getBoundingClientRect().top]));
+  groups.forEach(x=>{ const d=after.get(x)-before.get(x); if(Math.abs(d)<.5) return; x.classList.add('moving'); const a=x.animate([{transform:`translateY(${-d}px)`},{transform:'none'}],T); a.onfinish=()=>x.classList.remove('moving'); });
+  if(open){ const body=g.querySelector('.chbody'), chin=body.querySelector('.chin'), H=body.offsetHeight; body.classList.add('moving'); chin.classList.add('moving');
+    const a=chin.animate([{transform:`translateY(${-H}px)`,opacity:.4},{transform:'none',opacity:1}],T); a.onfinish=()=>{ body.classList.remove('moving'); chin.classList.remove('moving'); }; staggerIn(g); }
+  ghosts.forEach(gh=>{ const a=gh.chin.animate([{transform:'none',clipPath:'inset(0px 0px 0px 0px)',opacity:1},{transform:`translateY(${-gh.h}px)`,clipPath:`inset(${gh.h}px 0px 0px 0px)`,opacity:.5}],T);
+    a.onfinish=()=>{ gh.body.classList.remove('ghost'); gh.chin.style.paddingTop=''; gh.chin.style.paddingBottom=''; }; });
+}
 function staggerIn(...els){ els.forEach(el=>{ if(!el) return; el.classList.add('in'); clearTimeout(el._inT); el._inT=setTimeout(()=>el.classList.remove('in'),900); }); }
 function renderChapter(ch){
   view='chapter'; $('#chapter').dataset.ch=ch; const list=SONGS.filter(s=>s.ch===ch); const total=list.reduce((a,s)=>a+s.dur,0);
