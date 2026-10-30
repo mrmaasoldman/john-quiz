@@ -431,6 +431,10 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .speedpop .sl{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:12px;font-weight:700;color:var(--np-sub)}
 .speedpop .sl input{width:100%;accent-color:#fff;height:4px}
 .hapt{position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:.01;z-index:-1}
+/* iPhone haptics: a real (invisible) iOS switch lies over each tappable control; your finger flips it as you tap, and iOS taps back */
+.htap{position:absolute;inset:0;border-radius:inherit;z-index:7;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;margin:0;padding:0}
+.htap>input{position:absolute;left:0;top:0;width:1px;height:1px;margin:0;visibility:hidden}
+body.nohapt .htap{display:none}
 .speedpop .rl{font-size:12px;font-weight:600;color:var(--np-sub);margin:2px 0 8px}
 .speedpop .vchips{flex-wrap:wrap;margin-bottom:4px;max-height:132px;overflow-y:auto}
 .speedpop .vchips button{flex:0 0 auto;min-width:40px;padding:0 10px}
@@ -856,7 +860,7 @@ function swipeable(el,o){ let sx=0,sy=0,d=0,mode=null,id=null,will=false;
   el.addEventListener('pointerup',end); el.addEventListener('pointercancel',end);
 }
 document.addEventListener('click',e=>{ if(performance.now()<suppressClickUntil){ e.stopPropagation(); e.preventDefault(); } },true);
-function wireRows(root){ const ctx=root.id==='favlist'?'favs':'chapter';
+function wireRows(root){ const ctx=root.id==='favlist'?'favs':'chapter'; try{ hapticOverlays(root); }catch(e){}
   root.querySelectorAll('[data-song]').forEach(b=>{ let timer=null, fired=false, px=0, py=0;
     b.addEventListener('pointerdown',e=>{ fired=false; px=e.clientX; py=e.clientY; clearTimeout(timer); timer=setTimeout(()=>{ fired=true; suppressClickUntil=performance.now()+900; openSheet(SONGS[+b.dataset.song]); try{ haptic() }catch(x){} },480); });
     const cancel=()=>clearTimeout(timer);
@@ -878,7 +882,7 @@ function renderLibrary(){
   $('#list').innerHTML=CHAPTERS.map(c=>{ const list=SONGS.filter(s=>s.ch===c), tot=list.reduce((a,s)=>a+s.dur,0);
     return `<section class="chgroup ${c===lastCh?'open':''}" data-chg="${c}"><button class="chhd glass" type="button" aria-expanded="${c===lastCh}"><div class="th"><img src="${ART[c]}" alt="" loading="lazy"></div><div class="tt"><b>John ${c}</b><small>${esc(CH[c].name)} · ${list.length} song${list.length>1?'s':''}</small></div><span class="go" data-chlink="${c}">Open ›</span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 15.5 4.5 8l1.4-1.4L12 12.7l6.1-6.1L19.5 8z"/></svg></span></button><div class="chbody"><div class="chin">${list.map((s,k)=>rowHTML(s,{i:k,sub:`${nVerses(s)} verses · ${fmt(s.dur)}`})).join('')}</div></div></section>`; }).join('');
   document.querySelectorAll('[data-chlink]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const g=b.closest('.chgroup'); showChapter(+b.dataset.chlink,g&&g.querySelector('.chhd .th img')); });
-  document.querySelectorAll('.chhd').forEach(h=>h.onclick=()=>toggleGroup(h.closest('.chgroup')));
+  document.querySelectorAll('.chhd').forEach(h=>h.onclick=()=>toggleGroup(h.closest('.chgroup'))); try{ hapticOverlays($('#list')); }catch(e){}
   wireRows($('#list')); renderRecent(); renderResume(); staggerIn($('#albums'));
 }
 function renderFavs(){ return;
@@ -963,7 +967,7 @@ function renderChapter(ch){
       <div class="bigbtns"><button type="button" id="chplay"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Play</button><button type="button" class="ghost" id="chshuf"><svg viewBox="0 0 24 24"><path d="M17 4h4v4l-1.5-1.5L16 10l-1.4-1.4 3.5-3.5zM3 6h4l9.6 11H21l-1.5 1.5L21 20h-4v-4l1.5 1.5L17 16H6L3 6zm0 12 4.6-5.3 1.3 1.6L5 18z"/></svg>Shuffle</button></div></div>
     ${list.map((s,k)=>rowHTML(s,{n:k+1,i:k})).join('')}
     <p class="note">Verses ${list[0].a}–${list[list.length-1].b} of John ${ch}, in order.</p></div>`;
-  $('#back').onclick=()=>{ showHome(); if(history.state&&history.state.ch) try{ history.back(); }catch(e){} }; wireRows($('#chapter')); staggerIn($('#chapter'));
+  $('#back').onclick=()=>{ showHome(); if(history.state&&history.state.ch) try{ history.back(); }catch(e){} }; wireRows($('#chapter')); try{ hapticOverlays($('#chapter')); }catch(e){} staggerIn($('#chapter'));
   $('#chplay').onclick=()=>{ shuffle=false; $('#shuf').setAttribute('aria-pressed','false'); setSource('chapter',ch,list[0].i); load(list[0].i,true); openNP(); };
   $('#chshuf').onclick=()=>{ shuffle=true; $('#shuf').setAttribute('aria-pressed','true'); setSource('chapter',ch,null); load(src.order[0],true); openNP(); };
   if(song) document.querySelectorAll('[data-song]').forEach(b=>b.setAttribute('aria-current',+b.dataset.song===song.i));
@@ -1114,8 +1118,16 @@ function haptic(kind){ if(!hapticsOn) return; const n=performance.now(); if(n-ha
 if(HAPT){ HAPT.addEventListener('focus',()=>{ try{ HAPT.blur(); }catch(e){} if(window.scrollY||window.scrollX) window.scrollTo(0,0); }); }
 addEventListener('scroll',()=>{ if(window.scrollY||window.scrollX) window.scrollTo(0,0); },{passive:true});
 addEventListener('focusin',e=>{ if(e.target&&e.target.id==='haptsw'){ e.target.blur(); } });
-function setHaptics(on){ hapticsOn=!!on; lsSet('haptics',hapticsOn); $('#hapton').setAttribute('aria-pressed',hapticsOn); $('#haptoff').setAttribute('aria-pressed',!hapticsOn); }
-$('#hapton').onclick=()=>{ setHaptics(true); haptic(); }; $('#haptoff').onclick=()=>{ setHaptics(false); }; try{ setHaptics(hapticsOn); }catch(e){}
+function setHaptics(on){ hapticsOn=!!on; lsSet('haptics',hapticsOn); $('#hapton').setAttribute('aria-pressed',hapticsOn); $('#haptoff').setAttribute('aria-pressed',!hapticsOn); document.body.classList.toggle('nohapt',!hapticsOn); }
+// iOS only taps back for a real finger on a real switch, so every main control gets an invisible one laid over it
+const HAPT_IOS=(/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))&&!navigator.vibrate;
+function hapticOverlay(el){ if(!HAPT_IOS||!el||el.querySelector(':scope>.htap')) return; const lb=document.createElement('label'); lb.className='htap'; lb.setAttribute('aria-hidden','true');
+  const sw=document.createElement('input'); sw.type='checkbox'; sw.setAttribute('switch',''); sw.tabIndex=-1; lb.append(sw);
+  sw.addEventListener('click',e=>e.stopPropagation()); // the label re-sends the tap to its switch; the control must not hear it twice
+  sw.addEventListener('focus',()=>{ try{ sw.blur(); }catch(e){} });
+  if(getComputedStyle(el).position==='static') el.style.position='relative'; el.append(lb); }
+function hapticOverlays(root){ if(!HAPT_IOS) return; (root||document).querySelectorAll('.tabbar>button,#play,#miniplay,#next,#prev,#mininext,#npfav,.chhd,.bigbtns button,.br button,[data-fav],#back,#uclose,#queue,.uctl button,.chips button,#npclose,#lyup').forEach(hapticOverlay); }
+$('#hapton').onclick=()=>{ setHaptics(true); haptic(); }; $('#haptoff').onclick=()=>{ setHaptics(false); }; try{ setHaptics(hapticsOn); hapticOverlays(); }catch(e){}
 function updateVerse(force){
   if(!song) return; const t=audio.currentTime; const idx=verseAt(t);
   if(idx!==curVerse||force){ const prev=curVerse; curVerse=idx; renderVerse(idx); if(!force&&idx>=0&&prev!==idx&&!audio.paused&&!seeking){ haptic('soft'); } }
@@ -1252,7 +1264,8 @@ $('#shuf').onclick=()=>{ shuffle=!shuffle; $('#shuf').setAttribute('aria-pressed
 $('#volr').oninput=e=>audio.volume=+e.target.value;
 function rangeTimes(){ if(!loopRange||!verses.length) return null; const a=verses.find(v=>v.v===loopRange.a&&!v.rep)||verses.find(v=>v.v===loopRange.a), b=verses.find(v=>v.v===loopRange.b&&!v.rep)||verses.find(v=>v.v===loopRange.b); if(!a||!b) return null; return {start:Math.max(0,a.start-0.3),end:b.end}; }
 function setRange(a,b){ loopRange=a==null?null:{a:Math.min(a,b),b:Math.max(a,b)}; if(loopRange){ repeat='off'; lsSet('repeat',repeat); const r=rangeTimes(); if(r&&(audio.currentTime<r.start||audio.currentTime>r.end)) audio.currentTime=r.start; audio.play().catch(()=>{}); } setRepeatUI(); renderRepPop(); }
-function renderRepPop(){ if(!song) return; const vs=[...new Set(verses.filter(v=>!v.rep).map(v=>v.v))]; let first=$('#vchips').dataset.first; first=first===''||first==null?null:+first;
+function renderRepPop(){ renderRepPop0(); try{ hapticOverlays($('#reppop')); }catch(e){} }
+function renderRepPop0(){ if(!song) return; const vs=[...new Set(verses.filter(v=>!v.rep).map(v=>v.v))]; let first=$('#vchips').dataset.first; first=first===''||first==null?null:+first;
   $('#vchips').innerHTML=vs.map(v=>{ const inR=loopRange&&v>=loopRange.a&&v<=loopRange.b, edge=loopRange&&(v===loopRange.a||v===loopRange.b); return `<button type="button" data-v="${v}" class="${inR?'in':''}" aria-pressed="${edge||first===v}">${v}</button>`; }).join('');
   $('#repsong').setAttribute('aria-pressed',repeat==='one'); $('#repval').textContent=loopRange?`John ${song.ch}:${loopRange.a}${loopRange.b!==loopRange.a?'–'+loopRange.b:''}`:repeat==='one'?'This song':'Off';
   $('#vchips').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const v=+b.dataset.v; const f=$('#vchips').dataset.first; if(f===''||f==null){ $('#vchips').dataset.first=v; setRange(v,v); } else { $('#vchips').dataset.first=''; setRange(+f,v); } }); }
