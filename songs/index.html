@@ -536,8 +536,11 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .sheet .box button.it{height:48px;border-radius:14px;display:flex;align-items:center;gap:12px;padding:0 14px;font-weight:600;font-size:15px;color:var(--fg);text-align:left}
 .sheet .box button.it:active{background:var(--btn)}
 .sheet .box button.it svg{width:20px;height:20px;fill:currentColor;color:var(--accent)}
-.intro{align-items:center;background:rgba(0,0,0,.5)} .intro .box.glass{padding:14px 12px 10px;background:rgba(24,22,36,.94)!important;backdrop-filter:blur(18px) saturate(1.6)!important;-webkit-backdrop-filter:blur(18px) saturate(1.6)!important;color:#f6f3fb;box-shadow:0 24px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.3)} .intro .ihd small,.intro .ihow{color:rgba(246,243,251,.82)} .intro .it{color:#fff!important} .intro #introok{color:rgba(246,243,251,.6)!important}
-.intro .ihd{display:flex;gap:12px;align-items:flex-start;padding:4px 6px 8px} .intro .ihd b{display:block;font-family:var(--serif);font-size:19px;margin-bottom:3px} .intro .ihd small{display:block;color:var(--sub);font-size:13.5px;line-height:1.4}
+.intro{align-items:center;background:rgba(0,0,0,.5)} .intro .box.glass{padding:14px 12px 10px;background:rgba(24,22,36,.94)!important;backdrop-filter:blur(18px) saturate(1.6)!important;-webkit-backdrop-filter:blur(18px) saturate(1.6)!important;color:#f6f3fb;box-shadow:0 24px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.3)} .intro .ihow{color:rgba(246,243,251,.82)} .intro .it{color:#fff!important} .intro #introok{color:rgba(246,243,251,.6)!important}
+.intro .ihd{display:flex;gap:14px;align-items:center;padding:4px 6px 10px} .intro .ihd b{display:block;font-family:var(--serif);font-size:26px;letter-spacing:-.01em}
+.intro .ip{margin:0;padding:4px 8px 10px;font-size:18px;line-height:1.45;color:#f6f3fb} .intro .ip b{color:#fff;font-weight:800}
+.intro .it{height:54px!important;font-size:17px!important;border-radius:16px!important;background:rgba(255,255,255,.1)}
+.intro #introon{background:var(--sig)!important;justify-content:center;box-shadow:0 8px 20px rgba(255,92,138,.35)} .intro #introon svg{color:#fff!important}
 .intro .iknock{flex:none;width:44px;height:44px;border-radius:14px;background:var(--sig);color:#fff;display:grid;place-items:center;font-size:22px;box-shadow:0 6px 16px rgba(255,92,138,.35)}
 .intro .ihow{margin:2px 0 8px;padding:0 6px 0 24px;color:var(--fg);font-size:14px;line-height:1.45;display:grid;gap:6px} .intro .ihow b{font-weight:700}
 .toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);z-index:50;padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;color:var(--fg);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
@@ -711,7 +714,12 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
 
 <div class="sheet" id="sheet"><div class="box glass" id="sheetbox"></div></div>
 <div class="sheet intro" id="intro" aria-label="Verse click" hidden><div class="box glass">
-  <div class="ihd"><span class="iknock" aria-hidden="true">♩</span><div><b>New: the verse click</b><small>A little knock between verses, to help you hear where one ends and the next begins.</small></div></div>
+  <div class="ihd"><span class="iknock" aria-hidden="true">♩</span><b>Verse click</b></div>
+  <p class="ip">Hear a <b>knock</b> right before each verse starts, so you can tell the verses apart.</p>
+  <p class="ip">In the player, tap the <b>♩</b> key next to the play buttons to turn it on or off.</p>
+  <button class="it" type="button" id="introon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Turn it on</button>
+  <button class="it" type="button" id="introok" style="justify-content:center;color:var(--sub)">Not now</button>
+</div></div>
   <ol class="ihow"><li>Open the player (tap the song bar or a song's picture).</li><li>Tap the small <b>♩</b> key to the right of the play buttons — it lights up and you'll hear one knock.</li><li>Tap it again to turn it off.</li></ol>
   <button class="it" type="button" id="introon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Turn it on now</button>
   <button class="it" type="button" id="introok" style="justify-content:center;color:var(--sub)">Maybe later</button>
@@ -1114,7 +1122,7 @@ let tickArmed=false;
 function armTick(){ if(tickArmed||!tickEl||!verseClick) return; tickArmed=true; try{ tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickArmed=false; }); }catch(e){ tickArmed=false; } }
 // how long this phone takes between asking for the knock and it coming out (measured each time, averaged), so the next one is asked for that much sooner
 let tickLat=IOS?.16:.04, tickAsk=0; if(tickEl){ tickEl.addEventListener('playing',()=>{ if(tickAsk){ const l=(performance.now()-tickAsk)/1000; if(l>0&&l<.6) tickLat=tickLat*.6+l*.4; tickAsk=0; } }); tickEl.addEventListener('ended',()=>{ try{ tickEl.currentTime=0; }catch(e){} }); }
-const tickNudge=IOS?-.06:0; // a hair ahead of the word on phones, where the song's clock reads slightly behind
+const tickNudge=IOS?-.51:-.45; // the knock sits just under half a second ahead of the sung word (that's where it feels right); phones a hair more, their song clock reads behind
 function elTick(){ try{ if(!tickEl) return; tickAsk=performance.now(); tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickAsk=0; }); }catch(e){} }
 function verseTick(){ if(IOS||!(window.AudioContext||window.webkitAudioContext)){ elTick(); return; } if(ACX&&ACX.state==='running') knock(); else elTick(); }
 // look a little ahead of the song and book each verse start, so the knock lands on the beat rather than a quarter-second late
