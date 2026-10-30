@@ -65,7 +65,6 @@ html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) sa
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--g-flat:rgba(44,40,64,.42)}} :root[data-theme="dark"]{--g-flat:rgba(44,40,64,.42)}
 /* everything that moves is promoted ahead of time so the first frame doesn't stall on a layer being built */
 .mini .card,.tabbar,#libdim,.upnext,.toast,.speedpop,.reppop,.sheet .box,.tabbar>.blob{will-change:transform,opacity}
-.hero.paging,#home.paging{will-change:transform,opacity}
 .lib{backface-visibility:hidden}
 /* the reflection: a mirrored, softened picture of the current cover (what the room is lit by) slides across the glass as you tilt or scroll, plus a hard glint that moves with it */
 .glass>.refl{position:absolute;inset:0;border-radius:inherit;pointer-events:none;overflow:hidden}
@@ -147,7 +146,10 @@ html[data-vt="pop"]::view-transition-old(content){animation-name:vtOutRight} htm
 #chapter[hidden]{display:none}
 #chapter>.chwrap{max-width:900px;margin:0 auto}
 #chapter.sliding{transition:none}
-body.inchapter .hero,body.inchapter #home{transform:translateX(-24%);opacity:.55;pointer-events:none}
+body.inchapter .lib{transform:scale(.955) translateY(-6px)} body.inchapter #libdim{opacity:.3} body.inchapter:not(.npopen) #libdim{z-index:3}
+body.inchapter.npopen .lib{transform:scale(.955) translateY(-6px) scale(.94) translateY(-10px)}
+body.paging .lib,body.paging #libdim,body.paging .mini .card,body.paging .tabbar{transition:none!important}
+#chapter{transform-origin:50% 50%}
 body.npopen #chapter{transform:scale(.94) translateY(-10px)} body.morphing #chapter{transition:none!important}
 .mirlib .view[data-ch]{position:static!important;height:auto!important;overflow:visible!important;box-shadow:none!important;background:none!important;transform:none!important;padding:0!important}
 @keyframes viewIn{from{opacity:0;transform:translateY(5px)}}
@@ -892,22 +894,27 @@ $('#shuffleall').onclick=()=>{ shuffle=true; $('#shuf').setAttribute('aria-press
 })();
 
 /* chapter page */
-const PAGE_T={duration:460,easing:'cubic-bezier(.32,.72,0,1)'};
-function homeParts(){ return [$('#hero'),$('#home')]; }
-let chapPop=null;
+const PAGE_T={duration:480,easing:'cubic-bezier(.32,.72,0,1)'};
+let chapPop=null, chapFromEl=null;
+const libBase=()=>view==='chapter'?'scale(.955) translateY(-6px)':'none', dimBase=()=>view==='chapter'?.3:0;
+// where a chapter's page comes from / goes back to: the album tile or folder header for that chapter, if one is on screen
+function chapterAnchor(ch){ const cands=[`#albums [data-ch="${ch}"] .cover`,`#lib .chgroup[data-chg="${ch}"] .chhd .th`,`#favlist .row[data-song] .th`]; for(const q of cands.slice(0,2)){ const el=document.querySelector(q); if(!el) continue; const r=el.getBoundingClientRect(); if(r.width&&r.bottom>60&&r.top<innerHeight-120&&r.right>0&&r.left<innerWidth) return {el,r}; } return null; }
+const pageAt=r=>`translate(${r.left+r.width/2-innerWidth/2}px,${r.top+r.height/2-innerHeight/2}px) scale(${Math.max(.08,r.width/innerWidth)},${Math.max(.05,r.height/innerHeight)})`;
+function pagingOn(){ document.body.classList.add('paging'); clearTimeout(pagingOn.t); pagingOn.t=setTimeout(()=>document.body.classList.remove('paging'),PAGE_T.duration+80); }
 function showChapter(ch,fromEl){
   const chap=$('#chapter'), wasChapter=view==='chapter';
   if(chapPop){ chapPop.onfinish=null; chapPop.cancel(); chapPop=null; }
   if(wasChapter){ renderChapter(ch); chap.scrollTop=0; staggerIn(chap); return; }
   renderChapter(ch); view='chapter'; chap.hidden=false; chap.scrollTop=0; chap.classList.remove('sliding'); chap.style.transform='';
-  document.body.classList.add('inchapter'); mirrorSync();
+  pagingOn(); document.body.classList.add('inchapter'); mirrorSync();
   if(reduce) return;
-  // the page slides in from the right; the library eases back and dims; the cover you tapped flies into place
-  homeParts().forEach(h=>h.classList.add('paging')); document.body.classList.add('paging'); setTimeout(()=>{ homeParts().forEach(h=>h.classList.remove('paging')); document.body.classList.remove('paging'); },PAGE_T.duration+60);
+  // the page grows out of the tile you tapped (fading in as it grows), the cover flies up into its place, and the library settles back behind it
+  const anchor=fromEl?{el:fromEl,r:fromEl.getBoundingClientRect()}:chapterAnchor(ch); chapFromEl=anchor&&anchor.el;
   const to=chap.querySelector('.chhead .cover'), r=to&&to.getBoundingClientRect(); // measured before the page starts moving
-  chap.animate([{transform:'translateX(100%)'},{transform:'none'}],PAGE_T);
-  homeParts().forEach(h=>h.animate([{transform:'none',opacity:1},{transform:'translateX(-24%)',opacity:.55}],PAGE_T));
-  if(fromEl&&to&&r.width) morph(fromEl,to,{left:r.left,top:r.top,width:r.width,height:r.height},null,ART[ch]);
+  const start=anchor&&anchor.r.width?pageAt(anchor.r):`translate(0px,${innerHeight*.12}px) scale(.92,.92)`;
+  chap.animate([{transform:start,opacity:0},{opacity:1,offset:.5},{transform:'none',opacity:1}],PAGE_T);
+  $('#lib').animate([{transform:'none'},{transform:'scale(.955) translateY(-6px)'}],PAGE_T); $('#libdim').animate([{opacity:0},{opacity:.3}],PAGE_T);
+  if(anchor&&to&&r&&r.width) morph(anchor.el,to,{left:r.left,top:r.top,width:r.width,height:r.height},null,ART[ch]);
 }
 // folders: one layout, then transforms. Opening: the list slides out from under its header while everything below glides down.
 // Tapping it shut: the list rolls back up under the header. Opening another: the old list just fades where it is.
@@ -954,28 +961,30 @@ function renderChapter(ch){
 }
 function showHome(){
   const chap=$('#chapter'); if(view!=='chapter') return; view='home';
-  const finish=()=>{ chap.hidden=true; chap.classList.remove('sliding'); chap.style.transform=''; homeParts().forEach(h=>{ h.style.transform=''; h.style.opacity=''; }); document.body.classList.remove('inchapter'); if(tab!=='home') applyTab('home'); mirrorSync(); };
+  const finish=()=>{ chap.hidden=true; chap.classList.remove('sliding'); chap.style.transform=''; chap.style.opacity=''; document.body.classList.remove('inchapter'); if(tab!=='home') applyTab('home'); mirrorSync(); };
   if(reduce||chap.hidden){ finish(); return; }
-  // from wherever the page is (a finger may have pulled it part way) out to the right
-  const cs=getComputedStyle(chap), from=cs.transform==='none'?'translateX(0px)':cs.transform;
-  homeParts().forEach(h=>h.classList.add('paging')); document.body.classList.add('paging'); setTimeout(()=>{ homeParts().forEach(h=>h.classList.remove('paging')); document.body.classList.remove('paging'); },PAGE_T.duration+60);
-  chap.classList.add('sliding'); const a=chap.animate([{transform:from},{transform:'translateX(100%)'}],PAGE_T); chapPop=a;
-  homeParts().forEach(h=>{ const c=getComputedStyle(h); h.animate([{transform:c.transform==='none'?'translateX(0px)':c.transform,opacity:c.opacity},{transform:'none',opacity:1}],PAGE_T); });
-  const ch=+chap.dataset.ch, tile=document.querySelector(`#albums [data-ch="${ch}"] .cover`), from2=chap.querySelector('.chhead .cover');
-  if(tile&&from2){ const r=tile.getBoundingClientRect(); if(r.width&&r.right>0&&r.left<innerWidth&&r.bottom>0&&r.top<innerHeight){ const b=from2.getBoundingClientRect(); if(b.width) morph(from2,tile,{left:r.left,top:r.top,width:r.width,height:r.height},null,ART[ch]); } }
+  pagingOn();
+  // back into the tile it came from (or the chapter's folder header) if that's on screen; otherwise it just recedes and fades
+  const ch=+chap.dataset.ch, anchor=chapterAnchor(ch);
+  const cs=getComputedStyle(chap), from={transform:cs.transform==='none'?'translate(0px,0px)':cs.transform,opacity:cs.opacity};
+  const end=anchor?pageAt(anchor.r):`translate(0px,${innerHeight*.1}px) scale(.9,.9)`;
+  chap.classList.add('sliding'); const a=chap.animate([from,{opacity:from.opacity,offset:.1},{transform:end,opacity:0}],PAGE_T); chapPop=a;
+  const lc=getComputedStyle($('#lib')), dc=getComputedStyle($('#libdim'));
+  $('#lib').animate([{transform:lc.transform==='none'?'scale(1)':lc.transform},{transform:'none'}],PAGE_T); $('#libdim').animate([{opacity:dc.opacity},{opacity:0}],PAGE_T);
+  const from2=chap.querySelector('.chhead .cover');
+  if(anchor&&from2){ const b=from2.getBoundingClientRect(); if(b.width&&b.bottom>0&&b.top<innerHeight) morph(from2,anchor.el,{left:anchor.r.left,top:anchor.r.top,width:anchor.r.width,height:anchor.r.height},null,ART[ch]); }
   a.onfinish=()=>{ chapPop=null; finish(); };
 }
-// swipe the chapter page to the right to leave it (follows the finger; lets go into the same slide)
+// swipe the chapter page to the right to leave it: it follows the finger and lets go into the same zoom-back
 (function(){ const chap=$('#chapter'); let x0=0,y0=0,t0=0,dx=0,mode=null;
   // songs rows swipe right on their own (to queue), so over a row only the left edge peels the page; anywhere else, any rightward drag does
   chap.addEventListener('touchstart',e=>{ if(e.touches.length!==1){ mode=null; return; } x0=e.touches[0].clientX; y0=e.touches[0].clientY; t0=performance.now(); dx=0; mode=(e.target.closest('.row,.bigbtns,.scrub,input')&&x0>=28)?null:'maybe'; },{passive:true});
   chap.addEventListener('touchmove',e=>{ if(!mode) return; const t=e.touches[0]; dx=t.clientX-x0; const dy=t.clientY-y0;
     if(mode==='maybe'){ if(Math.abs(dy)>Math.abs(dx)||dx<8){ if(Math.abs(dy)>8) mode=null; return; } mode='pop'; chap.classList.add('sliding'); }
-    if(e.cancelable) e.preventDefault(); const p=Math.max(0,Math.min(1,dx/innerWidth)); chap.style.transform=`translateX(${Math.max(0,dx)}px)`;
-    homeParts().forEach(h=>{ h.style.transform=`translateX(${-24*(1-p)}%)`; h.style.opacity=(.55+.45*p).toFixed(3); }); },{passive:false});
+    if(e.cancelable) e.preventDefault(); const p=Math.max(0,Math.min(1,dx/innerWidth)); chap.style.transform=`translateX(${Math.max(0,dx)}px) scale(${1-.08*p})`; chap.style.opacity=(1-.25*p).toFixed(3); },{passive:false});
   const end=()=>{ if(mode!=='pop'){ mode=null; return; } mode=null; const v=dx/Math.max(1,performance.now()-t0);
     if(dx>innerWidth*.3||(dx>40&&v>.5)){ showHome(); if(history.state&&history.state.ch) try{ history.back(); }catch(e){} }
-    else { const a=chap.animate([{transform:chap.style.transform},{transform:'translateX(0px)'}],{duration:300,easing:'cubic-bezier(.2,.8,.2,1)'}); homeParts().forEach(h=>{ h.animate([{transform:h.style.transform,opacity:h.style.opacity},{transform:'translateX(-24%)',opacity:.55}],{duration:300,easing:'cubic-bezier(.2,.8,.2,1)'}); h.style.transform=''; h.style.opacity=''; }); chap.style.transform=''; a.onfinish=()=>chap.classList.remove('sliding'); } };
+    else { const a=chap.animate([{transform:chap.style.transform,opacity:chap.style.opacity},{transform:'none',opacity:1}],{duration:320,easing:'cubic-bezier(.2,.8,.2,1)'}); chap.style.transform=''; chap.style.opacity=''; a.onfinish=()=>chap.classList.remove('sliding'); } };
   chap.addEventListener('touchend',end); chap.addEventListener('touchcancel',end);
 })();
 addEventListener('popstate',e=>{ const st=e.state; if(st&&st.ch&&CH[st.ch]){ if(view!=='chapter'||+$('#chapter').dataset.ch!==st.ch) showChapter(st.ch); } else if(view==='chapter') showHome(); });
@@ -1319,7 +1328,7 @@ function glassMorph(opening,done,scrub){
   const ga=g.animate(opening?[pill,sheet]:[sheet,pill],{duration:D,easing:E,fill:'forwards'});
   const gO=g.animate(opening?[{opacity:1},{opacity:1,offset:.4},{opacity:0,offset:.9},{opacity:0}]:[{opacity:0},{opacity:0,offset:.1},{opacity:1,offset:.6},{opacity:1}],{duration:D,easing:'linear',fill:'forwards'});
   // the library, its dim, the mini bar and the tab bar move on the very same clock, so the background never jumps ahead of the glass
-  const BG=[[$('#lib'),{transform:'none'},{transform:'scale(.94) translateY(-10px)'}],[$('#libdim'),{opacity:0},{opacity:.4}],[$('#minicard'),{transform:'translateY(0) scale(1)',opacity:1},{transform:'translateY(24px) scale(.92)',opacity:0}],[$('#tabbar'),{transform:'translateX(-50%) translateY(0)',opacity:1},{transform:'translateX(-50%) translateY(40px)',opacity:0}]].concat(view==='chapter'?[[$('#chapter'),{transform:'none'},{transform:'scale(.94) translateY(-10px)'}]]:[]);
+  const lb0=libBase(), lb=lb0==='none'?'':lb0+' ', db=dimBase(); const BG=[[$('#lib'),{transform:lb0},{transform:lb+'scale(.94) translateY(-10px)'}],[$('#libdim'),{opacity:db},{opacity:.4}],[$('#minicard'),{transform:'translateY(0) scale(1)',opacity:1},{transform:'translateY(24px) scale(.92)',opacity:0}],[$('#tabbar'),{transform:'translateX(-50%) translateY(0)',opacity:1},{transform:'translateX(-50%) translateY(40px)',opacity:0}]].concat(view==='chapter'?[[$('#chapter'),{transform:'none'},{transform:'scale(.94) translateY(-10px)'}]]:[]);
   document.body.classList.add('morphing');
   const bgA=BG.map(([el,a,b])=>el.animate(opening?[a,b]:[b,a],{duration:D,easing:E,fill:'forwards'}));
   const all=[npA,npO,ga,gO,...bgA], clean=()=>{ g.remove(); npA.cancel(); npO.cancel(); }, settle=()=>{ bgA.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); };
