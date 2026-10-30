@@ -672,6 +672,8 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
     <div class="chips vchips" id="vchips"></div>
     <div class="rl" style="margin-top:12px">Verse click — a little tick where each verse starts</div>
     <div class="chips rowchips"><button type="button" id="clickon" aria-pressed="false">On</button><button type="button" id="clickoff" aria-pressed="true">Off</button></div>
+    <div class="rl" style="margin-top:12px">Haptics — a little buzz on taps (tap On to feel it)</div>
+    <div class="chips rowchips"><button type="button" id="hapton" aria-pressed="true">On</button><button type="button" id="haptoff" aria-pressed="false">Off</button></div>
   </div>
   <label class="hapt" id="haptlb" aria-hidden="true"><input type="checkbox" switch id="haptsw" tabindex="-1"></label>
   <div class="speedpop glass" id="speedpop" hidden>
@@ -825,7 +827,7 @@ function next(){ if(!song) return;
   if(src){ if(src.order.length<2&&!(src.order.length===1&&src.order[0]!==song.i)) refill(); const n=src.order.length; if(!n){ audio.pause(); audio.currentTime=0; return; } src.pos=(src.pos+1)%n; fromManual=false; load(src.order[src.pos],true); return; }
   audio.pause(); audio.currentTime=0; }
 function prev(){ if(!song) return; if(audio.currentTime>3||!src||fromManual||src.order.length<2){ audio.currentTime=0; return; } const n=src.order.length; src.pos=(src.pos-1+n)%n; load(src.order[src.pos],true); }
-function toggle(){ if(verseClick) tickUnlock(); if(!song){ playIdx(0); return; } audio.paused?audio.play().catch(()=>{}):audio.pause(); }
+function toggle(){ if(verseClick) acx(); if(!song){ playIdx(0); return; } audio.paused?audio.play().catch(()=>{}):audio.pause(); }
 
 /* ---------- favorites & resume ---------- */
 const isFav=id=>favs.includes(id);
@@ -1074,28 +1076,39 @@ function fitVerse(){ // give the verse box an explicit pixel height (iOS can't b
   txt.style.setProperty('--vfs',best+'px'); }
 const vscale=1;
 /* ---------- verse click & haptics ---------- */
-// the click is a tiny WAV played through a real <audio> element (not Web Audio), so it comes out even with the ring/silent switch on silent, like the songs do
-let verseClick=lsGet('vclick',false);
+let verseClick=lsGet('vclick',false), hapticsOn=lsGet('haptics',true);
+// Web Audio, told to behave like music playback so the ring/silent switch doesn't mute it; ticks are scheduled on the audio clock right at each verse start
+let ACX=null; try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
+function acx(){ try{ if(!ACX) ACX=new (window.AudioContext||window.webkitAudioContext)(); if(ACX.state!=='running'){ const p=ACX.resume(); if(p&&p.catch) p.catch(()=>{}); } }catch(e){} return ACX; }
+function knock(at){ const c=acx(); if(!c) return; const t=Math.max(c.currentTime,at||c.currentTime), g=c.createGain(); // a woodblock: a 1 kHz knock with a bright edge, fast decay
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.9,t+.003); g.gain.exponentialRampToValueAtTime(.0001,t+.11); g.connect(c.destination);
+  [[1000,1,.11],[2400,.4,.05]].forEach(([f,v,d])=>{ const o=c.createOscillator(), og=c.createGain(); o.type='sine'; o.frequency.setValueAtTime(f,t); o.frequency.exponentialRampToValueAtTime(f*.7,t+d); og.gain.value=v; o.connect(og); og.connect(g); o.start(t); o.stop(t+d+.02); KNOCKS.push(o); }); if(KNOCKS.length>8) KNOCKS.splice(0,KNOCKS.length-8); }
+const KNOCKS=[]; function unbook(){ bookedVerse=-1; clearTimeout(bookedTimer); if(ACX) KNOCKS.splice(0).forEach(o=>{ try{ o.stop(ACX.currentTime); }catch(e){} }); }
+// fallback for anything without Web Audio: a tiny WAV through a real <audio> element
 function wavURL(samples,rate){ const n=samples.length, b=new ArrayBuffer(44+n*2), v=new DataView(b); const W=(o,str)=>{ for(let k=0;k<str.length;k++) v.setUint8(o+k,str.charCodeAt(k)); };
   W(0,'RIFF'); v.setUint32(4,36+n*2,true); W(8,'WAVE'); W(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); W(36,'data'); v.setUint32(40,n*2,true);
   for(let k=0;k<n;k++){ const x=Math.max(-1,Math.min(1,samples[k])); v.setInt16(44+k*2,x<0?x*32768:x*32767,true); } return URL.createObjectURL(new Blob([b],{type:'audio/wav'})); }
-const TICK=(()=>{ try{ const rate=22050, n=Math.round(rate*.14), out=new Float32Array(n); // a woodblock: a 1 kHz knock with a bright 2.4 kHz edge, fast decay
-  for(let k=0;k<n;k++){ const t=k/rate, env=Math.exp(-t*38), e2=Math.exp(-t*90); out[k]=.85*env*Math.sin(2*Math.PI*1000*t)+.35*e2*Math.sin(2*Math.PI*2400*t)+.12*e2*(Math.random()*2-1); }
-  return wavURL(out,rate); }catch(e){ return ''; } })();
-let SILENT=''; try{ SILENT=wavURL(new Float32Array(400),8000); }catch(e){}
-let tickEl=null; try{ tickEl=new Audio(SILENT); tickEl.preload='auto'; }catch(e){} let tickReady=false;
-function tickUnlock(){ if(tickReady||!tickEl||!TICK) return; tickReady=true; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{ tickReady=false; }); tickEl.addEventListener('ended',()=>{ tickEl.src=TICK; },{once:true}); setTimeout(()=>{ if(tickEl.src!==TICK) tickEl.src=TICK; },400); }
-function tick(){ if(!tickEl||!TICK) return; if(!tickReady){ tickUnlock(); return; } try{ if(tickEl.src!==TICK) tickEl.src=TICK; tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
-function setVerseClick(on){ verseClick=!!on; lsSet('vclick',verseClick); $('#clickon').setAttribute('aria-pressed',verseClick); $('#clickoff').setAttribute('aria-pressed',!verseClick); if(verseClick&&tickEl&&TICK){ tickReady=true; tickEl.src=TICK; tick(); } }
-$('#clickon').onclick=()=>{ setVerseClick(true); haptic(); }; $('#clickoff').onclick=()=>{ setVerseClick(false); haptic(); }; try{ setVerseClick(verseClick); }catch(e){}
-// the first tap on anything unlocks the click player (phones only let a sound start from a tap)
-addEventListener('pointerup',()=>{ if(verseClick) tickUnlock(); },{passive:true});
-// haptics: Android vibrates; iPhones tick when a native switch flips, so a hidden one is flipped through its label
+let tickEl=null; try{ const rate=22050, n=Math.round(rate*.14), out=new Float32Array(n); for(let k=0;k<n;k++){ const t=k/rate; out[k]=.85*Math.exp(-t*38)*Math.sin(2*Math.PI*1000*t)+.35*Math.exp(-t*90)*Math.sin(2*Math.PI*2400*t); } tickEl=new Audio(wavURL(out,rate)); tickEl.preload='auto'; }catch(e){}
+function verseTick(){ if(window.AudioContext||window.webkitAudioContext){ knock(); return; } try{ if(tickEl){ tickEl.currentTime=0; const p=tickEl.play(); if(p&&p.catch) p.catch(()=>{}); } }catch(e){} }
+// look a little ahead of the song and book each verse start on the audio clock, so the knock lands on the beat rather than a quarter-second late
+let bookedVerse=-1, bookedTimer=0;
+function bookTicks(){ if(!verseClick||!song||audio.paused||seeking||!verses.length) return; const c=acx(); const t=audio.currentTime, rate=audio.playbackRate||1;
+  for(let k=0;k<verses.length;k++){ const st=verses[k].start; const d=(st-t)/rate; if(d>-.05&&d<.7){ if(bookedVerse===k) return; bookedVerse=k; clearTimeout(bookedTimer);
+      if(c&&c.state==='running') knock(c.currentTime+Math.max(0,d)); else bookedTimer=setTimeout(verseTick,Math.max(0,d*1000)); return; } } }
+audio.addEventListener('seeking',unbook); audio.addEventListener('pause',unbook);
+function setVerseClick(on){ verseClick=!!on; lsSet('vclick',verseClick); $('#clickon').setAttribute('aria-pressed',verseClick); $('#clickoff').setAttribute('aria-pressed',!verseClick); bookedVerse=-1; }
+$('#clickon').onclick=()=>{ setVerseClick(true); acx(); verseTick(); haptic(); }; $('#clickoff').onclick=()=>{ setVerseClick(false); haptic(); }; try{ setVerseClick(verseClick); }catch(e){}
+// phones only let sound start from a touch: the first touch anywhere wakes the audio clock up
+['touchend','pointerup','click'].forEach(ev=>addEventListener(ev,()=>{ if(verseClick) acx(); },{passive:true}));
+// haptics: Android vibrates; iPhones (17.4+) tick when a native switch flips, so a hidden one is flipped on each tap
 const HAPT=$('#haptsw'), HAPTL=$('#haptlb'); let haptT=0;
-function haptic(kind){ const n=performance.now(); if(n-haptT<45) return; haptT=n; try{ if(navigator.vibrate){ navigator.vibrate(kind==='soft'?6:10); } else if(HAPT&&'switch' in HAPT){ HAPTL.click(); } }catch(e){} }
+function haptic(kind){ if(!hapticsOn) return; const n=performance.now(); if(n-haptT<45) return; haptT=n;
+  try{ if(navigator.vibrate){ navigator.vibrate(kind==='soft'?6:10); } else if(HAPT){ HAPT.checked=!HAPT.checked; HAPTL.click(); } }catch(e){} }
+function setHaptics(on){ hapticsOn=!!on; lsSet('haptics',hapticsOn); $('#hapton').setAttribute('aria-pressed',hapticsOn); $('#haptoff').setAttribute('aria-pressed',!hapticsOn); }
+$('#hapton').onclick=()=>{ setHaptics(true); haptic(); }; $('#haptoff').onclick=()=>{ setHaptics(false); }; try{ setHaptics(hapticsOn); }catch(e){}
 function updateVerse(force){
   if(!song) return; const t=audio.currentTime; const idx=verseAt(t);
-  if(idx!==curVerse||force){ const prev=curVerse; curVerse=idx; renderVerse(idx); if(!force&&idx>=0&&prev!==idx&&!audio.paused&&!seeking){ if(verseClick) tick(); haptic('soft'); } }
+  if(idx!==curVerse||force){ const prev=curVerse; curVerse=idx; renderVerse(idx); if(!force&&idx>=0&&prev!==idx&&!audio.paused&&!seeking){ haptic('soft'); } }
   const nowMs=performance.now(); if(nowMs-fitCheckAt>700){ fitCheckAt=nowMs; if(verseOverflows()) fitVerse(); }
   if(idx>=0){ const ws=$('#vtext').querySelectorAll('.w'); let now=-1; verses[idx].words.forEach((w,k)=>{ if(t>=w.t-0.1) now=k; }); ws.forEach((el,k)=>{ el.classList.toggle('on',k<=now); el.classList.toggle('now',k===now); }); }
 }
@@ -1199,7 +1212,7 @@ function updateTime(){
   $('#minibar').style.width=(p*100)+'%';
 }
 function tick(){
-  updateTime(); if(np.classList.contains('open')){ updateVerse(); updateLyrics(); }
+  updateTime(); bookTicks(); if(np.classList.contains('open')){ updateVerse(); updateLyrics(); }
   if(loopRange){ const r=rangeTimes(); if(r&&audio.currentTime>=r.end-0.12){ audio.currentTime=r.start; } }
   saveProgress(false);
   if('mediaSession' in navigator&&navigator.mediaSession.setPositionState&&audio.duration){ try{ navigator.mediaSession.setPositionState({duration:audio.duration,playbackRate:audio.playbackRate,position:Math.min(audio.currentTime,audio.duration)}); }catch(e){} }
