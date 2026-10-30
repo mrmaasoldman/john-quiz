@@ -385,14 +385,14 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 @keyframes hintBob{50%{transform:translateY(-4px)}}
 /* lyrics page: flows on under the verse page in the same scroller — a sticky header, then big lines that follow the song */
 .plyr{position:relative;min-height:100%;max-width:560px;margin:0 auto;width:100%;padding:0 max(20px,env(safe-area-inset-right,0px)) 0 max(20px,env(safe-area-inset-left,0px))}
-.lyhead{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:12px;margin:0 calc(-1 * max(20px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(20px,env(safe-area-inset-left,0px)));padding:calc(10px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) 10px max(20px,env(safe-area-inset-left,0px));background:linear-gradient(rgba(11,11,16,.92),rgba(11,11,16,.78));border-bottom:1px solid rgba(255,255,255,.08)}
-.lyhead::after{content:"";position:absolute;left:0;right:0;top:100%;height:28px;background:linear-gradient(rgba(11,11,16,.6),transparent);pointer-events:none}
-.lyhead .sm{width:40px;height:40px;border-radius:7px;overflow:hidden;flex:none;padding:0;background:#222;box-shadow:0 3px 10px rgba(0,0,0,.4)}
+.lyhead.glass{position:sticky;top:calc(6px + env(safe-area-inset-top,0px));z-index:3;display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:6px 6px 6px 6px;border-radius:999px;background:rgba(22,20,34,.62);backdrop-filter:blur(12px) saturate(1.8) brightness(1.05);-webkit-backdrop-filter:blur(12px) saturate(1.8) brightness(1.05);border:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(255,255,255,.1),0 10px 30px rgba(0,0,0,.35)}
+.plyr{padding-top:calc(6px + env(safe-area-inset-top,0px))}
+.lyhead .sm{width:44px;height:44px;border-radius:22px;overflow:hidden;flex:none;padding:0;background:#222;box-shadow:0 3px 10px rgba(0,0,0,.4)}
 .lyhead .sm img{width:100%;height:100%;display:block}
 .lyhead .tt{min-width:0;flex:1}
 .lyhead b{display:block;font-family:var(--serif);font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lyhead small{display:block;font-size:11px;color:var(--np-sub);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
-.lyup{display:flex;align-items:center;gap:4px;padding:8px 12px 8px 10px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:13px;font-weight:700;flex:none}
+.lyup{display:flex;align-items:center;gap:4px;height:36px;padding:0 14px 0 10px;border-radius:999px;background:var(--sig);color:#fff;font-size:13px;font-weight:700;flex:none;box-shadow:0 4px 12px rgba(255,92,138,.35)}
 .lyup svg{width:14px;height:14px;fill:currentColor}
 .lyrics{padding:var(--lypad,18vh) 0 var(--lybot,60vh)}
 .ln{display:block;width:100%;text-align:left;font-size:clamp(27px,6.8vw,34px);font-weight:800;line-height:1.14;letter-spacing:-.015em;color:#fff;opacity:.5;margin:0 0 26px;padding:2px 0;transform-origin:left center;transform:scale(.94);transition:opacity .4s,transform .5s cubic-bezier(.2,.8,.2,1);cursor:pointer;text-wrap:pretty}
@@ -461,19 +461,19 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 /* up next sheet: drag to reorder, swipe the header down to close */
 .scrim{position:absolute;inset:0;z-index:3;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .3s}
 .scrim.on{opacity:1;pointer-events:auto}
-.upnext{position:absolute;inset:auto 0 0 0;z-index:4;max-height:80%;background:rgba(20,18,32,.74);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px) saturate(1.6);border-top:1px solid rgba(255,255,255,.22);border-radius:22px 22px 0 0;transform:translateY(105%);transition:transform .44s cubic-bezier(.32,.72,0,1);display:grid;grid-template-rows:auto auto auto auto 1fr auto;grid-template-columns:minmax(0,1fr);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+.upnext.glass{position:absolute;inset:auto 0 0 0;z-index:4;max-height:80%;background:rgba(22,20,34,.6);backdrop-filter:blur(16px) saturate(1.8) brightness(1.05);-webkit-backdrop-filter:blur(16px) saturate(1.8) brightness(1.05);border:0;border-radius:26px 26px 0 0;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -12px 20px -14px rgba(255,255,255,.25),0 -10px 40px rgba(0,0,0,.35);transform:translateY(105%);transition:transform .44s cubic-bezier(.32,.72,0,1);display:grid;grid-template-rows:auto auto auto auto 1fr auto;grid-template-columns:minmax(0,1fr);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.5)}
 .upnext.open{transform:translateY(0)}
 .upnext.drag{transition:none}
 .upnext .grab{margin-top:8px}
 .upnext .uh{display:flex;align-items:center;gap:6px;padding:8px 0 4px;touch-action:none;min-width:0}
-.unow{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:8px 10px;border-radius:14px;background:rgba(255,255,255,.08);margin:2px 0 10px}
+.unow{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:8px 10px;border-radius:16px;background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 1px rgba(255,255,255,.08);margin:2px 0 10px}
 .unow .th{width:44px;height:44px;border-radius:7px;overflow:hidden}
 .unow .th img{width:100%;height:100%;display:block}
 .unow small{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sig1)}
 .unow b{display:block;font-size:15px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .unow i{display:block;font-style:normal;font-size:12.5px;color:var(--np-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .uctl{display:flex;gap:8px;margin-bottom:4px}
-.uctl button{flex:1;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;gap:7px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);font-size:13.5px;font-weight:700;transition:background .2s,color .2s}
+.uctl button{flex:1;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;gap:7px;background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.08);color:rgba(255,255,255,.85);font-size:13.5px;font-weight:700;transition:background .2s,color .2s}
 .uctl button[aria-pressed="true"]{background:var(--sig1);color:#1a1026}
 .uctl svg{width:18px;height:18px;fill:currentColor}
 .uhint{font-size:12px;line-height:1.45;color:var(--np-dim);padding:10px 2px 4px;border-top:1px solid rgba(255,255,255,.1);margin-top:6px}
@@ -533,7 +533,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
   .pverse{grid-template-rows:auto auto 1fr}
   .plyr{max-width:none;margin:0;height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
   .plyr::-webkit-scrollbar{display:none}
-  .lyhead{border-radius:0 0 14px 14px;padding-right:76px}
+  .lyhead.glass{margin-right:64px}
   .lyup{display:none}
   .vhint{display:none}
   .art{display:block;width:min(34vw,300px,calc(100dvh - 560px));height:min(34vw,300px,calc(100dvh - 560px));border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.55);overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s;position:relative;margin-bottom:8px}
@@ -636,7 +636,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
         <button class="vhint" id="vhint" type="button">Swipe up for all the lyrics <svg viewBox="0 0 24 24"><path d="M12 8.5 4.5 16l1.4 1.4L12 11.3l6.1 6.1L19.5 16z"/></svg></button>
       </div>
       <section class="plyr" id="plyr" aria-label="Lyrics">
-        <div class="lyhead" id="lyhead">
+        <div class="lyhead glass" id="lyhead">
           <button class="sm" id="lycover" type="button" aria-label="Close"><img id="lyart2" alt=""></button>
           <div class="tt"><b id="lytitle">—</b><small>Lyrics</small></div>
           <button class="lyup" id="lyup" type="button" aria-label="Back to the verse"><svg viewBox="0 0 24 24"><path d="M12 8.5 4.5 16l1.4 1.4L12 11.3l6.1 6.1L19.5 16z"/></svg>Verse</button>
@@ -675,7 +675,7 @@ body.npopen .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:
     <div class="sl"><span>0.5×</span><input id="speedr" type="range" min="0.5" max="2" step="0.05" value="1" aria-label="Playback speed"><span>2×</span></div>
   </div>
   <div class="scrim" id="scrim"></div>
-  <div class="upnext" id="upnext" aria-label="Up next">
+  <div class="upnext glass" id="upnext" aria-label="Up next">
     <div class="grab" aria-hidden="true"></div>
     <div class="uh" id="uh"><b>Up Next<small id="uloop" hidden></small></b>
       <button id="uclose" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M12 15.5 4.5 8l1.4-1.4L12 12.7l6.1-6.1L19.5 8z"/></svg></button>
