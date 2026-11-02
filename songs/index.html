@@ -949,6 +949,10 @@ function springEase(bounce){ try{ if(!CSS.supports('animation-timing-function','
   for(let i=0;i<=N;i++){ const t=i/N; const x=1-Math.exp(-z*w*t)*(Math.cos(wd*t)+(z*w/wd)*Math.sin(wd*t)); pts.push((i===N?1:x).toFixed(4)); }
   return 'linear('+pts.join(',')+')'; }
 const SPRING='cubic-bezier(.22,.78,.14,1)', SPRING_SOFT='cubic-bezier(.25,.8,.2,1)'; // smooth, no overshoot: fast out of the gate, long gentle settle
+// the same curve as a function, for animations whose keyframes have to be sampled by hand
+function bezFn(x1,y1,x2,y2){ const cx=3*x1,bx=3*(x2-x1)-cx,ax=1-cx-bx, cy=3*y1,by=3*(y2-y1)-cy,ay=1-cy-by; const X=t=>((ax*t+bx)*t+cx)*t, Y=t=>((ay*t+by)*t+cy)*t, dX=t=>(3*ax*t+2*bx)*t+cx;
+  return x=>{ if(x<=0) return 0; if(x>=1) return 1; let t=x; for(let i=0;i<8;i++){ const e=X(t)-x; if(Math.abs(e)<1e-5) break; const d=dX(t); if(Math.abs(d)<1e-6) break; t-=e/d; } return Y(Math.max(0,Math.min(1,t))); }; }
+const SPRING_FN=bezFn(.22,.78,.14,1);
 const PAGE_T={duration:560,easing:SPRING_SOFT};
 let chapPop=null, chapFromEl=null;
 const libBase=()=>view==='chapter'?'scale(.955) translateY(-6px)':'none', dimBase=()=>view==='chapter'?.3:0;
@@ -1443,45 +1447,62 @@ let miniCardRect=null;
 const NP_FADE=()=>[...np.querySelectorAll(':scope>.npbg,:scope>#aurora,:scope>.npbg2,:scope>#npin,:scope>#npclose')];
 // the glass pill of the mini player swells into the whole sheet: the sheet is clipped to the pill's shape and grows, while a clear glass copy rides on top and thins out as the player fills in
 function glassMorph(opening,done,scrub){
-  const D=680, E=SPRING, r=miniCardRect, W=innerWidth, H=innerHeight;
+  const D=680, E=SPRING, EF=SPRING_FN, r=miniCardRect, W=innerWidth, H=innerHeight;
   if(reduce||!r||!r.width){ document.body.classList.remove('morphing'); np.classList.remove('morphing'); done&&done(); return null; }
   // a glass copy the size of the pill scales up to the screen; the player itself scales up from the pill's spot, invisible at first, then fades in
   const g=document.createElement('div'); g.className='glass gmorph'; document.body.append(g);
   Object.assign(g.style,{width:r.width+'px',height:r.height+'px',borderRadius:(r.height/2)+'px'});
   const pill={transform:`translate(${r.left}px,${r.top}px) scale(1,1)`}, sheet={transform:`translate(0px,0px) scale(${W/r.width},${H/r.height})`};
   const cx=r.left+r.width/2, cy=r.top+r.height/2, sx=r.width/W, sy=r.height/H;
-  const npSmall=`translate(${cx-W/2}px,${cy-H/2}px) scale(${sx},${sy})`, npFull='translate(0px,0px) scale(1,1)';
-  // shape moves on the spring curve; the cross-fade runs on its own straight clock so it stays a cross-fade
-  const npA=np.animate(opening?[{transform:npSmall},{transform:npFull}]:[{transform:npFull},{transform:npSmall}],{duration:D,easing:E,fill:'forwards'});
-  const npO=np.animate(opening?[{opacity:0},{opacity:0,offset:.3},{opacity:1,offset:.68},{opacity:1}]:[{opacity:1},{opacity:1,offset:.32},{opacity:0,offset:.7},{opacity:0}],{duration:D,easing:'linear',fill:'forwards'});
+  // the sheet's box scales up from the pill, but what's inside it is scaled back the other way frame by frame, so the player is revealed through the growing
+  // glass instead of being squashed into it. both sets of keyframes are sampled off the same curve, so they always cancel out exactly
+  const nr=np.getBoundingClientRect(), kids=NP_FADE().concat(np.classList.contains('lyvis')?[$('#lyhead')]:[]);
+  kids.forEach(el=>{ const c=el.getBoundingClientRect(); el.style.transformOrigin=`${(W/2-(c.left-nr.left)).toFixed(2)}px ${(H/2-(c.top-nr.top)).toFixed(2)}px`; });
+  // corners: the box and its glass are scaled unevenly, so their radii are counter-scaled each frame to keep the pill's round ends round as they grow
+  const R0=r.height/2, gx=W/r.width, gy=H/r.height;
+  // (the glass is a small layer, so re-drawing its corners every frame is cheap; the sheet itself is full-screen, so it just keeps a fixed radius that the phone's own corners hide)
+  const N=40, shape=p=>{ const a=sx+(1-sx)*p, b=sy+(1-sy)*p, Rg=R0*(1-p)+26*p, ga_=1+(gx-1)*p, gb_=1+(gy-1)*p;
+    return [`translate(${((cx-W/2)*(1-p)).toFixed(3)}px,${((cy-H/2)*(1-p)).toFixed(3)}px) scale(${a.toFixed(5)},${b.toFixed(5)})`,`scale(${(1/a).toFixed(5)},${(1/b).toFixed(5)})`,`${(Rg/ga_).toFixed(2)}px / ${(Rg/gb_).toFixed(2)}px`]; };
+  const sample=(p0,p1,ease)=>{ const box=[],inv=[],gr_=[]; for(let i=0;i<=N;i++){ const u=i/N, p=p0+(p1-p0)*ease(u), s=shape(p); box.push({offset:u,transform:s[0]}); inv.push({offset:u,transform:s[1]}); gr_.push({offset:u,borderRadius:s[2]}); } return [box,inv,gr_]; };
+  const lin=u=>u, [box0,inv0,gr0]=sample(opening?0:1,opening?1:0,scrub?lin:EF), LIN={duration:D,easing:'linear',fill:'forwards'};
+  np.style.borderRadius='28px';
+  const npA=np.animate(box0,LIN), kA=kids.map(el=>el.animate(inv0,LIN)), gR=g.animate(gr0,LIN);
+  // the cross-fade runs on its own straight clock so it stays a cross-fade
+  const npO=np.animate(opening?[{opacity:0},{opacity:0,offset:.18},{opacity:1,offset:.6},{opacity:1}]:[{opacity:1},{opacity:1,offset:.4},{opacity:0,offset:.82},{opacity:0}],{duration:D,easing:'linear',fill:'forwards'});
   const ga=g.animate(opening?[pill,sheet]:[sheet,pill],{duration:D,easing:E,fill:'forwards'});
-  const gO=g.animate(opening?[{opacity:1},{opacity:1,offset:.4},{opacity:0,offset:.9},{opacity:0}]:[{opacity:0},{opacity:0,offset:.1},{opacity:1,offset:.6},{opacity:1}],{duration:D,easing:'linear',fill:'forwards'});
+  const gO=g.animate(opening?[{opacity:1},{opacity:1,offset:.3},{opacity:0,offset:.85},{opacity:0}]:[{opacity:0},{opacity:0,offset:.15},{opacity:1,offset:.7},{opacity:1}],{duration:D,easing:'linear',fill:'forwards'});
   // the library, its dim, the mini bar and the tab bar move on the very same clock, so the background never jumps ahead of the glass
   const lb0=libBase(), lb=lb0==='none'?'':lb0+' ', db=dimBase(); const BG=[[$('#lib'),{transform:lb0},{transform:lb+'scale(.94) translateY(-10px)'}],[$('#libdim'),{opacity:db},{opacity:.4}],[$('#minicard'),{transform:'translateY(0) scale(1)',opacity:1},{transform:'translateY(24px) scale(.92)',opacity:0}],[$('#tabbar'),{transform:'translateX(-50%) translateY(0)',opacity:1},{transform:'translateX(-50%) translateY(40px)',opacity:0}]].concat(view==='chapter'?[[$('#chapter'),{transform:'none'},{transform:'scale(.94) translateY(-10px)'}]]:[]);
   document.body.classList.add('morphing');
   const bgA=BG.map(([el,a,b])=>el.animate(opening?[a,b]:[b,a],{duration:D,easing:E,fill:'forwards'}));
-  const all=[npA,npO,ga,gO,...bgA], clean=()=>{ g.remove(); npA.cancel(); npO.cancel(); }, settle=()=>{ bgA.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); };
+  const all=[npA,npO,ga,gO,gR,...kA,...bgA], unkid=()=>{ kA.forEach(a=>a.cancel()); kids.forEach(el=>{ el.style.transformOrigin=''; }); np.style.borderRadius=''; };
+  const clean=()=>{ g.remove(); npA.cancel(); npO.cancel(); unkid(); }, settle=()=>{ bgA.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); };
   let ctlRef=null; ga.onfinish=()=>{ if(ctlRef&&NPM.ctl===ctlRef) NPM.ctl=null; clean(); done&&done(); settle(); };
   // a finger can drive it (paused, scrubbed by progress), and any tap while it moves just changes where it's heading
-  if(scrub){ all.forEach(a=>{ a.pause(); }); npA.effect.updateTiming({easing:'linear'}); ga.effect.updateTiming({easing:'linear'}); }
-  let prog=0, legs=null, heading=opening, arrive=done;
+  if(scrub){ all.forEach(a=>{ a.pause(); }); ga.effect.updateTiming({easing:'linear'}); }
+  let prog=0, legs=null, heading=opening, arrive=done, aimP=0, aimRaf=0, aimOn=false;
+  const openness=()=>{ const m=getComputedStyle(np).transform.match(/matrix\(([^,]+)/); const a=m?parseFloat(m[1]):(opening?1:0); return Math.max(0,Math.min(1,(a-sx)/(1-sx))); };
   const ctl={ seek(p){ prog=Math.max(0,Math.min(1,p)); const t=prog*D; all.forEach(a=>{ a.currentTime=t; }); },
-    head(toOpen,cb){ if(legs&&heading===toOpen){ arrive=cb; return; } heading=toOpen; arrive=cb; NPM.ctl=ctl; NPM.opening=toOpen;
-      const cs=getComputedStyle(np), cg=getComputedStyle(g), fromNp={transform:cs.transform,opacity:cs.opacity}, fromG={transform:cg.transform,opacity:cg.opacity};
+    // the finger's position is followed with a little give (a few frames of lag), so touch jitter never reaches the glass
+    aim(p){ aimP=Math.max(0,Math.min(1,p)); if(aimOn) return; aimOn=true; const step=()=>{ if(!aimOn) return; const d=aimP-prog; if(Math.abs(d)<.0015){ ctl.seek(aimP); aimOn=false; return; } ctl.seek(prog+d*.45); aimRaf=requestAnimationFrame(step); }; aimRaf=requestAnimationFrame(step); },
+    head(toOpen,cb,vel){ aimOn=false; cancelAnimationFrame(aimRaf); if(legs&&heading===toOpen){ arrive=cb; return; } heading=toOpen; arrive=cb; NPM.ctl=ctl; NPM.opening=toOpen;
+      const cg=getComputedStyle(g), fromG={transform:cg.transform,opacity:cg.opacity}, fromO=getComputedStyle(np).opacity, p0=openness();
       const bgFrom=BG.map(([el])=>{ const c=getComputedStyle(el); return {transform:c.transform,opacity:c.opacity}; });
       let left; if(!legs){ if(!scrub) prog=Math.max(0,Math.min(1,(ga.currentTime||0)/D)); left=(toOpen===opening)?1-prog:prog; ga.onfinish=null; all.forEach(a=>a.cancel()); } else { left=.6; legs.forEach(a=>a.cancel()); }
-      const dur=Math.max(240,Math.round(D*left));
-      const endNp=toOpen?{transform:npFull,opacity:1}:{transform:npSmall,opacity:0}, endG=toOpen?{...sheet,opacity:0}:{...pill,opacity:1};
-      const a1=np.animate([fromNp,endNp],{duration:dur,easing:E,fill:'forwards'}), a2=g.animate([fromG,endG],{duration:dur,easing:E,fill:'forwards'});
+      // a quick flick lands sooner than a gentle let-go, within reason
+      let dur=Math.max(260,Math.round(D*left)); if(vel>0) dur=Math.max(220,Math.min(dur,Math.round(left/vel*1.15)));
+      const [box1,inv1,gr1]=sample(p0,toOpen?1:0,EF), endG=toOpen?{...sheet,opacity:0}:{...pill,opacity:1}, L1={duration:dur,easing:'linear',fill:'forwards'};
+      const a1=np.animate(box1,L1), a1k=kids.map(el=>el.animate(inv1,L1)), a2r=g.animate(gr1,L1);
+      const a1o=np.animate([{opacity:fromO},{opacity:toOpen?1:0}],L1), a2=g.animate([fromG,endG],{duration:dur,easing:E,fill:'forwards'});
       const a3=BG.map(([el,a,b],k)=>el.animate([bgFrom[k],{...(toOpen?b:a)}],{duration:dur,easing:E,fill:'forwards'}));
-      legs=[a1,a2,...a3];
-      a2.onfinish=()=>{ if(NPM.ctl===ctl) NPM.ctl=null; g.remove(); a1.cancel(); arrive&&arrive(); a3.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); }; },
-    go(forward,undo){ ctl.head(forward?opening:!opening, forward?done:undo); } };
+      legs=[a1,a1o,a2,a2r,...a1k,...a3];
+      a2.onfinish=()=>{ if(NPM.ctl===ctl) NPM.ctl=null; g.remove(); a1.cancel(); a1o.cancel(); unkid(); arrive&&arrive(); a3.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); }; },
+    go(forward,undo,vel){ ctl.head(forward?opening:!opening, forward?done:undo, vel); } };
   ctlRef=ctl; NPM.ctl=ctl; NPM.opening=opening; return scrub?ctl:null;
 }
 const NPM={ctl:null,opening:false};
 // safety net: if a move ever fails to report back (an interrupted animation, a backgrounded app), the busy flags clear themselves
-setInterval(()=>{ const b=document.body.classList; ['morphing','folding','paging'].forEach(c=>{ if(!b.contains(c)||(c==='morphing'&&np.classList.contains('drag'))){ delete NPM['t_'+c]; return; } NPM['t_'+c]=(NPM['t_'+c]||0)+1; if(NPM['t_'+c]>=3){ b.remove(c); np.classList.remove('morphing'); delete NPM['t_'+c]; if(c==='morphing'){ document.querySelectorAll('.gmorph').forEach(g=>g.remove()); NPM.ctl=null; } } }); },900);
+setInterval(()=>{ const b=document.body.classList; ['morphing','folding','paging'].forEach(c=>{ if(!b.contains(c)||(c==='morphing'&&np.classList.contains('drag'))){ delete NPM['t_'+c]; return; } NPM['t_'+c]=(NPM['t_'+c]||0)+1; if(NPM['t_'+c]>=3){ b.remove(c); np.classList.remove('morphing'); delete NPM['t_'+c]; if(c==='morphing'){ document.querySelectorAll('.gmorph').forEach(g=>g.remove()); NPM.ctl=null; [np,...np.children].forEach(el=>{ el.getAnimations().forEach(a=>a.cancel()); el.style.transformOrigin=''; }); np.style.borderRadius=''; } } }); },900);
 function npHideNow(){ haptic('soft'); np.classList.remove('closing'); np.classList.add('morphing'); np.classList.remove('open','drag'); np.style.transform=''; np.setAttribute('aria-hidden','true'); document.body.classList.remove('npopen'); void np.offsetWidth; np.classList.remove('morphing'); }
 function openNP(scrub){ scrub=scrub===true;
   if(NPM.ctl){ if(!NPM.opening){ np.classList.remove('closing'); document.body.classList.add('npopen'); np.classList.add('open'); np.setAttribute('aria-hidden','false'); npMoving(); NPM.ctl.head(true,()=>{ document.body.classList.add('npopen'); }); } return null; } // it's mid-move: just head up
@@ -1489,11 +1510,12 @@ function openNP(scrub){ scrub=scrub===true;
   if(!wasOpen&&!wide()){ cancelAnimationFrame(LY.anim); LY.prog=false; npscroll.scrollTop=0; LY.wasVis=false; LY.arrive=false; np.classList.remove('lyvis'); }
   const fromMini=!wasOpen&&!reduce&&!$('#mini').classList.contains('hide')&&!np.style.transform;
   const prep=()=>{ fitVerse(); lyLayout(); updateVerse(true); updateLyrics(true); if(!reduce){ AUR.last=0; drawAurora(performance.now()); } };
-  if(fromMini) requestAnimationFrame(()=>requestAnimationFrame(prep)); else prep();
+  if(!fromMini) prep();
   if(fromMini){ miniRect=$('#minith').getBoundingClientRect(); miniCardRect=$('#minicard').getBoundingClientRect(); np.classList.add('morphing'); document.body.classList.add('morphing'); }
   np.classList.add('open'); np.setAttribute('aria-hidden','false'); document.body.classList.add('npopen'); if(!wasOpen){ npMoving(); haptic('soft'); }
-  if(fromMini){ void np.offsetWidth; np.classList.remove('morphing'); const ctl=glassMorph(true,null,scrub);
-    if(!scrub) requestAnimationFrame(()=>{ const t=npTarget(), r=t.getBoundingClientRect(); morph($('#minith'),t,{left:r.left,top:r.top,width:r.width,height:r.height}); }); return ctl; }
+  // lay the player out in full before the first frame moves, so no measuring lands in the middle of the animation
+  if(fromMini){ void np.offsetWidth; np.classList.remove('morphing'); prep(); const t=npTarget(), r=t.getBoundingClientRect(); const ctl=glassMorph(true,null,scrub);
+    if(!scrub) morph($('#minith'),t,{left:r.left,top:r.top,width:r.width,height:r.height}); return ctl; }
   requestAnimationFrame(()=>{ np.classList.remove('drag'); np.style.transform=''; });
   if(!wasOpen&&!$('#mini').classList.contains('hide')){ miniRect=$('#minith').getBoundingClientRect(); miniCardRect=$('#minicard').getBoundingClientRect();
     requestAnimationFrame(()=>{ const t=npTarget(), r=t.getBoundingClientRect(), nr=np.getBoundingClientRect(); morph($('#minith'),t,{left:r.left,top:r.top-nr.top,width:r.width,height:r.height}); }); }
@@ -1525,12 +1547,12 @@ $('#npclose').onclick=closeNP; $('#lyclose').onclick=closeNP; $('#vcover').oncli
     if(mode==='maybe'){ if(Math.abs(dx)>Math.abs(dy)||dy<=0){ mode=null; return; } mode='sheet'; }
     if(mode==='sheet'){ if(e.cancelable) e.preventDefault();
       if(!ctl&&!ctlTried){ ctlTried=true; ctl=closeNP(true)||null; if(ctl) np.classList.add('drag'); }
-      if(ctl) ctl.seek(dy/(innerHeight*.6)); else { np.classList.add('drag'); np.style.transform=`translateY(${Math.max(0,dy)}px)`; } }
+      if(ctl) ctl.aim(dy/(innerHeight*.6)); else { np.classList.add('drag'); np.style.transform=`translateY(${Math.max(0,dy)}px)`; } }
     else if(mode==='up'){ if(e.cancelable) e.preventDefault(); up.classList.add('drag'); up.style.transform=`translateY(${Math.max(0,dy)}px)`; }
   },{passive:false});
   let ctl=null, ctlTried=false;
   const end=()=>{ if(mode==='sheet'){ const v=dy/Math.max(1,performance.now()-t0), go=dy>120||(dy>40&&v>.6); np.classList.remove('drag');
-      if(ctl){ const c=ctl; ctl=null; npMoving(); if(go) c.go(true); else c.go(false,()=>{ np.classList.remove('closing'); document.body.classList.add('npopen'); }); }
+      if(ctl){ const c=ctl; ctl=null; npMoving(); if(go) c.go(true,null,v/(innerHeight*.6)); else c.go(false,()=>{ np.classList.remove('closing'); document.body.classList.add('npopen'); }); }
       else if(go) closeNP(); else np.style.transform=''; }
     else if(mode==='up'){ up.classList.remove('drag'); up.style.transform=''; if(dy>90) setQueueOpen(false); } mode=null; ctlTried=false; };
   np.addEventListener('touchend',end); np.addEventListener('touchcancel',end);
@@ -1545,9 +1567,9 @@ $('#npclose').onclick=closeNP; $('#lyclose').onclick=closeNP; $('#vcover').oncli
   mc.addEventListener('touchstart',e=>{ m0=e.touches[0].clientY; mdyT=0; on=true; mt0=performance.now(); },{passive:true});
   mc.addEventListener('touchmove',e=>{ if(!on||!song) return; mdyT=e.touches[0].clientY-m0; if(mdyT<-4){ if(e.cancelable) e.preventDefault();
       if(!octl&&!otried){ otried=true; octl=openNP(true)||null; if(octl) np.classList.add('drag'); }
-      if(octl) octl.seek(-mdyT/(innerHeight*.5)); else { np.classList.add('drag'); np.style.transform=`translateY(${Math.max(0,innerHeight*1.04+mdyT)}px)`; } } },{passive:false});
+      if(octl) octl.aim(-mdyT/(innerHeight*.5)); else { np.classList.add('drag'); np.style.transform=`translateY(${Math.max(0,innerHeight*1.04+mdyT)}px)`; } } },{passive:false});
   mc.addEventListener('touchend',()=>{ if(!on) return; on=false; otried=false; const v=-mdyT/Math.max(1,performance.now()-mt0), go=-mdyT>80||(-mdyT>30&&v>.5);
-    if(octl){ const c=octl; octl=null; np.classList.remove('drag'); npMoving(); if(go) c.go(true); else c.go(false,npHideNow); }
+    if(octl){ const c=octl; octl=null; np.classList.remove('drag'); npMoving(); if(go) c.go(true,null,v/(innerHeight*.5)); else c.go(false,npHideNow); }
     else if(mdyT<-70){ openNP(); } else { np.classList.remove('drag'); np.style.transform=''; } mdyT=0; });
 })();
 document.addEventListener('keydown',e=>{
