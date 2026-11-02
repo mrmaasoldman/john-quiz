@@ -569,6 +569,9 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .xppop.show{opacity:1;transform:none}
 .annc{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-12px);z-index:65;width:min(440px,calc(100% - 24px));padding:14px 16px;background:#000;border:3px solid var(--gold);box-shadow:4px 4px 0 #000;color:#fff;display:grid;gap:10px;opacity:0;transition:opacity .3s,transform .35s}
 .annc.show{opacity:1;transform:translateX(-50%)}
+.sccode{display:inline-block;font-family:var(--f-num);font-size:22px;letter-spacing:.12em;color:var(--gold);background:#000;border:2px solid var(--gold);padding:1px 8px;margin:0 2px;white-space:nowrap}
+.sccode.big{font-size:30px;padding:4px 12px;justify-self:start}
+.scbox{display:grid;gap:4px}
 .annc b{font-family:var(--f-num);font-size:22px;line-height:1.1;color:var(--gold)}
 .annc p{margin:0;font-size:14px;line-height:1.45}
 .annc .row{display:flex;gap:8px;justify-content:flex-end}
@@ -1562,8 +1565,58 @@ function lsSet(k,v){try{localStorage.setItem(K+k,JSON.stringify(v));return true}
 function blankUser(){return {stats:{},mem:{},sessions:[],sel:['1:'+qVerses[1].join(',1:')].join('').split(','),opts:{order:'order',limit:'all',pool:'all',memOnly:false,mix:false,words:'all',answer:'think',timer:'off'},vopts:{from:'goal',order:'shuffle',limit:'25',mode:'type',vsel:[],kind:'ref',timer:'off'},vstats:{},rstats:{},counts:{},badges:{}}}
 let users = lsGet('users',[]);
 let me = null, U = null;
-function loadUser(name){ me=name; U=Object.assign(blankUser(),lsGet('u:'+name,{})); U.opts=Object.assign(blankUser().opts,U.opts||{}); if(!U.migThink){ U.opts.answer='think'; U.migThink=1; } U.vopts=Object.assign(blankUser().vopts,U.vopts||{});if(U.vopts.chs){U.vopts.vsel=[...new Set([...(U.vopts.vsel||[]),...U.vopts.chs.flatMap(c=>allVerses(c).map(v=>c+':'+v))])];delete U.vopts.chs} U.vstats=U.vstats||{};U.rstats=U.rstats||{};U.counts=U.counts||{};U.badges=U.badges||{}; if(!users.includes(name)){users.push(name);lsSet('users',users)} lsSet('last',name); pullCloud(); applyTheme(); if(mus.playing) musicStart(); setTimeout(applyFreezes,300); setTimeout(checkEvents,500); sheetLast=''; scheduleSheet(); }
-function save(){ if(!me) return; U.saved=Date.now(); lsSet('u:'+me,U); scheduleSync(); scheduleSheet(); }
+function loadUser(name){ me=name; U=Object.assign(blankUser(),lsGet('u:'+name,{})); U.opts=Object.assign(blankUser().opts,U.opts||{}); if(!U.migThink){ U.opts.answer='think'; U.migThink=1; } U.vopts=Object.assign(blankUser().vopts,U.vopts||{});if(U.vopts.chs){U.vopts.vsel=[...new Set([...(U.vopts.vsel||[]),...U.vopts.chs.flatMap(c=>allVerses(c).map(v=>c+':'+v))])];delete U.vopts.chs} U.vstats=U.vstats||{};U.rstats=U.rstats||{};U.counts=U.counts||{};U.badges=U.badges||{}; if(!users.includes(name)){users.push(name);lsSet('users',users)} lsSet('last',name); pullCloud(); applyTheme(); if(mus.playing) musicStart(); setTimeout(applyFreezes,300); setTimeout(checkEvents,500); sheetLast=''; scheduleSheet(); ensureSaveCode(); cloudPull(); }
+function save(){ if(!me) return; U.saved=Date.now(); lsSet('u:'+me,U); scheduleSync(); scheduleSheet(); scheduleCloudSave(); }
+
+/* ---------- cloud saving: every quizzer gets a save code, and their progress is copied to the cloud ----------
+   The database key is a hash of the code, and the list of saves can't be read, so a save only opens with its code. */
+const SAVE_DB='https://john-quiz-2-default-rtdb.firebaseio.com'.replace(/\/+$/,'');
+const saveOn=()=>/^https?:\/\/[^_]/.test(SAVE_DB)&&!!(window.crypto&&crypto.subtle&&window.TextEncoder);
+const SC_ABC='23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+let csTimer=null, csPullAt=0; const cs={st:'',at:0,busy:false,again:false};
+const scNorm=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+const scLooks=c=>/^[A-Z]{2,4}[A-Z0-9]{5}$/.test(scNorm(c))&&String(c).trim().length<=14;
+function scFormat(c){ const n=scNorm(c); return n.slice(0,-5)+'-'+n.slice(-5); }
+function newSaveCode(name){ const p=(String(name||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,4))||'JQ'; const r=new Uint32Array(5); crypto.getRandomValues(r); return (p.length<2?p+'Q':p)+'-'+[...r].map(x=>SC_ABC[x%SC_ABC.length]).join(''); }
+async function scKey(code){ const h=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('jq-save:'+scNorm(code)))); return [...h.slice(0,16)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+async function scReq(m,path,v){ const r=await fetch(SAVE_DB+'/saves/'+path+'.json',{method:m,headers:{'Content-Type':'application/json'},body:v===undefined?undefined:JSON.stringify(v),cache:'no-store'});
+  if(r.status===401||r.status===403){ const e=new Error('denied'); e.denied=1; throw e; } if(!r.ok) throw new Error('db '+r.status); return r.json(); }
+const scMeta=u=>({saved:u.saved||0,xp:u.xp||0,ep:u.ep||0});
+// which copy wins: a reset (ep) beats everything, then more XP, then the newer save
+function cloudWins(m,u){ if(!m) return false; if((m.ep||0)!==(u.ep||0)) return (m.ep||0)>(u.ep||0); if((m.xp||0)!==(u.xp||0)) return (m.xp||0)>(u.xp||0); return (m.saved||0)>(u.saved||0)+1000; }
+function ensureSaveCode(){ if(!U||U.saveCode||!saveOn()) return; U.saveCode=newSaveCode(me); U.scNew=1; lsSet('u:'+me,U); }
+function scheduleCloudSave(){ if(!saveOn()||!me||!U||!U.saveCode) return; clearTimeout(csTimer); csTimer=setTimeout(cloudPush,4000); }
+async function adoptCloud(name,code,z){ const d=await unpackCode(z); const u=Object.assign({},d.u,{saveCode:code}); delete u.scNew;
+  lsSet('u:'+name,u); if(!users.includes(name)){users.push(name);lsSet('users',users)} loadUser(name); }
+async function cloudPush(){ if(!saveOn()||!me||!U||!U.saveCode) return; if(cs.busy){cs.again=true;return} cs.busy=true; cs.st=cs.st==='ok'?'ok':'saving'; refreshSaveBox(); const name=me, code=U.saveCode;
+  try{ const key=await scKey(code), m=await scReq('GET',key+'/m'); if(me!==name) return;
+    if(cloudWins(m,U)){ const c=await scReq('GET',key); if(me===name&&c&&c.z){ await adoptCloud(name,code,c.z); render(); } }  // another device is ahead: take its copy instead of overwriting it
+    else { const z=await packCode(); if(me!==name) return; await scReq('PUT',key,{m:Object.assign({n:name},scMeta(U)),z}); }
+    cs.st='ok'; cs.at=Date.now(); if(U&&U.scNew) announceSaveCode(); }
+  catch(e){ cs.st=e.denied?'off':'err'; }
+  finally{ cs.busy=false; refreshSaveBox(); if(cs.again){cs.again=false;scheduleCloudSave()} } }
+async function cloudPull(){ if(!saveOn()||!me||!U||!U.saveCode) return; const name=me, code=U.saveCode; csPullAt=Date.now();
+  try{ const key=await scKey(code), m=await scReq('GET',key+'/m'); if(me!==name) return;
+    if(cloudWins(m,U)){ const c=await scReq('GET',key); if(me===name&&c&&c.z){ await adoptCloud(name,code,c.z); render(); } cs.st='ok'; cs.at=Date.now(); refreshSaveBox(); }
+    else if(!m||m.saved!==(U.saved||0)||m.xp!==(U.xp||0)||(m.ep||0)!==(U.ep||0)) cloudPush();
+    else { cs.st='ok'; cs.at=Date.now(); refreshSaveBox(); if(U.scNew) announceSaveCode(); } }
+  catch(e){ cs.st=e.denied?'off':'err'; refreshSaveBox(); } }
+// sign in on a new device (or after clearing the browser) with a save code
+async function restoreFromCode(raw){ if(!saveOn()) throw new Error('Cloud saving needs an internet connection.'); if(!scLooks(raw)) throw new Error('A save code looks like LEVI-7K4PQ.');
+  let c; try{ c=await scReq('GET',await scKey(raw)); }catch(e){ throw new Error(e.denied?"Cloud saving isn't switched on yet. Ask Mr. Maas.":"Couldn't reach the cloud. Check your internet and try again."); }
+  if(!c||!c.z) throw new Error('No save found for that code. Check each letter and try again.');
+  const d=await unpackCode(c.z); const nm=String((c.m&&c.m.n)||d.n||'Quizzer').slice(0,40); const name=users.find(x=>x.toLowerCase()===nm.toLowerCase())||nm;
+  await adoptCloud(name,(d.u&&d.u.saveCode)||scFormat(raw),c.z); cs.st='ok'; cs.at=Date.now(); return name; }
+function saveStatus(){ if(!saveOn()) return 'Cloud saving needs an internet connection.';
+  return cs.st==='ok'?'☁️ Saved to the cloud'+(cs.at?' at '+new Date(cs.at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):''):cs.st==='saving'?'☁️ Saving…':cs.st==='off'?"Cloud saving isn't switched on yet. Your progress is still saved on this device.":cs.st==='err'?"Couldn't reach the cloud right now. It will try again on its own.":'☁️ Checking the cloud…'; }
+function refreshSaveBox(){ const el=document.getElementById('scstat'); if(el) el.textContent=saveStatus(); }
+function announceSaveCode(){ if(!U||!U.scNew||!U.saveCode) return; if(document.querySelector('.annc')){ setTimeout(announceSaveCode,6000); return; }
+  const el=document.createElement('div'); el.className='annc'; el.setAttribute('role','status');
+  el.innerHTML=`<b>☁️ Your progress now saves to the cloud!</b><p>Your save code is <span class="sccode">${esc(U.saveCode)}</span> Write it down somewhere safe. If you get a new phone or your progress disappears, tap <b style="font:inherit;color:var(--gold)">I have a save code</b> on the sign-in screen and everything comes back. Keep it secret, like a locker combination. You can always find it under <b style="font:inherit;color:var(--gold)">Progress</b>.</p><div class="row"><button class="ghost" type="button" id="anncok">I wrote it down</button></div>`;
+  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('show'));
+  el.querySelector('#anncok').onclick=()=>{ if(U){ delete U.scNew; lsSet('u:'+me,U); } el.classList.remove('show'); setTimeout(()=>el.remove(),350); }; }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&me&&U&&Date.now()-csPullAt>30e3) cloudPull(); });
+if(location.hostname==='localhost') window.__jq={pull:()=>{csPullAt=0;return cloudPull()},push:()=>cloudPush(),get U(){return U},set(f){f(U);save()},raw(f){f(U);lsSet('u:'+me,U)},get me(){return me},pack:()=>packCode()};
 
 /* ---------- grading ---------- */
 function norm(s){return s.toLowerCase().replace(/[’‘`]/g,"'").replace(/&/g,' and ').replace(/[^a-z0-9' ]+/g,' ').replace(/'/g,'').replace(/\s+/g,' ').trim()}
@@ -1879,6 +1932,8 @@ function signInView(){
       <div><span class="pill n">Android</span> In Chrome, tap <b>⋮</b>, then <b>Add to Home screen</b>.</div></div>
       <span class="hint">Then it opens with one tap, like any other app.</span>
     </div>`}
+    <div class="panel screstore" style="display:grid;gap:8px"><button class="btn ghost small" type="button" id="schave">☁️ I have a save code</button>
+      <form id="scform" hidden style="display:grid;gap:8px"><span class="hint">Type the save code you wrote down, like LEVI-7K4PQ.</span><input id="scin" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="14" placeholder="SAVE-CODE" style="font-family:var(--f-num);font-size:22px;letter-spacing:.12em;text-transform:uppercase"><div class="row"><button class="btn small" type="submit">Bring back my progress</button><span class="hint" id="scmsg"></span></div></form></div>
     ${users.length?`<div style="display:grid;gap:8px"><div class="label">Pick up where you left off</div><div class="names">${users.map(n=>{const u=lsGet('u:'+n,null)||{};return `<button data-name="${esc(n)}">${avC(u.av||avDefault(n),22,n)}<span>${esc(n)}</span></button>`}).join('')}</div></div>`:''}
   </div></main>`);
   wireTeamPicker(f);
@@ -1888,6 +1943,10 @@ function signInView(){
     loadUser(n); if(t) setTeam(t); render()};
   setTimeout(()=>loadLeaders(false),0);
   f.querySelectorAll('[data-name]').forEach(b=>b.onclick=()=>{loadUser(b.dataset.name);render()});
+  f.querySelector('#schave').onclick=()=>{ $('#scform').hidden=false; $('#schave').hidden=true; $('#scin').focus(); };
+  f.querySelector('#scform').onsubmit=async e=>{ e.preventDefault(); const msg=$('#scmsg'), btn=e.submitter||$('#scform button'); msg.textContent='Looking…'; btn.disabled=true;
+    try{ const n=await restoreFromCode($('#scin').value); render(); toast(`<b>Welcome back, ${esc(n)}!</b><span>Your progress came back from the cloud.</span>`); }
+    catch(err){ msg.textContent=err.message||"That didn't work. Try again."; btn.disabled=false; } };
   const hh=f.querySelector('#hidehome'); if(hh) hh.onclick=()=>{lsSet('hidehome',true);render()};
   return f;
 }
@@ -2330,10 +2389,12 @@ function progressView(){
       ${U.sessions.length?`<div class="tbl-wrap"><table><tbody>${U.sessions.slice(0,12).map(s=>`<tr><td class="mono" style="white-space:nowrap">${new Date(s.d).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</td><td>${esc(s.label)}</td><td class="n">${s.r}/${s.n}</td><td class="n"><span class="pill ${pct(s.r,s.n)>=85?'g':pct(s.r,s.n)>=65?'w':'b'}">${pct(s.r,s.n)}%</span></td></tr>`).join('')}</tbody></table></div>`:'<span class="muted">Finish a practice session and it shows up here.</span>'}
     </div>
     <div class="panel" style="display:grid;gap:10px">
-      <span class="label">Move or restore your progress</span>
-      <span class="hint">Your progress is saved in this browser, and a backup copy goes to Mr. Maas. Lost your progress? Ask Mr. Maas for your backup code, sign in with the same name, tap <b>Paste a code</b> and paste it. To move to another device, copy your code here and paste it there. You have ${memCount} memory verse${memCount===1?'':'s'} marked.</span>
+      <span class="label">Cloud save</span>
+      ${U.saveCode?`<div class="scbox"><span class="hint">Your save code</span><span class="sccode big">${esc(U.saveCode)}</span><span class="hint" id="scstat">${saveStatus()}</span></div>
+      <span class="hint">Your progress saves to the cloud by itself. On a new phone or after clearing your browser, tap <b>I have a save code</b> on the sign-in screen and type this code. Use the same code on two devices and they stay in sync. Keep it secret, like a locker combination.</span>`:`<span class="hint">${saveStatus()}</span>`}
+      <span class="hint">Older way: copy a long progress code here and paste it on another device. You have ${memCount} memory verse${memCount===1?'':'s'} marked.</span>
       <div class="row"><button class="btn ghost small" id="copycode">Copy my progress code</button><button class="btn ghost small" id="showimport">Paste a code</button></div>
-      <div id="importbox" hidden style="display:grid;gap:8px"><textarea id="code" placeholder="Paste a progress code or backup code here"></textarea><div class="row"><button class="btn small" id="doimport">Load this code</button><label class="btn ghost small" style="cursor:pointer">Open the backup file<input type="file" id="codefile" accept=".txt,text/plain" hidden></label><span class="hint" id="importmsg"></span></div></div>
+      <div id="importbox" hidden style="display:grid;gap:8px"><textarea id="code" placeholder="Paste a save code, progress code or backup code here"></textarea><div class="row"><button class="btn small" id="doimport">Load this code</button><label class="btn ghost small" style="cursor:pointer">Open the backup file<input type="file" id="codefile" accept=".txt,text/plain" hidden></label><span class="hint" id="importmsg"></span></div></div>
       <div>${confirmReset?`<div class="confirm"><span>Erase all of ${esc(me)}'s scores and memory verses?</span><button class="btn small" style="background:var(--bad);color:#fff" id="resetyes">Erase</button><button class="btn ghost small" id="resetno">Keep them</button></div>`:`<button class="btn ghost small" id="reset">Reset my progress</button>`}</div>
     </div>
 `:''}
@@ -4492,12 +4553,12 @@ function wire(){
   document.querySelectorAll('[data-progsub]').forEach(b=>b.onclick=()=>{progSub=b.dataset.progsub;render()});
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
   { const f=document.getElementById('codefile'); if(f) f.onchange=async()=>{ const file=f.files&&f.files[0]; if(!file) return; const txt=await file.text(); $('#code').value=txt; $('#doimport').click(); }; }
-  on('#doimport',async()=>{ const msg=$('#importmsg'); try{ const d=await unpackCode($('#code').value); if(d.grant){ const before=U.xp||0; U.xp=Math.max(before,d.u.xp||0); U.xpLog=U.xpLog||[]; if(U.xp>before) U.xpLog.unshift({t:Date.now(),n:U.xp-before,w:d.grant});
+  on('#doimport',async()=>{ const msg=$('#importmsg'); if(scLooks($('#code').value)){ try{ const n=await restoreFromCode($('#code').value); render(); toast(`<b>Welcome back, ${esc(n)}!</b><span>Your progress came back from the cloud.</span>`); }catch(e){ if(msg) msg.textContent=e.message; } return; } try{ const d=await unpackCode($('#code').value); if(d.grant){ const before=U.xp||0; U.xp=Math.max(before,d.u.xp||0); U.xpLog=U.xpLog||[]; if(U.xp>before) U.xpLog.unshift({t:Date.now(),n:U.xp-before,w:d.grant});
     if(d.streak>0){ U.days=U.days||{}; const today=dayKey(); let k=((U.days[today]||0)>=DAILY)?today:shiftDay(today,-1); for(let i=0;i<d.streak;i++){ U.days[k]=Math.max(U.days[k]||0,DAILY); k=shiftDay(k,-1); } }
-    save(); render(); toast(`<b>Progress restored!</b><span>${esc(d.grant)}</span>`); return; } U=Object.assign(blankUser(),d.u); U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{}); save(); applyTheme(); render(); toast('<b>Progress restored!</b><span>Welcome back. Everything is right where you left it.</span>'); }catch(e){ const why=e&&e.message; if(msg) msg.textContent=why==='nogzip'?"This phone's browser is too old to open the code. Try it in Safari or Chrome after updating, or on a computer.":why==='short'?"That's not a whole code. Open the backup file, Select All, Copy, and paste everything here.":"That code didn't load. Make sure you copied all of it (it can be very long) — open the file, Select All, Copy."; } });
+    save(); render(); toast(`<b>Progress restored!</b><span>${esc(d.grant)}</span>`); return; } const sc=U.saveCode, ep=U.ep; U=Object.assign(blankUser(),d.u); if(sc){ U.saveCode=sc; U.ep=Math.max(ep||0,U.ep||0); } delete U.scNew; U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{}); save(); applyTheme(); render(); toast('<b>Progress restored!</b><span>Welcome back. Everything is right where you left it.</span>'); }catch(e){ const why=e&&e.message; if(msg) msg.textContent=why==='nogzip'?"This phone's browser is too old to open the code. Try it in Safari or Chrome after updating, or on a computer.":why==='short'?"That's not a whole code. Open the backup file, Select All, Copy, and paste everything here.":"That code didn't load. Make sure you copied all of it (it can be very long) — open the file, Select All, Copy."; } });
   on('#reset',()=>{confirmReset=true;render()});
   on('#resetno',()=>{confirmReset=false;render()});
-  on('#resetyes',()=>{const sel=U.sel,opts=U.opts;U=blankUser();U.sel=sel;U.opts=opts;save();confirmReset=false;render()});
+  on('#resetyes',()=>{const sel=U.sel,opts=U.opts,sc=U.saveCode,ep=(U.ep||0)+1;U=blankUser();U.sel=sel;U.opts=opts;if(sc)U.saveCode=sc;U.ep=ep;save();confirmReset=false;render()});
   // memory
   // memory verses: tap one, or press and slide across a bunch to mark (or clear) them all at once
   paintVerses('[data-mem]','mem',keys=>{ const on=keys.mode; keys.forEach(k=>{ if(on) U.mem[k]=1; else delete U.mem[k]; const b=document.querySelector(`[data-mem="${k}"]`); if(b){ b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); } }); save(); checkBadges(); refreshMemHead(); });
