@@ -7,8 +7,25 @@
         ".read": true,
         ".write": true,
         ".validate": "$room.matches(/^[A-Z0-9]{5}$/)",
-        "players": { "$pid": { ".validate": "$pid.matches(/^[a-z0-9]{4,12}$/) && newData.child('name').isString() && newData.child('name').val().length <= 40" } },
-        "answers": { "$i": { "$pid": { ".validate": "newData.child('t').isNumber()" } } }
+        "players": {
+          "$pid": {
+            ".validate": "$pid.matches(/^[a-z0-9]{4,12}$/) && newData.child('name').isString() && newData.child('name').val().length <= 40"
+          }
+        },
+        "answers": {
+          "$i": {
+            "$pid": {
+              ".validate": "newData.child('t').isNumber()"
+            }
+          }
+        }
+      }
+    },
+    "saves": {
+      "$k": {
+        ".read": true,
+        ".write": true,
+        ".validate": "$k.matches(/^[0-9a-f]{32}$/) && newData.hasChildren(['m','z']) && newData.child('z').isString() && newData.child('z').val().length < 2000000 && newData.child('m/xp').isNumber()"
       }
     }
   }
