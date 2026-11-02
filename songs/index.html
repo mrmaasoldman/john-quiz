@@ -953,7 +953,11 @@ const PAGE_T={duration:560,easing:SPRING_SOFT};
 let chapPop=null, chapFromEl=null;
 const libBase=()=>view==='chapter'?'scale(.955) translateY(-6px)':'none', dimBase=()=>view==='chapter'?.3:0;
 // where a chapter's page comes from / goes back to: the album tile or folder header for that chapter, if one is on screen
-function chapterAnchor(ch){ const cands=[`#albums [data-ch="${ch}"] .cover`,`#lib .chgroup[data-chg="${ch}"] .chhd .th`,`#favlist .row[data-song] .th`]; for(const q of cands.slice(0,2)){ const el=document.querySelector(q); if(!el) continue; const r=el.getBoundingClientRect(); if(r.width&&r.bottom>60&&r.top<innerHeight-120&&r.right>0&&r.left<innerWidth) return {el,r}; } return null; }
+// a tile measured while the library sits scaled back (behind a chapter page) is mapped to where it will be once the library is upright again
+function unlib(r){ const lib=$('#lib'), m=getComputedStyle(lib).transform.match(/matrix\(([^)]+)\)/); if(!m) return r; const [a,,,d,e,f]=m[1].split(',').map(Number); if(!a||!d||(a===1&&d===1&&!e&&!f)) return r;
+  const L=lib.getBoundingClientRect(), [ox,oy]=getComputedStyle(lib).transformOrigin.split(' ').map(parseFloat), Ox=L.left-e+a*ox, Oy=L.top-f+d*oy, X=x=>(x-Ox-e)/a+Ox, Y=y=>(y-Oy-f)/d+Oy, l=X(r.left), t=Y(r.top), rt=X(r.right), bt=Y(r.bottom);
+  return {left:l,top:t,right:rt,bottom:bt,width:rt-l,height:bt-t,x:l,y:t}; }
+function chapterAnchor(ch){ const cands=[`#albums [data-ch="${ch}"] .cover`,`#lib .chgroup[data-chg="${ch}"] .chhd .th`,`#favlist .row[data-song] .th`]; for(const q of cands.slice(0,2)){ const el=document.querySelector(q); if(!el) continue; const r=unlib(el.getBoundingClientRect()); if(r.width&&r.bottom>60&&r.top<innerHeight-120&&r.right>0&&r.left<innerWidth) return {el,r}; } return null; }
 const pageAt=r=>`translate(${r.left+r.width/2-innerWidth/2}px,${r.top+r.height/2-innerHeight/2}px) scale(${Math.max(.08,r.width/innerWidth)},${Math.max(.05,r.height/innerHeight)})`;
 function pagingOn(){ document.body.classList.add('paging'); clearTimeout(pagingOn.t); pagingOn.t=setTimeout(()=>document.body.classList.remove('paging'),PAGE_T.duration+80); }
 function showChapter(ch,fromEl){
@@ -969,7 +973,7 @@ function showChapter(ch,fromEl){
   const start=anchor&&anchor.r.width?pageAt(anchor.r):`translate(0px,${innerHeight*.12}px) scale(.92,.92)`;
   chap.animate([{transform:start,opacity:0},{opacity:1,offset:.5},{transform:'none',opacity:1}],PAGE_T);
   $('#lib').animate([{transform:'none'},{transform:'scale(.955) translateY(-6px)'}],PAGE_T); $('#libdim').animate([{opacity:0},{opacity:.3}],PAGE_T);
-  if(anchor&&to&&r&&r.width) morph(anchor.el,to,{left:r.left,top:r.top,width:r.width,height:r.height},null,ART[ch]);
+  if(anchor&&to&&r&&r.width) morph(anchor.el,to,{left:r.left,top:r.top,width:r.width,height:r.height},null,ART[ch],PAGE_T.duration);
 }
 // folders: one layout, then transforms. Opening: the list slides out from under its header while everything below glides down.
 // Tapping it shut: the list rolls back up under the header. Opening another: the old list just fades where it is.
@@ -1018,7 +1022,7 @@ function showHome(){
   const chap=$('#chapter'); if(view!=='chapter') return; view='home';
   const finish=()=>{ chap.hidden=true; chap.classList.remove('sliding'); chap.style.transform=''; chap.style.opacity=''; document.body.classList.remove('inchapter'); if(tab!=='home') applyTab('home'); mirrorSync(); };
   if(reduce||chap.hidden){ finish(); return; }
-  pagingOn();
+  pagingOn(); morphSettle();
   // back into the tile it came from (or the chapter's folder header) if that's on screen; otherwise it just recedes and fades
   const ch=+chap.dataset.ch, anchor=chapterAnchor(ch);
   const cs=getComputedStyle(chap), from={transform:cs.transform==='none'?'translate(0px,0px)':cs.transform,opacity:cs.opacity};
@@ -1027,7 +1031,7 @@ function showHome(){
   const lc=getComputedStyle($('#lib')), dc=getComputedStyle($('#libdim'));
   $('#lib').animate([{transform:lc.transform==='none'?'scale(1)':lc.transform},{transform:'none'}],PAGE_T); $('#libdim').animate([{opacity:dc.opacity},{opacity:0}],PAGE_T);
   const from2=chap.querySelector('.chhead .cover');
-  if(anchor&&from2){ const b=from2.getBoundingClientRect(); if(b.width&&b.bottom>0&&b.top<innerHeight) morph(from2,anchor.el,{left:anchor.r.left,top:anchor.r.top,width:anchor.r.width,height:anchor.r.height},null,ART[ch]); }
+  if(anchor&&from2){ const b=from2.getBoundingClientRect(); if(b.width&&b.bottom>0&&b.top<innerHeight) morph(from2,anchor.el,{left:anchor.r.left,top:anchor.r.top,width:anchor.r.width,height:anchor.r.height},null,ART[ch],PAGE_T.duration); }
   a.onfinish=()=>{ chapPop=null; finish(); };
 }
 // swipe the chapter page to the right to leave it: it follows the finger and lets go into the same zoom-back
@@ -1428,15 +1432,17 @@ function drawAurora(now){
 (function auroraLoop(now){ const open=np.classList.contains('open'); if(open&&!np.classList.contains('anim')&&!np.classList.contains('drag')&&!reduce) drawAurora(now||0); if(open) requestAnimationFrame(auroraLoop); else setTimeout(()=>requestAnimationFrame(auroraLoop),300); })(0);
 let npAnimT=0; function npMoving(){ np.classList.add('anim'); clearTimeout(npAnimT); npAnimT=setTimeout(()=>np.classList.remove('anim'),620); }
 np.addEventListener('transitionend',e=>{ if(e.target===np&&e.propertyName==='transform'){ clearTimeout(npAnimT); np.classList.remove('anim'); } });
-function morph(from,to,b,done,src){
+// only one cover flies at a time: starting a new flight lands any earlier one at once, so a page closed mid-open never leaves a cover hanging
+const FLY=[]; function morphSettle(){ FLY.splice(0).forEach(f=>{ f.to.style.visibility=''; f.g.remove(); }); }
+function morph(from,to,b,done,src,dur){
   if(reduce||!from||!to||(!song&&!src)){ done&&done(); return; }
-  const a=from.getBoundingClientRect(); if(!a.width||!b||!b.width){ done&&done(); return; }
-  const g=document.createElement('img'); g.src=src||ART[song.ch]; g.className='morphimg'; document.body.append(g);
+  morphSettle(); const a=from.getBoundingClientRect(); if(!a.width||!b||!b.width){ done&&done(); return; }
+  const g=document.createElement('img'); g.src=src||ART[song.ch]; g.className='morphimg'; document.body.append(g); const fly={g,to}; FLY.push(fly);
   const ra=getComputedStyle(from).borderRadius, rb=getComputedStyle(to).borderRadius;
   Object.assign(g.style,{left:b.left+'px',top:b.top+'px',width:b.width+'px',height:b.height+'px',borderRadius:rb});
   to.style.visibility='hidden';
-  const an=g.animate([{transform:`translate(${a.left-b.left}px,${a.top-b.top}px) scale(${a.width/b.width},${a.height/b.height})`,borderRadius:ra},{transform:'none',borderRadius:rb}],{duration:680,easing:SPRING_SOFT,fill:'forwards'});
-  an.onfinish=()=>{ to.style.visibility=''; g.remove(); done&&done(); };
+  const an=g.animate([{transform:`translate(${a.left-b.left}px,${a.top-b.top}px) scale(${a.width/b.width},${a.height/b.height})`,borderRadius:ra},{transform:'none',borderRadius:rb}],{duration:dur||680,easing:SPRING_SOFT,fill:'forwards'});
+  an.onfinish=()=>{ const k=FLY.indexOf(fly); if(k>=0) FLY.splice(k,1); to.style.visibility=''; g.remove(); done&&done(); };
 }
 function npTarget(){ return innerWidth>=900?$('.art'):$('#vcover'); }
 let miniCardRect=null;
