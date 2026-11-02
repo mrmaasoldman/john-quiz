@@ -1464,19 +1464,22 @@ function glassMorph(opening,done,scrub){
   let ctlRef=null; ga.onfinish=()=>{ if(ctlRef&&NPM.ctl===ctlRef) NPM.ctl=null; clean(); done&&done(); settle(); };
   // a finger can drive it (paused, scrubbed by progress), and any tap while it moves just changes where it's heading
   if(scrub){ all.forEach(a=>{ a.pause(); }); npA.effect.updateTiming({easing:'linear'}); ga.effect.updateTiming({easing:'linear'}); }
-  let prog=0, legs=null, heading=opening, arrive=done;
+  let prog=0, legs=null, heading=opening, arrive=done, aimP=0, aimRaf=0, aimOn=false;
   const ctl={ seek(p){ prog=Math.max(0,Math.min(1,p)); const t=prog*D; all.forEach(a=>{ a.currentTime=t; }); },
-    head(toOpen,cb){ if(legs&&heading===toOpen){ arrive=cb; return; } heading=toOpen; arrive=cb; NPM.ctl=ctl; NPM.opening=toOpen;
+    // the finger is followed with a little give (a couple of frames of lag), so touch jitter never reaches the glass
+    aim(p){ aimP=Math.max(0,Math.min(1,p)); if(aimOn) return; aimOn=true; const step=()=>{ if(!aimOn) return; const d=aimP-prog; if(Math.abs(d)<.0015){ ctl.seek(aimP); aimOn=false; return; } ctl.seek(prog+d*.5); aimRaf=requestAnimationFrame(step); }; aimRaf=requestAnimationFrame(step); },
+    head(toOpen,cb,vel){ aimOn=false; cancelAnimationFrame(aimRaf); if(legs&&heading===toOpen){ arrive=cb; return; } heading=toOpen; arrive=cb; NPM.ctl=ctl; NPM.opening=toOpen;
       const cs=getComputedStyle(np), cg=getComputedStyle(g), fromNp={transform:cs.transform,opacity:cs.opacity}, fromG={transform:cg.transform,opacity:cg.opacity};
       const bgFrom=BG.map(([el])=>{ const c=getComputedStyle(el); return {transform:c.transform,opacity:c.opacity}; });
       let left; if(!legs){ if(!scrub) prog=Math.max(0,Math.min(1,(ga.currentTime||0)/D)); left=(toOpen===opening)?1-prog:prog; ga.onfinish=null; all.forEach(a=>a.cancel()); } else { left=.6; legs.forEach(a=>a.cancel()); }
-      const dur=Math.max(240,Math.round(D*left));
+      // a quick flick lands sooner than a gentle let-go, within reason
+      let dur=Math.max(260,Math.round(D*left)); if(vel>0) dur=Math.max(220,Math.min(dur,Math.round(left/vel*1.15)));
       const endNp=toOpen?{transform:npFull,opacity:1}:{transform:npSmall,opacity:0}, endG=toOpen?{...sheet,opacity:0}:{...pill,opacity:1};
       const a1=np.animate([fromNp,endNp],{duration:dur,easing:E,fill:'forwards'}), a2=g.animate([fromG,endG],{duration:dur,easing:E,fill:'forwards'});
       const a3=BG.map(([el,a,b],k)=>el.animate([bgFrom[k],{...(toOpen?b:a)}],{duration:dur,easing:E,fill:'forwards'}));
       legs=[a1,a2,...a3];
       a2.onfinish=()=>{ if(NPM.ctl===ctl) NPM.ctl=null; g.remove(); a1.cancel(); arrive&&arrive(); a3.forEach(a=>a.cancel()); document.body.classList.remove('morphing'); }; },
-    go(forward,undo){ ctl.head(forward?opening:!opening, forward?done:undo); } };
+    go(forward,undo,vel){ ctl.head(forward?opening:!opening, forward?done:undo, vel); } };
   ctlRef=ctl; NPM.ctl=ctl; NPM.opening=opening; return scrub?ctl:null;
 }
 const NPM={ctl:null,opening:false};
@@ -1489,11 +1492,12 @@ function openNP(scrub){ scrub=scrub===true;
   if(!wasOpen&&!wide()){ cancelAnimationFrame(LY.anim); LY.prog=false; npscroll.scrollTop=0; LY.wasVis=false; LY.arrive=false; np.classList.remove('lyvis'); }
   const fromMini=!wasOpen&&!reduce&&!$('#mini').classList.contains('hide')&&!np.style.transform;
   const prep=()=>{ fitVerse(); lyLayout(); updateVerse(true); updateLyrics(true); if(!reduce){ AUR.last=0; drawAurora(performance.now()); } };
-  if(fromMini) requestAnimationFrame(()=>requestAnimationFrame(prep)); else prep();
+  if(!fromMini) prep();
   if(fromMini){ miniRect=$('#minith').getBoundingClientRect(); miniCardRect=$('#minicard').getBoundingClientRect(); np.classList.add('morphing'); document.body.classList.add('morphing'); }
   np.classList.add('open'); np.setAttribute('aria-hidden','false'); document.body.classList.add('npopen'); if(!wasOpen){ npMoving(); haptic('soft'); }
-  if(fromMini){ void np.offsetWidth; np.classList.remove('morphing'); const ctl=glassMorph(true,null,scrub);
-    if(!scrub) requestAnimationFrame(()=>{ const t=npTarget(), r=t.getBoundingClientRect(); morph($('#minith'),t,{left:r.left,top:r.top,width:r.width,height:r.height}); }); return ctl; }
+  // lay the player out in full before the first frame moves, so no measuring lands in the middle of the animation
+  if(fromMini){ void np.offsetWidth; np.classList.remove('morphing'); prep(); const t=npTarget(), r=t.getBoundingClientRect(); const ctl=glassMorph(true,null,scrub);
+    if(!scrub) morph($('#minith'),t,{left:r.left,top:r.top,width:r.width,height:r.height}); return ctl; }
   requestAnimationFrame(()=>{ np.classList.remove('drag'); np.style.transform=''; });
   if(!wasOpen&&!$('#mini').classList.contains('hide')){ miniRect=$('#minith').getBoundingClientRect(); miniCardRect=$('#minicard').getBoundingClientRect();
     requestAnimationFrame(()=>{ const t=npTarget(), r=t.getBoundingClientRect(), nr=np.getBoundingClientRect(); morph($('#minith'),t,{left:r.left,top:r.top-nr.top,width:r.width,height:r.height}); }); }
@@ -1525,12 +1529,12 @@ $('#npclose').onclick=closeNP; $('#lyclose').onclick=closeNP; $('#vcover').oncli
     if(mode==='maybe'){ if(Math.abs(dx)>Math.abs(dy)||dy<=0){ mode=null; return; } mode='sheet'; }
     if(mode==='sheet'){ if(e.cancelable) e.preventDefault();
       if(!ctl&&!ctlTried){ ctlTried=true; ctl=closeNP(true)||null; if(ctl) np.classList.add('drag'); }
-      if(ctl) ctl.seek(dy/(innerHeight*.6)); else { np.classList.add('drag'); np.style.transform=`translateY(${Math.max(0,dy)}px)`; } }
+      if(ctl) ctl.aim(dy/(innerHeight*.6)); else { np.classList.add('drag'); np.style.transform=`translateY(${Math.max(0,dy)}px)`; } }
     else if(mode==='up'){ if(e.cancelable) e.preventDefault(); up.classList.add('drag'); up.style.transform=`translateY(${Math.max(0,dy)}px)`; }
   },{passive:false});
   let ctl=null, ctlTried=false;
   const end=()=>{ if(mode==='sheet'){ const v=dy/Math.max(1,performance.now()-t0), go=dy>120||(dy>40&&v>.6); np.classList.remove('drag');
-      if(ctl){ const c=ctl; ctl=null; npMoving(); if(go) c.go(true); else c.go(false,()=>{ np.classList.remove('closing'); document.body.classList.add('npopen'); }); }
+      if(ctl){ const c=ctl; ctl=null; npMoving(); if(go) c.go(true,null,v/(innerHeight*.6)); else c.go(false,()=>{ np.classList.remove('closing'); document.body.classList.add('npopen'); }); }
       else if(go) closeNP(); else np.style.transform=''; }
     else if(mode==='up'){ up.classList.remove('drag'); up.style.transform=''; if(dy>90) setQueueOpen(false); } mode=null; ctlTried=false; };
   np.addEventListener('touchend',end); np.addEventListener('touchcancel',end);
@@ -1545,9 +1549,9 @@ $('#npclose').onclick=closeNP; $('#lyclose').onclick=closeNP; $('#vcover').oncli
   mc.addEventListener('touchstart',e=>{ m0=e.touches[0].clientY; mdyT=0; on=true; mt0=performance.now(); },{passive:true});
   mc.addEventListener('touchmove',e=>{ if(!on||!song) return; mdyT=e.touches[0].clientY-m0; if(mdyT<-4){ if(e.cancelable) e.preventDefault();
       if(!octl&&!otried){ otried=true; octl=openNP(true)||null; if(octl) np.classList.add('drag'); }
-      if(octl) octl.seek(-mdyT/(innerHeight*.5)); else { np.classList.add('drag'); np.style.transform=`translateY(${Math.max(0,innerHeight*1.04+mdyT)}px)`; } } },{passive:false});
+      if(octl) octl.aim(-mdyT/(innerHeight*.5)); else { np.classList.add('drag'); np.style.transform=`translateY(${Math.max(0,innerHeight*1.04+mdyT)}px)`; } } },{passive:false});
   mc.addEventListener('touchend',()=>{ if(!on) return; on=false; otried=false; const v=-mdyT/Math.max(1,performance.now()-mt0), go=-mdyT>80||(-mdyT>30&&v>.5);
-    if(octl){ const c=octl; octl=null; np.classList.remove('drag'); npMoving(); if(go) c.go(true); else c.go(false,npHideNow); }
+    if(octl){ const c=octl; octl=null; np.classList.remove('drag'); npMoving(); if(go) c.go(true,null,v/(innerHeight*.5)); else c.go(false,npHideNow); }
     else if(mdyT<-70){ openNP(); } else { np.classList.remove('drag'); np.style.transform=''; } mdyT=0; });
 })();
 document.addEventListener('keydown',e=>{
