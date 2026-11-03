@@ -626,7 +626,7 @@ body.npopen .toast{bottom:calc(150px + var(--sab));z-index:50}
   .vol{display:grid}
   .npctl{max-width:1100px;grid-template-columns:1fr 1fr;column-gap:40px}
   .npctl>*{grid-column:1}
-  .upnext{left:auto;right:0;width:420px;max-height:100%;border-radius:0;top:0;border-left:1px solid rgba(255,255,255,.15)}
+  .upnext.glass{left:auto;right:0;width:420px;max-height:100%;border-radius:0;top:0;border-left:1px solid rgba(255,255,255,.15);box-shadow:-10px 0 40px rgba(0,0,0,.35)}
   .tabbar{bottom:calc(14px + var(--sab))}
 }
 .vtext .w.now,.ln.cur .w.now{will-change:background-image}
@@ -1366,13 +1366,13 @@ $('#lyr').onclick=()=>goLyrics(!lyricsVisible()||wide()); $('#vhint').onclick=()
 
 /* ---------- time & controls ---------- */
 // the elements this touches every frame are looked up once; text is only written when it actually changes
-const TE={fill:$('#fill'),cur:$('#tcur'),rem:$('#trem'),mini:$('#minibar'),lastCur:'',lastRem:''};
+const TE={fill:$('#fill'),cur:$('#tcur'),rem:$('#trem'),mini:$('#minibar'),up:$('#upnext'),q:null,lastCur:'',lastRem:''};
 function updateTime(){
   const d=audio.duration||song&&song.dur||0, t=audio.currentTime||0, p=d?t/d:0;
   if(!seeking){ TE.fill.style.transform=`scaleX(${p.toFixed(4)})`; const c=fmt(t), r='-'+fmt(Math.max(0,d-t)); if(c!==TE.lastCur){ TE.lastCur=c; TE.cur.textContent=c; } if(r!==TE.lastRem){ TE.lastRem=r; TE.rem.textContent=r; } }
   if(document.body.classList.contains('morphing')) return;
   TE.mini.style.transform=`scaleX(${p.toFixed(4)})`;
-  if(TE.q&&$('#upnext').classList.contains('open')) TE.q.style.transform=`scaleX(${p.toFixed(4)})`;
+  if(TE.q&&TE.up.classList.contains('open')) TE.q.style.transform=`scaleX(${p.toFixed(4)})`;
 }
 function tick(){
   updateTime(); bookTicks(); if(np.classList.contains('open')){ updateVerse(); updateLyrics(); }
