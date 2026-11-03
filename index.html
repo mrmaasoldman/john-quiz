@@ -602,7 +602,7 @@ input[type=text],textarea,select{font-family:var(--f-body)!important;font-size:2
 .evday b{font-weight:700}.evday i{font-style:normal;font-family:var(--f-num);font-size:16px;color:var(--win-ink)}
 .evday.hit{border-color:var(--good)}.evday.hit i{color:var(--good)}
 .evday.miss i{color:var(--bad)}.evday.today{border-color:var(--gold)}.evday.today i{color:var(--gold);font-size:14px}
-.avlock.ev{background:var(--gold);color:#000}
+.avlock.ev{background:var(--gold);color:#000} .avlock.tm{background:#2f3f7a;color:#fff}
 .avpick.evitem{border-color:var(--gold)}
 .live .ltop{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .live.host{max-width:1100px}
@@ -1887,7 +1887,7 @@ function readTeamPick(root){ const sel=root.querySelector('#tmsel'), msg=root.qu
   if(!t){ msg.innerHTML='<span style="color:var(--bad)">Pick your team (or “not on a team yet”).</span>'; sel.focus(); return null; }
   if(t!==NO_TEAM){ const ts=lsGet('teams',[])||[]; if(!ts.some(x=>x.toLowerCase()===t.toLowerCase())){ ts.push(t); lsSet('teams',ts.slice(-200)); } }
   return t; }
-function setTeam(t){ if(!U||!t) return; const changed=U.team!==t; U.team=t; save(); if(changed){ sheetLast=''; sendSheet(false); } }
+function setTeam(t){ if(!U||!t) return; const changed=U.team!==t; U.team=t; if(changed&&U.av){ const o=avParse(U.av,me), a=avFind(AV_ANIMALS,o.a); if(a&&a.team&&!avTeamOK(a)){ o.a=avDefault(me).split('.')[0]; U.av=avCode(o); } } save(); if(changed){ sheetLast=''; sendSheet(false); } }
 function teamGateView(){
   const f=h(`<main class="wrap"><div class="signin">
     <div><div class="label">One more thing, ${esc(me)}</div><h1>Pick your <em>team</em>.</h1></div>
@@ -3152,10 +3152,10 @@ const AV_B_DANIEL=["................", "................", "................", "
 const AV_B_LAZARUS=["................", "................", ".....OOOOOO.....", "....OWWGWWWO....", "...OWGWWWWGWO...", "..OWWWWGWWWWWO..", "..OGWWWWWWGWWO..", "..OWWFFFFFFWWO..", "..OWFFFFFFFFWO..", "..OWFWEFFWEFWO..", "..OGFEEFFEEFGO..", "..OWPFFNNFFPWO..", "..OWFFMMMMFFWO..", "..OWWFFFFFFWWO..", "...OWGWWWWGWO...", "OWWWGWWWWWWGWWWO"];
 const AV_B_ELIJAH=["................", "................", "................", ".....OOOOOO.....", "....OGGGGGGO....", "...OGGGGGGGGO...", "Y.OGGGGGGGGGGO.Y", "AYOGFFFFFFFFGOYA", "RAOFFFFFFFFFFOAR", "RAOFWEFFFFWEFOAR", "AROFEEFFFFEEFORA", "YAOPFFFNNFFFPOAY", "RAOGGGGMMGGGGOAR", "ARYOGGGGGGGGOYRA", "RAAYOGGGGGGOYAAR", "AARRCCOGGOCCRRAA"];
 const AV_B_ABRAHAM=["................", "Y.............Y.", "...Y.OOOOOO.Y...", "....OTTSTTSO....", "...OTSTTSTTTO...", "..OTTTSTTTSTTO..", "..OTTTTTTTTTTO..", "..OTFFFFFFFFTO..", "..OTFWWFFWWFTO..", "..OTWEFFFFWETO..", "..OTEEFFFFEETO..", "..OTWWFNNFWWTO..", "..OTWWWMMWWWTO..", "..OTWWWWWWWWTO..", "...OWWWWWWWWO...", "CCCCOWWWWWWOCCCC"];
-// Team avatars (level 24): a sword with a grin for the Master Swords, a wok on the fire for the Warriors of Christ, and a sun in shades for Blinding Light
-const AV_T_SWORD=[".......OO.......", "......OWWO......", ".....OWWWSO.....", "....OWWWWSSO....", "....OWWWWSSO....", "....OWWWWSSO....", "....OEEWWEEO....", "....OEEWWEEO....", "....OPWWWSPO....", "....OWMWWMSO....", "....OWWMMSSO....", "....OWWWWSSO....", ".OYYYYYYYYYYYYO.", "OYYYYYYRRYYYYYYO", ".OOOOOOGGOOOOOO.", "......OGHO......"];
+// Team avatars (level 24, and only for that team): a sword for the Master Swords, a wok on the fire for the Warriors of Christ, a light in the darkness for Blinding Light
+const AV_T_SWORD=["............OOWW", "...........OOWLS", "..........OOWLOO", ".........OOWLSO.", "........OOWLSOO.", ".......OOELSOO..", "..OOO.OOMLEOO...", "..OYOOOWMMOO....", "..OYYOWLSOO.....", "..OOYRLSOO......", "..OOGRYOO.......", ".OOGHGYYOO......", "OOYHGOOYYO......", "OYYYOOOOOO......", "OOYOO...........", ".OOO............"];
 const AV_T_WOK=["......V..V......", ".....V..V..V....", "....G.RY.GR.Y...", "...GYRGRYGRYG...", "..OOOOOOOOOOOO..", "HHOKKKKKKKKKKOHH", ".OKKWEKKKKWEKKO.", ".OKKEEKKKKEEKKO.", ".OKPKKKKKKKKPKO.", "..OKKKWWWWKKKO..", "...OKKKWWKKKO...", "....OOOOOOOO....", ".....A..AA..A...", "....AYA.YY.AYA..", "...AYYAAYYAAYYA.", "....AAAAAAAAAA.."];
-const AV_T_SUN=["...R...RR...R...", "....R.OOOO.R....", ".....OLLLLO.....", "R...OLLLLLLO...R", ".R.OLLLLLLLLO.R.", "..OLLLLLLLLLLO..", "RROLKKKKKKKKLORR", "RROLKEKLLKEKLORR", "..OLLKKLLKKLLO..", ".R.OLPLLLLPLO.R.", "...OLMWWWWMLO...", "R...OLMMMMLO...R", "....R.OOOO.R....", "...R...RR...R...", "................", "................"];
+const AV_T_SUN=["NTNNNNNDDNNNTNNN", "NNNNNNNAANNNNNTN", "NNDNNNDDDDNNNDNN", "NNNADDAAAADDANNN", "NNNDDAALLAADDNNN", "NNNDALLLLLLADNNN", "NNDAALKWWKLAADNN", "DADALLWWWWLLADAD", "DADALLMWWMLLADAD", "NNDAALWMMWLAADNN", "NNNDALLLLLLADNNN", "NNNDDAALLAADDNNN", "NNNADDAAAADDANNN", "NNDNNNDDDDNNNDNT", "TNNNNNNAANNNNNNN", "NNNTNNNDDNNNNNNN"];
 const AV_ANIMALS=[
  {id:'cat',name:'Cat',lvl:1,ears:'pointy',c:{F:'#f4a340',I:'#ffb3c1',M:'#ffe2b8',N:'#e8607a',D:'#b86a1c'}},
  {id:'dog',name:'Dog',lvl:1,ears:'none',front:'floppy',c:{F:'#c98a4b',I:'#ffb3c1',M:'#f3dcc0',N:'#2a1a12',D:'#6b4123'}},
@@ -3201,9 +3201,9 @@ const AV_ANIMALS=[
  {id:"ruth",name:"Ruth",lvl:22,ears:'none',custom:AV_B_RUTH,c:{"F": "#d6a47a", "N": "#b98560", "P": "#e08c7a", "E": "#1a1a22", "W": "#ffffff", "O": "#1a1a22", "M": "#9a3f45", "I": "#d6a47a", "T": "#d9b38c", "H": "#4a2f1a", "Y": "#e6b422", "G": "#6a994e"}},
  {id:"peter",name:"Peter",lvl:23,ears:'none',custom:AV_B_PETER,c:{"F": "#d6a47a", "N": "#b98560", "P": "#e08c7a", "E": "#1a1a22", "W": "#ffffff", "O": "#1a1a22", "M": "#9a3f45", "I": "#d6a47a", "H": "#6d5a4a", "L": "#9a8878", "B": "#6d5a4a", "C": "#4a6a8a", "A": "#78b4d8"}},
  {id:"miriam",name:"Miriam",lvl:24,ears:'none',custom:AV_B_MIRIAM,c:{"F": "#d6a47a", "N": "#b98560", "P": "#e08c7a", "E": "#1a1a22", "W": "#ffffff", "O": "#1a1a22", "M": "#9a3f45", "I": "#d6a47a", "H": "#3b2618", "R": "#e53935", "Y": "#ffd23f", "C": "#e8d2a8", "T": "#26a69a"}},
- {id:"mastersword",name:"Master Sword",lvl:24,ears:'none',custom:AV_T_SWORD,c:{"O":"#1a1a22","W":"#eef2f8","S":"#aab4c6","E":"#1a1a22","P":"#ffb3c1","M":"#3a3f55","Y":"#ffc93c","R":"#e53935","G":"#2f3f7a","H":"#4a5aa0","F":"#eef2f8","I":"#eef2f8","N":"#aab4c6"}},
- {id:"wok",name:"WOC Wok",lvl:24,ears:'none',custom:AV_T_WOK,c:{"O":"#1a1a22","K":"#3a3d4a","W":"#ffffff","E":"#1a1a22","P":"#ff8fab","H":"#8b5a2b","V":"#dfe6f2","G":"#5ad16a","R":"#ff5a5a","Y":"#ffd23f","A":"#ff8c1a","F":"#3a3d4a","I":"#3a3d4a","N":"#3a3d4a","M":"#ffffff"}},
- {id:"blindinglight",name:"Blinding Light",lvl:24,ears:'none',custom:AV_T_SUN,c:{"O":"#1a1a22","L":"#ffd23f","R":"#ff9f1a","K":"#1e1e24","E":"#8be0ff","P":"#ffb347","M":"#b23a3a","W":"#ffffff","F":"#ffd23f","I":"#ffd23f","N":"#ffb347"}},
+ {id:"mastersword",name:"Master Sword",lvl:24,team:/sword/i,teamName:"Master Swords",teamTag:"Swords",ears:'none',custom:AV_T_SWORD,c:{"O":"#1a1a22","W":"#f4f7fb","L":"#c9d2df","S":"#8e9ab0","E":"#1a1a22","M":"#3a3f55","Y":"#ffc93c","R":"#e53935","G":"#2f3f7a","H":"#4a5aa0","F":"#f4f7fb","I":"#f4f7fb","N":"#8e9ab0"}},
+ {id:"wok",name:"WOC Wok",lvl:24,team:/warrior|\bwo[ck]\b/i,teamName:"Warriors of Christ",teamTag:"WOC",ears:'none',custom:AV_T_WOK,c:{"O":"#1a1a22","K":"#3a3d4a","W":"#ffffff","E":"#1a1a22","P":"#ff8fab","H":"#8b5a2b","V":"#dfe6f2","G":"#5ad16a","R":"#ff5a5a","Y":"#ffd23f","A":"#ff8c1a","F":"#3a3d4a","I":"#3a3d4a","N":"#3a3d4a","M":"#ffffff"}},
+ {id:"blindinglight",name:"Blinding Light",lvl:24,team:/blind/i,teamName:"Blinding Light",teamTag:"Light",ears:'none',custom:AV_T_SUN,c:{"O":"#1a1a22","N":"#0d1030","D":"#8a5a12","A":"#ffb21a","L":"#ffe169","W":"#ffffff","K":"#6b4a00","M":"#d98a00","T":"#3a3f6e","F":"#ffe169","I":"#ffe169"}},
  {id:"samson",name:"Samson",lvl:25,ears:'none',custom:AV_B_SAMSON,c:{"F": "#d6a47a", "N": "#b98560", "P": "#e08c7a", "E": "#1a1a22", "W": "#ffffff", "O": "#1a1a22", "M": "#9a3f45", "I": "#d6a47a", "H": "#2b1a0e", "G": "#b0a99f", "C": "#8d6e63"}},
  {id:"deborah",name:"Deborah",lvl:26,ears:'none',custom:AV_B_DEBORAH,c:{"F": "#d6a47a", "N": "#b98560", "P": "#e08c7a", "E": "#1a1a22", "W": "#ffffff", "O": "#1a1a22", "M": "#9a3f45", "I": "#d6a47a", "H": "#5a3a22", "L": "#4caf50", "G": "#2e7d32", "Y": "#ffd23f"}},
  {id:"baptist",name:"John the Baptist",lvl:27,ears:'none',custom:AV_B_BAPTIST,c:{"F": "#d6a47a", "N": "#b98560", "P": "#e08c7a", "E": "#1a1a22", "W": "#ffffff", "O": "#1a1a22", "M": "#9a3f45", "I": "#d6a47a", "H": "#3b2618", "C": "#c19a6b", "c": "#a37e52"}},
@@ -3261,7 +3261,9 @@ const AV_EVENTS={luther:{name:'Martin Luther',need:1200,start:'2026-10-18',end:'
 const avOwned=id=>!!(U&&U.unlocks&&U.unlocks[id]);
 function avEventActive(id){ const e=AV_EVENTS[id]; if(!e) return false; const d=dayKey(); return d>=e.start&&d<=e.end; }
 function avEventXP(id){ const e=AV_EVENTS[id]; if(!e||!U) return 0; const x=U.xpDays||{}; let t=0; for(const k in x) if(k>=e.start&&k<=e.end) t+=x[k]||0; return t; }
-const avItemOpen=(x,L)=>x.event?avOwned(x.event):L>=(x.lvl||1);
+// team avatars belong to one team: you need the level and to be on that team
+const avTeamOK=x=>!x.team||!!(U&&U.team&&U.team!==NO_TEAM&&x.team.test(U.team));
+const avItemOpen=(x,L)=>x.event?avOwned(x.event):L>=(x.lvl||1)&&avTeamOK(x);
 const avShown=x=>!x.event||avOwned(x.event)||avEventActive(x.event);
 function avDefault(name){ let hsh=0; for(const ch of String(name||'')) hsh=(hsh*31+ch.charCodeAt(0))>>>0; const starters=AV_ANIMALS.filter(a=>a.lvl===1);
   return [starters[hsh%starters.length].id,'none','none',AV_BGS[hsh%8][0],AV_COLORS[(hsh>>>3)%7][0]].join('.'); }
@@ -3323,18 +3325,18 @@ function crownSvg(){ if(crownSvgCache) return crownSvgCache; const pal={O:'#1a1a
   return crownSvgCache=`<svg class="avcrown" viewBox="0 0 11 6" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`; }
 function isQotd(name){ try{ if(!lb||!name) return false; const q=lbData().qotd; return !!(q&&q.name&&String(q.name).trim().toLowerCase()===String(name).trim().toLowerCase()); }catch(e){ return false; } }
 function avC(code,px,name){ const svg=avSvg(code,px,name); return isQotd(name)?`<span class="avwrap" style="--avpx:${px}px" title="Quizzer of the Day">${svg}${crownSvg()}</span>`:svg; }
-const myAv=()=>U?(U.av||avDefault(me)):'';
+const myAv=()=>{ if(!U) return ''; const c=U.av||avDefault(me); const o=avParse(c,me), a=avFind(AV_ANIMALS,o.a); if(a&&a.team&&!avTeamOK(a)){ o.a=avDefault(me).split('.')[0]; U.av=avCode(o); return U.av; } return c; };
 function avOpen(item){ return levelOf(U.xp).level>=(item.lvl||1); }
-function avUnlocksAt(L){ const n=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>x.lvl===L).map(x=>x.name).concat(AV_BGS.filter(b=>b[2]===L).map(b=>b[0][0].toUpperCase()+b[0].slice(1)+' background'));
+function avUnlocksAt(L){ const n=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>x.lvl===L&&avTeamOK(x)).map(x=>x.name).concat(AV_BGS.filter(b=>b[2]===L).map(b=>b[0][0].toUpperCase()+b[0].slice(1)+' background'));
   return n.length?` New avatar stuff: ${n.join(', ')}!`:''; }
 let avTab='animal';
 function avatarPanel(){
   const o=avParse(myAv(),me), L=levelOf(U.xp).level;
   const tabs=[['animal','🙂 Avatar'],['hat','🎩 Hat'],['face','😎 Face'],['color','🎨 Colors']];
-  const lockTag=n=>n==='event'?`<span class="avlock ev">⏳ Event</span>`:`<span class="avlock">🔒 Lv ${n}</span>`;
-  const tile=(code,label,open,cur,attr,need)=>`<button class="avpick ${cur?'cur':''} ${open?'':'locked'} ${need==='event'?'evitem':''}" ${open?attr:'disabled'} aria-pressed="${cur}" title="${esc(label)}${open?'':need==='event'?' (limited-time unlock)':' (unlocks at level '+need+')'}">${avSvg(code,44,me)}<small>${esc(label)}</small>${open?'':lockTag(need)}</button>`;
+  const lockTag=n=>n==='event'?`<span class="avlock ev">⏳ Event</span>`:String(n).startsWith('team:')?`<span class="avlock tm">🛡️ ${esc(String(n).split('|')[1]||'Team')}</span>`:`<span class="avlock">🔒 Lv ${n}</span>`;
+  const tile=(code,label,open,cur,attr,need)=>`<button class="avpick ${cur?'cur':''} ${open?'':'locked'} ${need==='event'?'evitem':''}" ${open?attr:'disabled'} aria-pressed="${cur}" title="${esc(label)}${open?'':need==='event'?' (limited-time unlock)':String(need).startsWith('team:')?' ('+esc(String(need).slice(5).split('|')[0])+' only, at level 24)':' (unlocks at level '+need+')'}">${avSvg(code,44,me)}<small>${esc(label)}</small>${open?'':lockTag(need)}</button>`;
   let body='';
-  if(avTab==='animal') body=AV_ANIMALS.filter(avShown).map(a=>tile(avCode({...o,a:a.id}),a.name,avItemOpen(a,L),o.a===a.id,`data-av="a:${a.id}"`,a.event?'event':a.lvl)).join('');
+  if(avTab==='animal') body=AV_ANIMALS.filter(avShown).map(a=>tile(avCode({...o,a:a.id}),a.name,avItemOpen(a,L),o.a===a.id,`data-av="a:${a.id}"`,a.event?'event':(a.team&&!avTeamOK(a))?'team:'+a.teamName+'|'+a.teamTag:a.lvl)).join('');
   if(avTab==='hat') body=AV_HATS.map(x=>tile(avCode({...o,h:x.id}),x.name,L>=x.lvl,o.h===x.id,`data-av="h:${x.id}"`,x.lvl)).join('');
   if(avTab==='face') body=AV_FACES.map(x=>tile(avCode({...o,f:x.id}),x.name,L>=x.lvl,o.f===x.id,`data-av="f:${x.id}"`,x.lvl)).join('');
   const sw=(k,v,col,cur,need)=>{const open=!need||L>=need; return `<button class="avsw ${cur?'cur':''}" ${open?`data-av="${k}:${v}"`:'disabled'} aria-pressed="${cur}" title="${v}${open?'':' (level '+need+')'}" style="background:${col==='rainbow'?'linear-gradient(135deg,#ff8a80,#ffd180,#ccff90,#80d8ff,#ea80fc)':col}">${open?'':'🔒'}</button>`};
@@ -3344,7 +3346,7 @@ function avatarPanel(){
     <span class="hint">Hair color</span><div class="avsws">${AV_HAIRCOLORS.map(([v,c])=>sw('hcol',v,c,o.hcol===v)).join('')}</div>`:'';
   const colors=`<div style="display:grid;gap:8px">${hairRow}${skinRow}<span class="hint">Hat, bow tie and jersey color</span><div class="avsws">${AV_COLORS.map(([v,c])=>sw('hc',v,c,o.hc===v)).join('')}</div>
     <span class="hint">Background</span><div class="avsws">${AV_BGS.map(([v,c,n])=>sw('bg',v,c,o.bg===v,n)).join('')}</div></div>`;
-  const nextUp=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>!x.event&&x.lvl>L).sort((a,b)=>a.lvl-b.lvl)[0];
+  const nextUp=[...AV_ANIMALS,...AV_HATS,...AV_FACES].filter(x=>!x.event&&x.lvl>L&&avTeamOK(x)).sort((a,b)=>a.lvl-b.lvl)[0];
   return `<div class="panel avpanel" style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><span class="label">Your avatar</span>${nextUp?`<span class="hint">Next unlock: ${esc(nextUp.name)} at level ${nextUp.lvl}</span>`:'<span class="hint">Everything unlocked!</span>'}</div>
     <div class="row" style="gap:14px;align-items:center;flex-wrap:nowrap"><div class="avbig">${avC(myAv(),88,me)}</div>
