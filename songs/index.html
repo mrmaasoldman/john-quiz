@@ -76,7 +76,7 @@ html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) sa
 .glass>.refl>.mirror{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;pointer-events:none;filter:blur(1.8px) saturate(1.6);opacity:var(--g-mir,.6)}
 .mirlib{position:static!important;height:auto!important;overflow:visible!important;transform:none!important;transition:none!important;animation:none!important;background:none!important;view-transition-name:none}
 .mirlib .glass{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:transparent!important;box-shadow:none!important}
-.mirlib .glass::before,.mirlib .glass::after,.mirlib .refl{display:none}
+.mirlib .glass::before,.mirlib .glass::after,.mirlib .refl{display:none} .mirlib>*,.mirlib .chgroup{content-visibility:auto} /* only the slice of the mirror under the bar is laid out and painted; each part keeps its real height so the reflection stays lined up */
 .mirlib *{animation:none!important;transition:none!important} .mirlib{font-size:16px;text-shadow:none}
 .mini .card.glass>.refl,.tabbar.glass>.refl{-webkit-mask:linear-gradient(to top,rgba(0,0,0,1) 0,rgba(0,0,0,.7) 45%,rgba(0,0,0,.15) 100%);mask:linear-gradient(to top,rgba(0,0,0,1) 0,rgba(0,0,0,.7) 45%,rgba(0,0,0,.15) 100%)}
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .glass>.refl>.mirror{--g-mir:.45}} :root[data-theme="light"] .glass>.refl>.mirror{--g-mir:.45}
@@ -345,7 +345,7 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .mini .card>.ctl button:first-child{background:var(--sig);color:#fff;box-shadow:0 4px 12px rgba(255,92,138,.4)} .mini .ctl button:first-child svg{fill:#fff}
 .mini .card>.ctl svg{width:24px;height:24px;fill:var(--fg)}
 .mini .card>.bar{position:absolute;left:66px;right:116px;bottom:4px;height:2px;background:var(--sep);border-radius:3px;overflow:hidden}
-.mini .card>.bar i{display:block;height:100%;width:0;background:var(--sig1)}
+.mini .card>.bar i{display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:0 50%;background:var(--sig1);will-change:transform}
 
 /* ---------- now playing: a sheet with two pages — the whole current verse, then the scrolling lyrics ---------- */
 .np{position:fixed;inset:0;z-index:20;transform:translateY(104%);transition:transform .5s cubic-bezier(.32,.72,0,1);background:#0b0b10;color:var(--np-fg);will-change:transform;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -451,7 +451,7 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 @media (min-width:900px){.speedpop{left:auto;right:max(20px,var(--sar));transform:translateY(8px)} .speedpop.open{transform:none}}
 .scrub{position:relative;height:28px;touch-action:none;cursor:pointer}
 .scrub .trk{position:absolute;left:0;right:0;top:12px;height:4px;border-radius:4px;background:var(--np-line);transition:height .15s,top .15s}
-.scrub .fill{position:absolute;left:0;top:12px;height:4px;border-radius:4px;background:#fff;width:0;transition:height .15s,top .15s}
+.scrub .fill{position:absolute;left:0;top:12px;height:4px;border-radius:4px;background:#fff;width:100%;transform:scaleX(0);transform-origin:0 50%;will-change:transform;transition:height .15s,top .15s}
 .scrub.on .trk,.scrub.on .fill{height:8px;top:10px}
 .times{display:flex;justify-content:space-between;font-size:12px;color:var(--np-dim);font-variant-numeric:tabular-nums;margin-top:-6px;font-weight:600}
 .tr{display:flex;align-items:center;justify-content:center;gap:30px;padding:0;position:relative}
@@ -789,7 +789,14 @@ function buildLines(s){
 function verseStart(s,v){ const T=TIMING[s.id]; const sg=T&&T.seg&&T.seg.find(x=>x.v===v); return sg?Math.max(0,sg.t[0]-LEAD):0; }
 
 /* ---------- covers: a photo per chapter, chapter name set on it, colors pulled from the picture ---------- */
-const ART={}, COL={}, ART_BG={};
+const ART={}, THUMB={}, COL={}, ART_BG={};
+// painted covers are kept on the device (IndexedDB) so they're painted once, not on every visit
+const ART_V='3'; const artKey=ch=>`${ART_V}:${ch}:${CH[ch].label||''}:${CH[ch].big||''}`;
+function artDB(){ return new Promise(r=>{ try{ const q=indexedDB.open('jsongs-art',1); q.onupgradeneeded=()=>{ q.result.createObjectStore('art'); }; q.onsuccess=()=>r(q.result); q.onerror=()=>r(null); q.onblocked=()=>r(null); }catch(e){ r(null); } }); }
+async function artCacheAll(){ const db=await artDB(); if(!db) return {}; return new Promise(r=>{ try{ const out={}, st=db.transaction('art','readonly').objectStore('art'), q=st.openCursor(); q.onsuccess=()=>{ const c=q.result; if(!c){ r(out); return; } out[c.key]=c.value; c.continue(); }; q.onerror=()=>r(out); }catch(e){ r({}); } }); }
+async function artCachePut(key,val){ const db=await artDB(); if(!db) return; try{ const tx=db.transaction('art','readwrite'); tx.objectStore('art').put(val,key); const keep=new Set(CHAPTERS.map(artKey)); const cur=tx.objectStore('art').openCursor(); cur.onsuccess=()=>{ const c=cur.result; if(!c) return; if(!keep.has(c.key)) c.delete(); c.continue(); }; }catch(e){} }
+function toBlob(c,type,q){ return new Promise(r=>{ try{ c.toBlob(b=>r(b),type,q); }catch(e){ r(null); } }); }
+function useArt(ch,v){ if(!v) return; if(v.cover) ART[ch]=URL.createObjectURL(v.cover); if(v.thumb) THUMB[ch]=URL.createObjectURL(v.thumb); if(v.bg) ART_BG[ch]=v.bg; if(v.col) COL[ch]=v.col; }
 function boxBlur(cv,r,passes){ const x=cv.getContext('2d'), w=cv.width, h=cv.height, d=x.getImageData(0,0,w,h), a=d.data, t=new Float32Array(a.length);
   for(let p=0;p<passes;p++){ for(let y=0;y<h;y++) for(let X=0;X<w;X++){ let R=0,G=0,B=0,n=0; for(let k=-r;k<=r;k++){ const xx=Math.min(w-1,Math.max(0,X+k)), i=(y*w+xx)*4; R+=a[i];G+=a[i+1];B+=a[i+2];n++; } const o=(y*w+X)*4; t[o]=R/n;t[o+1]=G/n;t[o+2]=B/n; }
     for(let y=0;y<h;y++) for(let X=0;X<w;X++){ let R=0,G=0,B=0,n=0; for(let k=-r;k<=r;k++){ const yy=Math.min(h-1,Math.max(0,y+k)), i=(yy*w+X)*4; R+=t[i];G+=t[i+1];B+=t[i+2];n++; } const o=(y*w+X)*4; a[o]=R/n;a[o+1]=G/n;a[o+2]=B/n;a[o+3]=255; } }
@@ -821,7 +828,9 @@ async function makeArt(ch){
   x.shadowColor='rgba(0,0,0,.5)'; x.shadowBlur=18;
   x.fillStyle='rgba(255,255,255,.85)'; x.font='700 24px '+getComputedStyle(document.documentElement).getPropertyValue('--ui'); x.fillText(CH[ch].label||'JOHN',45,W-152);
   x.fillStyle='#fff'; x.font='800 136px Fraunces, Georgia, serif'; x.fillText(CH[ch].big||String(ch),40,W-32);
-  return c.toDataURL('image/jpeg',.86);
+  const t=document.createElement('canvas'); t.width=t.height=240; t.getContext('2d').drawImage(c,0,0,240,240);
+  const [cover,thumb]=await Promise.all([toBlob(c,'image/jpeg',.86),toBlob(t,'image/jpeg',.82)]);
+  return {cover,thumb,bg:ART_BG[ch],col:COL[ch]};
 }
 
 /* ---------- state ---------- */
@@ -843,7 +852,7 @@ function load(idx,autoplay,startAt){
   resumeAt=startAt||null;
   const art=ART[song.ch];
   if(prev&&prev.ch!==song.ch){ $('#npart0').src=ART[prev.ch]; $('#npart').style.opacity=0; requestAnimationFrame(()=>{ $('#npart').src=art; $('#npart').style.opacity=1; }); } else { $('#npart').src=art; $('#npart0').src=art; }
-  $('#minith').src=$('#lyart').src=$('#lyart2').src=art;
+  $('#minith').src=$('#lyart').src=$('#lyart2').src=THUMB[song.ch]||art;
   $('#npbg').style.backgroundImage=`url(${ART_BG[song.ch]||art})`;
   const col=COL[song.ch]; if(col){ document.documentElement.style.setProperty('--tint',col.tint); AUR.cols=col.c.slice(); AUR.last=0; }
   $('#minitt').innerHTML=`${esc(song.title)}<small>${esc(song.sub)}</small>`;
@@ -876,7 +885,7 @@ let lastSave=0;
 function saveProgress(force){ if(!song) return; const now=performance.now(); if(!force&&now-lastSave<3000) return; lastSave=now; lsSet('last',{id:song.id,t:audio.currentTime,d:audio.duration||song.dur}); }
 
 /* ---------- library ---------- */
-const rowHTML=(s,opts={})=>`<button class="row" type="button" data-song="${s.i}" style="--i:${Math.min(opts.i||0,14)}" ${opts.at!=null?`data-at="${opts.at}"`:''}>${opts.n?`<span class="n">${opts.n}</span>`:`<div class="th"><img src="${ART[s.ch]}" alt="" loading="lazy"><div class="eq"><i></i><i></i><i></i></div></div>`}<div class="tt"><b>${opts.title||esc(s.title)}</b><small>${opts.sub||(s.extra?esc(s.sub):`${nVerses(s)} verses · ${esc(s.sub)}`)}</small></div><span class="heart" data-fav="${s.id}" role="button" aria-pressed="${isFav(s.id)}" aria-label="Favorite"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.9c0 5.4-7.5 10-7.5 10z"/></svg></span><span class="dur">${fmt(s.dur)}</span></button>`;
+const rowHTML=(s,opts={})=>`<button class="row" type="button" data-song="${s.i}" style="--i:${Math.min(opts.i||0,14)}" ${opts.at!=null?`data-at="${opts.at}"`:''}>${opts.n?`<span class="n">${opts.n}</span>`:`<div class="th"><img src="${THUMB[s.ch]||ART[s.ch]}" data-art="${s.ch}" data-sz="t" alt="" loading="lazy"><div class="eq"><i></i><i></i><i></i></div></div>`}<div class="tt"><b>${opts.title||esc(s.title)}</b><small>${opts.sub||(s.extra?esc(s.sub):`${nVerses(s)} verses · ${esc(s.sub)}`)}</small></div><span class="heart" data-fav="${s.id}" role="button" aria-pressed="${isFav(s.id)}" aria-label="Favorite"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.9c0 5.4-7.5 10-7.5 10z"/></svg></span><span class="dur">${fmt(s.dur)}</span></button>`;
 let suppressClickUntil=0;
 /* swipe a row sideways: it slides with the finger, a pane grows behind it, and past the threshold the action fires on release */
 function swipeable(el,o){ let sx=0,sy=0,d=0,mode=null,id=null,will=false;
@@ -910,11 +919,11 @@ function setHero(ch){ const el=$('#herobg'), old=$('#herobg0'); if(el.dataset.ch
 function renderLibrary(){
   $('#meta').textContent=`${SONGS.length} songs · ${CHAPTERS.filter(c=>!CH[c].extra).length} chapters · ${fmtLong(SONGS.reduce((a,s)=>a+s.dur,0))}`;
   $('#chcount').textContent=`${CHAPTERS.length} albums`;
-  $('#albums').innerHTML=CHAPTERS.map((c,k)=>`<button class="album" type="button" data-ch="${c}" style="--i:${k}"><div class="cover"><img src="${ART[c]}" alt=""></div><b>${esc(chName(c))}</b><small>${SONGS.filter(s=>s.ch===c).length} song${SONGS.filter(s=>s.ch===c).length>1?'s':''} · ${CH[c].name}</small></button>`).join('');
+  $('#albums').innerHTML=CHAPTERS.map((c,k)=>`<button class="album" type="button" data-ch="${c}" style="--i:${k}"><div class="cover"><img src="${ART[c]}" data-art="${c}" alt=""></div><b>${esc(chName(c))}</b><small>${SONGS.filter(s=>s.ch===c).length} song${SONGS.filter(s=>s.ch===c).length>1?'s':''} · ${CH[c].name}</small></button>`).join('');
   document.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>showChapter(+b.dataset.ch,b.querySelector('.cover img, .th img')||b.querySelector('img')));
   const last=lsGet('last',null), lastCh=last&&SONGS.find(x=>x.id===last.id)?SONGS.find(x=>x.id===last.id).ch:CHAPTERS[0];
   $('#list').innerHTML=CHAPTERS.map(c=>{ const list=SONGS.filter(s=>s.ch===c), tot=list.reduce((a,s)=>a+s.dur,0);
-    return `<section class="chgroup ${c===lastCh?'open':''}" data-chg="${c}"><button class="chhd glass" type="button" aria-expanded="${c===lastCh}"><div class="th"><img src="${ART[c]}" alt="" loading="lazy"></div><div class="tt"><b>${esc(chName(c))}</b><small>${esc(CH[c].name)} · ${list.length} song${list.length>1?'s':''}</small></div><span class="go" data-chlink="${c}">Open ›</span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 15.5 4.5 8l1.4-1.4L12 12.7l6.1-6.1L19.5 8z"/></svg></span></button><div class="chbody"><div class="chin">${list.map((s,k)=>rowHTML(s,{i:k,sub:`${nVerses(s)} verses · ${fmt(s.dur)}`})).join('')}</div></div></section>`; }).join('');
+    return `<section class="chgroup ${c===lastCh?'open':''}" data-chg="${c}"><button class="chhd glass" type="button" aria-expanded="${c===lastCh}"><div class="th"><img src="${THUMB[c]||ART[c]}" data-art="${c}" data-sz="t" alt="" loading="lazy"></div><div class="tt"><b>${esc(chName(c))}</b><small>${esc(CH[c].name)} · ${list.length} song${list.length>1?'s':''}</small></div><span class="go" data-chlink="${c}">Open ›</span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 15.5 4.5 8l1.4-1.4L12 12.7l6.1-6.1L19.5 8z"/></svg></span></button><div class="chbody"><div class="chin">${list.map((s,k)=>rowHTML(s,{i:k,sub:`${nVerses(s)} verses · ${fmt(s.dur)}`})).join('')}</div></div></section>`; }).join('');
   document.querySelectorAll('[data-chlink]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const g=b.closest('.chgroup'); showChapter(+b.dataset.chlink,g&&g.querySelector('.chhd .th img')); });
   document.querySelectorAll('.chhd').forEach(h=>h.onclick=()=>toggleGroup(h.closest('.chgroup'))); try{ hapticOverlays($('#list')); }catch(e){}
   wireRows($('#list')); renderRecent(); renderResume(); staggerIn($('#albums'));
@@ -925,13 +934,13 @@ function renderFavs(){ return;
   wireRows(el); if(song) document.querySelectorAll('[data-song]').forEach(b=>b.setAttribute('aria-current',+b.dataset.song===song.i));
 }
 function renderRecent(){ const el=$('#recent'); const ids=lsGet('hist',[]).filter(id=>SONGS.some(s=>s.id===id)).slice(0,10); if(!ids.length){ el.innerHTML=''; return; }
-  el.innerHTML=`<div class="sect"><h2>Recently played</h2><small>${ids.length}</small></div><div class="recent">${ids.map(id=>{ const s=SONGS.find(x=>x.id===id); return `<button class="rc" type="button" data-rc="${s.i}"><div class="cover"><img src="${ART[s.ch]}" alt="" loading="lazy"><i>${fmt(s.dur)}</i></div><b>${esc(s.title)}</b><small>${esc(s.sub)}</small></button>`; }).join('')}</div>`;
+  el.innerHTML=`<div class="sect"><h2>Recently played</h2><small>${ids.length}</small></div><div class="recent">${ids.map(id=>{ const s=SONGS.find(x=>x.id===id); return `<button class="rc" type="button" data-rc="${s.i}"><div class="cover"><img src="${ART[s.ch]}" data-art="${s.ch}" alt="" loading="lazy"><i>${fmt(s.dur)}</i></div><b>${esc(s.title)}</b><small>${esc(s.sub)}</small></button>`; }).join('')}</div>`;
   el.querySelectorAll('[data-rc]').forEach(b=>b.onclick=e=>{ const i=+b.dataset.rc, pic=!!e.target.closest('.cover'); if(song&&song.i===i){ if(pic) openNP(); else toggle(); } else { playIdx(i); if(pic) openNP(); } }); }
 function noteHistory(id){ const h=lsGet('hist',[]).filter(x=>x!==id); h.unshift(id); lsSet('hist',h.slice(0,12)); }
 function renderResume(){
   const last=lsGet('last',null); const el=$('#resume'); el.innerHTML='';
   if(!last||!last.t||last.t<8) return; const s=SONGS.find(x=>x.id===last.id); if(!s||last.t>(last.d||s.dur)-8) return;
-  el.innerHTML=`<button class="resume glass" type="button" id="resumebtn"><div class="th"><img src="${ART[s.ch]}" alt=""></div><div class="tt"><small>Continue listening</small><b>${esc(s.title)}</b><div class="bar"><i style="width:${(last.t/(last.d||s.dur)*100).toFixed(1)}%"></i></div></div><span class="go"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></button>`;
+  el.innerHTML=`<button class="resume glass" type="button" id="resumebtn"><div class="th"><img src="${THUMB[s.ch]||ART[s.ch]}" data-art="${s.ch}" data-sz="t" alt=""></div><div class="tt"><small>Continue listening</small><b>${esc(s.title)}</b><div class="bar"><i style="width:${(last.t/(last.d||s.dur)*100).toFixed(1)}%"></i></div></div><span class="go"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></button>`;
   $('#resumebtn').onclick=()=>{ playIdx(s.i,last.t); openNP(); };
 }
 $('#playall').onclick=()=>{ shuffle=false; $('#shuf').setAttribute('aria-pressed','false'); setSource('all',null,0); load(0,true); openNP(); };
@@ -1294,11 +1303,13 @@ function goLyrics(on){ if(wide()){ LY.userAt=0; LY.followed=-2; updateLyrics(); 
 $('#lyr').onclick=()=>goLyrics(!lyricsVisible()||wide()); $('#vhint').onclick=()=>goLyrics(true); $('#lyup').onclick=()=>goLyrics(false);
 
 /* ---------- time & controls ---------- */
+// the elements this touches every frame are looked up once; text is only written when it actually changes
+const TE={fill:$('#fill'),cur:$('#tcur'),rem:$('#trem'),mini:$('#minibar'),lastCur:'',lastRem:''};
 function updateTime(){
   const d=audio.duration||song&&song.dur||0, t=audio.currentTime||0, p=d?t/d:0;
-  if(!seeking){ $('#fill').style.width=(p*100)+'%'; $('#tcur').textContent=fmt(t); $('#trem').textContent='-'+fmt(Math.max(0,d-t)); }
+  if(!seeking){ TE.fill.style.transform=`scaleX(${p.toFixed(4)})`; const c=fmt(t), r='-'+fmt(Math.max(0,d-t)); if(c!==TE.lastCur){ TE.lastCur=c; TE.cur.textContent=c; } if(r!==TE.lastRem){ TE.lastRem=r; TE.rem.textContent=r; } }
   if(document.body.classList.contains('morphing')) return;
-  $('#minibar').style.width=(p*100)+'%';
+  TE.mini.style.transform=`scaleX(${p.toFixed(4)})`;
 }
 function tick(){
   updateTime(); bookTicks(); if(np.classList.contains('open')){ updateVerse(); updateLyrics(); }
@@ -1317,7 +1328,7 @@ audio.addEventListener('ended',()=>{ lsSet('last',null); next(); });
 audio.addEventListener('timeupdate',tick);
 audio.addEventListener('loadedmetadata',()=>{ if(resumeAt&&resumeAt<audio.duration-5){ audio.currentTime=resumeAt; } resumeAt=null; updateTime(); });
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveProgress(true); });
-(function loop(){ if(song&&!audio.paused){ updateTime(); if(np.classList.contains('open')){ updateVerse(); updateLyrics(); } } requestAnimationFrame(loop); })();
+(function loop(){ let k=0; (function f(){ k++; if(song&&!audio.paused){ const open=np.classList.contains('open'); if(open||k%6===0) updateTime(); if(open){ updateVerse(); updateLyrics(); } } requestAnimationFrame(f); })(); })();
 $('#play').onclick=toggle; $('#miniplay').onclick=e=>{e.stopPropagation();toggle()};
 $('#next').onclick=next; $('#mininext').onclick=e=>{e.stopPropagation();next()}; $('#prev').onclick=prev;
 function setRepeatUI(){ const one=repeat==='one'; $('#rep').setAttribute('aria-pressed',qloop); $('#repi').innerHTML=false?'<path d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z"/><path d="M11 9.5h1.5V15H14v1.2h-4.2V15h1.4v-4.1l-1.4.6V10.3z" fill="#000"/>':'<path d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z"/>'; $('#rep').setAttribute('aria-label',qloop?'Looping the songs you added: on':'Loop the songs you added'); $('#rep1').setAttribute('aria-pressed',one||!!loopRange); $('#rep1 span').textContent=loopRange?`${loopRange.a}${loopRange.b!==loopRange.a?'–'+loopRange.b:''}`:'Repeat'; }
@@ -1358,7 +1369,7 @@ if('mediaSession' in navigator){ try{ navigator.mediaSession.setActionHandler('p
 // scrubber
 (function(){ const el=$('#scrub'); let drag=false;
   const at=e=>{ const r=el.getBoundingClientRect(); return Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)); };
-  const show=p=>{ const d=audio.duration||song.dur||0; $('#fill').style.width=(p*100)+'%'; $('#tcur').textContent=fmt(p*d); $('#trem').textContent='-'+fmt(d*(1-p)); };
+  const show=p=>{ const d=audio.duration||song.dur||0; TE.fill.style.transform=`scaleX(${p.toFixed(4)})`; TE.cur.textContent=TE.lastCur=fmt(p*d); TE.rem.textContent=TE.lastRem='-'+fmt(d*(1-p)); };
   el.addEventListener('pointerdown',e=>{ if(!song) return; drag=true; seeking=true; el.classList.add('on'); el.setPointerCapture(e.pointerId); show(at(e)); e.stopPropagation(); });
   el.addEventListener('pointermove',e=>{ if(drag) show(at(e)); });
   const end=e=>{ if(!drag) return; drag=false; const p=at(e); if(audio.duration) audio.currentTime=p*audio.duration; seeking=false; el.classList.remove('on'); LY.userAt=0; updateVerse(true); updateLyrics(true); };
@@ -1371,7 +1382,7 @@ function renderQueue(){
   $('#uloop').textContent=qloop?`Looping ${manual.length} song${manual.length>1?'s':''} · ${srcName()} is paused`:(src?`From ${srcName()} · on a loop`:''); $('#uloop').hidden=!src&&!qloop;
   if(song) $('#unow').innerHTML=`<div class="th"><img src="${ART[song.ch]}" alt=""></div><div><small>Now playing</small><b>${esc(song.title)}</b><i>${esc(song.sub)}</i></div>`;
   $('#reptxt').textContent=qloop?'Looping':(manual.length?'Loop my songs':'Loop this list');
-  const row=(i,key,drag,cls)=>{ const s=SONGS[i]; return `<div class="qrow ${cls}" data-key="${key}">${drag?'<span class="hd" data-hd aria-label="Drag to reorder"><svg viewBox="0 0 24 24"><path d="M4 7h16v2H4zm0 4h16v2H4zm0 4h16v2H4z"/></svg></span>':'<span class="hd" aria-hidden="true"></span>'}<div class="th"><img src="${ART[s.ch]}" alt=""></div><button class="tt" type="button" data-qplay="${key}" style="text-align:left;min-width:0"><b>${esc(s.title)}</b><small>${esc(s.sub)}</small></button><span class="dur">${fmt(s.dur)}</span><button class="rm" type="button" data-qrm="${key}" aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L12 13.4l-6.3 6.3-1.4-1.4L10.6 12 4.3 5.7l1.4-1.4L12 10.6l6.3-6.3z"/></svg></button></div>`; };
+  const row=(i,key,drag,cls)=>{ const s=SONGS[i]; return `<div class="qrow ${cls}" data-key="${key}">${drag?'<span class="hd" data-hd aria-label="Drag to reorder"><svg viewBox="0 0 24 24"><path d="M4 7h16v2H4zm0 4h16v2H4zm0 4h16v2H4z"/></svg></span>':'<span class="hd" aria-hidden="true"></span>'}<div class="th"><img src="${THUMB[s.ch]||ART[s.ch]}" data-art="${s.ch}" data-sz="t" alt=""></div><button class="tt" type="button" data-qplay="${key}" style="text-align:left;min-width:0"><b>${esc(s.title)}</b><small>${esc(s.sub)}</small></button><span class="dur">${fmt(s.dur)}</span><button class="rm" type="button" data-qrm="${key}" aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L12 13.4l-6.3 6.3-1.4-1.4L10.6 12 4.3 5.7l1.4-1.4L12 10.6l6.3-6.3z"/></svg></button></div>`; };
   if(manual.length) html+=`<div class="qdiv">${qloop?'Looping these':'Songs you added'}</div><div class="qsec" data-sec="m">${manual.map((i,k)=>(qloop&&k===manualPos)?'':row(i,'m'+k,true,'man')).join('')}</div>`;
   if(src&&src.order.length>1&&!qloop){ // while a loop is on, only the songs that will actually play are listed
     const tail=src.order.slice(src.pos+1), head=src.order.slice(0,Math.max(0,src.pos));
@@ -1622,7 +1633,9 @@ document.addEventListener('click',e=>{ if(e.target.closest('.row[data-song],.rc[
 const MIR=[];
 function mirrorMake(host){ const refl=host.querySelector(':scope>.refl'); if(!refl) return; const m=document.createElement('div'); m.className='mirror'; m.setAttribute('aria-hidden','true'); refl.append(m); MIR.push({host,m}); }
 const mirSrc=()=>view==='chapter'&&!$('#chapter').hidden?$('#chapter'):$('#lib');
-let mirT=0; function mirrorSync(){ clearTimeout(mirT); mirT=setTimeout(()=>{ if(document.body.classList.contains('folding')||document.body.classList.contains('morphing')||document.body.classList.contains('paging')){ mirrorSync(); return; } const lib=mirSrc(); MIR.forEach(({m})=>{ const c=lib.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.querySelectorAll('.refl,.mirror,canvas,video,.htap,.hapt,svg,.eq,.chgroup:not(.open) .chin,.note,.uhint').forEach(e=>e.remove()); /* the mirror is blurred and faint: closed folders' rows and icon chrome add nothing but layout cost */ c.querySelectorAll('[loading]').forEach(e=>e.removeAttribute('loading')); c.className='lib mirlib'; c.inert=true; m.replaceChildren(c); }); mirrorMeasure(); },360); }
+let mirT=0; function mirrorSync(){ clearTimeout(mirT); mirT=setTimeout(()=>{ if(document.body.classList.contains('folding')||document.body.classList.contains('morphing')||document.body.classList.contains('paging')){ mirrorSync(); return; } const lib=mirSrc(); MIR.forEach(({m})=>{ const c=lib.cloneNode(true); c.removeAttribute('id'); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.querySelectorAll('.refl,.mirror,canvas,video,.htap,.hapt,svg,.eq,.chgroup:not(.open) .chin,.note,.uhint').forEach(e=>e.remove()); /* the mirror is blurred and faint: closed folders' rows and icon chrome add nothing but layout cost */ c.querySelectorAll('[loading]').forEach(e=>e.removeAttribute('loading')); c.className='lib mirlib'; c.inert=true; mirrorSize(lib,c); m.replaceChildren(c); }); mirrorMeasure(); },360); }
+// the clone's parts are given the source's heights up front, so the parts the browser skips still take up the right room
+function mirrorSize(src,c){ const pair=(a,b)=>{ const A=[...a], B=[...b]; if(A.length!==B.length) return; A.forEach((e,i)=>{ const h=e.offsetHeight; if(h) B[i].style.containIntrinsicSize=`auto ${h}px`; }); }; pair(src.children,c.children); pair(src.querySelectorAll('.chgroup'),c.querySelectorAll('.chgroup')); }
 let mirGeo=null;
 function mirrorMeasure(){ const lib=mirSrc(), lr=lib.getBoundingClientRect(); if(!lr.width) return; mirGeo={left:lr.left,top:lr.top,width:lr.width,bars:MIR.map(({host,m})=>{ const r=host.getBoundingClientRect(); return {m,r}; })}; mirrorPos(); }
 function mirrorPos(){ if(!mirGeo||document.body.classList.contains('npopen')) return; const st=mirSrc().scrollTop, G=mirGeo;
@@ -1660,12 +1673,13 @@ if(!/claude\.ai$/.test(location.hostname)&&/\/songs\/?(index\.html)?$/.test(loca
   if(EMBEDDED) try{ parent.postMessage({jq:'ready'},'*'); }catch(e){}
   if(!EMBEDDED&&lsGet('where',null)===null){} }
 // swap a freshly made cover into every place the plain photo was showing
-function refreshArt(c){ const raw=`art/john${c}.jpg`; document.querySelectorAll(`img[src$="${raw}"]`).forEach(im=>{ im.src=ART[c]; });
+function refreshArt(c){ document.querySelectorAll(`img[data-art="${c}"]`).forEach(im=>{ const want=im.dataset.sz==='t'?(THUMB[c]||ART[c]):ART[c]; if(im.getAttribute('src')!==want) im.src=want; }); const raw=`art/john${c}.jpg`; [['#minith',1],['#lyart',1],['#lyart2',1],['#npart',0],['#npart0',0]].forEach(([q,t])=>{ const el=$(q); if(el&&el.getAttribute('src')===raw) el.src=t?(THUMB[c]||ART[c]):ART[c]; });
   if(song&&song.ch===c){ $('#npbg').style.backgroundImage=`url(${ART_BG[c]||ART[c]})`; const col=COL[c]; if(col){ document.documentElement.style.setProperty('--tint',col.tint); AUR.cols=col.c.slice(); AUR.last=0; } } }
 (async function(){
   // show the library right away with the plain photos; the numbered covers get painted in one by one behind the scenes
   try{ await Promise.race([document.fonts.load('800 150px Fraunces'),new Promise(r=>setTimeout(r,350))]); }catch(e){}
   CHAPTERS.forEach(c=>{ ART[c]=`art/john${c}.jpg`; });
+  const cached=await artCacheAll(); CHAPTERS.forEach(c=>useArt(c,cached[artKey(c)]));
   { // a different chapter's photo behind the title every visit (never the same one twice in a row)
     let prev=lsGet('heroch',0), pick; do{ pick=CHAPTERS[Math.random()*CHAPTERS.length|0]; }while(CHAPTERS.length>1&&pick===prev); lsSet('heroch',pick); setHero(pick); }
   renderLibrary();
@@ -1680,7 +1694,7 @@ function refreshArt(c){ const raw=`art/john${c}.jpg`; document.querySelectorAll(
   if(m&&CH[+m[1]]) showChapter(+m[1]);
   const order=[s.ch,...CHAPTERS.filter(c=>c!==s.ch)];
   const idle=()=>new Promise(r=>('requestIdleCallback' in window)?requestIdleCallback(()=>r(),{timeout:600}):setTimeout(r,90));
-  for(const c of order){ await idle(); try{ ART[c]=await makeArt(c); refreshArt(c); }catch(e){} }
+  for(const c of order){ if(cached[artKey(c)]) continue; await idle(); try{ const v=await makeArt(c); useArt(c,v); refreshArt(c); artCachePut(artKey(c),v); }catch(e){} }
 })();
 </script>
 
