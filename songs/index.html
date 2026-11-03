@@ -1493,7 +1493,7 @@ const NPM={ctl:null,opening:false};
 setInterval(()=>{ const b=document.body.classList; ['morphing','folding','paging'].forEach(c=>{ if(!b.contains(c)||(c==='morphing'&&np.classList.contains('drag'))){ delete NPM['t_'+c]; return; } NPM['t_'+c]=(NPM['t_'+c]||0)+1; if(NPM['t_'+c]>=3){ b.remove(c); np.classList.remove('morphing'); delete NPM['t_'+c]; if(c==='morphing'){ document.querySelectorAll('.gmorph').forEach(g=>g.remove()); NPM.ctl=null; } } }); },900);
 function npHideNow(){ haptic('soft'); np.classList.remove('closing'); np.classList.add('morphing'); np.classList.remove('open','drag'); np.style.transform=''; np.setAttribute('aria-hidden','true'); document.body.classList.remove('npopen'); void np.offsetWidth; np.classList.remove('morphing'); }
 function openNP(scrub){ scrub=scrub===true;
-  if(NPM.ctl){ if(!NPM.opening){ np.classList.remove('closing'); document.body.classList.add('npopen'); np.classList.add('open'); np.setAttribute('aria-hidden','false'); npMoving(); NPM.ctl.head(true,()=>{ document.body.classList.add('npopen'); }); } return null; } // it's mid-move: just head up
+  if(NPM.ctl){ morphSettle(); if(!NPM.opening){ np.classList.remove('closing'); document.body.classList.add('npopen'); np.classList.add('open'); np.setAttribute('aria-hidden','false'); npMoving(); NPM.ctl.head(true,()=>{ document.body.classList.add('npopen'); }); } return null; } // it's mid-move: just head up
   const wasOpen=np.classList.contains('open');
   if(!wasOpen&&!wide()){ cancelAnimationFrame(LY.anim); LY.prog=false; npscroll.scrollTop=0; LY.wasVis=false; LY.arrive=false; np.classList.remove('lyvis'); }
   const fromMini=!wasOpen&&!reduce&&!$('#mini').classList.contains('hide')&&!np.style.transform;
@@ -1509,8 +1509,8 @@ function openNP(scrub){ scrub=scrub===true;
     requestAnimationFrame(()=>{ const t=npTarget(), r=t.getBoundingClientRect(), nr=np.getBoundingClientRect(); morph($('#minith'),t,{left:r.left,top:r.top-nr.top,width:r.width,height:r.height}); }); }
 }
 function closeNP(scrub){ scrub=scrub===true;
-  if(NPM.ctl){ if(NPM.opening){ setQueueOpen(false); setSpeedOpen(false); setRepOpen(false); document.body.classList.remove('npopen'); npMoving(); NPM.ctl.head(false,npHideNow); } return null; } // it's mid-move: just head down
-  const wasOpen=np.classList.contains('open'), dragged=!!np.style.transform;
+  if(NPM.ctl){ morphSettle(); if(NPM.opening){ setQueueOpen(false); setSpeedOpen(false); setRepOpen(false); document.body.classList.remove('npopen'); npMoving(); NPM.ctl.head(false,npHideNow); } return null; } // it's mid-move: just head down
+  morphSettle(); const wasOpen=np.classList.contains('open'), dragged=!!np.style.transform;
   const viaGlass=wasOpen&&!dragged&&!reduce&&miniCardRect&&!$('#mini').classList.contains('hide'); if(viaGlass) document.body.classList.add('morphing');
   setQueueOpen(false); setSpeedOpen(false); setRepOpen(false); document.body.classList.remove('npopen');
   if(viaGlass){ np.classList.remove('drag'); np.classList.add('closing'); npMoving();
