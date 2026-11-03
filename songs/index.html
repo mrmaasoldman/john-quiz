@@ -717,10 +717,11 @@ body.npopen .toast{bottom:calc(150px + var(--sab));z-index:50}
     <div class="unow" id="unow"></div>
     <div class="uctl">
       <button id="shuf" type="button" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M17 4h4v4l-1.5-1.5L16 10l-1.4-1.4 3.5-3.5zM3 6h4l9.6 11H21l-1.5 1.5L21 20h-4v-4l1.5 1.5L17 16H6L3 6zm0 12 4.6-5.3 1.3 1.6L5 18z"/></svg>Shuffle</button>
-      <button id="rep" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" id="repi"><path d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z"/></svg><span id="reptxt">Loop this list</span></button>
+      <button id="rep" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" id="repi"><path d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z"/></svg><span id="reptxt">Repeat</span></button>
+      <button id="qclear" type="button" hidden><svg viewBox="0 0 24 24"><path d="M6 7h12l-1 13H7zm3-3h6v2H9zM4 6h16v1.5H4z"/></svg>Clear</button>
     </div>
     <div class="ul" id="ulist"></div>
-    <div class="uhint">Tap a song to jump to it · drag <b>≡</b> to reorder · swipe left or tap <b>×</b> to remove · swipe any song in the library to the right to add it here</div>
+    <div class="uhint">Tap a song to jump to it · drag <b>≡</b> to reorder · swipe left or tap <b>×</b> to remove · in the library, swipe a song right to play it next, or a folder right to add the chapter</div>
   </div>
 </section>
 
@@ -840,7 +841,7 @@ async function makeArt(ch){
 }
 
 /* ---------- state ---------- */
-let src=null, manual=[], manualPos=-1, qloop=false, qconv=false, fromManual=false, loopRange=null, song=null, lines=[], repeat=lsGet('repeat','off')==='one'?'one':'off', shuffle=false, curLine=-2, seeking=false, speed=lsGet('speed',1), favs=lsGet('fav',[]), resumeAt=null, view='home';
+let src=null, loopAll=lsGet('loopall',true)!==false, loopRange=null, song=null, lines=[], repeat=lsGet('repeat','off')==='one'?'one':'off', shuffle=false, curLine=-2, seeking=false, speed=lsGet('speed',1), favs=lsGet('fav',[]), resumeAt=null, view='home';
 
 function listFor(kind,ch){ return kind==='all'?SONGS.map(s=>s.i):kind==='favs'?SONGS.filter(s=>isFav(s.id)).map(s=>s.i):SONGS.filter(s=>s.ch===ch).map(s=>s.i); }
 function shuffled(list,first){ const r=list.filter(i=>i!==first); for(let i=r.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [r[i],r[j]]=[r[j],r[i]]; } if(first!=null&&list.includes(first)) r.unshift(first); return r; }
@@ -848,10 +849,10 @@ function setSource(kind,ch,startIdx){
   let order=listFor(kind,ch);
   if(!order.length||(startIdx!=null&&!order.includes(startIdx))){ kind='chapter'; ch=SONGS[startIdx!=null?startIdx:0].ch; order=listFor(kind,ch); }
   if(shuffle) order=shuffled(order,startIdx);
-  src={kind,ch,order,pos:startIdx!=null?order.indexOf(startIdx):0}; fromManual=false;
+  src={kind,ch,order,pos:startIdx!=null?order.indexOf(startIdx):0};
 }
 function srcName(){ return !src?'':src.kind==='all'?'all the songs':src.kind==='favs'?'Favorites':chName(src.ch); }
-function refill(){ if(!src) return; const cur=song?song.i:null; let order=listFor(src.kind,src.ch); if(!order.length){ order=listFor('chapter',song?song.ch:SONGS[0].ch); src.kind='chapter'; src.ch=song?song.ch:SONGS[0].ch; } if(shuffle) order=shuffled(order,cur); src.order=order; src.pos=cur!=null?Math.max(0,order.indexOf(cur)):-1; }
+// the queue is one plain list: the song playing, then everything lined up after it, in the order shown. songs you add are slipped into that same list
 function load(idx,autoplay,startAt){
   const prev=song; song=SONGS[idx]; lines=buildLines(song); curLine=-2; if(!prev||prev.i!==idx){ loopRange=null; }
   audio.src=song.file; audio.load(); audio.playbackRate=speed;
@@ -875,11 +876,11 @@ function load(idx,autoplay,startAt){
 function playIdx(idx,startAt,ctx){ setSource(ctx==='favs'?'favs':'chapter',SONGS[idx].ch,idx); load(idx,true,startAt); }
 function next(){ if(!song) return;
   if(repeat==='one'){ audio.currentTime=0; audio.play().catch(()=>{}); return; }
-  if(qloop&&manual.length){ manualPos=(manualPos+1)%manual.length; fromManual=true; load(manual[manualPos],true); return; }
-  if(manual.length){ const i=manual.shift(); fromManual=true; load(i,true); return; }
-  if(src){ if(src.order.length<2&&!(src.order.length===1&&src.order[0]!==song.i)) refill(); const n=src.order.length; if(!n){ audio.pause(); audio.currentTime=0; return; } src.pos=(src.pos+1)%n; fromManual=false; load(src.order[src.pos],true); return; }
-  audio.pause(); audio.currentTime=0; }
-function prev(){ if(!song) return; if(audio.currentTime>3||!src||fromManual||src.order.length<2){ audio.currentTime=0; return; } const n=src.order.length; src.pos=(src.pos-1+n)%n; load(src.order[src.pos],true); }
+  if(!src||!src.order.length){ audio.pause(); audio.currentTime=0; return; }
+  if(src.pos+1<src.order.length){ src.pos++; load(src.order[src.pos],true); return; }
+  if(loopAll){ src.pos=0; load(src.order[0],true); return; }
+  audio.pause(); audio.currentTime=0; updateTime(); }
+function prev(){ if(!song) return; if(audio.currentTime>3||!src||src.order.length<2){ audio.currentTime=0; return; } if(src.pos>0) src.pos--; else if(loopAll) src.pos=src.order.length-1; else { audio.currentTime=0; return; } load(src.order[src.pos],true); }
 function toggle(){ if(verseClick&&!IOS) acx(); if(!song){ playIdx(0); return; } audio.paused?audio.play().catch(()=>{}):audio.pause(); }
 
 /* ---------- favorites & resume ---------- */
@@ -1344,14 +1345,9 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveProgr
 (function loop(){ let k=0; (function f(){ k++; if(song&&!audio.paused){ const open=np.classList.contains('open'); if(open||k%6===0) updateTime(); if(open){ updateVerse(); updateLyrics(); } } requestAnimationFrame(f); })(); })();
 $('#play').onclick=toggle; $('#miniplay').onclick=e=>{e.stopPropagation();toggle()};
 $('#next').onclick=next; $('#mininext').onclick=e=>{e.stopPropagation();next()}; $('#prev').onclick=prev;
-function setRepeatUI(){ const one=repeat==='one'; $('#rep').setAttribute('aria-pressed',qloop); $('#repi').innerHTML=false?'<path d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z"/><path d="M11 9.5h1.5V15H14v1.2h-4.2V15h1.4v-4.1l-1.4.6V10.3z" fill="#000"/>':'<path d="M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z"/>'; $('#rep').setAttribute('aria-label',qloop?'Looping the songs you added: on':'Loop the songs you added'); $('#rep1').setAttribute('aria-pressed',one||!!loopRange); $('#rep1 span').textContent=loopRange?`${loopRange.a}${loopRange.b!==loopRange.a?'–'+loopRange.b:''}`:'Repeat'; }
-$('#rep').onclick=()=>{ if(!song) return;
-  if(qloop){ qloop=false; if(qconv){ qconv=false; manual=[]; manualPos=-1; if(src){ const k=src.order.indexOf(song.i); if(k>=0) src.pos=k; } fromManual=false; } setRepeatUI(); renderQueue(); toast('Queue loop off'); return; }
-  if(!manual.length){ // nothing added by hand: loop the list exactly as it's shown — this song, then the rest of the chapter in the order you've arranged it
-    const tail=src?src.order.slice(src.pos+1):[], head=src?src.order.slice(0,src.pos):[]; manual=[song.i,...tail,...head]; manualPos=0; fromManual=true; qconv=true; }
-  else { qconv=false; manualPos=fromManual?Math.max(0,manual.indexOf(song.i)):-1; }
-  qloop=true; repeat='off'; lsSet('repeat',repeat); loopRange=null; setRepeatUI(); renderQueue(); toast(`Looping ${manual.length} song${manual.length>1?'s':''}`); }; setRepeatUI();
-$('#shuf').onclick=()=>{ shuffle=!shuffle; $('#shuf').setAttribute('aria-pressed',shuffle); if(!song||!src) return; const cur=song.i; src.order=shuffle?shuffled(listFor(src.kind,src.ch),cur):listFor(src.kind,src.ch); if(!src.order.includes(cur)) src.order.unshift(cur); src.pos=src.order.indexOf(cur); renderQueue(); };
+function setRepeatUI(){ const one=repeat==='one'; $('#rep').setAttribute('aria-pressed',loopAll); $('#rep').setAttribute('aria-label',loopAll?'Repeat the list: on':'Repeat the list'); $('#rep1').setAttribute('aria-pressed',one||!!loopRange); $('#rep1 span').textContent=loopRange?`${loopRange.a}${loopRange.b!==loopRange.a?'–'+loopRange.b:''}`:'Repeat'; }
+$('#rep').onclick=()=>{ loopAll=!loopAll; lsSet('loopall',loopAll); setRepeatUI(); renderQueue(); toast(loopAll?'The list starts over when it ends':'The list stops when it ends'); }; setRepeatUI();
+$('#shuf').onclick=()=>{ shuffle=!shuffle; $('#shuf').setAttribute('aria-pressed',shuffle); if(!song||!src) return; const up=src.order.slice(src.pos+1), head=src.order.slice(0,src.pos+1); src.order=head.concat(shuffle?shuffled(up):up.slice().sort((a,b)=>a-b)); renderQueue(); toast(shuffle?'Shuffling what comes next':'Back in order'); };
 $('#volr').oninput=e=>audio.volume=+e.target.value;
 function rangeTimes(){ if(!loopRange||!verses.length) return null; const a=verses.find(v=>v.v===loopRange.a&&!v.rep)||verses.find(v=>v.v===loopRange.a), b=verses.find(v=>v.v===loopRange.b&&!v.rep)||verses.find(v=>v.v===loopRange.b); if(!a||!b) return null; return {start:Math.max(0,a.start-0.3),end:b.end}; }
 function setRange(a,b){ loopRange=a==null?null:{a:Math.min(a,b),b:Math.max(a,b)}; if(loopRange){ repeat='off'; lsSet('repeat',repeat); const r=rangeTimes(); if(r&&(audio.currentTime<r.start||audio.currentTime>r.end)) audio.currentTime=r.start; audio.play().catch(()=>{}); } setRepeatUI(); renderRepPop(); }
@@ -1392,21 +1388,17 @@ if('mediaSession' in navigator){ try{ navigator.mediaSession.setActionHandler('p
 /* ---------- up next: tap to jump, drag the handle to reorder, × to remove ---------- */
 function renderQueue(){
   const ul=$('#ulist'); let html='';
-  $('#uloop').textContent=qloop?`Looping ${manual.length} song${manual.length>1?'s':''} · ${srcName()} is paused`:(src?`From ${srcName()} · on a loop`:''); $('#uloop').hidden=!src&&!qloop;
-  if(song) $('#unow').innerHTML=`<div class="th"><img src="${ART[song.ch]}" alt=""></div><div><small>Now playing</small><b>${esc(song.title)}</b><i>${esc(song.sub)}</i></div>`;
-  $('#reptxt').textContent=qloop?'Looping':(manual.length?'Loop my songs':'Loop this list');
-  const row=(i,key,drag,cls)=>{ const s=SONGS[i]; return `<div class="qrow ${cls}" data-key="${key}">${drag?'<span class="hd" data-hd aria-label="Drag to reorder"><svg viewBox="0 0 24 24"><path d="M4 7h16v2H4zm0 4h16v2H4zm0 4h16v2H4z"/></svg></span>':'<span class="hd" aria-hidden="true"></span>'}<div class="th"><img src="${THUMB[s.ch]||ART[s.ch]}" data-art="${s.ch}" data-sz="t" alt=""></div><button class="tt" type="button" data-qplay="${key}" style="text-align:left;min-width:0"><b>${esc(s.title)}</b><small>${esc(s.sub)}</small></button><span class="dur">${fmt(s.dur)}</span><button class="rm" type="button" data-qrm="${key}" aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L12 13.4l-6.3 6.3-1.4-1.4L10.6 12 4.3 5.7l1.4-1.4L12 10.6l6.3-6.3z"/></svg></button></div>`; };
-  if(manual.length) html+=`<div class="qdiv">${qloop?'Looping these':'Songs you added'}</div><div class="qsec" data-sec="m">${manual.map((i,k)=>(qloop&&k===manualPos)?'':row(i,'m'+k,true,'man')).join('')}</div>`;
-  if(src&&src.order.length>1&&!qloop){ // while a loop is on, only the songs that will actually play are listed
-    const tail=src.order.slice(src.pos+1), head=src.order.slice(0,Math.max(0,src.pos));
-    html+=`<div class="qdiv">${manual.length?'Then the rest of ':'Coming up in '}${srcName()}</div>`;
-    if(tail.length) html+=`<div class="qsec" data-sec="t">${tail.map((i,k)=>row(i,'s'+(src.pos+1+k),true,'rest')).join('')}</div>`;
-    if(head.length) html+=`<div class="qdiv sub">${srcName()} starts over</div><div class="qsec" data-sec="h">${head.map((i,k)=>row(i,'s'+k,true,'wrap')).join('')}</div>`;
-  }
-  ul.innerHTML=html||`<div class="empty" style="color:var(--np-sub)">Nothing lined up yet.</div>`;
-  const parse=key=>({m:key[0]==='m',k:+key.slice(1)});
-  ul.querySelectorAll('[data-qplay]').forEach(b=>b.onclick=()=>{ const {m,k}=parse(b.dataset.qplay); if(m){ if(qloop){ manualPos=k; fromManual=true; load(manual[k],true); } else { const [i]=manual.splice(k,1); fromManual=true; load(i,true); } } else { src.pos=k; fromManual=false; load(src.order[k],true); } });
-  const removeKey=key=>{ const {m,k}=parse(key); if(m){ manual.splice(k,1); if(k<=manualPos) manualPos--; if(manual.length<=(qconv?1:0)){ qloop=false; if(qconv){ qconv=false; manual=[]; manualPos=-1; fromManual=false; } setRepeatUI(); } } else if(src){ src.order.splice(k,1); if(k<src.pos) src.pos--; if(src.order.length<2){ refill(); toast(`${srcName()} added back`); } } renderQueue(); };
+  const n=src?src.order.length:0, up=src?src.order.slice(src.pos+1):[], before=src?src.order.slice(0,Math.max(0,src.pos)):[];
+  $('#uloop').textContent=src?`From ${srcName()}${loopAll?' · starts over at the end':' · stops at the end'}`:''; $('#uloop').hidden=!src;
+  if(song) $('#unow').innerHTML=`<div class="th"><img src="${THUMB[song.ch]||ART[song.ch]}" alt=""></div><div><small>Now playing</small><b>${esc(song.title)}</b><i>${esc(song.sub)}</i></div>`;
+  $('#reptxt').textContent='Repeat'; $('#qclear').hidden=!up.length;
+  const row=(i,key,cls)=>{ const s=SONGS[i]; return `<div class="qrow ${cls}" data-key="${key}"><span class="hd" data-hd aria-label="Drag to reorder"><svg viewBox="0 0 24 24"><path d="M4 7h16v2H4zm0 4h16v2H4zm0 4h16v2H4z"/></svg></span><div class="th"><img src="${THUMB[s.ch]||ART[s.ch]}" data-art="${s.ch}" data-sz="t" alt=""></div><button class="tt" type="button" data-qplay="${key}" style="text-align:left;min-width:0"><b>${esc(s.title)}</b><small>${esc(s.sub)}</small></button><span class="dur">${fmt(s.dur)}</span><button class="rm" type="button" data-qrm="${key}" aria-label="Remove"><svg viewBox="0 0 24 24"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L12 13.4l-6.3 6.3-1.4-1.4L10.6 12 4.3 5.7l1.4-1.4L12 10.6l6.3-6.3z"/></svg></button></div>`; };
+  if(up.length) html+=`<div class="qdiv">Up next · ${up.length} song${up.length>1?'s':''}</div><div class="qsec" data-sec="t">${up.map((i,k)=>row(i,'s'+(src.pos+1+k),'rest')).join('')}</div>`;
+  if(loopAll&&before.length) html+=`<div class="qdiv sub">Then from the top</div><div class="qsec" data-sec="h">${before.map((i,k)=>row(i,'s'+k,'wrap')).join('')}</div>`;
+  ul.innerHTML=html||`<div class="empty" style="color:var(--np-sub)">Nothing lined up after this one.</div>`;
+  const parse=key=>({k:+key.slice(1)});
+  ul.querySelectorAll('[data-qplay]').forEach(b=>b.onclick=()=>{ const {k}=parse(b.dataset.qplay); src.pos=k; load(src.order[k],true); });
+  const removeKey=key=>{ const {k}=parse(key); if(!src||k===src.pos) return; src.order.splice(k,1); if(k<src.pos) src.pos--; renderQueue(); };
   const dropRow=(row,cls)=>{ row.classList.add(cls); setTimeout(()=>{ row.style.height=row.offsetHeight+'px'; void row.offsetWidth; row.classList.add('collapse'); setTimeout(()=>removeKey(row.dataset.key),240); },cls==='rowout'?240:220); };
   ul.querySelectorAll('[data-qrm]').forEach(b=>b.onclick=()=>dropRow(b.closest('.qrow'),'rowgo'));
   ul.querySelectorAll('.qrow').forEach(r=>swipeable(r,{dir:-1,ignore:'[data-hd]',onCommit:()=>dropRow(r,'rowout')}));
@@ -1416,20 +1408,22 @@ function renderQueue(){
     const move=ev=>{ const dy=ev.clientY-y0; row.style.transform=`translateY(${dy}px) scale(1.02)`; const target=Math.max(0,Math.min(rows.length-1,Math.round(i0+dy/rh)));
       if(target!==cur){ cur=target; rows.forEach((r,k)=>{ if(r===row) return; let off=0; if(i0<cur&&k>i0&&k<=cur) off=-rh; else if(i0>cur&&k>=cur&&k<i0) off=rh; r.style.transform=off?`translateY(${off}px)`:''; }); } };
     const up=()=>{ h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); h.removeEventListener('pointercancel',up); row.classList.remove('lift'); row.style.transform=''; rows.forEach(r=>r.style.transform='');
-      if(cur!==i0){ const from=parse(rows[i0].dataset.key).k, to=parse(rows[cur].dataset.key).k, list=sec.dataset.sec==='m'?manual:src.order; const [it]=list.splice(from,1); list.splice(to,0,it); } renderQueue(); };
+      if(cur!==i0){ const from=parse(rows[i0].dataset.key).k, to=parse(rows[cur].dataset.key).k, list=src.order; const [it]=list.splice(from,1); list.splice(to,0,it); } renderQueue(); };
     h.addEventListener('pointermove',move); h.addEventListener('pointerup',up); h.addEventListener('pointercancel',up);
   }));
 }
 function setQueueOpen(on){ np.classList.toggle('qopen',on); $('#upnext').classList.toggle('open',on); $('#scrim').classList.toggle('on',on); $('#queue').setAttribute('aria-pressed',on); }
-$('#queue').onclick=()=>setQueueOpen(!$('#upnext').classList.contains('open')); $('#uclose').onclick=()=>setQueueOpen(false); $('#scrim').onclick=()=>setQueueOpen(false);
-function playNext(i){ haptic(); if(!song){ playIdx(i); return; } const k=manual.indexOf(i); if(k>=0){ manual.splice(k,1); if(k<=manualPos) manualPos--; } if(qloop){ manual.splice(manualPos+1,0,i); } else manual.unshift(i); renderQueue(); toast(`Playing next: ${SONGS[i].title}`); }
-// a whole chapter after what's already lined up (songs of it already there move to the end with it); nothing playing yet → it just starts playing
+$('#queue').onclick=()=>setQueueOpen(!$('#upnext').classList.contains('open')); $('#qclear').onclick=()=>{ if(!src) return; haptic(); src.order=src.order.slice(0,src.pos+1); renderQueue(); toast('Cleared what was coming up'); }; $('#uclose').onclick=()=>setQueueOpen(false); $('#scrim').onclick=()=>setQueueOpen(false);
+function playNext(i){ haptic(); if(!song||!src){ playIdx(i); return; } if(i===song.i){ toast('That one is playing now'); return; } qTake(i); src.order.splice(src.pos+1,0,i); renderQueue(); toast(`Playing next: ${SONGS[i].title}`); }
+// pull a song out of the line (not the one playing) so it can be put somewhere else
+function qTake(i){ const k=src.order.indexOf(i); if(k<0||k===src.pos) return false; src.order.splice(k,1); if(k<src.pos) src.pos--; return true; }
+// a whole chapter at the end of the line (songs of it already lined up move to the end with it); nothing playing yet → it just starts playing
 function addChapter(ch,fromEl){ const list=SONGS.filter(s=>s.ch===ch).map(s=>s.i); if(!list.length) return; haptic();
-  if(!song){ shuffle=false; $('#shuf').setAttribute('aria-pressed','false'); setSource('chapter',ch,list[0]); load(list[0],true); toast(`Playing ${chName(ch)}`); return; }
-  list.forEach(i=>{ const k=manual.indexOf(i); if(k>=0){ manual.splice(k,1); if(k<=manualPos) manualPos--; } }); manual.push(...list); renderQueue();
+  if(!song||!src){ shuffle=false; $('#shuf').setAttribute('aria-pressed','false'); setSource('chapter',ch,list[0]); load(list[0],true); toast(`Playing ${chName(ch)}`); return; }
+  list.forEach(i=>{ if(i!==song.i){ qTake(i); src.order.push(i); } }); renderQueue();
   try{ flyTo(fromEl,np.classList.contains('open')?$('#queue'):$('#minith'),ART[ch]); }catch(e){}
   toast(`Added to Up Next: ${chName(ch)} · ${list.length} song${list.length>1?'s':''}`); }
-function addLast(i){ haptic(); if(!song){ playIdx(i); return; } manual.push(i); renderQueue(); toast(`Added to Up Next: ${SONGS[i].title}`); }
+function addLast(i){ haptic(); if(!song||!src){ playIdx(i); return; } if(i===song.i){ toast('That one is playing now'); return; } qTake(i); src.order.push(i); renderQueue(); toast(`Added to Up Next: ${SONGS[i].title}`); }
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),1800); }
 
 /* long-press (or right-click) a song for more */
