@@ -278,10 +278,10 @@ body.npopen #chapter{transform:scale(.94) translateY(-10px)} body.morphing #chap
 .row::after{content:"Play next";position:absolute;top:50%;left:16px;transform:translate(calc(-1 * var(--dx,0px)),-50%) scale(var(--dxs,1));transform-origin:left center;color:#fff;font-weight:700;font-size:13px;letter-spacing:.01em;white-space:nowrap;opacity:var(--dxo,0);padding-left:26px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff'%3E%3Cpath d='M3 6h12v2H3zm0 5h12v2H3zm0 5h8v2H3zm14-5v8l5-4z'/%3E%3C/svg%3E") no-repeat left center/18px 18px;pointer-events:none;transition:transform .16s cubic-bezier(.34,1.5,.64,1)}
 .row.snap::after{transition:transform .36s cubic-bezier(.2,.8,.2,1),opacity .12s}
 .row.will::before{filter:brightness(1.08)}
-/* swipe a folder header left: it slides over and a pane grows on the right; past the threshold the whole chapter goes to Up Next */
+/* swipe a folder header right (like a song): it slides over and a pane grows behind it on the left; past the threshold the whole chapter goes to Up Next */
 .chhd{touch-action:pan-y} .chhd.swiping{transition:none!important;z-index:1} .chhd.snap{transition:transform .36s cubic-bezier(.2,.8,.2,1)!important}
-.chhd .qpane{position:absolute;top:0;bottom:0;right:0;width:var(--dx,0px);transform:translateX(var(--dx,0px));border-radius:18px;background:var(--sig);opacity:0;pointer-events:none;display:flex;align-items:center;justify-content:flex-end;padding-right:16px;color:#fff;font-weight:700;font-size:13px;letter-spacing:.01em;white-space:nowrap;overflow:hidden;z-index:2}
-.chhd .qpane i{opacity:var(--dxo,0);transform:scale(var(--dxs,1));transform-origin:right center;font-style:normal;display:inline-flex;align-items:center;gap:8px;transition:transform .16s cubic-bezier(.34,1.5,.64,1)}
+.chhd .qpane{position:absolute;top:0;bottom:0;left:0;width:var(--dx,0px);transform:translateX(calc(-1 * var(--dx,0px)));border-radius:18px;background:var(--sig);opacity:0;pointer-events:none;display:flex;align-items:center;justify-content:flex-start;padding-left:16px;color:#fff;font-weight:700;font-size:13px;letter-spacing:.01em;white-space:nowrap;overflow:hidden;z-index:2}
+.chhd .qpane i{opacity:var(--dxo,0);transform:scale(var(--dxs,1));transform-origin:left center;font-style:normal;display:inline-flex;align-items:center;gap:8px;transition:transform .16s cubic-bezier(.34,1.5,.64,1)}
 .chhd .qpane svg{width:18px;height:18px;fill:#fff;flex:none}
 .chhd.swiping .qpane,.chhd.snap .qpane{opacity:1} .chhd.snap .qpane{transition:width .36s cubic-bezier(.2,.8,.2,1),transform .36s cubic-bezier(.2,.8,.2,1),opacity .15s .25s} .chhd.will .qpane{filter:brightness(1.08)}
 .row .th{width:52px;height:52px;border-radius:8px;background:var(--thumb);overflow:hidden;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.2)}
@@ -935,9 +935,9 @@ function renderLibrary(){
   document.querySelectorAll('.chhd').forEach(h=>h.onclick=e=>{ const g=h.closest('.chgroup'), th=h.querySelector('.th'), r=th&&th.getBoundingClientRect();
     if(r&&e.clientX>=r.left-6&&e.clientX<=r.right+6&&e.clientY>=r.top-8&&e.clientY<=r.bottom+8&&(e.clientX||e.clientY)){ showChapter(+g.dataset.chg,th.querySelector('img')); return; }
     toggleGroup(g); });
-  // swipe a folder header to the left: the whole chapter goes to Up Next
+  // swipe a folder header to the right (like a song): the whole chapter goes to Up Next
   document.querySelectorAll('#list .chhd').forEach(h=>{ const g=h.closest('.chgroup'), ch=+g.dataset.chg; if(!h.querySelector('.qpane')) h.insertAdjacentHTML('beforeend','<span class="qpane" aria-hidden="true"><i><svg viewBox="0 0 24 24"><path d="M3 6h12v2H3zm0 5h12v2H3zm0 5h8v2H3zm16-4h-2v3h-3v2h3v3h2v-3h3v-2h-3z"/></svg>Add chapter</i></span>');
-    swipeable(h,{dir:-1,ignore:'.qpane',onCommit:()=>addChapter(ch,h.querySelector('.th img'))}); }); try{ hapticOverlays($('#list')); }catch(e){}
+    swipeable(h,{dir:1,ignore:'.qpane',onCommit:()=>addChapter(ch,h.querySelector('.th img'))}); }); try{ hapticOverlays($('#list')); }catch(e){}
   wireRows($('#list')); renderRecent(); renderResume(); staggerIn($('#albums'));
 }
 function renderFavs(){ return;
