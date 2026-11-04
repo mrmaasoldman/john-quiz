@@ -3236,7 +3236,7 @@ const AV_HATS=[
  {id:'sweat',name:'Sweatband',lvl:15,y:7,g:['..OCCCCCCCCCCO..','..OCCCCKKCCCCO..']},
  {id:'crown',name:'Crown',lvl:20,y:2,g:['...O...OO...O...','..OCO.OCCO.OCO..','..OCCOCCCCOCCO..','..OCKCCRRCCKCO..','..OCCCCCCCCCCO..','..OOOOOOOOOOOO..']},
  // more head things (Nov 2026): the color picker tints the arrow, antenna tips, ears, bands and the ? in the bubble
- {id:'arrow',name:"Arrow",lvl:4,y:0,g:["", "..OOOOOOO.......", ".OCCCCCCCO......", "..OOOOOLCO......", "...OOOOLCOOOO...", "....OCCCCCCO....", ".....OCCCCO.....", "......OCCO......", ".......OO......."]},
+ {id:'arrow',name:"Arrow",lvl:4,y:0,g:["", "", ".......OO.......", "......OqcO......", "......OLCO......", "...OOOOLCOOOO...", "....OCCCCCCO....", ".....OCCCCO.....", "......OCCO......", ".......OO......."]},
  {id:'antennae',name:"Antennae",lvl:5,y:0,g:["...OO......OO...", "..OCCO....OCCO..", "...OO......OO...", "....K......K....", "....K......K....", ".....K....K.....", "...OKKKKKKKKO..."]},
  {id:'sprout',name:"Sprout",lvl:6,y:1,g:[".....GG.GG......", "....GLLGLLG.....", ".....GGKGG......", ".......K........", ".......K........"]},
  {id:'propeller',name:"Propeller cap",lvl:8,y:1,g:["...RRRRYBBBB....", ".......O........", ".....OOOOOO.....", "....OCCKKCCO....", "...OCCKCCKCCO...", "..OCCCCCCCCCCO..", "..OOOOOOOOOOOO.."]},
@@ -3332,7 +3332,7 @@ function avSvg(code,px,name){ const key=code+'|'+px+'|'+(name||''); if(avCache[k
   if(an.overlay&&AV_OVERLAY[an.overlay]) put(AV_OVERLAY[an.overlay],Object.assign({},base,an.oc||{}));
   if(an.id==='luther') put(AV_LUTHER,Object.assign({},base,{W:'#ffffff'}));
   if(face&&face.g.length){ const fp=Object.assign({},base,{O:'#1a1a22',C:hc}); if(face.id==='jersey') fp.K='#ffffff'; put(face.g,fp,face.y); }
-  if(hat&&hat.g.length){ const fx=AV_HATFIX[hat.id]||{}, pal=Object.assign({},base,{O:'#1a1a22',C:hc}); for(const k in fx) pal[k]=fx[k]==='C'?hc:fx[k]; put(hat.g,pal,hat.y); }
+  if(hat&&hat.g.length){ const fx=AV_HATFIX[hat.id]||{}, pal=Object.assign({},base,{O:'#1a1a22',C:hc,c:avMix(hc,'#000000',.3),q:avMix(hc,'#000000',.55)}); for(const k in fx) pal[k]=fx[k]==='C'?hc:fx[k]; put(hat.g,pal,hat.y); }
   let rects='';
   for(let y=0;y<16;y++){ let x=0; while(x<16){ const c=grid[y][x]; if(!c){x++;continue} let w=1; while(x+w<16&&grid[y][x+w]===c) w++; rects+=`<rect x="${x}" y="${y}" width="${w}" height="1" fill="${c}"/>`; x+=w; } }
   const gid='avg'+String(o.bg).replace(/[^a-z0-9]/gi,'');
