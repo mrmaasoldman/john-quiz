@@ -3232,9 +3232,26 @@ const AV_HATS=[
  {id:'grad',name:'Grad cap',lvl:15,y:2,g:['.......OO.......','....OOOCCOOO....','.OOOCCCCCCCCOOO.','OCCCCCCKCCCCCCCO','.OOOCCCCCCCCOOO.','...OCCCCCCCCOK..','...OOOOOOOOOOK..','.............K..']},
  {id:'sweat',name:'Sweatband',lvl:15,y:7,g:['..OCCCCCCCCCCO..','..OCCCCKKCCCCO..']},
  {id:'crown',name:'Crown',lvl:20,y:2,g:['...O...OO...O...','..OCO.OCCO.OCO..','..OCCOCCCCOCCO..','..OCKCCRRCCKCO..','..OCCCCCCCCCCO..','..OOOOOOOOOOOO..']},
+ // more head things (Nov 2026): the color picker tints the arrow, antenna tips, ears, bands and the ? in the bubble
+ {id:'arrow',name:"Arrow",lvl:4,y:4,g:[".OO..........OCO", "OWWO........OCCC", "OWWWCC....CCCCCC", "OWWO........OCCC", ".OO..........OCO"]},
+ {id:'antennae',name:"Antennae",lvl:5,y:0,g:["...OO......OO...", "..OCCO....OCCO..", "...OO......OO...", "....K......K....", "....K......K....", ".....K....K.....", "...OKKKKKKKKO..."]},
+ {id:'sprout',name:"Sprout",lvl:6,y:1,g:[".....GG.GG......", "....GLLGLLG.....", ".....GGKGG......", ".......K........", ".......K........"]},
+ {id:'propeller',name:"Propeller cap",lvl:8,y:1,g:["...RRRRYBBBB....", ".......O........", ".....OOOOOO.....", "....OCCKKCCO....", "...OCCKCCKCCO...", "..OCCCCCCCCCCO..", "..OOOOOOOOOOOO.."]},
+ {id:'bunnyband',name:"Bunny ears",lvl:10,y:0,g:["...OO......OO...", "..OCCO....OCCO..", "..OCPO....OPCO..", "..OCPO....OPCO..", "..OCPO....OPCO..", "...OCO....OCO...", "...OCCCCCCCCO..."]},
+ {id:'catband',name:"Cat ears",lvl:11,y:1,g:["..O..........O..", "..OO........OO..", "..OCO......OCO..", "..OCPO....OPCO..", "..OCCCO..OCCCO..", "...OCCCCCCCCO..."]},
+ {id:'chef',name:"Chef hat",lvl:12,y:0,g:["....OOO..OOO....", "...OWWWOOWWWO...", "..OWWWWWWWWWWO..", "..OWWWWWWWWWWO..", "...OWWWWWWWWO...", "...OWWWWWWWWO...", "...OCCCCCCCCO...", "...OOOOOOOOOO..."]},
+ {id:'tophat',name:"Top hat",lvl:14,y:0,g:["....OOOOOOOO....", "....OKKKKKKO....", "....OKKKKKKO....", "....OKKKKKKO....", "....OCCCCCCO....", ".OOOOKKKKKKOOOO.", "OKKKKKKKKKKKKKKO", ".OOOOOOOOOOOOOO."]},
+ {id:'bulb',name:"Bright idea",lvl:16,y:0,g:["........Y.....Y.", "..........OOO...", ".........OYYYO..", "........YOYLYOY.", ".........OYYYO..", "..........OKO...", "..........OKO..."]},
+ {id:'halo',name:"Halo",lvl:17,y:0,g:["....YYYYYYYY....", "...YL......LY...", "....YYYYYYYY...."]},
+ {id:'viking',name:"Viking helmet",lvl:18,y:1,g:[".W............W.", ".WW..OOOOOO..WW.", "..WWOKKKKKKOWW..", "...OKKKKKKKKO...", "..OKKKKKKKKKKO..", "..OCYCCYCCYCCO..", "..OOOOOOOOOOOO.."]},
+ {id:'cloud',name:"Rain cloud",lvl:19,y:0,g:["......OOO.......", "....OOWWWOO.....", "...OWWWWWWWO....", "...OOOOOOOOO....", "....B..B..B.....", "...B..B..B......"]},
+ {id:'question',name:"Thinking",lvl:21,y:0,g:[".........OOOOO..", "........OWCCWWO.", "........OWWWCWO.", "........OWWCWWO.", "........OWWWWWO.", "........OWWCWWO.", ".........OOOOO..", ".........O......"]},
+ {id:'tiara',name:"Tiara",lvl:22,y:2,g:[".......OO.......", "...O..OCCO..O...", "..OYO.OYYO.OYO..", "..OYYOYYYYOYYO..", "...OOOOOOOOOO..."]},
+ {id:'flames',name:"On fire",lvl:25,y:0,g:["....R....R..R...", "...RR..R.RR.RR..", "..RAR.RAR.RAAR..", "..RAAARAYRAAYAR.", ".RAYYAAYYAAYYAR.", ".RAYYYYYYYYYYAR."]},
 ];
 const AV_HATFIX={cap:{K:'#ffffff'},bow:{},beanie:{K:'#ffffff'},party:{K:'#ffd23f'},flower:{Y:'#ffd23f',K:'C'},phones:{K:'#33333d'},cowboy:{K:'#3a2016'},
- pirate:{K:'#ffffff'},wizard:{K:'#ffd23f'},knight:{K:'#e53935',C:'#c9ced6'},grad:{K:'#ffd23f',C:'#1e1e24'},sweat:{K:'#ffffff'},crown:{C:'#ffd23f',K:'#4fc3f7',R:'#e53935'}};
+ pirate:{K:'#ffffff'},wizard:{K:'#ffd23f'},knight:{K:'#e53935',C:'#c9ced6'},grad:{K:'#ffd23f',C:'#1e1e24'},sweat:{K:'#ffffff'},crown:{C:'#ffd23f',K:'#4fc3f7',R:'#e53935'},
+ arrow:{"W": "#d9dde6"},antennae:{"K": "#33333d"},sprout:{"G": "#2e7d32", "L": "#7bd36a", "K": "#4caf50"},propeller:{"R": "#ff5a5a", "B": "#3fa9ff", "Y": "#ffd23f", "K": "#ffffff"},bunnyband:{"P": "#ffb3c1"},catband:{"P": "#ffb3c1"},chef:{"W": "#ffffff"},tophat:{"K": "#3a3a46"},bulb:{"Y": "#ffd23f", "L": "#fffbe0", "K": "#9aa0ad"},halo:{"Y": "#ffcf33", "L": "#fff3b0"},viking:{"W": "#f3ead2", "K": "#a9b0bd", "Y": "#ffd23f"},cloud:{"W": "#e3e7ee", "B": "#3fa9ff"},question:{"W": "#ffffff"},tiara:{"Y": "#ffd23f"},flames:{"R": "#e53935", "A": "#ff8c1a", "Y": "#ffd23f"}};
 const AV_FACES=[
  {id:'none',name:'Nothing',lvl:1,y:0,g:[]},
  {id:'glasses',name:'Glasses',lvl:2,y:8,g:['...OOOO..OOOO...','...O..OOOO..O...','...O..O..O..O...','...OOOO..OOOO...']},
@@ -3340,7 +3357,7 @@ function avatarPanel(){
   const tile=(code,label,open,cur,attr,need)=>`<button class="avpick ${cur?'cur':''} ${open?'':'locked'} ${need==='event'?'evitem':''}" ${open?attr:'disabled'} aria-pressed="${cur}" title="${esc(label)}${open?'':need==='event'?' (limited-time unlock)':String(need).startsWith('team:')?' ('+esc(String(need).slice(5).split('|')[0])+' only, at level 24)':' (unlocks at level '+need+')'}">${avSvg(code,44,me)}<small>${esc(label)}</small>${open?'':lockTag(need)}</button>`;
   let body='';
   if(avTab==='animal') body=AV_ANIMALS.filter(avShown).map(a=>tile(avCode({...o,a:a.id}),a.name,avItemOpen(a,L),o.a===a.id,`data-av="a:${a.id}"`,a.event?'event':(a.team&&!avTeamOK(a))?'team:'+a.teamName+'|'+a.teamTag:a.lvl)).join('');
-  if(avTab==='hat') body=AV_HATS.map(x=>tile(avCode({...o,h:x.id}),x.name,L>=x.lvl,o.h===x.id,`data-av="h:${x.id}"`,x.lvl)).join('');
+  if(avTab==='hat') body=AV_HATS.slice().sort((p,q)=>p.lvl-q.lvl).map(x=>tile(avCode({...o,h:x.id}),x.name,L>=x.lvl,o.h===x.id,`data-av="h:${x.id}"`,x.lvl)).join('');
   if(avTab==='face') body=AV_FACES.map(x=>tile(avCode({...o,f:x.id}),x.name,L>=x.lvl,o.f===x.id,`data-av="f:${x.id}"`,x.lvl)).join('');
   const sw=(k,v,col,cur,need)=>{const open=!need||L>=need; return `<button class="avsw ${cur?'cur':''}" ${open?`data-av="${k}:${v}"`:'disabled'} aria-pressed="${cur}" title="${v}${open?'':' (level '+need+')'}" style="background:${col==='rainbow'?'linear-gradient(135deg,#ff8a80,#ffd180,#ccff90,#80d8ff,#ea80fc)':col}">${open?'':'🔒'}</button>`};
   const curA=avFind(AV_ANIMALS,o.a);
