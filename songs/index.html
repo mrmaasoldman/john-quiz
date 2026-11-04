@@ -174,10 +174,15 @@ body.npopen #chapter{transform:scale(.94) translateY(-10px)} body.morphing #chap
 .hero .quizlink{position:absolute;top:calc(16px + var(--sat));right:max(20px,var(--sar));height:40px;padding:0 14px 0 8px;border-radius:20px;display:flex;align-items:center;gap:2px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;z-index:2}
 .hero .quizlink svg{width:18px;height:18px;fill:currentColor}
 .hero .quizlink .lv{margin-left:8px;padding:2px 8px;border-radius:999px;background:var(--sig);font-size:12px;font-weight:800}
-.xppop{position:fixed;left:50%;transform:translateX(-50%) translateY(12px);bottom:calc(150px + var(--sab));z-index:55;display:grid;justify-items:center;gap:2px;padding:10px 18px;background:#000;border:3px solid #f0b440;color:#fff;box-shadow:4px 4px 0 #000;opacity:0;pointer-events:none;transition:opacity .25s,transform .3s cubic-bezier(.2,.8,.2,1)}
-.xppop.show{opacity:1;transform:translateX(-50%)}
-.xppop b{font-size:28px;line-height:1;color:#f0b440;font-variant-numeric:tabular-nums}
-.xppop span{font-size:12px;font-weight:600}
+/* XP for a song: a glass capsule drops in from the top under a shower of confetti */
+.xppop{position:fixed;left:50%;top:calc(14px + var(--sat));transform:translateX(-50%) translateY(-24px) scale(.9);z-index:56;display:grid;justify-items:center;text-align:center;row-gap:2px;padding:10px 22px 11px;border-radius:24px;background:rgba(22,20,34,.62);backdrop-filter:blur(14px) saturate(1.8);-webkit-backdrop-filter:blur(14px) saturate(1.8);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 12px 34px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .28s,transform .5s cubic-bezier(.22,.78,.14,1);max-width:min(92vw,420px)}
+.xppop.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+.xppop b{font-family:var(--serif);font-weight:800;font-size:24px;line-height:1;letter-spacing:-.01em;background:var(--sig);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums;white-space:nowrap}
+.xppop span{display:block;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.78);line-height:1.3;max-width:260px}
+.xppop.show b{animation:xpBeat .6s cubic-bezier(.2,.8,.2,1) .15s}
+@keyframes xpBeat{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+#confetti{position:fixed;inset:0;z-index:55;pointer-events:none;display:none}
+#confetti.on{display:block}
 .hero .mark{position:absolute;top:calc(14px + var(--sat));left:max(20px,var(--sal));width:44px;height:44px;border-radius:14px;background:var(--sig);display:grid;place-items:center;font-family:var(--serif);font-weight:800;font-size:26px;color:#fff;box-shadow:0 8px 24px rgba(255,92,138,.45),inset 0 1px 0 rgba(255,255,255,.5);transform:rotate(-6deg)}
 .hero .eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--sig1);margin:0;text-shadow:0 1px 8px rgba(0,0,0,.5)}
 .hero h1{font-family:var(--serif);font-size:clamp(44px,11vw,72px);font-weight:800;letter-spacing:-.02em;margin:0;line-height:.95;text-shadow:0 2px 24px rgba(0,0,0,.45)}
@@ -1661,7 +1666,17 @@ function awardXP(){
   try{ localStorage.setItem(QK+'u:'+n,JSON.stringify(u)); }catch(e){ return false; }
   const after=levelOf(u.xp); xpPop(XP_PER_SONG,after>before?`Level up! You're level ${after}`:`for listening to ${song.title}`); qzChip(); return true;
 }
-function xpPop(n,msg){ let el=$('#xppop'); if(!el){ el=document.createElement('div'); el.id='xppop'; el.className='xppop'; el.setAttribute('role','status'); document.body.append(el); } el.innerHTML=`<b>+${n} XP</b><span>${esc(msg)}</span>`; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2600); }
+function xpPop(n,msg){ let el=$('#xppop'); if(!el){ el=document.createElement('div'); el.id='xppop'; el.className='xppop'; el.setAttribute('role','status'); document.body.append(el); } el.innerHTML=`<b>+${n} XP</b><span>${esc(msg)}</span>`; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3200); if(!reduce) confetti(); }
+// confetti: a couple hundred bits of paper in the app's colors tumble from the top of the screen to the bottom on their own canvas
+function confetti(){ let cv=$('#confetti'); if(!cv){ cv=document.createElement('canvas'); cv.id='confetti'; cv.setAttribute('aria-hidden','true'); document.body.append(cv); }
+  const dpr=Math.min(2,devicePixelRatio||1), W=innerWidth, H=innerHeight; cv.width=W*dpr; cv.height=H*dpr; const x=cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0);
+  const cols=['#ffb547','#ff5c8a','#6c5ce7','#4fc3f7','#8be0a4','#ffd23f','#ffffff'], N=W<500?140:220, P=[];
+  for(let i=0;i<N;i++) P.push({x:Math.random()*W,y:-20-Math.random()*H*.6,w:5+Math.random()*5,h:8+Math.random()*8,c:cols[i%cols.length],vy:90+Math.random()*120,vx:(Math.random()-.5)*50,a:Math.random()*Math.PI*2,va:(Math.random()-.5)*8,ph:Math.random()*Math.PI*2,r:Math.random()<.25});
+  cv.classList.add('on'); let last=performance.now(); const t0=last; cancelAnimationFrame(confetti.raf);
+  (function f(now){ const dt=Math.min(.05,(now-last)/1000); last=now; const t=(now-t0)/1000; x.clearRect(0,0,W,H); let alive=0;
+    for(const p of P){ p.y+=p.vy*dt; p.x+=(p.vx+Math.sin(t*3+p.ph)*40)*dt; p.a+=p.va*dt; if(p.y>H+20) continue; alive++;
+      x.save(); x.translate(p.x,p.y); x.rotate(p.a); x.fillStyle=p.c; x.globalAlpha=t>4.2?Math.max(0,1-(t-4.2)):1; const sq=Math.abs(Math.cos(t*4+p.ph)); if(p.r){ x.beginPath(); x.arc(0,0,p.w*.55,0,Math.PI*2); x.fill(); } else x.fillRect(-p.w/2,-p.h*sq/2,p.w,p.h*sq); x.restore(); }
+    if(alive&&t<5.4) confetti.raf=requestAnimationFrame(f); else { x.clearRect(0,0,W,H); cv.classList.remove('on'); } })(last); }
 // count real listening time (not seeking); once a song's worth has gone by, that's one listen
 let heard=0, heardAt=null, heardSong=null;
 audio.addEventListener('timeupdate',()=>{ const t=audio.currentTime; if(heardSong!==song){ heardSong=song; heard=0; heardAt=t; return; } if(heardAt!=null&&!audio.paused){ const d=t-heardAt; if(d>0&&d<1.5) heard+=d; } heardAt=t;
