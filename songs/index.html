@@ -1673,13 +1673,22 @@ function xpPop(n,msg){ let el=$('#xppop'); if(!el){ el=document.createElement('d
 // confetti: a couple hundred bits of paper in the app's colors tumble from the top of the screen to the bottom on their own canvas
 function confetti(){ let cv=$('#confetti'); if(!cv){ cv=document.createElement('canvas'); cv.id='confetti'; cv.setAttribute('aria-hidden','true'); document.body.append(cv); }
   const dpr=Math.min(2,devicePixelRatio||1), W=innerWidth, H=innerHeight; cv.width=W*dpr; cv.height=H*dpr; const x=cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0);
-  const cols=['#ffb547','#ff5c8a','#6c5ce7','#4fc3f7','#8be0a4','#ffd23f','#ffffff'], N=W<500?140:220, P=[];
-  for(let i=0;i<N;i++) P.push({x:Math.random()*W,y:-20-Math.random()*H*.6,w:5+Math.random()*5,h:8+Math.random()*8,c:cols[i%cols.length],vy:90+Math.random()*120,vx:(Math.random()-.5)*50,a:Math.random()*Math.PI*2,va:(Math.random()-.5)*8,ph:Math.random()*Math.PI*2,r:Math.random()<.25});
-  cv.classList.add('on'); let last=performance.now(); const t0=last; cancelAnimationFrame(confetti.raf);
+  // the app's palette, bright: amber, hot pink, violet, sky, mint, lemon, coral, white
+  const cols=['#ffb547','#ff5c8a','#8b7cff','#4fc3f7','#7ef0b2','#ffe24a','#ff7a59','#ffffff'], pick=()=>cols[Math.random()*cols.length|0];
+  const P=[], N=W<500?260:380, kinds=['rect','rect','rect','strip','circ','star'];
+  // two big bursts from the top corners that arc across the screen, then a steady shower from the top edge
+  const burst=(bx,dir,count)=>{ for(let i=0;i<count;i++){ const a=(dir>0?0:Math.PI)-dir*(Math.random()*.75), sp=420+Math.random()*460; /* flung across the screen, rising a little, then falling */ P.push({x:bx,y:H*.16+Math.random()*H*.1,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,c:pick(),k:kinds[i%kinds.length],w:6+Math.random()*6,h:10+Math.random()*10,a:Math.random()*6.3,va:(Math.random()-.5)*14,ph:Math.random()*6.3,drag:.985,born:0}); } };
+  burst(-6,1,Math.round(N*.3)); burst(W+6,-1,Math.round(N*.3));
+  for(let i=0;i<N*.4;i++) P.push({x:Math.random()*W,y:-20-Math.random()*H*.7,vx:(Math.random()-.5)*60,vy:70+Math.random()*110,c:pick(),k:kinds[i%kinds.length],w:5+Math.random()*6,h:9+Math.random()*9,a:Math.random()*6.3,va:(Math.random()-.5)*9,ph:Math.random()*6.3,drag:1,born:.25+Math.random()*.5});
+  const star=(r)=>{ x.beginPath(); for(let i=0;i<10;i++){ const rr=i%2?r*.45:r, an=i*Math.PI/5-Math.PI/2; x.lineTo(Math.cos(an)*rr,Math.sin(an)*rr); } x.closePath(); x.fill(); };
+  cv.classList.add('on'); let last=performance.now(); const t0=last, G=420; cancelAnimationFrame(confetti.raf);
   (function f(now){ const dt=Math.min(.05,(now-last)/1000); last=now; const t=(now-t0)/1000; x.clearRect(0,0,W,H); let alive=0;
-    for(const p of P){ p.y+=p.vy*dt; p.x+=(p.vx+Math.sin(t*3+p.ph)*40)*dt; p.a+=p.va*dt; if(p.y>H+20) continue; alive++;
-      x.save(); x.translate(p.x,p.y); x.rotate(p.a); x.fillStyle=p.c; x.globalAlpha=t>4.2?Math.max(0,1-(t-4.2)):1; const sq=Math.abs(Math.cos(t*4+p.ph)); if(p.r){ x.beginPath(); x.arc(0,0,p.w*.55,0,Math.PI*2); x.fill(); } else x.fillRect(-p.w/2,-p.h*sq/2,p.w,p.h*sq); x.restore(); }
-    if(alive&&t<5.4) confetti.raf=requestAnimationFrame(f); else { x.clearRect(0,0,W,H); cv.classList.remove('on'); } })(last); }
+    for(const p of P){ if(t<p.born) { alive++; continue; } p.vy+=G*dt; p.vx*=p.drag; p.vy*=p.drag; if(p.vy>170) p.vy=170+(p.vy-170)*.9; p.x+=(p.vx+Math.sin(t*2.6+p.ph)*35)*dt; p.y+=p.vy*dt; p.a+=p.va*dt; if(p.y>H+24) continue; alive++;
+      x.save(); x.translate(p.x,p.y); x.rotate(p.a); x.fillStyle=p.c; x.globalAlpha=t>4.6?Math.max(0,1-(t-4.6)/.8):1;
+      const sq=.25+.75*Math.abs(Math.cos(t*5+p.ph)); // paper turning over catches the light
+      if(p.k==='circ'){ x.beginPath(); x.arc(0,0,p.w*.55,0,6.3); x.fill(); } else if(p.k==='star'){ star(p.w*.8); } else if(p.k==='strip'){ x.fillRect(-p.w*.25,-p.h*1.1*sq/2,p.w*.5,p.h*1.1*sq); } else { x.fillRect(-p.w/2,-p.h*sq/2,p.w,p.h*sq); if(sq>.8){ x.globalAlpha*=.35; x.fillStyle='#fff'; x.fillRect(-p.w/2,-p.h*sq/2,p.w,p.h*sq*.3); } }
+      x.restore(); }
+    if(alive&&t<5.6) confetti.raf=requestAnimationFrame(f); else { x.clearRect(0,0,W,H); cv.classList.remove('on'); } })(last); }
 // count real listening time (not seeking); once a song's worth has gone by, that's one listen
 // XP comes when the song reaches its end, as long as nearly all of it was actually heard (not skipped through). the clock keeps running while the screen is
 // locked, where the browser reports time only every few seconds, so a whole song heard in a pocket still counts; a seek breaks the chain so jumps don't.
