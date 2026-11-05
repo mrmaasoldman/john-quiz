@@ -1682,12 +1682,13 @@ function confetti(){ let cv=$('#confetti'); if(!cv){ cv=document.createElement('
   for(let i=0;i<N*.4;i++) P.push({x:Math.random()*W,y:-20-Math.random()*H*.7,vx:(Math.random()-.5)*60,vy:70+Math.random()*110,c:pick(),k:kinds[i%kinds.length],w:5+Math.random()*6,h:9+Math.random()*9,a:Math.random()*6.3,va:(Math.random()-.5)*9,ph:Math.random()*6.3,drag:1,born:.25+Math.random()*.5});
   const star=(r)=>{ x.beginPath(); for(let i=0;i<10;i++){ const rr=i%2?r*.45:r, an=i*Math.PI/5-Math.PI/2; x.lineTo(Math.cos(an)*rr,Math.sin(an)*rr); } x.closePath(); x.fill(); };
   cv.classList.add('on'); let last=performance.now(); const t0=last, G=420; cancelAnimationFrame(confetti.raf);
-  (function f(now){ const dt=Math.min(.05,(now-last)/1000); last=now; const t=(now-t0)/1000; x.clearRect(0,0,W,H); let alive=0;
+  (function f(now){ const dt=Math.min(.05,(now-last)/1000); last=now; const t=(now-t0)/1000, fade=t>4.6?Math.max(0,1-(t-4.6)/.8):1; x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,W,H); let alive=0;
     for(const p of P){ if(t<p.born) { alive++; continue; } p.vy+=G*dt; p.vx*=p.drag; p.vy*=p.drag; if(p.vy>170) p.vy=170+(p.vy-170)*.9; p.x+=(p.vx+Math.sin(t*2.6+p.ph)*35)*dt; p.y+=p.vy*dt; p.a+=p.va*dt; if(p.y>H+24) continue; alive++;
-      x.save(); x.translate(p.x,p.y); x.rotate(p.a); x.fillStyle=p.c; x.globalAlpha=t>4.6?Math.max(0,1-(t-4.6)/.8):1;
+      const ca=Math.cos(p.a)*dpr, sa=Math.sin(p.a)*dpr; x.setTransform(ca,sa,-sa,ca,p.x*dpr,p.y*dpr); x.fillStyle=p.c; x.globalAlpha=fade;
       const sq=.25+.75*Math.abs(Math.cos(t*5+p.ph)); // paper turning over catches the light
       if(p.k==='circ'){ x.beginPath(); x.arc(0,0,p.w*.55,0,6.3); x.fill(); } else if(p.k==='star'){ star(p.w*.8); } else if(p.k==='strip'){ x.fillRect(-p.w*.25,-p.h*1.1*sq/2,p.w*.5,p.h*1.1*sq); } else { x.fillRect(-p.w/2,-p.h*sq/2,p.w,p.h*sq); if(sq>.8){ x.globalAlpha*=.35; x.fillStyle='#fff'; x.fillRect(-p.w/2,-p.h*sq/2,p.w,p.h*sq*.3); } }
-      x.restore(); }
+      }
+    x.setTransform(dpr,0,0,dpr,0,0);
     if(alive&&t<5.6) confetti.raf=requestAnimationFrame(f); else { x.clearRect(0,0,W,H); cv.classList.remove('on'); } })(last); }
 // count real listening time (not seeking); once a song's worth has gone by, that's one listen
 // XP comes when the song reaches its end, as long as nearly all of it was actually heard (not skipped through). the clock keeps running while the screen is
