@@ -1657,14 +1657,14 @@ const lvlNeed=L=>L<=10?75*(L-1)*L:6750+1500*(L-10), levelOf=xp=>{ xp=xp||0; let 
 let qzFmt=null; try{ qzFmt=new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}); }catch(e){}
 function qzDay(){ try{ const p={}; qzFmt.formatToParts(new Date()).forEach(x=>p[x.type]=x.value); return p.year+'-'+p.month+'-'+p.day; }catch(e){ return new Date().toISOString().slice(0,10); } }
 function qzChip(){ const el=$('#quizlink'); if(!el||el.hidden) return; const n=qzName(); const old=el.querySelector('.lv'); if(old) old.remove(); if(!n) return; const u=qzGet('u:'+n,null); if(!u) return; const lv=document.createElement('span'); lv.className='lv'; lv.textContent='Lv '+levelOf(u.xp); el.append(lv); }
-function awardXP(){
+function awardXP(sg){ sg=sg||song; if(!sg) return false;
   const n=qzName(); if(!n) return false; const u=qzGet('u:'+n,null); if(!u) return false;
   const before=levelOf(u.xp); u.xp=(u.xp||0)+XP_PER_SONG;
-  u.xpLog=u.xpLog||[]; u.xpLog.unshift({t:Date.now(),n:XP_PER_SONG,w:`Listened to ${song.title}`}); if(u.xpLog.length>30) u.xpLog.length=30;
+  u.xpLog=u.xpLog||[]; u.xpLog.unshift({t:Date.now(),n:XP_PER_SONG,w:`Listened to ${sg.title}`}); if(u.xpLog.length>30) u.xpLog.length=30;
   u.xpDays=u.xpDays||{}; const dk=qzDay(); u.xpDays[dk]=(u.xpDays[dk]||0)+XP_PER_SONG;
   u.counts=u.counts||{}; u.counts.songs=(u.counts.songs||0)+1; u.saved=Date.now();
   try{ localStorage.setItem(QK+'u:'+n,JSON.stringify(u)); }catch(e){ return false; }
-  const after=levelOf(u.xp); xpPop(XP_PER_SONG,after>before?`Level up! You're level ${after}`:`for listening to ${song.title}`); qzChip(); return true;
+  const after=levelOf(u.xp); xpPop(XP_PER_SONG,after>before?`Level up! You're level ${after}`:`for listening to ${sg.title}`); qzChip(); return true;
 }
 function xpPop(n,msg){ let el=$('#xppop'); if(!el){ el=document.createElement('div'); el.id='xppop'; el.className='xppop'; el.setAttribute('role','status'); document.body.append(el); } el.innerHTML=`<b>+${n} XP</b><span>${esc(msg)}</span>`; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3200); if(!reduce) confetti(); }
 // confetti: a couple hundred bits of paper in the app's colors tumble from the top of the screen to the bottom on their own canvas
@@ -1678,9 +1678,16 @@ function confetti(){ let cv=$('#confetti'); if(!cv){ cv=document.createElement('
       x.save(); x.translate(p.x,p.y); x.rotate(p.a); x.fillStyle=p.c; x.globalAlpha=t>4.2?Math.max(0,1-(t-4.2)):1; const sq=Math.abs(Math.cos(t*4+p.ph)); if(p.r){ x.beginPath(); x.arc(0,0,p.w*.55,0,Math.PI*2); x.fill(); } else x.fillRect(-p.w/2,-p.h*sq/2,p.w,p.h*sq); x.restore(); }
     if(alive&&t<5.4) confetti.raf=requestAnimationFrame(f); else { x.clearRect(0,0,W,H); cv.classList.remove('on'); } })(last); }
 // count real listening time (not seeking); once a song's worth has gone by, that's one listen
-let heard=0, heardAt=null, heardSong=null;
-audio.addEventListener('timeupdate',()=>{ const t=audio.currentTime; if(heardSong!==song){ heardSong=song; heard=0; heardAt=t; return; } if(heardAt!=null&&!audio.paused){ const d=t-heardAt; if(d>0&&d<1.5) heard+=d; } heardAt=t;
-  const need=(song&&song.dur||0)*0.85; if(song&&need>0&&heard>=need){ heard=0; if(!awardXP()) heard=-1e9; } });
+// XP comes when the song reaches its end, as long as nearly all of it was actually heard (not skipped through). the clock keeps running while the screen is
+// locked, where the browser reports time only every few seconds, so a whole song heard in a pocket still counts; a seek breaks the chain so jumps don't.
+let heard=0, heardAt=null, heardSong=null, heardLen=0, xpGiven=false;
+// the tracked song and its length are pinned when it starts, so the check at the end still credits the song that just played even after the next one has loaded
+const heardDur=()=>(audio.duration&&isFinite(audio.duration)&&audio.duration>0?audio.duration:(heardSong&&heardSong.dur||0));
+function heardCheck(atEnd){ if(!heardSong||xpGiven) return; const dur=heardLen||heardDur(); if(!(dur>0)) return; const t=atEnd?dur:audio.currentTime; if(t>=dur-0.75&&heard>=dur*0.9){ xpGiven=true; awardXP(heardSong); } }
+audio.addEventListener('timeupdate',()=>{ const t=audio.currentTime; if(heardSong!==song){ heardSong=song; heardLen=heardDur(); heard=0; xpGiven=false; heardAt=t; return; }
+  if(!heardLen) heardLen=heardDur(); if(heardAt!=null&&!audio.paused){ const d=t-heardAt; if(d>0&&d<12) heard+=d; } heardAt=t; heardCheck(false); });
+audio.addEventListener('loadedmetadata',()=>{ if(heardSong===song) heardLen=heardDur(); });
+audio.addEventListener('ended',()=>{ if(heardSong&&heardSong!==song){ /* the ended handler that moves on ran first: judge the song that just finished */ } heardCheck(true); heard=0; heardAt=null; xpGiven=false; heardSong=null; });
 audio.addEventListener('seeking',()=>{ heardAt=null; });
 /* ---------- juice: tiny gags for each move ---------- */
 function juice(el,cls){ if(!el||reduce) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); el.addEventListener('animationend',()=>el.classList.remove(cls),{once:true}); }
