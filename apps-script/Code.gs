@@ -12,13 +12,25 @@ const HEADERS = ['Student','Last active','Memorized verses','Memory goal','Goal 
   'Answered today','Level','XP','Badges','Bosses beaten','Speed Round best','Daily Challenge today','Verse cards right',
   'Speed Round best (typed)','XP today','Date (today)','XP yesterday','Date (yesterday)',
   'Team','XP this week','Week of','Avatar',
-  'Questions by day (28)','XP by day (28)','Practice seconds by day (28)','Chapters (answered.right.mastered.memorized)'];
+  'Questions by day (28)','XP by day (28)','Practice seconds by day (28)','Chapters (answered.right.mastered.memorized)',
+  'Owner key','Flags','XP not counted'];
+const C_OWNER = 32, C_FLAGS = 33, C_OFF = 34;
+// Most XP a quizzer can really earn: a burst plus a steady rate, and never more than a hard day's worth per day.
+function xpAllowed_(minutes) { return Math.round(1000 + Math.min(150 * minutes, 5000 * Math.max(1, minutes / 1440))); }
+function levelOf_(xp) { const need = L => L <= 10 ? 75 * (L - 1) * L : 6750 + 1500 * (L - 10); let L = 1; while (xp >= need(L + 1)) L++; return L; }
+function flag_(old, msg) { const line = Utilities.formatDate(new Date(), 'America/Chicago', 'M/d h:mm a') + ' ' + msg; return (line + (old ? ' | ' + old : '')).slice(0, 900); }
 
 function doPost(e) {
   let d;
   try { d = JSON.parse(e.postData.contents); } catch (err) { return out('bad json'); }
   if (!d || d.key !== KEY || !d.name) return out('ignored');
-  if (d.type === 'backup') return saveBackup_(String(d.name).trim().slice(0, 40), String(d.code || ''));
+  const sk = /^[0-9a-f]{16,64}$/.test(String(d.sk || '')) ? String(d.sk) : '';
+  if (d.type === 'backup') {
+    const nm = String(d.name).trim().slice(0, 40), sh0 = sheet_(), n0 = Math.max(sh0.getLastRow() - 1, 1);
+    const all = sh0.getRange(2, 1, n0, HEADERS.length).getValues(), hit = all.find(r => String(r[0]).trim().toLowerCase() === nm.toLowerCase());
+    if (hit && hit[C_OWNER] && hit[C_OWNER] !== sk) return out('not yours');   // only the quizzer's own save code can replace their backup
+    return saveBackup_(nm, String(d.code || ''));
+  }
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -40,6 +52,36 @@ function doPost(e) {
     const names = sh.getRange(2, 1, Math.max(sh.getLastRow() - 1, 1), 1).getValues().map(r => String(r[0]).trim().toLowerCase());
     const i = names.indexOf(name.toLowerCase());
     const r = i >= 0 ? i + 2 : sh.getLastRow() + 1;
+    const prev = i >= 0 ? sh.getRange(r, 1, 1, HEADERS.length).getValues()[0] : null;
+    let owner = prev ? String(prev[C_OWNER] || '') : '', flags = prev ? String(prev[C_FLAGS] || '') : '';
+    // A name belongs to the save code that first reported it: another device can't post over someone else's row.
+    if (owner && sk !== owner) {
+      if (!/someone else/.test(flags.slice(0, 120))) sh.getRange(r, C_FLAGS + 1).setValue(flag_(flags, 'Blocked: someone else tried to post as ' + name));
+      return out('not yours');
+    }
+    if (!owner && sk) owner = sk;
+    // XP sanity check: no more than a quizzer could really earn since the last report.
+    const prevXP = prev ? num(prev[13]) : 0;
+    const mins = prev && prev[1] instanceof Date ? Math.max(0, (Date.now() - prev[1].getTime()) / 60000) : 0;
+    const allowed = prev ? xpAllowed_(mins) : 3000;
+    const strip = v => String(v).replace(/^'/, '');
+    const sameDay = prev && strip(prev[21]) === strip(row[21]), sameWeek = prev && strip(prev[26]) === strip(row[26]);
+    // XP the device claims but never really earned stays subtracted from then on, so a hacked total can't creep back up.
+    let off = prev ? num(prev[C_OFF]) : 0, xp = row[13] - off;
+    if (xp < 0) { off = 0; xp = row[13]; }          // the quizzer reset their progress
+    if (xp - prevXP > allowed) {
+      flags = flag_(flags, 'XP capped: reported ' + row[13] + ', kept ' + (prevXP + allowed));
+      off += xp - (prevXP + allowed); xp = prevXP + allowed;
+    }
+    row[13] = xp; row[12] = Math.min(num(row[12]), levelOf_(xp));
+    // today's, this week's and yesterday's XP can't grow by more than the total really grew
+    const inc = Math.max(0, xp - prevXP);
+    const capTo = (col, limit, what) => { if (row[col] > limit) { if (row[col] > limit + 50) flags = flag_(flags, what + ' capped: reported ' + row[col] + ', kept ' + limit); row[col] = limit; } };
+    capTo(20, (sameDay ? num(prev[20]) : 0) + inc, 'XP today');
+    capTo(25, (sameWeek ? num(prev[25]) : 0) + inc, 'XP this week');
+    const prevYest = prev ? (strip(prev[21]) === strip(row[23]) ? num(prev[20]) : (strip(prev[23]) === strip(row[23]) ? num(prev[22]) : 0)) : 0;
+    capTo(22, prevYest + inc, 'XP yesterday');
+    row.push(owner, flags, off);
     sh.getRange(r, 1, 1, row.length).setValues([row]);
     sh.getRange(r, 5).setNumberFormat('0%');
     sh.getRange(r, 8).setNumberFormat('0%');
@@ -61,7 +103,7 @@ function setupBackups() {
   Logger.log('Backups folder is ready: ' + folder.getUrl());
 }
 function saveBackup_(name, code) {
-  if (!name || !/^JQZ1:|^[A-Za-z0-9+/=]+$/.test(code) || code.length > 2000000) return out('ignored');
+  if (!name || !/^JQZ[12]:|^[A-Za-z0-9+/=]+(\.[0-9a-f]{32})?$/.test(code) || code.length > 2000000) return out('ignored');
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const it = DriveApp.getFoldersByName(BACKUP_FOLDER);

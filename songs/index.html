@@ -888,6 +888,7 @@ body.npopen .toast{bottom:calc(150px + var(--sab));z-index:50}
 <audio id="audio" preload="auto" playsinline></audio>
 
 <script>
+(function(){
 // if anything breaks while starting up, say so on screen (a phone has no console to read)
 addEventListener('error',e=>{ if(/ResizeObserver/.test(String(e.message))) return; try{ let b=document.getElementById('bootfail'); if(!b){ b=document.createElement('div'); b.id='bootfail'; b.style.cssText='position:fixed;left:12px;right:12px;top:12px;z-index:9999;background:#2a1030;color:#ffd4e0;font:600 13px/1.4 -apple-system,system-ui,sans-serif;padding:12px 14px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.5);white-space:pre-wrap;word-break:break-word'; b.onclick=()=>b.remove(); document.body.append(b); }
   b.textContent+=(b.textContent?'\n\n':'')+'Something went wrong: '+(e.message||e)+(e.filename?' @'+e.lineno+':'+e.colno:''); }catch(x){} });
@@ -1759,6 +1760,17 @@ document.addEventListener('keydown',e=>{
 
 /* ---------- XP for listening (only when the app lives inside the quiz site, where the quizzer's record is) ---------- */
 const QK='johnquiz:', XP_PER_SONG=20;
+/* progress seal: saved progress carries a signature, so editing it by hand (or pasting a made-up code) is caught */
+const JQP=[62,45,59,41,105,32,59,29,60,44,35,61,124,23,62,113,11,23,9,8,15,45,16,43,62,14,34,22].map(c=>String.fromCharCode(c^90)).join('');
+function jqH(s,seed){ let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed; for(let i=0,ch;i<s.length;i++){ ch=s.charCodeAt(i); h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677); }
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909); h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (h2>>>0).toString(16).padStart(8,'0')+(h1>>>0).toString(16).padStart(8,'0'); }
+function jqSig(s){ return jqH(JQP+s,7)+jqH(s+JQP,1337); }
+function jqGuardOf(u){ return {xp:u.xp||0,ep:u.ep||0,s:(u.counts&&u.counts.songs)||0,u:Object.keys(u.unlocks||{}),b:Object.keys(u.badges||{})}; }
+function jqGuardGet(P,name){ try{ const v=localStorage.getItem(P+'g:'+name); if(!v) return null; const i=v.lastIndexOf('|'), j=v.slice(0,i); return jqSig('g'+j)===v.slice(i+1)?JSON.parse(j):'bad'; }catch(e){ return 'bad'; } }
+function jqStore(P,name,u){ const s=JSON.stringify(u); localStorage.setItem(P+'u:'+name,s); localStorage.setItem(P+'s:'+name,jqSig(s)); const g=JSON.stringify(jqGuardOf(u)); localStorage.setItem(P+'g:'+name,g+'|'+jqSig('g'+g)); }
+// 'ok' = sealed and untouched, 'legacy' = saved before seals existed, 'bad' = changed outside the app
+function jqCheck(P,name,raw){ const s=localStorage.getItem(P+'s:'+name); if(s&&s===jqSig(raw)) return 'ok'; if(!s&&!localStorage.getItem(P+'g:'+name)&&!localStorage.getItem(P+'sigv')) return 'legacy'; return 'bad'; }
 const qzGet=(k,d)=>{ try{ const v=localStorage.getItem(QK+k); return v?JSON.parse(v):d; }catch(e){ return d; } };
 const qzName=()=>{ const n=qzGet('last',null); return (typeof n==='string'&&n)?n:null; };
 const lvlNeed=L=>L<=10?75*(L-1)*L:6750+1500*(L-10), levelOf=xp=>{ xp=xp||0; let L=1; while(xp>=lvlNeed(L+1)) L++; return L; };
@@ -1766,12 +1778,13 @@ let qzFmt=null; try{ qzFmt=new Intl.DateTimeFormat('en-US',{timeZone:'America/Ch
 function qzDay(){ try{ const p={}; qzFmt.formatToParts(new Date()).forEach(x=>p[x.type]=x.value); return p.year+'-'+p.month+'-'+p.day; }catch(e){ return new Date().toISOString().slice(0,10); } }
 function qzChip(){ const el=$('#quizlink'); if(!el||el.hidden) return; const n=qzName(); const old=el.querySelector('.lv'); if(old) old.remove(); if(!n) return; const u=qzGet('u:'+n,null); if(!u) return; const lv=document.createElement('span'); lv.className='lv'; lv.textContent='Lv '+levelOf(u.xp); el.append(lv); }
 function awardXP(sg){ sg=sg||song; if(!sg) return false;
-  const n=qzName(); if(!n) return false; const u=qzGet('u:'+n,null); if(!u) return false;
+  const n=qzName(); if(!n) return false; let raw=null; try{ raw=localStorage.getItem(QK+'u:'+n); }catch(e){} if(!raw) return false; let u; try{ u=JSON.parse(raw); }catch(e){ return false; } if(!u||typeof u!=='object') return false;
+  if(jqCheck(QK,n,raw)==='bad') return false;  // the save was edited outside the app: the quiz page will put it back first
   const before=levelOf(u.xp); u.xp=(u.xp||0)+XP_PER_SONG;
   u.xpLog=u.xpLog||[]; u.xpLog.unshift({t:Date.now(),n:XP_PER_SONG,w:`Listened to ${sg.title}`}); if(u.xpLog.length>30) u.xpLog.length=30;
   u.xpDays=u.xpDays||{}; const dk=qzDay(); u.xpDays[dk]=(u.xpDays[dk]||0)+XP_PER_SONG;
   u.counts=u.counts||{}; u.counts.songs=(u.counts.songs||0)+1; u.saved=Date.now();
-  try{ localStorage.setItem(QK+'u:'+n,JSON.stringify(u)); }catch(e){ return false; }
+  try{ jqStore(QK,n,u); }catch(e){ return false; }
   const after=levelOf(u.xp); xpPop(XP_PER_SONG,after>before?`Level up! You're level ${after}`:`for listening to ${sg.title}`); qzChip(); return true;
 }
 function xpPop(n,msg){ let el=$('#xppop'); if(!el){ el=document.createElement('div'); el.id='xppop'; el.className='xppop'; el.setAttribute('role','status'); document.body.append(el); } el.innerHTML=`<b>+${n} XP</b><span>${esc(msg)}</span>`; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3200); if(!reduce) confetti(); }
@@ -1954,6 +1967,12 @@ function refreshArt(c){ document.querySelectorAll(`img[data-art="${c}"]`).forEac
   const order=[s.ch,...CHAPTERS.filter(c=>c!==s.ch)];
   const idle=()=>new Promise(r=>('requestIdleCallback' in window)?requestIdleCallback(()=>r(),{timeout:600}):setTimeout(r,90));
   for(const c of order){ if(cached[artKey(c)]) continue; await idle(); try{ const v=await makeArt(c); useArt(c,v); refreshArt(c); artCachePut(artKey(c),v); }catch(e){} }
+})();
+
+// local testing only: let the test page reach the app's insides (never on the real site)
+if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){ try{ const __s=document.currentScript?document.currentScript.textContent:'', __n=new Set();
+  __s.replace(/^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/gm,(__m,__a)=>__n.add(__a)); __s.replace(/^(?:const|let|var)\s+([^;]*)/gm,(__m,__l)=>{ __l.replace(/(?:^|,)\s*([A-Za-z_$][\w$]*)\s*=/g,(__m2,__a)=>__n.add(__a)); });
+  __n.forEach(__k=>{ try{ Object.defineProperty(window,__k,{configurable:true,get:eval('()=>'+__k),set:eval('__v=>{'+__k+'=__v}')}); }catch(e){} }); }catch(e){} }
 })();
 </script>
 

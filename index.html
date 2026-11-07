@@ -1628,12 +1628,38 @@ addEventListener('message',e=>{ const d=e.data||{}; if(d.jq==='quiz') closeSongs
 addEventListener('resize',()=>{ if(songsFrame) sendInsets(); });
 document.addEventListener('click',e=>{ const a=e.target.closest('a[href="songs/"],a[href="./songs/"]'); if(!a) return; e.preventDefault(); openSongsFrame(); },true);
 if(wantSongs) addEventListener('DOMContentLoaded',openSongsFrame);
-function lsGet(k,d){try{const v=localStorage.getItem(K+k);return v?JSON.parse(v):d}catch(e){return d}}
-function lsSet(k,v){try{localStorage.setItem(K+k,JSON.stringify(v));return true}catch(e){return false}}
+/* progress seal: saved progress carries a signature, so editing it by hand (or pasting a made-up code) is caught */
+const JQP=[62,45,59,41,105,32,59,29,60,44,35,61,124,23,62,113,11,23,9,8,15,45,16,43,62,14,34,22].map(c=>String.fromCharCode(c^90)).join('');
+function jqH(s,seed){ let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed; for(let i=0,ch;i<s.length;i++){ ch=s.charCodeAt(i); h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677); }
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909); h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (h2>>>0).toString(16).padStart(8,'0')+(h1>>>0).toString(16).padStart(8,'0'); }
+function jqSig(s){ return jqH(JQP+s,7)+jqH(s+JQP,1337); }
+function jqGuardOf(u){ return {xp:u.xp||0,ep:u.ep||0,s:(u.counts&&u.counts.songs)||0,u:Object.keys(u.unlocks||{}),b:Object.keys(u.badges||{})}; }
+function jqGuardGet(P,name){ try{ const v=localStorage.getItem(P+'g:'+name); if(!v) return null; const i=v.lastIndexOf('|'), j=v.slice(0,i); return jqSig('g'+j)===v.slice(i+1)?JSON.parse(j):'bad'; }catch(e){ return 'bad'; } }
+function jqStore(P,name,u){ const s=JSON.stringify(u); localStorage.setItem(P+'u:'+name,s); localStorage.setItem(P+'s:'+name,jqSig(s)); const g=JSON.stringify(jqGuardOf(u)); localStorage.setItem(P+'g:'+name,g+'|'+jqSig('g'+g)); }
+// 'ok' = sealed and untouched, 'legacy' = saved before seals existed, 'bad' = changed outside the app
+function jqCheck(P,name,raw){ const s=localStorage.getItem(P+'s:'+name); if(s&&s===jqSig(raw)) return 'ok'; if(!s&&!localStorage.getItem(P+'g:'+name)&&!localStorage.getItem(P+'sigv')) return 'legacy'; return 'bad'; }
+const SIG_CUT=Date.parse('2026-11-07T21:00:00Z');   // codes made before the seal came in can still be restored (with checks)
+const sealSeen=new Map(); let tamperNote=0;
+function uRepair(name,o){ const g=jqGuardGet(K,name);
+  if(g&&g!=='bad'){ const nu=Object.keys(o.unlocks||{}).filter(k=>!g.u.includes(k)), nb=Object.keys(o.badges||{}).filter(k=>!g.b.includes(k)), songs=(o.counts&&o.counts.songs)||0;
+    // a little drift is an older copy of the page that was still open; a jump is someone editing the save
+    if((o.xp||0)<=g.xp+300&&songs<=g.s+15&&!nu.length&&nb.length<=2){ try{ jqStore(K,name,o); }catch(e){} return o; }
+    o.xp=Math.min(o.xp||0,g.xp); if(o.counts) o.counts.songs=Math.min(songs,g.s); nu.forEach(k=>delete o.unlocks[k]); nb.forEach(k=>delete o.badges[k]); }
+  else if(o.saveCode) o.cloudFix=1;
+  o.tamper=(o.tamper||0)+1; try{ jqStore(K,name,o); }catch(e){} tamperNote=1; return o; }
+function lsGet(k,d){try{const v=localStorage.getItem(K+k); if(!v) return d; const o=JSON.parse(v);
+  if(k.slice(0,2)==='u:'&&o&&typeof o==='object'){ const n=k.slice(2); if(sealSeen.get(n)!==v){ const st=jqCheck(K,n,v); if(st==='bad') return uRepair(n,o); if(st==='legacy'){ try{ jqStore(K,n,o); }catch(e){} } sealSeen.set(n,v); } }
+  return o}catch(e){return d}}
+function lsSet(k,v){try{ if(k.slice(0,2)==='u:'){ jqStore(K,k.slice(2),v); sealSeen.delete(k.slice(2)); } else localStorage.setItem(K+k,JSON.stringify(v)); return true}catch(e){return false}}
+// seal everyone already saved on this device, then from now on an unsealed save means it was edited
+try{ if(!localStorage.getItem(K+'sigv')){ (JSON.parse(localStorage.getItem(K+'users')||'[]')||[]).forEach(n=>{ const v=localStorage.getItem(K+'u:'+n); if(v&&!localStorage.getItem(K+'s:'+n)&&!localStorage.getItem(K+'g:'+n)){ try{ jqStore(K,n,JSON.parse(v)); }catch(e){} } }); localStorage.setItem(K+'sigv','1'); } }catch(e){}
+const ownKey=()=>U&&U.saveCode?jqSig('own:'+scNorm(U.saveCode)).slice(0,24):'';
 function blankUser(){return {stats:{},mem:{},sessions:[],sel:['1:'+qVerses[1].join(',1:')].join('').split(','),opts:{order:'order',limit:'all',pool:'all',memOnly:false,mix:false,words:'all',answer:'think',timer:'off'},vopts:{from:'goal',order:'shuffle',limit:'25',mode:'type',vsel:[],kind:'ref',timer:'off'},vstats:{},rstats:{},counts:{},badges:{}}}
 let users = lsGet('users',[]);
 let me = null, U = null;
-function loadUser(name){ me=name; U=Object.assign(blankUser(),lsGet('u:'+name,{})); U.opts=Object.assign(blankUser().opts,U.opts||{}); if(!U.migThink){ U.opts.answer='think'; U.migThink=1; } U.vopts=Object.assign(blankUser().vopts,U.vopts||{});if(U.vopts.chs){U.vopts.vsel=[...new Set([...(U.vopts.vsel||[]),...U.vopts.chs.flatMap(c=>allVerses(c).map(v=>c+':'+v))])];delete U.vopts.chs} U.vstats=U.vstats||{};U.rstats=U.rstats||{};U.counts=U.counts||{};U.badges=U.badges||{}; if(!users.includes(name)){users.push(name);lsSet('users',users)} lsSet('last',name); pullCloud(); applyTheme(); if(mus.playing) musicStart(); setTimeout(applyFreezes,300); setTimeout(checkEvents,500); sheetLast=''; scheduleSheet(); ensureSaveCode(); cloudPull(); }
+function loadUser(name){ me=name; U=Object.assign(blankUser(),lsGet('u:'+name,{})); U.opts=Object.assign(blankUser().opts,U.opts||{}); if(!U.migThink){ U.opts.answer='think'; U.migThink=1; } U.vopts=Object.assign(blankUser().vopts,U.vopts||{});if(U.vopts.chs){U.vopts.vsel=[...new Set([...(U.vopts.vsel||[]),...U.vopts.chs.flatMap(c=>allVerses(c).map(v=>c+':'+v))])];delete U.vopts.chs} U.vstats=U.vstats||{};U.rstats=U.rstats||{};U.counts=U.counts||{};U.badges=U.badges||{}; if(!users.includes(name)){users.push(name);lsSet('users',users)} lsSet('last',name); pullCloud(); applyTheme(); if(mus.playing) musicStart(); setTimeout(applyFreezes,300); setTimeout(checkEvents,500); sheetLast=''; scheduleSheet(); ensureSaveCode(); cloudPull();  tamperToast(); }
+function tamperToast(){ if(!tamperNote) return; tamperNote=0; setTimeout(()=>{ try{ toast('<b>Your progress was put back</b><span>Someone changed this save outside the app, so the extra XP and unlocks were removed.</span>'); }catch(e){} },1200); }
 function save(){ if(!me) return; U.saved=Date.now(); lsSet('u:'+me,U); scheduleSync(); scheduleSheet(); scheduleCloudSave(); }
 
 /* ---------- cloud saving: every quizzer gets a save code, and their progress is copied to the cloud ----------
@@ -1651,21 +1677,21 @@ async function scReq(m,path,v){ const r=await fetch(SAVE_DB+'/saves/'+path+'.jso
   if(r.status===401||r.status===403){ const e=new Error('denied'); e.denied=1; throw e; } if(!r.ok) throw new Error('db '+r.status); return r.json(); }
 const scMeta=u=>({saved:u.saved||0,xp:u.xp||0,ep:u.ep||0});
 // which copy wins: a reset (ep) beats everything, then more XP, then the newer save
-function cloudWins(m,u){ if(!m) return false; if((m.ep||0)!==(u.ep||0)) return (m.ep||0)>(u.ep||0); if((m.xp||0)!==(u.xp||0)) return (m.xp||0)>(u.xp||0); return (m.saved||0)>(u.saved||0)+1000; }
+function cloudWins(m,u){ if(!m) return false; if(u&&u.cloudFix) return true; if((m.ep||0)!==(u.ep||0)) return (m.ep||0)>(u.ep||0); if((m.xp||0)!==(u.xp||0)) return (m.xp||0)>(u.xp||0); return (m.saved||0)>(u.saved||0)+1000; }
 function ensureSaveCode(){ if(!U||U.saveCode||!saveOn()) return; U.saveCode=newSaveCode(me); U.scNew=1; lsSet('u:'+me,U); }
 function scheduleCloudSave(){ if(!saveOn()||!me||!U||!U.saveCode) return; clearTimeout(csTimer); csTimer=setTimeout(cloudPush,4000); }
-async function adoptCloud(name,code,z){ const d=await unpackCode(z); const u=Object.assign({},d.u,{saveCode:code}); delete u.scNew;
-  lsSet('u:'+name,u); if(!users.includes(name)){users.push(name);lsSet('users',users)} loadUser(name); }
+async function adoptCloud(name,code,z){ const d=await unpackCode(z); if(!d.signed&&!((d.u&&d.u.saved||0)<SIG_CUT)) return false; const u=Object.assign({},d.u,{saveCode:code}); delete u.scNew; delete u.cloudFix;
+  lsSet('u:'+name,u); if(!users.includes(name)){users.push(name);lsSet('users',users)} loadUser(name); return true; }
 async function cloudPush(){ if(!saveOn()||!me||!U||!U.saveCode) return; if(cs.busy){cs.again=true;return} cs.busy=true; cs.st=cs.st==='ok'?'ok':'saving'; refreshSaveBox(); const name=me, code=U.saveCode;
   try{ const key=await scKey(code), m=await scReq('GET',key+'/m'); if(me!==name) return;
-    if(cloudWins(m,U)){ const c=await scReq('GET',key); if(me===name&&c&&c.z){ await adoptCloud(name,code,c.z); render(); } }  // another device is ahead: take its copy instead of overwriting it
-    else { const z=await packCode(); if(me!==name) return; await scReq('PUT',key,{m:Object.assign({n:name},scMeta(U)),z}); }
+    let took=false; if(cloudWins(m,U)){ const c=await scReq('GET',key); if(me===name&&c&&c.z&&await adoptCloud(name,code,c.z)){ took=true; render(); } }  // another device is ahead: take its copy instead of overwriting it
+    if(!took){ if(U.cloudFix){ delete U.cloudFix; lsSet('u:'+me,U); } const z=await packCode(); if(me!==name) return; await scReq('PUT',key,{m:Object.assign({n:name},scMeta(U)),z}); }
     cs.st='ok'; cs.at=Date.now(); if(U&&U.scNew) announceSaveCode(); }
   catch(e){ cs.st=e.denied?'off':'err'; }
   finally{ cs.busy=false; refreshSaveBox(); if(cs.again){cs.again=false;scheduleCloudSave()} } }
 async function cloudPull(){ if(!saveOn()||!me||!U||!U.saveCode) return; const name=me, code=U.saveCode; csPullAt=Date.now();
   try{ const key=await scKey(code), m=await scReq('GET',key+'/m'); if(me!==name) return;
-    if(cloudWins(m,U)){ const c=await scReq('GET',key); if(me===name&&c&&c.z){ await adoptCloud(name,code,c.z); render(); } cs.st='ok'; cs.at=Date.now(); refreshSaveBox(); }
+    if(cloudWins(m,U)){ const c=await scReq('GET',key); if(me===name&&c&&c.z&&await adoptCloud(name,code,c.z)){ render(); cs.st='ok'; cs.at=Date.now(); refreshSaveBox(); } else cloudPush(); }
     else if(!m||m.saved!==(U.saved||0)||m.xp!==(U.xp||0)||(m.ep||0)!==(U.ep||0)) cloudPush();
     else { cs.st='ok'; cs.at=Date.now(); refreshSaveBox(); if(U.scNew) announceSaveCode(); } }
   catch(e){ cs.st=e.denied?'off':'err'; refreshSaveBox(); } }
@@ -1674,7 +1700,7 @@ async function restoreFromCode(raw){ if(!saveOn()) throw new Error('Cloud saving
   let c; try{ c=await scReq('GET',await scKey(raw)); }catch(e){ throw new Error(e.denied?"Cloud saving isn't switched on yet. Ask Mr. Maas.":"Couldn't reach the cloud. Check your internet and try again."); }
   if(!c||!c.z) throw new Error('No save found for that code. Check each letter and try again.');
   const d=await unpackCode(c.z); const nm=String((c.m&&c.m.n)||d.n||'Quizzer').slice(0,40); const name=users.find(x=>x.toLowerCase()===nm.toLowerCase())||nm;
-  await adoptCloud(name,(d.u&&d.u.saveCode)||scFormat(raw),c.z); cs.st='ok'; cs.at=Date.now(); return name; }
+  if(!await adoptCloud(name,(d.u&&d.u.saveCode)||scFormat(raw),c.z)) throw new Error("That save couldn't be checked. Ask Mr. Maas for help."); cs.st='ok'; cs.at=Date.now(); return name; }
 function saveStatus(){ if(!saveOn()) return 'Cloud saving needs an internet connection.';
   return cs.st==='ok'?'☁️ Saved to the cloud'+(cs.at?' at '+new Date(cs.at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):''):cs.st==='saving'?'☁️ Saving…':cs.st==='off'?"Cloud saving isn't switched on yet. Your progress is still saved on this device.":cs.st==='err'?"Couldn't reach the cloud right now. It will try again on its own.":'☁️ Checking the cloud…'; }
 function refreshSaveBox(){ const el=document.getElementById('scstat'); if(el) el.textContent=saveStatus(); }
@@ -2522,26 +2548,28 @@ function memoryView(){
 const cloud={status:'loading',db:null,uid:null,owner:false,board:{},lastSync:null,err:null};
 let teacherCode='', confirmRemove=null, boardSort='goal';
 function slug(n){return (n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60))||'student'}
-function codeFor(){return btoa(unescape(encodeURIComponent(JSON.stringify({n:me,u:U}))))}
+function codeFor(){const j=JSON.stringify({n:me,u:U});return btoa(unescape(encodeURIComponent(j)))+'.'+jqSig('c'+j)}
 function readCode(s){const d=JSON.parse(decodeURIComponent(escape(atob(s.trim()))));if(!d.u||!d.u.stats||!d.n)throw 0;return d}
 // Compact backup codes ("JQZ1:" + gzip + base64) so a whole season of progress stays small.
 const b64ToBytes=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
 function bytesToB64(u){ let s=''; for(let i=0;i<u.length;i+=0x8000) s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000)); return btoa(s); }
 async function packCode(){ const json=JSON.stringify({n:me,u:U});
   if(typeof CompressionStream==='undefined') return codeFor();
-  const buf=await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer(); return 'JQZ1:'+bytesToB64(new Uint8Array(buf)); }
+  const buf=await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer(); return 'JQZ2:'+bytesToB64(new Uint8Array(buf))+'.'+jqSig('c'+json); }
 // Accepts a code however it arrived: with line breaks, wrapped in quotes or an email, '+' turned into spaces, URL-safe letters, or missing '=' padding.
 function cleanB64(b){ b=String(b||'').replace(/[\s"'“”‘’`]+/g,'').replace(/-/g,'+').replace(/_/g,'/').replace(/[^A-Za-z0-9+\/=]/g,''); b=b.replace(/=+$/,''); while(b.length%4) b+='='; return b; }
-async function unpackCode(raw){ let s=String(raw||'');
+async function unpackCode(raw){ let s=String(raw||''), sig=null;
+  const m0=s.match(/JQZ2:\s*([A-Za-z0-9+\/=_\-\s]+?)\s*\.\s*([0-9a-f]{32})/); if(m0){ s='JQZ1:'+m0[1]; sig=m0[2]; }
+  else { const m1=s.match(/(eyJ[A-Za-z0-9+\/=_\-\s]{40,}?)\s*\.\s*([0-9a-f]{32})/); if(m1){ s=m1[1]; sig=m1[2]; } }
   const m=s.match(/JQZ1:\s*([A-Za-z0-9+\/=_\-]+(?:\s+[A-Za-z0-9+\/=_\-]{16,})*)/); // pull the code out of a whole email or file if that's what was pasted
   if(m) s='JQZ1:'+m[1]; else { const m2=s.match(/eyJ[A-Za-z0-9+\/=_\-]{40,}(?:\s+[A-Za-z0-9+\/=_\-]{16,})*/); if(m2) s=m2[0]; }
   if(s.replace(/\s+/g,'').length<20) throw new Error('short');
-  const tryGz=async b=>{ if(typeof DecompressionStream==='undefined') throw new Error('nogzip'); const txt=await new Response(new Blob([b64ToBytes(b)]).stream().pipeThrough(new DecompressionStream('gzip'))).text(); return JSON.parse(txt); };
+  let txt0=''; const tryGz=async b=>{ if(typeof DecompressionStream==='undefined') throw new Error('nogzip'); const txt=await new Response(new Blob([b64ToBytes(b)]).stream().pipeThrough(new DecompressionStream('gzip'))).text(); txt0=txt; return JSON.parse(txt); };
   const variants=[s, s.replace(/ /g,'+')]; let lastErr=null;
   for(const v of variants){ try{ const t=v.replace(/\s+/g,''); let d;
       if(t.startsWith('JQZ1:')) d=await tryGz(cleanB64(t.slice(5)));
-      else d=JSON.parse(decodeURIComponent(escape(atob(cleanB64(t)))));
-      if(!d||!d.u||!d.u.stats) throw new Error('shape'); return d; }catch(e){ lastErr=e; } }
+      else { txt0=decodeURIComponent(escape(atob(cleanB64(t)))); d=JSON.parse(txt0); }
+      if(!d||!d.u||!d.u.stats) throw new Error('shape'); d.signed=!!sig&&jqSig('c'+txt0)===sig; return d; }catch(e){ lastErr=e; } }
   throw lastErr||new Error('bad'); }
 function summary(name,u){
   const memCh=VERSES_IN_JOHN.map((n,i)=>{let m=0;for(let v=1;v<=n;v++)if(u.mem&&u.mem[(i+1)+':'+v])m++;return m});
@@ -3917,7 +3945,7 @@ function wireGames(){
 const SHEET_URL='https://script.google.com/macros/s/AKfycbwuMn5RzT0fGVk5vt8qmWUsuFYjrGUe87ytVAD1qodJ0XC2qfY4BIpIEGdtcleGAvYf/exec', SHEET_KEY='jq-maas-2026';
 let sheetTimer=null, sheetLast='';
 function sheetSummary(){ const r=summary(me,U), {streak,best}=streakFrom(goalDaysOf(U.days)), td=U.daily&&U.daily[dayKey()];
-  return {key:SHEET_KEY,name:me,mem:r.mem,goal:U.goal||'',goalN:r.goalN,goalMem:r.goalMem,att:r.att,right:r.right,solid:r.solid,streak,best,today:todayCount(),
+  return {key:SHEET_KEY,sk:ownKey(),name:me,mem:r.mem,goal:U.goal||'',goalN:r.goalN,goalMem:r.goalMem,att:r.att,right:r.right,solid:r.solid,streak,best,today:todayCount(),
     level:levelOf(U.xp).level,xp:U.xp||0,badges:Object.keys(U.badges||{}).length,bosses:Object.keys(U.bosses||{}).length,speed:(U.hs&&U.hs.speed)||0,
     daily:td?td.s+'/'+(td.n||10):'',vright:(U.counts&&U.counts.vright)||0,speedTyped:(U.hs&&U.hs.speedTyped)||0,
     xpToday:(U.xpDays&&U.xpDays[dayKey()])||0,tdate:dayKey(),xpYest:(U.xpDays&&U.xpDays[shiftDay(dayKey(),-1)])||0,ydate:shiftDay(dayKey(),-1),
@@ -3937,7 +3965,7 @@ function sendSheet(beacon){ if(!SHEET_URL.startsWith('https://')||!me||!U) retur
     fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body,keepalive:true}).catch(()=>{sheetLast=''}); }catch(e){ sheetLast=''; } }
 let backupAt=0, backupTimer=null;
 async function sendBackup(beacon){ if(!SHEET_URL.startsWith('https://')||!me||!U) return; backupAt=Date.now();
-  try{ const body=JSON.stringify({key:SHEET_KEY,type:'backup',name:me,code:await packCode()});
+  try{ const body=JSON.stringify({key:SHEET_KEY,type:'backup',sk:ownKey(),name:me,code:await packCode()});
     if(beacon){ if(body.length<60000&&navigator.sendBeacon) navigator.sendBeacon(SHEET_URL,new Blob([body],{type:'text/plain'})); return; }
     fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body}).catch(()=>{backupAt=0}); }catch(e){ backupAt=0; } }
 function scheduleBackup(){ if(!SHEET_URL.startsWith('https://')||backupTimer) return; if(Date.now()-backupAt<10*60e3) return;
@@ -4681,7 +4709,15 @@ function wire(){
   document.querySelectorAll('[data-progsub]').forEach(b=>b.onclick=()=>{progSub=b.dataset.progsub;render()});
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
   { const f=document.getElementById('codefile'); if(f) f.onchange=async()=>{ const file=f.files&&f.files[0]; if(!file) return; const txt=await file.text(); $('#code').value=txt; $('#doimport').click(); }; }
-  on('#doimport',async()=>{ const msg=$('#importmsg'); if(scLooks($('#code').value)){ try{ const n=await restoreFromCode($('#code').value); render(); toast(`<b>Welcome back, ${esc(n)}!</b><span>Your progress came back from the cloud.</span>`); }catch(e){ if(msg) msg.textContent=e.message; } return; } try{ const d=await unpackCode($('#code').value); if(d.grant){ const before=U.xp||0; U.xp=Math.max(before,d.u.xp||0); U.xpLog=U.xpLog||[]; if(U.xp>before) U.xpLog.unshift({t:Date.now(),n:U.xp-before,w:d.grant});
+  on('#doimport',async()=>{ const msg=$('#importmsg'); if(scLooks($('#code').value)){ try{ const n=await restoreFromCode($('#code').value); render(); toast(`<b>Welcome back, ${esc(n)}!</b><span>Your progress came back from the cloud.</span>`); }catch(e){ if(msg) msg.textContent=e.message; } return; } try{ const d=await unpackCode($('#code').value);
+      if(!d.signed){ const bad=()=>{ if(msg) msg.textContent="That code doesn't check out. Use the code the app gave you, or ask Mr. Maas for a new one."; };
+        if(d.grant||!((d.u.saved||0)<SIG_CUT)) return bad();
+        // an older code from before codes were sealed: only as much XP as the class record shows for that quizzer
+        const nm=String(d.n||'').trim().toLowerCase(); let sx=null;
+        try{ const r=await fetch(SHEET_URL+'?lb=1',{cache:'no-store'}).then(r=>r.json()); const hit=(r.xp||[]).find(p=>String(p.name).trim().toLowerCase()===nm); sx=hit?hit.v:0; }catch(e){}
+        if(sx===null){ if(msg) msg.textContent="Couldn't check that older code right now. Try again with internet, or ask Mr. Maas for a new one."; return; }
+        if((d.u.xp||0)>sx+500) return bad(); }
+      if(d.grant){ const gid=String(d.gid||d.grant); U.grantsUsed=U.grantsUsed||{}; if(U.grantsUsed[gid]){ if(msg) msg.textContent='That code was already used.'; return; } U.grantsUsed[gid]=Date.now(); const before=U.xp||0; U.xp=Math.max(before,d.u.xp||0); U.xpLog=U.xpLog||[]; if(U.xp>before) U.xpLog.unshift({t:Date.now(),n:U.xp-before,w:d.grant});
     if(d.streak>0){ U.days=U.days||{}; const today=dayKey(); let k=((U.days[today]||0)>=DAILY)?today:shiftDay(today,-1); for(let i=0;i<d.streak;i++){ U.days[k]=Math.max(U.days[k]||0,DAILY); k=shiftDay(k,-1); } }
     save(); render(); toast(`<b>Progress restored!</b><span>${esc(d.grant)}</span>`); return; } const sc=U.saveCode, ep=U.ep; U=Object.assign(blankUser(),d.u); if(sc){ U.saveCode=sc; U.ep=Math.max(ep||0,U.ep||0); } delete U.scNew; U.opts=Object.assign(blankUser().opts,U.opts||{}); U.vopts=Object.assign(blankUser().vopts,U.vopts||{}); save(); applyTheme(); render(); toast('<b>Progress restored!</b><span>Welcome back. Everything is right where you left it.</span>'); }catch(e){ const why=e&&e.message; if(msg) msg.textContent=why==='nogzip'?"This phone's browser is too old to open the code. Try it in Safari or Chrome after updating, or on a computer.":why==='short'?"That's not a whole code. Open the backup file, Select All, Copy, and paste everything here.":"That code didn't load. Make sure you copied all of it (it can be very long) — open the file, Select All, Copy."; } });
   on('#reset',()=>{confirmReset=true;render()});
