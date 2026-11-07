@@ -639,32 +639,93 @@ body.npopen .toast{bottom:calc(150px + var(--sab));z-index:50}
 @media (prefers-reduced-motion:reduce){.np,.art,.mini .card,.upnext,.lib,.tabbar,.tabbar .blob,.sheet .box{transition:none}.eq i,.row,.album,.lyrics,.vbody,.vhead .tt,.tabbar .sweep,.vhint,.ln.gap,.ln.gap i{animation:none!important}.ln{transition:none}.ln.cur .w.now,.vtext .w.now{animation:none;background-image:linear-gradient(#fff,#fff)}body.npopen .lib{transform:none;filter:none}}
 
 /* listening stats */
-.st-hero{position:relative;overflow:hidden;border-radius:24px;padding:20px 20px 18px;margin:8px 0 12px}
-.st-hero::before{content:"";position:absolute;inset:-40% -20% auto auto;width:240px;height:240px;border-radius:50%;background:var(--sig);opacity:.28;filter:blur(40px);pointer-events:none}
-.st-hero .lbl{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)}
-.st-hero .big{display:flex;align-items:baseline;gap:8px;margin:4px 0 2px}
-.st-hero .big b{font-family:var(--serif);font-size:58px;line-height:1;font-weight:800;letter-spacing:-.03em;background:var(--sig);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
-.st-hero .big span{font-size:17px;font-weight:700;color:var(--sub)}
-.st-hero small{color:var(--sub);font-size:13px}
-.st-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px}
-.st-tile{border-radius:18px;padding:14px 12px 12px;min-width:0}
-.st-tile b{display:block;font-size:26px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
-.st-tile span{display:block;font-size:12px;color:var(--sub);font-weight:600;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.st-week{border-radius:20px;padding:14px 14px 10px;margin-bottom:22px}
-.st-week .bars{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:120px;margin-top:10px}
-.st-week .bar{display:grid;grid-template-rows:auto 1fr auto;justify-items:center;height:100%;gap:4px;min-width:0}
-.st-week .bar em{font-style:normal;font-size:10.5px;font-weight:700;color:var(--sub);font-variant-numeric:tabular-nums;align-self:end}
-.st-week .bar i{display:block;width:100%;max-width:30px;align-self:end;border-radius:8px 8px 4px 4px;background:var(--sig);min-height:4px;transform-origin:bottom;animation:stGrow .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--k)*40ms)}
-.st-week .bar.zero i{background:var(--sep);opacity:.9}
-.st-week .bar span{font-size:11px;font-weight:700;color:var(--sub)}
-.st-week .bar.today span{color:var(--accent)}
+.row .tt b .lstat{vertical-align:2px}
+.lstat{display:inline-flex;align-items:center;gap:3px;margin-left:7px;padding:1px 7px 1px 5px;border-radius:9px;font-size:11px;font-weight:700;font-style:normal;color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);font-variant-numeric:tabular-nums;vertical-align:1px;white-space:nowrap;line-height:16px}
+.lstat svg{width:10px;height:10px;fill:currentColor}
+.lstat i{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.55;margin:0 2px}
+.lstat.none{display:none}
+.lstat.bump{animation:lsBump .5s cubic-bezier(.3,1.4,.5,1)}
+@keyframes lsBump{40%{transform:scale(1.18)}}
+#statview .favhead{padding-bottom:12px}
+.st-hero{position:relative;overflow:hidden;border-radius:26px;padding:22px 20px 20px;margin:4px 0 12px;color:#fff;isolation:isolate;box-shadow:0 18px 40px -18px rgba(0,0,0,.55);min-height:178px;display:flex;flex-direction:column;justify-content:flex-end}
+.st-hero>img{position:absolute;inset:-20%;width:140%;height:140%;object-fit:cover;filter:blur(26px) saturate(1.5);z-index:-2;transform:scale(1.05)}
+.st-hero .sh{position:absolute;inset:0;z-index:-1;background:radial-gradient(120% 90% at 100% 0%,rgba(255,92,138,.45),transparent 60%),linear-gradient(180deg,rgba(10,8,20,.15),rgba(10,8,20,.62))}
+.st-hero .lbl{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.st-hero .big{display:flex;align-items:baseline;margin:2px 0 4px;font-family:var(--serif)}
+.st-hero .big b{font-size:72px;line-height:.95;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-shadow:0 4px 24px rgba(0,0,0,.25)}
+.st-hero .big u{text-decoration:none;font-size:30px;font-weight:700;opacity:.8;margin:0 14px 0 3px}.st-hero .big u.w{margin-left:10px}
+.st-hero small{font-size:14px;opacity:.88;font-weight:600}
+.st-eq{position:absolute;top:20px;right:20px;display:flex;gap:3px;align-items:flex-end;height:22px}
+.st-eq i{width:4px;border-radius:2px;background:#fff;opacity:.85;height:30%}
+.st-eq i:nth-child(2){height:70%}.st-eq i:nth-child(3){height:45%}.st-eq i:nth-child(4){height:90%}.st-eq i:nth-child(5){height:55%}
+.st-eq.on i{animation:stEq .9s ease-in-out infinite alternate}
+.st-eq.on i:nth-child(2){animation-delay:-.3s}.st-eq.on i:nth-child(3){animation-delay:-.6s}.st-eq.on i:nth-child(4){animation-delay:-.15s}.st-eq.on i:nth-child(5){animation-delay:-.45s}
+@keyframes stEq{from{transform:scaleY(.35)}to{transform:scaleY(1)}}
+.st-eq i{transform-origin:bottom}
+.st-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.st-tile{position:relative;border-radius:20px;padding:14px 14px 13px;min-width:0;overflow:hidden}
+.st-tile .ic{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;margin-bottom:10px;color:#fff;background:var(--g);box-shadow:0 6px 14px -6px var(--sh)}
+.st-tile .ic svg{width:19px;height:19px;fill:currentColor}
+.st-tile.t1{--g:linear-gradient(135deg,#ff7a59,#ff3d7f);--sh:#ff3d7f}
+.st-tile.t2{--g:linear-gradient(135deg,#34d399,#0ea5a4);--sh:#10b981}
+.st-tile.t3{--g:none;--sh:transparent}
+.st-tile.t4{--g:linear-gradient(135deg,#ffb547,#ff6a2b);--sh:#ff6a2b}
+.st-tile.t3 .ic{width:34px;height:34px;background:none;box-shadow:none}
+.st-tile .ring{width:34px;height:34px;transform:rotate(-90deg)}
+.st-tile .ring circle{fill:none;stroke-width:4.5}
+.st-tile .ring .bg{stroke:var(--sep)}
+.st-tile .ring .fg{stroke:#8b7cff;stroke-linecap:round;transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1)}
+.st-tile b{display:block;font-size:30px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.st-tile b small{font-size:15px;color:var(--sub);font-weight:700;letter-spacing:0}
+.st-tile .l{display:block;font-size:12.5px;color:var(--sub);font-weight:700;margin-top:5px}
+.st-week{border-radius:22px;padding:16px 16px 12px;margin-bottom:6px}
+.st-week .hd{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.st-week .lbl{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)}
+.st-week .hd b{display:block;font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+.st-week .cmp{font-size:12px;font-weight:800;padding:4px 9px;border-radius:10px;white-space:nowrap}
+.st-week .cmp.up{color:#10b981;background:rgba(16,185,129,.14)}
+.st-week .cmp.down{color:var(--sub);background:var(--sep)}
+.st-week .chart{position:relative;margin-top:12px}
+.st-week .bars{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:9px;height:160px}
+.st-week .bar{display:grid;grid-template-rows:1fr 20px;justify-items:center;height:100%;min-width:0}
+.st-week .col{position:relative;width:100%;max-width:32px;margin-top:16px}
+.st-week .bar i{position:absolute;left:0;right:0;bottom:0;height:var(--h);border-radius:9px 9px 5px 5px;background:linear-gradient(180deg,#ffb547,#ff5c8a 55%,#8b7cff);transform-origin:bottom;animation:stGrow .7s cubic-bezier(.2,.9,.25,1.05) both;animation-delay:calc(var(--k)*45ms);opacity:.55}
+.st-week .bar em{position:absolute;left:50%;bottom:calc(var(--h) + 4px);transform:translateX(-50%);font-style:normal;font-size:10px;font-weight:800;color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap;animation:stFade .5s both;animation-delay:calc(var(--k)*45ms + .35s)}
+@keyframes stFade{from{opacity:0;transform:translate(-50%,4px)}}
+.st-week .bar.today i{opacity:1;box-shadow:0 6px 16px -6px #ff5c8a}
+.st-week .bar.zero i{background:var(--sep);opacity:1}
+.st-week .bar>span{align-self:end;font-size:11px;font-weight:700;color:var(--sub)}
+.st-week .bar.today>span,.st-week .bar.today em{color:var(--accent)}
+.st-week .avg{position:absolute;left:0;right:0;bottom:calc(20px + (100% - 36px) * var(--a));border-top:1.5px dashed color-mix(in srgb,var(--sub) 50%,transparent);pointer-events:none;z-index:2}
+.st-week .avg span{position:absolute;left:0;top:-16px;font-size:10px;font-weight:800;color:var(--sub)}
 @keyframes stGrow{from{transform:scaleY(0)}}
-.st-week h3,.st-sect h2{margin:0}
-.st-week h3{font-size:15px;font-weight:800;display:flex;justify-content:space-between;align-items:baseline}
-.st-week h3 small{font-size:12px;color:var(--sub);font-weight:600}
-#statlist .row .tt small .st-meter{display:block;height:3px;border-radius:2px;background:var(--sep);margin-top:6px;overflow:hidden;max-width:180px}
-#statlist .row .tt small .st-meter i{display:block;height:100%;background:var(--sig);border-radius:inherit}
-.st-empty{text-align:center;color:var(--sub);padding:18px 10px 4px;font-size:14px}
+.st-pod{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:10px;align-items:end;margin-bottom:6px}
+.st-pod .pc{display:grid;justify-items:center;text-align:center;gap:3px;min-width:0;padding:0;border-radius:16px;transition:transform .15s}
+.st-pod .pc:active{transform:scale(.95)}
+.st-pod .cv{position:relative;width:100%;aspect-ratio:1;border-radius:18px;overflow:visible;margin-bottom:8px}
+.st-pod .cv img{width:100%;height:100%;object-fit:cover;border-radius:inherit;box-shadow:0 12px 26px -12px rgba(0,0,0,.6);background:var(--thumb)}
+.st-pod .p1 .cv{border-radius:22px}
+.st-pod .p1 .cv img{box-shadow:0 0 0 3px #ffcc4d,0 16px 32px -12px rgba(255,170,40,.6)}
+.st-pod .md{position:absolute;left:50%;bottom:-11px;transform:translateX(-50%);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:900;color:#3a2a00;background:radial-gradient(circle at 35% 30%,#fff8,transparent 55%),var(--m);box-shadow:0 3px 8px rgba(0,0,0,.35),inset 0 -2px 0 rgba(0,0,0,.15)}
+.st-pod .p1 .md{width:32px;height:32px;bottom:-14px;font-size:15px}
+.st-pod .p1 .cv::before{content:"👑";position:absolute;top:-22px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:24px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));z-index:1}
+.st-pod .pc b{font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-top:4px}
+.st-pod .pc small{font-size:11.5px;color:var(--sub);font-weight:600;white-space:nowrap}
+.st-pod .p1{padding-top:18px}
+.st-chs{border-radius:20px;padding:8px 6px;display:grid;margin-bottom:6px}
+.st-chs .ch{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;text-align:left}
+.st-chs .ch:active{background:var(--sep)}
+.st-chs .nm{font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-chs .tr{height:10px;border-radius:5px;background:var(--sep);overflow:hidden}
+.st-chs .tr i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--a),var(--b));transform-origin:left;animation:stGrowX .8s cubic-bezier(.2,.9,.25,1) both;animation-delay:calc(var(--k)*50ms)}
+@keyframes stGrowX{from{transform:scaleX(0)}}
+.st-chs .v{font-size:12px;font-weight:800;color:var(--sub);font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+#statlist .lstat{margin-left:0}
+#statlist .st-meter{display:block;height:3px;border-radius:2px;background:var(--sep);margin-top:7px;overflow:hidden;max-width:190px}
+#statlist .st-meter i{display:block;height:100%;background:var(--sig);border-radius:inherit}
+.st-empty{display:grid;justify-items:center;text-align:center;gap:6px;padding:26px 18px;border-radius:20px;color:var(--sub);font-size:14px}
+.st-empty svg{width:34px;height:34px;fill:var(--accent);opacity:.8}
+.st-empty b{color:var(--fg);font-size:16px}
 </style>
 
 <main class="lib" id="lib">
@@ -857,6 +918,14 @@ const audio=$('#audio');
 const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const lsGet=(k,d)=>{try{const v=localStorage.getItem('jsongs:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}};
 const lsSet=(k,v)=>{try{localStorage.setItem('jsongs:'+k,JSON.stringify(v))}catch(e){}};
+/* listening stats: lifetime totals, kept on this device */
+const dayKey=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+let STATS=lsGet('stats',null);
+if(!STATS||!STATS.songs){ STATS={since:Date.now(),sec:0,n:0,full:0,songs:{},days:{}};
+  /* start from the recent plays already logged so the page isn't blank */
+  const p=lsGet('plays',{})||{}; for(const id in p){ const sg=SONGS.find(x=>x.id===id); const k=(p[id]||[]).length; if(!sg||!k) continue; const sec=k*(sg.dur||0)*.9;
+    STATS.songs[id]={n:k,s:sec,last:Math.max(...p[id])}; STATS.n+=k; STATS.sec+=sec; (p[id]||[]).forEach(t=>{ const dk=dayKey(new Date(t)); STATS.days[dk]=(STATS.days[dk]||0)+(sg.dur||0)*.9; }); STATS.since=Math.min(STATS.since,...p[id]); }
+  lsSet('stats',STATS); }
 
 /* ---------- lyric lines ---------- */
 // the recognizer marks each word a beat after it starts; pull everything forward so highlights land on the word
@@ -976,7 +1045,13 @@ let lastSave=0;
 function saveProgress(force){ if(!song) return; const now=performance.now(); if(!force&&now-lastSave<3000) return; lastSave=now; lsSet('last',{id:song.id,t:audio.currentTime,d:audio.duration||song.dur}); }
 
 /* ---------- library ---------- */
-const rowHTML=(s,opts={})=>`<button class="row" type="button" data-song="${s.i}" style="--i:${Math.min(opts.i||0,14)}" ${opts.at!=null?`data-at="${opts.at}"`:''}>${opts.n?`<span class="n">${opts.n}</span>`:`<div class="th"><img src="${THUMB[s.ch]||ART[s.ch]}" data-art="${s.ch}" data-sz="t" alt="" loading="lazy"><div class="eq"><i></i><i></i><i></i></div></div>`}<div class="tt"><b>${opts.title||esc(s.title)}</b><small>${opts.sub||(s.extra?esc(s.sub):`${nVerses(s)} verses · ${esc(s.sub)}`)}</small></div><span class="heart" data-fav="${s.id}" role="button" aria-pressed="${isFav(s.id)}" aria-label="Favorite"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.9c0 5.4-7.5 10-7.5 10z"/></svg></span><span class="dur">${fmt(s.dur)}</span></button>`;
+
+const fmtShort=t=>{ const m=Math.floor(t/60); return m>=60?Math.floor(m/60)+'h '+(m%60)+'m':m>=1?m+'m':Math.round(t)+'s'; };
+function lstatInner(id){ const r=STATS.songs[id]; if(!r||!r.n) return ''; return `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>${r.n.toLocaleString()}<i></i>${fmtShort(r.s)}`; }
+function lstatHTML(id){ const h=lstatInner(id); return `<span class="lstat${h?'':' none'}" data-ls="${id}" title="Your listens and listening time">${h}</span>`; }
+const statTouched=new Set();
+function statPaint(){ statTouched.forEach(id=>{ const h=lstatInner(id); document.querySelectorAll(`[data-ls="${id}"]`).forEach(e=>{ if(e.innerHTML!==h){ e.innerHTML=h; e.classList.toggle('none',!h); e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); } }); }); statTouched.clear(); }
+const rowHTML=(s,opts={})=>`<button class="row" type="button" data-song="${s.i}" style="--i:${Math.min(opts.i||0,14)}" ${opts.at!=null?`data-at="${opts.at}"`:''}>${opts.n?`<span class="n">${opts.n}</span>`:`<div class="th"><img src="${THUMB[s.ch]||ART[s.ch]}" data-art="${s.ch}" data-sz="t" alt="" loading="lazy"><div class="eq"><i></i><i></i><i></i></div></div>`}<div class="tt"><b>${opts.title||esc(s.title)}${opts.nostat?'':lstatHTML(s.id)}</b><small>${opts.sub||(s.extra?esc(s.sub):`${nVerses(s)} verses · ${esc(s.sub)}`)}</small></div><span class="heart" data-fav="${s.id}" role="button" aria-pressed="${isFav(s.id)}" aria-label="Favorite"><svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.9c0 5.4-7.5 10-7.5 10z"/></svg></span><span class="dur">${fmt(s.dur)}</span></button>`;
 let suppressClickUntil=0;
 /* swipe a row sideways: it slides with the finger, a pane grows behind it, and past the threshold the action fires on release */
 function swipeable(el,o){ let sx=0,sy=0,d=0,mode=null,id=null,will=false;
@@ -1016,7 +1091,7 @@ function renderLibrary(){
   // folders open on their own for the chapters being listened to over and over lately (plus the one that played last), since that's how the songs get memorized
   const pc=playCounts(), hot=hotChapters(pc), openSet=new Set([lastCh,...hot]);
   $('#list').innerHTML=CHAPTERS.map(c=>{ const list=SONGS.filter(s=>s.ch===c), tot=list.reduce((a,s)=>a+s.dur,0), isOpen=openSet.has(c), isHot=hot.includes(c);
-    return `<section class="chgroup ${isOpen?'open':''} ${isHot?'hot':''}" data-chg="${c}"><button class="chhd glass" type="button" aria-expanded="${isOpen}"><div class="th"><img src="${THUMB[c]||ART[c]}" data-art="${c}" data-sz="t" alt="" loading="lazy"></div><div class="tt"><b>${esc(chName(c))}</b><small>${isHot?'<i class="rep" title="On repeat lately">↻</i> ':''}${esc(CH[c].name)} · ${list.length} song${list.length>1?'s':''}</small></div><span class="go" data-chlink="${c}">Open ›</span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 15.5 4.5 8l1.4-1.4L12 12.7l6.1-6.1L19.5 8z"/></svg></span></button><div class="chbody"><div class="chin">${list.map((s,k)=>rowHTML(s,{i:k,sub:`${nVerses(s)} verses · ${fmt(s.dur)}${pc[s.id]>=2?` · <i class="rep">↻ ${pc[s.id]}×</i>`:''}`})).join('')}</div></div></section>`; }).join('');
+    return `<section class="chgroup ${isOpen?'open':''} ${isHot?'hot':''}" data-chg="${c}"><button class="chhd glass" type="button" aria-expanded="${isOpen}"><div class="th"><img src="${THUMB[c]||ART[c]}" data-art="${c}" data-sz="t" alt="" loading="lazy"></div><div class="tt"><b>${esc(chName(c))}</b><small>${isHot?'<i class="rep" title="On repeat lately">↻</i> ':''}${esc(CH[c].name)} · ${list.length} song${list.length>1?'s':''}</small></div><span class="go" data-chlink="${c}">Open ›</span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 15.5 4.5 8l1.4-1.4L12 12.7l6.1-6.1L19.5 8z"/></svg></span></button><div class="chbody"><div class="chin">${list.map((s,k)=>rowHTML(s,{i:k,sub:`${nVerses(s)} verses · ${fmt(s.dur)}`})).join('')}</div></div></section>`; }).join('');
   document.querySelectorAll('[data-chlink]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const g=b.closest('.chgroup'); showChapter(+b.dataset.chlink,g&&g.querySelector('.chhd .th img')); });
   // a tap on the little picture opens the chapter's page; anywhere else on the header folds the list open or shut (judged by where the finger landed, since on iOS an invisible switch sits over the whole header)
   const hit=(el,e,px,py)=>{ if(!el||!(e.clientX||e.clientY)) return false; const r=el.getBoundingClientRect(); return e.clientX>=r.left-px&&e.clientX<=r.right+px&&e.clientY>=r.top-py&&e.clientY<=r.bottom+py; };
@@ -1732,40 +1807,55 @@ function hotChapters(pc){ pc=pc||playCounts(); const by={}; SONGS.forEach(s=>{ c
 // the tracked song and its length are pinned when it starts, so the check at the end still credits the song that just played even after the next one has loaded
 const heardDur=()=>(audio.duration&&isFinite(audio.duration)&&audio.duration>0?audio.duration:(heardSong&&heardSong.dur||0));
 
-/* listening stats: lifetime totals, kept on this device */
-const dayKey=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-let STATS=lsGet('stats',null);
-if(!STATS||!STATS.songs){ STATS={since:Date.now(),sec:0,n:0,full:0,songs:{},days:{}};
-  /* start from the recent plays already logged so the page isn't blank */
-  const p=lsGet('plays',{})||{}; for(const id in p){ const sg=SONGS.find(x=>x.id===id); const k=(p[id]||[]).length; if(!sg||!k) continue; const sec=k*(sg.dur||0)*.9;
-    STATS.songs[id]={n:k,s:sec,last:Math.max(...p[id])}; STATS.n+=k; STATS.sec+=sec; (p[id]||[]).forEach(t=>{ const dk=dayKey(new Date(t)); STATS.days[dk]=(STATS.days[dk]||0)+(sg.dur||0)*.9; }); STATS.since=Math.min(STATS.since,...p[id]); }
-  lsSet('stats',STATS); }
 let statDirty=0, statSaveT=null;
-function statSave(){ clearTimeout(statSaveT); statSaveT=null; statDirty=0; lsSet('stats',STATS); }
+function statSave(){ clearTimeout(statSaveT); statSaveT=null; statDirty=0; lsSet('stats',STATS); statPaint(); }
 function statSoon(){ if(++statDirty>=20) statSave(); else if(!statSaveT) statSaveT=setTimeout(statSave,8000); }
 function statRec(id){ return STATS.songs[id]||(STATS.songs[id]={n:0,s:0,last:0}); }
-function statTime(id,d){ const r=statRec(id); r.s+=d; STATS.sec+=d; const dk=dayKey(); STATS.days[dk]=(STATS.days[dk]||0)+d;
+function statTime(id,d){ statTouched.add(id); const r=statRec(id); r.s+=d; STATS.sec+=d; const dk=dayKey(); STATS.days[dk]=(STATS.days[dk]||0)+d;
   const keys=Object.keys(STATS.days); if(keys.length>400) keys.sort().slice(0,keys.length-400).forEach(k=>delete STATS.days[k]); statSoon(); }
-function statListen(id){ const r=statRec(id); r.n++; r.last=Date.now(); STATS.n++; statSave(); }
+function statListen(id){ statTouched.add(id); const r=statRec(id); r.n++; r.last=Date.now(); STATS.n++; statSave(); }
 function statFull(id){ STATS.full=(STATS.full||0)+1; statRec(id).f=(statRec(id).f||0)+1; statSave(); }
 addEventListener('pagehide',statSave); document.addEventListener('visibilitychange',()=>{ if(document.hidden) statSave(); });
 audio.addEventListener('pause',()=>{ if(statDirty) statSave(); });
 function statStreak(){ let k=0; const d=new Date(); if(!(STATS.days[dayKey(d)]>=30)) d.setDate(d.getDate()-1); while(STATS.days[dayKey(d)]>=30){ k++; d.setDate(d.getDate()-1); } return k; }
-function renderStats(){ const S=STATS, sec=S.sec;
-  const hrs=sec/3600, big=hrs>=1?(hrs>=10?Math.round(hrs).toLocaleString():hrs.toFixed(1)):String(Math.round(sec/60)), unit=hrs>=1?(big==='1.0'?'hour':'hours'):(Math.round(sec/60)===1?'minute':'minutes');
-  const heardN=SONGS.filter(s=>(S.songs[s.id]||{}).n>0).length, streak=statStreak();
+function renderStats(){ const S=STATS, sec=S.sec, mins=Math.floor(sec/60), H=Math.floor(mins/60), M=mins%60;
+  const heardN=SONGS.filter(s=>(S.songs[s.id]||{}).n>0).length, streak=statStreak(), full=S.full||0;
   const since=new Date(S.since).toLocaleDateString(undefined,{month:'short',day:'numeric',year:new Date(S.since).getFullYear()!==new Date().getFullYear()?'numeric':undefined});
-  $('#statmeta').textContent=S.n?`Your listening since ${since}`:'Your listening shows up here.';
-  const days=[]; for(let k=6;k>=0;k--){ const d=new Date(); d.setDate(d.getDate()-k); days.push({d,v:S.days[dayKey(d)]||0}); }
-  const mx=Math.max(1,...days.map(x=>x.v)), wk=days.reduce((a,x)=>a+x.v,0);
-  const bars=days.map((x,k)=>{ const m=Math.round(x.v/60); return `<div class="bar ${x.v<30?'zero':''} ${k===6?'today':''}" style="--k:${k}"><em>${m?m+'m':''}</em><i style="height:${Math.max(4,x.v/mx*100)}%"></i><span>${k===6?'Today':x.d.toLocaleDateString(undefined,{weekday:'narrow'})}</span></div>`; }).join('');
+  $('#statmeta').textContent=S.n?`Since ${since} · on this device`:'Your listening shows up here.';
   const top=SONGS.map(s=>({s,r:S.songs[s.id]})).filter(x=>x.r&&x.r.n>0).sort((a,b)=>b.r.n-a.r.n||b.r.s-a.r.s);
+  const avgDur=SONGS.reduce((a,x)=>a+(x.dur||0),0)/SONGS.length||120, worth=Math.round(sec/avgDur);
+  const heroCh=top.length?top[0].s.ch:(song?song.ch:SONGS[0].ch);
+  const timeBig=H?`<b>${H}</b><u>h</u><b>${M}</b><u>m</u>`:`<b>${mins}</b><u class="w">${mins===1?'minute':'minutes'}</u>`;
+  const eq=`<div class="st-eq ${audio.paused?'':'on'}" aria-hidden="true">${'<i></i>'.repeat(5)}</div>`;
+  const hero=`<div class="st-hero"><img src="${ART[heroCh]||THUMB[heroCh]}" data-art="${heroCh}" alt="" aria-hidden="true"><div class="sh"></div>${eq}
+    <div class="lbl">Total listening</div><div class="big">${timeBig}</div>
+    <small>${sec>=60?`About ${worth.toLocaleString()} song${worth===1?'':'s'}’ worth of John`:'Play a song to start your count'}</small></div>`;
+  const ring=(v,c)=>{ const R=15, C=2*Math.PI*R; return `<svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="${R}" class="bg"/><circle cx="18" cy="18" r="${R}" class="fg" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-v)}" style="--c:${c}"/></svg>`; };
+  const tile=(ic,cls,n,lbl,extra='')=>`<div class="st-tile glass ${cls}"><span class="ic">${ic}</span><b>${n}</b><span class="l">${lbl}</span>${extra}</div>`;
+  const tiles=`<div class="st-tiles">
+    ${tile('<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>','t1',S.n.toLocaleString(),'Listens')}
+    ${tile('<svg viewBox="0 0 24 24"><path d="M9.5 16.2 5.3 12l-1.4 1.4 5.6 5.6 11-11-1.4-1.4z"/></svg>','t2',full.toLocaleString(),'Full plays')}
+    ${tile(ring(heardN/SONGS.length),'t3',`${heardN}<small>/${SONGS.length}</small>`,'Songs heard')}
+    ${tile('<svg viewBox="0 0 24 24"><path d="M13.5.7s.7 2.6.7 4.7c0 2-1.3 3.6-3.3 3.6S7.4 7.4 7.4 5.4l.1-.4C5.5 7.4 4.3 10.5 4.3 14a7.7 7.7 0 0 0 15.4 0c0-5.4-2.6-10.2-6.2-13.3zM11.7 20c-1.9 0-3.4-1.5-3.4-3.3 0-1.7 1.1-2.9 2.9-3.3 1.9-.4 3.8-1.3 4.9-2.7.4 1.4.6 2.8.6 4.3 0 2.8-2.2 5-5 5z"/></svg>','t4',streak,streak===1?'Day streak':'Day streak')}
+  </div>`;
+  const days=[]; for(let k=6;k>=0;k--){ const d=new Date(); d.setDate(d.getDate()-k); days.push({d,v:S.days[dayKey(d)]||0}); }
+  let prev=0; for(let k=13;k>=7;k--){ const d=new Date(); d.setDate(d.getDate()-k); prev+=S.days[dayKey(d)]||0; }
+  const mx=Math.max(60,...days.map(x=>x.v)), wk=days.reduce((a,x)=>a+x.v,0), avg=wk/7;
+  const cmp=prev>=60?(()=>{ const pct=Math.round((wk-prev)/prev*100); return `<span class="cmp ${pct>=0?'up':'down'}">${pct>=0?'▲':'▼'} ${Math.abs(pct)}% vs last week</span>`; })():(wk>=60?'<span class="cmp up">Your first week of stats</span>':'');
+  const bars=days.map((x,k)=>{ const m=Math.round(x.v/60); const h=Math.max(3,x.v/mx*100); return `<div class="bar ${x.v<30?'zero':''} ${k===6?'today':''}" style="--k:${k};--h:${h}%"><div class="col"><i></i><em>${m?fmtShort(x.v):''}</em></div><span>${k===6?'Today':x.d.toLocaleDateString(undefined,{weekday:'short'}).slice(0,2)}</span></div>`; }).join('');
+  const week=`<div class="st-week glass"><div class="hd"><div><div class="lbl">Last 7 days</div><b>${fmtShort(wk)}</b></div>${cmp}</div>
+    <div class="chart">${avg>=30?`<div class="bars">${bars}<div class="avg" style="--a:${(avg/mx).toFixed(4)}"><span>avg ${fmtShort(avg)}</span></div></div>`:`<div class="bars">${bars}</div>`}</div></div>`;
+  const medal=['#ffcc4d','#d7dde8','#e0a46a'];
+  const pod=top.length?`<div class="sect st-sect"><h2>Top songs</h2><small>by listens</small></div><div class="st-pod">${[1,0,2].map(k=>{ const x=top[k]; if(!x) return '<div class="pc empty"></div>';
+    return `<button type="button" class="pc p${k+1}" data-pod="${x.s.i}"><div class="cv"><img src="${ART[x.s.ch]||THUMB[x.s.ch]}" data-art="${x.s.ch}" alt="" loading="lazy"><span class="md" style="--m:${medal[k]}">${k+1}</span></div><b>${esc(x.s.title)}</b><small>${x.r.n} listen${x.r.n>1?'s':''} · ${fmtShort(x.r.s)}</small></button>`; }).join('')}</div>`:'';
+  const byCh={}; top.forEach(x=>{ const c=x.s.ch; (byCh[c]=byCh[c]||{s:0,n:0}); byCh[c].s+=x.r.s; byCh[c].n+=x.r.n; });
+  const chs=Object.keys(byCh).sort((a,b)=>byCh[b].s-byCh[a].s), cmx=chs.length?byCh[chs[0]].s:1;
+  const chap=chs.length>1?`<div class="sect st-sect"><h2>By chapter</h2><small>${chs.length} chapters</small></div><div class="st-chs glass">${chs.slice(0,8).map((c,k)=>{ const col=(COL[c]&&COL[c].c)||[]; return `<button type="button" class="ch" data-stch="${c}" style="--k:${k};--a:${col[0]||'#ff5c8a'};--b:${col[1]||'#8b7cff'}"><span class="nm">${esc(chName(c))}</span><span class="tr"><i style="width:${Math.max(3,byCh[c].s/cmx*100)}%"></i></span><span class="v">${fmtShort(byCh[c].s)}</span></button>`; }).join('')}</div>`:'';
   const tmx=top.length?top[0].r.n:1;
-  $('#statbody').innerHTML=`<div class="st-hero glass"><div class="lbl">Listening time</div><div class="big"><b>${big}</b><span>${unit}</span></div><small>${sec>=60?fmtLong(sec)+' of John, sung':'Play a song to start your count'}</small></div>
-  <div class="st-tiles"><div class="st-tile glass"><b>${S.n.toLocaleString()}</b><span>Listens</span></div><div class="st-tile glass"><b>${heardN}<small style="font-size:14px;color:var(--sub)">/${SONGS.length}</small></b><span>Songs heard</span></div><div class="st-tile glass"><b>${streak}${streak?'🔥':''}</b><span>Day streak</span></div></div>
-  <div class="st-week glass"><h3>Last 7 days<small>${fmtLong(wk)}</small></h3><div class="bars">${bars}</div></div>
-  <div class="sect st-sect"><h2>Most played</h2><small>${(S.full||0).toLocaleString()} full play${S.full===1?'':'s'}</small></div>
-  <div id="statlist">${top.length?top.map((x,k)=>rowHTML(x.s,{i:k,sub:`${x.r.n} listen${x.r.n>1?'s':''} · ${fmtLong(x.r.s)}<span class="st-meter"><i style="width:${Math.max(4,x.r.n/tmx*100)}%"></i></span>`})).join(''):'<p class="st-empty">Songs you listen to will be ranked here.</p>'}</div>`;
+  const list=`<div class="sect st-sect"><h2>Every song</h2><small>${heardN} played</small></div><div id="statlist">${top.length?top.map((x,k)=>rowHTML(x.s,{i:k,nostat:1,sub:`<span class="lstat"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>${x.r.n}<i></i>${fmtShort(x.r.s)}</span><span class="st-meter"><i style="width:${Math.max(4,x.r.n/tmx*100)}%"></i></span>`})).join(''):'<div class="st-empty glass"><svg viewBox="0 0 24 24"><path d="M12 3v10.6A4 4 0 1 0 14 17V7h4V3z"/></svg><b>Nothing yet</b><span>Play a song and your listens and time will show up here.</span></div>'}</div>`;
+  $('#statbody').innerHTML=hero+tiles+week+pod+chap+list;
+  $('#statbody').querySelectorAll('[data-pod]').forEach(b=>b.onclick=()=>{ haptic&&haptic('soft'); playIdx(+b.dataset.pod); });
+  $('#statbody').querySelectorAll('[data-stch]').forEach(b=>b.onclick=()=>{ setTab('home'); showChapter(+b.dataset.stch); });
   wireRows($('#statlist')); if(song) document.querySelectorAll('#statlist [data-song]').forEach(b=>b.setAttribute('aria-current',+b.dataset.song===song.i)); }
 function heardCheck(atEnd){ if(!heardSong) return; const dur=heardLen||heardDur(); if(!(dur>0)) return; if(!playNoted&&heard>=Math.min(45,dur*.5)){ playNoted=true; notePlay(heardSong.id); } if(xpGiven) return; const t=atEnd?dur:audio.currentTime; if(t>=dur-0.75&&heard>=dur*0.9){ xpGiven=true; statFull(heardSong.id); awardXP(heardSong); } }
 audio.addEventListener('timeupdate',()=>{ const t=audio.currentTime; if(heardSong!==song){ heardSong=song; heardLen=heardDur(); heard=0; xpGiven=false; playNoted=false; heardAt=t; return; }
