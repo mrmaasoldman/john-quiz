@@ -17,6 +17,15 @@
 .appframe.on{visibility:visible;pointer-events:auto}
 html.inframe{background:#000} html.inframe body{overflow:hidden}
 
+.mp-sum{display:grid;gap:2px;padding:10px 12px;border-radius:12px;background:var(--sunk);font-size:13px;color:var(--muted)}
+.mp-sum b{font-size:16px;color:var(--ink)}
+.ch.some{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,var(--surface))}
+.ch.mp-new:not(.all):not(.some){border-color:var(--gold);border-style:dashed}
+.mp-vgrid .mv.known::after{content:"";position:absolute;right:3px;top:3px;width:6px;height:6px;border-radius:50%;background:var(--good)}
+.mp-vgrid .mv{position:relative}
+.mp-vgrid .mv.on{background:var(--accent)!important;color:var(--accent-ink,#fff)!important;border-color:var(--accent)!important}
+.chgrid .ch.mp-new:not(.all):not(.some){border:2px dashed var(--gold)!important}
+.chgrid .ch.some{border-color:var(--accent)!important}
 /* monthly memory plan */
 .mp-step{display:grid;gap:12px}
 .mp-step h3{font-size:21px;font-weight:800;margin:2px 0 0;line-height:1.25}
@@ -2555,7 +2564,7 @@ function meetInfo(u){ if(!u||!u.grp) return null; const today=dstr();
   if(u.grp==='midland'){ const i=MIDLAND.findIndex(m=>m.d>=today); if(i<0) return {grp:'midland',meet:null,ch:[],prev:MIDLAND[MIDLAND.length-1].d,done:true};
     return {grp:'midland',meet:MIDLAND[i].d,ch:MIDLAND[i].ch,prev:i?MIDLAND[i-1].d:null}; }
   const m=u.nextMeet&&u.nextMeet.d>=today?u.nextMeet:null; return {grp:'other',meet:m?m.d:null,ch:m?(m.ch||[]):[],prev:u.prevMeet||null}; }
-function planGot(u,p){ if(!p) return 0; const end=dparse(p.meet).getTime()+864e5; let n=0; for(const k in (u.mem||{})){ const v=u.mem[k]; if(typeof v==='number'&&v>=p.from&&v<end) n++; } return n; }
+function planGot(u,p){ if(!p) return 0; if(p.verses){ let n=0; p.verses.forEach(k=>{ if(u.mem&&u.mem[k]) n++; }); return n; } const end=dparse(p.meet).getTime()+864e5; let n=0; for(const k in (u.mem||{})){ const v=u.mem[k]; if(typeof v==='number'&&v>=p.from&&v<end) n++; } return n; }
 function planPace(p,now=Date.now()){ const t0=p.set, t1=meetTime(p.meet); return Math.max(0,Math.min(1,(now-t0)/Math.max(1,t1-t0))); }
 // when a meet has passed: file that month's result and get ready to ask for the next one
 function planRoll(u){ if(!u||!u.grp) return false; const today=dstr(); let ch=false;
@@ -2565,9 +2574,10 @@ function planRoll(u){ if(!u||!u.grp) return false; const today=dstr(); let ch=fa
 function memGoalHit(u){ return !!(u&&((u.plan&&u.plan.goal&&planGot(u,u.plan)>=u.plan.goal)||Object.values(u.memHist||{}).some(h=>h.goal&&h.got>=h.goal))); }
 // the verses for this meet's chapters (used to highlight the grid and for verse practice)
 function goalKeys(u){ const mi=meetInfo(u);
+  if(u&&u.plan&&u.plan.verses&&mi&&u.plan.meet===mi.meet){ const key='pv:'+u.plan.verses.join(','); if(!_gk[key]) _gk[key]=new Set(u.plan.verses); return _gk[key]; }
   if(mi&&mi.ch&&mi.ch.length){ const key='ch:'+mi.ch.join(','); if(!_gk[key]){ const out=new Set(); mi.ch.forEach(c=>{ for(let v=1;v<=VERSES_IN_JOHN[c-1];v++) out.add(c+':'+v); }); _gk[key]=out; } return _gk[key]; }
   if(!u||!u.goal) return null; if(!_gk[u.goal]) _gk[u.goal]=parseRange(u.goal,allVerses).out; return _gk[u.goal]; }
-let mpDraft={ch:new Set(),date:'',goal:''}, mpMsg='';
+let mpDraft={ch:new Set(),date:'',goal:'',vs:new Set(),chap:null}, mpMsg='';
 function mpStep(u=U){ if(!u.grp) return 'grp'; const mi=meetInfo(u); if(!mi.meet) return mi.done?'done':'date'; if(!u.plan||u.plan.meet!==mi.meet) return 'goal'; return 'plan'; }
 function cdHTML(meet){ return `<div class="mp-cd" data-cd="${meet}">${cdInner(meet)}</div>`; }
 function cdInner(meet){ const t=meetTime(meet), now=Date.now(), d=daysTo(meet);
@@ -2585,15 +2595,24 @@ function mpSetupHTML(step){ const mi=meetInfo(U)||{}; const today=dstr();
       <div class="chgrid">${VERSES_IN_JOHN.map((n,i)=>`<button class="ch ${d.ch.has(i+1)?'all':''}" data-mpch="${i+1}" aria-pressed="${d.ch.has(i+1)}"><b>${i+1}</b><small>${n} vv</small></button>`).join('')}</div></div>
       ${mpMsg?`<p class="hint" style="color:var(--bad);margin:0">${esc(mpMsg)}</p>`:''}
       <div class="row"><button class="btn" data-mp="date">Next</button><button class="btn ghost small" data-mp="regrp">Change group</button></div></div>`; }
-  if(step==='goal'){ const days=Math.max(1,daysTo(mi.meet)), gk=goalKeys(U); let left=0; if(gk) gk.forEach(k=>{ if(!U.mem[k]) left++; });
-    const pre=[]; if(gk&&left) pre.push([left,`All of ch. ${chList(mi.ch)}`]); if(gk&&left>=8) pre.push([Math.ceil(left/2),'Half of them']); pre.push([days,'1 a day']); pre.push([days*2,'2 a day']);
-    const seen=new Set(), chips=pre.filter(([n])=>n>0&&!seen.has(n)&&seen.add(n));
-    return `<div class="mp-step"><div class="label">Memory goal · ${meetShort(mi.meet)} meet</div><h3>How many verses will you memorize by ${meetLong(mi.meet)}?</h3>
-      <p class="hint">${days} day${days===1?'':'s'} from now${mi.ch.length?` · new chapters ${chList(mi.ch)} (${gk.size} verses, ${gk.size-left} memorized)`:''}</p>
-      <div class="mp-presets">${chips.map(([n,l])=>`<button class="mp-chip ${+mpDraft.goal===n?'on':''}" data-mpgoal="${n}"><b>${n}</b><span>${esc(l)}</span></button>`).join('')}</div>
-      <div class="row" style="flex-wrap:nowrap"><input type="number" id="mpgoal" min="1" max="2000" inputmode="numeric" placeholder="Or type a number" value="${esc(String(mpDraft.goal||''))}" class="mp-num"><button class="btn" data-mp="goal">Set my goal</button></div>
-      ${mpMsg?`<p class="hint" style="color:var(--bad);margin:0">${esc(mpMsg)}</p>`:''}
-      ${U.grp==='other'?'<button class="x" data-mp="redate">Change meet date</button>':'<button class="x" data-mp="regrp">Change group</button>'}</div>`; }
+  if(step==='goal'){ const days=Math.max(1,daysTo(mi.meet)), d=mpDraft, picked=[...d.vs], pc=c=>picked.filter(k=>+k.split(':')[0]===c).length;
+    const head=`<div class="label">Memory goal · ${meetShort(mi.meet)} meet · ${days} day${days===1?'':'s'} away</div>`;
+    const foot=`<div class="mp-sum">${picked.length?`<b>${picked.length} verse${picked.length===1?'':'s'}</b><span>${esc(rangeLabel(picked,allVerses))}</span>`:'<span>No verses picked yet</span>'}</div>
+      ${mpMsg?`<p class="hint" style="color:var(--bad);margin:0">${esc(mpMsg)}</p>`:''}`;
+    if(!d.chap){
+      return `<div class="mp-step">${head}<h3>Which chapter do you want to memorize?</h3>
+      ${mi.ch.length?`<p class="hint">New for this meet: chapter${mi.ch.length>1?'s':''} ${chList(mi.ch)}</p>`:''}
+      <div class="chgrid">${VERSES_IN_JOHN.map((n,i)=>{ const c=i+1, k=pc(c); return `<button class="ch ${k?(k===n?'all':'some'):''} ${mi.ch.includes(c)?'mp-new':''}" data-mpchap="${c}"><b>${c}</b><small>${k?k+'/'+n:n+' vv'}</small></button>`; }).join('')}</div>
+      ${foot}
+      <div class="row">${picked.length?`<button class="btn" data-mp="goal">Set my goal</button><button class="btn ghost small" data-mp="vclear">Start over</button>`:''}
+      ${U.grp==='other'?'<button class="x" data-mp="redate">Change meet date</button>':'<button class="x" data-mp="regrp">Change group</button>'}</div></div>`; }
+    const c=d.chap, n=VERSES_IN_JOHN[c-1], k=pc(c);
+    return `<div class="mp-step">${head}<h3>Which verses in chapter ${c}?</h3>
+      <p class="hint">Tap the verses you'll memorize by ${meetShort(mi.meet)}. A dot means you already know it.</p>
+      <div class="row"><button class="btn ghost small" data-mp="vall">${k===n?'None':'All '+n+' verses'}</button><button class="btn ghost small" data-mp="vnew">Only ones I don't know</button></div>
+      <div class="vgrid mp-vgrid">${[...Array(n)].map((_,i)=>{ const key=c+':'+(i+1); return `<button class="mv ${d.vs.has(key)?'on':''} ${U.mem[key]?'known':''}" data-mpv="${key}" aria-pressed="${d.vs.has(key)}">${i+1}</button>`; }).join('')}</div>
+      ${foot}
+      <div class="row"><button class="btn" data-mp="goal" ${picked.length?'':'disabled'}>Set my goal</button><button class="btn ghost small" data-mp="vback">+ Another chapter</button></div></div>`; }
   return ''; }
 function mpHistHTML(){ const h=Object.entries(U.memHist||{}).sort((a,b)=>a[0]<b[0]?1:-1); if(!h.length) return '';
   return `<div class="mp-hist"><div class="label">Past meets</div>${h.slice(0,6).map(([d,x])=>`<div class="mp-hrow"><span>${meetShort(d)}</span><span class="mp-hbar"><i style="width:${Math.min(100,x.goal?x.got/x.goal*100:0).toFixed(0)}%"></i></span><b>${x.got}/${x.goal}</b>${x.goal&&x.got>=x.goal?'<span class="mp-ok">✓</span>':''}</div>`).join('')}</div>`; }
@@ -2602,7 +2621,7 @@ function mpPlanHTML(){ const mi=meetInfo(U), p=U.plan, got=planGot(U,p), goal=p.
   const grpName=U.grp==='midland'?'Midland Ministries':'Your group';
   return `<div class="panel mp-plan">
     <div class="mp-top"><div><div class="label">Next quiz meet · ${grpName}</div><h2>${meetLong(p.meet)}</h2>${mi.ch.length?`<div class="hint">New chapters: ${chList(mi.ch)}</div>`:''}</div>${cdHTML(p.meet)}</div>
-    <div class="mp-goal"><div class="mp-gh"><b>${got} <span>of ${goal} verses</span></b><span class="hint">${got>=goal?'Goal reached! 🎉':`${pct(Math.min(got,goal),goal)}% this month`}</span></div>
+    <div class="mp-goal">${p.verses?`<div class="hint">Goal: <span class="mono">John ${esc(rangeLabel(p.verses,allVerses))}</span></div>`:''}<div class="mp-gh"><b>${got} <span>of ${goal} verses</span></b><span class="hint">${got>=goal?'Goal reached! 🎉':`${pct(Math.min(got,goal),goal)}% this month`}</span></div>
       <div class="goldbar mp-bar"><i style="width:${Math.min(100,got/goal*100).toFixed(1)}%"></i><em style="left:${(should/goal*100).toFixed(1)}%"></em></div>
       <div class="mp-gf"><span>📍 Where you should be today: <b>${should}</b></span>${got>=goal?'<span class="mp-tag ok">Done</span>':diff>=0?`<span class="mp-tag ok">${diff?diff+' ahead':'Right on pace'}</span>`:`<span class="mp-tag behind">${-diff} behind</span>`}</div>
       ${got<goal?`<p class="hint" style="margin:0">${days>0?`About <b>${perDay<1?'1 verse every '+Math.round(1/perDay)+' days':(Math.round(perDay*10)/10)+' verse'+(perDay>1?'s':'')+' a day'}</b> gets you there.`:`Meet day! You've got ${left} to go.`}</p>`:''}</div>
@@ -2617,8 +2636,8 @@ function memoryView(){
     <div><div class="label">Memory verses</div>
       <h2 style="font-size:28px;font-weight:800">${total} verse${total===1?'':'s'} memorized</h2></div>
     ${top}
-    <div class="row" style="justify-content:space-between"><p class="hint" style="margin:0">Tap a verse once you can say it word for word.${gk?' Faded verses aren\'t new for this meet.':''}</p>
-      ${gk?`<button class="x" id="memscope">${showAllMem?`Show only ch. ${chList(mi&&mi.ch.length?mi.ch:[])}`:'Show all 21 chapters'}</button>`:''}</div>
+    <div class="row" style="justify-content:space-between"><p class="hint" style="margin:0">Tap a verse once you can say it word for word.${gk?' Faded verses aren\'t in your goal.':''}</p>
+      ${gk?`<button class="x" id="memscope">${showAllMem?'Show only my goal':'Show all 21 chapters'}</button>`:''}</div>
     <div>${chapters.map(c=>{const n=VERSES_IN_JOHN[c-1]; const vs=[...Array(n)].map((_,k)=>k+1); const tgt=vs.filter(v=>inGoal(c+':'+v)); const t=tgt.length?tgt:vs;
       const m=t.filter(v=>U.mem[c+':'+v]).length;
       return `<div class="memch"><div class="memhead"><h3>Chapter ${c} <span class="muted mono" style="font-size:13px;font-weight:500">${m}/${t.length}</span></h3>
@@ -2634,25 +2653,31 @@ function mpPrompt(force){ if(!U||document.querySelector('.mpop')) return; const 
 function mpRefresh(){ const pop=document.querySelector('.mpop'); if(pop){ const step=mpStep(); if(['grp','date','goal'].includes(step)) pop.querySelector('.mpop-body').innerHTML=mpSetupHTML(step); else mpClose(); }
   if(tab==='materials') renderKeep(); }
 function mpClose(){ const pop=document.querySelector('.mpop'); if(!pop) return; pop.classList.remove('show'); setTimeout(()=>pop.remove(),300); }
-document.addEventListener('click',e=>{ if(!U) return; const t=e.target.closest('[data-mp],[data-mpgoal],[data-mpch]'); if(!t) return;
+document.addEventListener('click',e=>{ if(!U) return; const t=e.target.closest('[data-mp],[data-mpchap],[data-mpv],[data-mpch]'); if(!t) return;
   if(t.dataset.mpch){ const c=+t.dataset.mpch; const di=document.getElementById('mpdate'); if(di) mpDraft.date=di.value; mpDraft.ch.has(c)?mpDraft.ch.delete(c):mpDraft.ch.add(c); mpRefresh(); return; }
-  if(t.dataset.mpgoal){ mpDraft.goal=+t.dataset.mpgoal; mpMsg=''; mpRefresh(); return; }
+  if(t.dataset.mpchap){ mpDraft.chap=+t.dataset.mpchap; mpMsg=''; mpRefresh(); mpTop(); return; }
+  if(t.dataset.mpv){ const k=t.dataset.mpv; mpDraft.vs.has(k)?mpDraft.vs.delete(k):mpDraft.vs.add(k); mpMsg=''; mpRefresh(); return; }
   const a=t.dataset.mp; mpMsg='';
   if(a==='later'){ mpClose(); return; }
-  if(a.startsWith('grp:')){ U.grp=a.slice(4); if(U.plan){ const mi=meetInfo(U); if(!mi.meet||U.plan.meet!==mi.meet) U.plan=null; } save(); mpDraft={ch:new Set(),date:'',goal:''}; mpRefresh(); return; }
+  if(a==='vback'){ mpDraft.chap=null; mpRefresh(); mpTop(); return; }
+  if(a==='vclear'){ mpDraft.vs=new Set(); mpRefresh(); return; }
+  if(a==='vall'||a==='vnew'){ const c=mpDraft.chap, n=VERSES_IN_JOHN[c-1], keys=[...Array(n)].map((_,i)=>c+':'+(i+1)), all=keys.every(k=>mpDraft.vs.has(k));
+    keys.forEach(k=>mpDraft.vs.delete(k)); if(a==='vnew') keys.filter(k=>!U.mem[k]).forEach(k=>mpDraft.vs.add(k)); else if(!all) keys.forEach(k=>mpDraft.vs.add(k)); mpRefresh(); return; }
+  if(a.startsWith('grp:')){ U.grp=a.slice(4); if(U.plan){ const mi=meetInfo(U); if(!mi.meet||U.plan.meet!==mi.meet) U.plan=null; } save(); mpDraft={ch:new Set(),date:'',goal:'',vs:new Set(),chap:null}; mpRefresh(); return; }
   if(a==='regrp'){ delete U.grp; U.plan=null; save(); mpRefresh(); if(tab!=='materials') mpPrompt(true); return; }
-  if(a==='redate'){ mpDraft={ch:new Set(U.nextMeet?U.nextMeet.ch||[]:[]),date:U.nextMeet?U.nextMeet.d:'',goal:''}; U.nextMeet=null; U.plan=null; save(); mpRefresh(); if(tab!=='materials') mpPrompt(true); return; }
-  if(a==='regoal'){ mpDraft.goal=U.plan?U.plan.goal:''; U.planOld=U.plan; U.plan=null; save(); mpRefresh(); return; }
+  if(a==='redate'){ mpDraft={ch:new Set(U.nextMeet?U.nextMeet.ch||[]:[]),date:U.nextMeet?U.nextMeet.d:'',goal:'',vs:new Set(),chap:null}; U.nextMeet=null; U.plan=null; save(); mpRefresh(); if(tab!=='materials') mpPrompt(true); return; }
+  if(a==='regoal'){ mpDraft.vs=new Set(U.plan&&U.plan.verses||[]); mpDraft.chap=null; U.planOld=U.plan; U.plan=null; save(); mpRefresh(); return; }
   if(a==='date'){ const v=(document.getElementById('mpdate')||{}).value||''; if(!v||v<dstr()){ mpMsg='Pick the date of your next meet.'; mpRefresh(); return; }
     U.nextMeet={d:v,ch:[...mpDraft.ch].sort((x,y)=>x-y)}; save(); mpDraft.goal=''; mpRefresh(); return; }
-  if(a==='goal'){ const inp=document.getElementById('mpgoal'); const n=Math.round(+(inp&&inp.value||mpDraft.goal||0)); if(!(n>=1&&n<=2000)){ mpMsg='Pick or type how many verses.'; mpRefresh(); return; }
+  if(a==='goal'){ const vs=[...mpDraft.vs]; if(!vs.length){ mpMsg='Pick at least one verse.'; mpRefresh(); return; }
+    const kn=k=>{ const [c,v]=k.split(':').map(Number); return c*1000+v; }; vs.sort((x,y)=>kn(x)-kn(y));
     const mi=meetInfo(U), old=U.planOld&&U.planOld.meet===mi.meet?U.planOld:null;
-    // this month counts from the last meet (or from now if there wasn't one)
-    const from=old?old.from:(mi.prev?dparse(mi.prev).getTime():Date.now());
-    U.plan={meet:mi.meet,goal:n,set:old?old.set:Date.now(),from}; delete U.planOld; save(); checkBadges(); mpDraft={ch:new Set(),date:'',goal:''};
-    const wasPop=!!document.querySelector('.mpop'); mpRefresh(); if(wasPop) toast(`<b>Goal set: ${n} verses by ${meetShort(mi.meet)}</b><span>Track it on Materials → Memory verses.</span>`); return; }
+    U.plan={meet:mi.meet,verses:vs,goal:vs.length,set:old?old.set:Date.now(),from:old?old.from:(mi.prev?dparse(mi.prev).getTime():Date.now())}; delete U.planOld; save(); checkBadges();
+    mpDraft={ch:new Set(),date:'',goal:'',vs:new Set(),chap:null};
+    const wasPop=!!document.querySelector('.mpop'); mpRefresh(); if(wasPop) toast(`<b>Goal set: ${vs.length} verses by ${meetShort(mi.meet)}</b><span>John ${esc(rangeLabel(vs,allVerses))}</span>`); return; }
 });
-document.addEventListener('input',e=>{ if(e.target&&e.target.id==='mpgoal'){ mpDraft.goal=e.target.value; document.querySelectorAll('.mp-chip').forEach(c=>c.classList.toggle('on',+c.dataset.mpgoal===+e.target.value)); } if(e.target&&e.target.id==='mpdate') mpDraft.date=e.target.value; });
+document.addEventListener('input',e=>{ if(e.target&&e.target.id==='mpdate') mpDraft.date=e.target.value; });
+function mpTop(){ const b=document.querySelector('.mpop-in'); if(b) b.scrollTop=0; else { const el=document.querySelector('.mp-step'); if(el&&el.getBoundingClientRect().top<0) el.scrollIntoView({block:'start',behavior:'smooth'}); } }
 setInterval(()=>document.querySelectorAll('[data-cd]').forEach(el=>{ const h2=cdInner(el.dataset.cd); if(el.innerHTML!==h2) el.innerHTML=h2; }),15000);
 
 /* ---------- class board (shared database) ---------- */
@@ -2688,7 +2713,7 @@ function summary(name,u){
   let att=0,right=0,solid=0; const st=u.stats||{};
   for(const k in st){att+=st[k][0];right+=st[k][1];if(st[k][2]===1)solid++}
   const pl=u.plan||null, goalMem=pl?planGot(u,pl):0;
-  return {name:String(name).slice(0,40),badges:Object.keys(u.badges||{}).length,gdays:goalDaysOf(u.days).slice(-60),mem:memCh.reduce((a,b)=>a+b,0),memCh,goal:pl?`${pl.goal} verses by ${meetShort(pl.meet)} meet`+(u.grp==='midland'?' (Midland)':''):'',goalN:pl?pl.goal:0,goalMem,tried:Object.keys(st).length,att,right,solid,updated:Date.now()};
+  return {name:String(name).slice(0,40),badges:Object.keys(u.badges||{}).length,gdays:goalDaysOf(u.days).slice(-60),mem:memCh.reduce((a,b)=>a+b,0),memCh,goal:pl?(pl.verses?`John ${rangeLabel(pl.verses,allVerses)} by ${meetShort(pl.meet)}`:`${pl.goal} verses by ${meetShort(pl.meet)} meet`)+(u.grp==='midland'?' (Midland)':''):'',goalN:pl?pl.goal:0,goalMem,tried:Object.keys(st).length,att,right,solid,updated:Date.now()};
 }
 const sameRow=(a,b)=>{if(!a||!b)return false;const x={...a},y={...b};delete x.updated;delete y.updated;return JSON.stringify(x)===JSON.stringify(y)};
 let chain=Promise.resolve(), syncTimer=null;
@@ -2892,7 +2917,7 @@ function vSetupView(){
     <div class="panel opts">
       <div class="opt"><span class="label">Card type</span>${seg('kind',[['ref','Reference → verse'],['rev','Verse → reference']])}
         <span class="hint">${o.kind==='rev'?'You see the verse and answer with where it is, like 3:16.':'You see the reference and say the verse.'}</span></div>
-      <div class="opt"><span class="label">Which verses</span>${seg('from',[['goal','This meet\'s chapters'],['mem','Memorized'],['pick','Pick verses']])}</div>
+      <div class="opt"><span class="label">Which verses</span>${seg('from',[['goal','My memory goal'],['mem','Memorized'],['pick','Pick verses']])}</div>
       <div class="opt"><span class="label">How to answer</span>${seg('mode',[['type','Type it'],['think','Say it in my head']])}</div>
       <div class="opt"><span class="label">Order</span>${seg('order',[['order','In order'],['shuffle','Shuffled']])}</div>
       <div class="opt"><span class="label">Timer</span>${seg('timer',[['off','Off'],['30','30 seconds']])}<span class="hint">Say or type the verse before the clock runs out.</span></div>
