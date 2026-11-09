@@ -4181,25 +4181,31 @@ function boardBody(rows,fmt,isMine,sub,pic,mode,youTag,who){
   const li=(r,i)=>{const m=isMine(r.name);return `<li class="${m?'me':''} ${i<3?'top':''}"><span class="lbrank">${medal(i)}</span><span class="lbname">${pic?`<span class="lbav">${avC(m?myAv():(r.av||avDefault(r.name)),30,r.name)}</span>`:''}${esc(r.name)}${m?` <span class="you">${youTag}</span>`:''}${sub(r)?`<small class="lbsub">${sub(r)}</small>`:''}</span><span class="lbval">${fmt(r.v)}</span></li>`};
   const gap=`<li class="lbgap" aria-hidden="true">⋮</li>`;
   const mineCard=mi<0?`<div class="lbmine"><span>${who==='team'?'Your team isn\'t':'You\'re not'} on this board yet.</span><span class="hint">${who==='team'?'Earn some XP for your team to get on it!':'Answer a question to get on it!'}</span></div>`
-    :`<div class="lbmine"><span class="lbmrank">#${mi+1}</span><span>${who==='team'?'Your team':'You'} · <b>${fmt(rows[mi].v)}</b></span><span class="hint">${mi===0?'First place!':(()=>{const d=(+rows[mi-1].v||0)-(+rows[mi].v||0);return d>0?`${fmt(d).replace('/21','')} behind #${mi}`:`Tied with #${mi}`})()} · ${rows.length} on the board</span></div>`;
+    :`<div class="lbmine"><span class="lbmrank">#${mi+1}</span><span>${who==='team'?'Your team':'You'} · <b>${fmt(rows[mi].v)}</b></span><span class="hint">${mi===0?(mode==='all'?'First on your team!':'First place!'):(()=>{const d=(+rows[mi-1].v||0)-(+rows[mi].v||0);return d>0?`${fmt(d).replace('/21','')} behind #${mi}`:`Tied with #${mi}`})()} · ${rows.length} ${mode==='all'?'on your team':'on the board'}</span></div>`;
   let list;
   if(mode==='me'&&mi>=0){ const lo=Math.max(0,mi-5), hi=Math.min(rows.length,mi+6);
     list=(lo>0?gap:'')+rows.slice(lo,hi).map((r,k)=>li(r,lo+k)).join('')+(hi<rows.length?gap:''); }
   else if(mode==='me'){ const lo=Math.max(0,rows.length-5); list=(lo>0?gap:'')+rows.slice(lo).map((r,k)=>li(r,lo+k)).join(''); }
+  else if(mode==='all'){ list=rows.map(li).join(''); }
   else { list=rows.slice(0,10).map(li).join('')+(mi>=10?gap+li(rows[mi],mi):''); }
   return `${mineCard}<ol class="lblist">${list}</ol>`;
 }
-const modeSeg=(attr,cur,who)=>`<div class="seg lbmode"><button data-${attr}="top" aria-pressed="${cur==='top'}">🏆 Top 10</button><button data-${attr}="me" aria-pressed="${cur==='me'}">📍 Around ${who}</button></div>`;
+const hasTeam=()=>!!(U&&U.team&&U.team!==NO_TEAM);
+const sameTeam=r=>hasTeam()&&String(r&&r.team||'').trim().toLowerCase()===U.team.trim().toLowerCase();
+const modeSeg=(attr,cur,who,team)=>`<div class="seg lbmode"><button data-${attr}="top" aria-pressed="${cur==='top'}">🏆 Top 10</button><button data-${attr}="me" aria-pressed="${cur==='me'}">📍 Around ${who}</button>${team?`<button data-${attr}="team" aria-pressed="${cur==='team'}">🛡️ My team</button>`:''}</div>`;
 function leaderPanel(){
   if(!SHEET_URL.startsWith('https://')) return '';
-  const [id,ic,title,unit]=LB_BOARDS.find(b=>b[0]===lbBoard), rows=lb?lbData()[id]:[];
+  const [id,ic,title,unit]=LB_BOARDS.find(b=>b[0]===lbBoard); let rows=lb?lbData()[id]:[];
+  if(lbMode==='team'&&!hasTeam()) lbMode='top';
+  const teamOnly=lbMode==='team'; if(teamOnly&&Array.isArray(rows)) rows=rows.filter(r=>sameTeam(r)||isMe(r&&r.name));
   const xp=id==='day'||id==='week'||id==='xp';
   const fmt=v=>id==='bosses'?`${+v||0}/21`:(+v||0).toLocaleString()+(xp?' XP':'');
   return `<div class="panel lbpanel" style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><span class="label">🏆 Quizzer high scores</span><button class="x" id="lbrefresh">${lbBusy?'Loading…':'Refresh'}</button></div>
     <div class="seg lbtabs">${LB_BOARDS.map(([k,i,t])=>`<button data-lb="${k}" aria-pressed="${lbBoard===k}"><span aria-hidden="true">${i}</span> ${t}</button>`).join('')}</div>
-    ${modeSeg('lbmode',lbMode,'me')}
-    ${boardBody(rows,fmt,isMe,r=>r.team?'🛡️ '+esc(r.team):'',true,lbMode,'You','me')}
+    ${modeSeg('lbmode',lbMode,'me',hasTeam())}
+    ${teamOnly?`<div class="hint" style="margin-top:-4px">Just the <b>${esc(teamLabel(U.team))}</b>, ranked against each other.</div>`:''}
+    ${boardBody(rows,fmt,isMe,r=>!teamOnly&&r.team?'🛡️ '+esc(r.team):'',true,teamOnly?'all':lbMode,'You','me')}
     <span class="hint">${ic} ${title}: ${unit}.${id==='speed'?' Only rounds played by typing count.':''} Scores update a few seconds after you practice.</span>
   </div>`;
 }
