@@ -2304,12 +2304,34 @@ function feedback(q){
     <div class="row" style="justify-content:space-between;margin-top:4px">${next}
     ${(L.typed||L.rest)&&!L.overridden?`<button class="btn ghost small" id="override">I had it right</button>`:''}</div></div>`;
 }
+/* ---------- fair XP: answers only pay full XP when they're real practice ---------- */
+// too fast to have read it, the same question again today, or a flood of taps all earn less
+const XPG={recent:[]};
+function xpGuard(key,ok,ms,self,paced){ const d=dayKey(); if(!U.rep||U.rep.d!==d) U.rep={d,m:{},sx:0}; const R=U.rep, now=Date.now();
+  XPG.recent=XPG.recent.filter(t=>now-t<60000); XPG.recent.push(now);
+  const n=R.m[key]=(R.m[key]||0)+1; if(self&&ok) R.sx=(R.sx||0)+1;
+  const day=(U.xpDays&&U.xpDays[d])||0;
+  if(ms!=null&&ms<(self?3000:1200)) return {m:0,why:'Too fast to count. Take a second to think it through.'};
+  if(!paced&&XPG.recent.length>14) return {m:0,why:'Whoa, slow down! More than 14 answers a minute earns no XP.'};
+  if(n>=3) return {m:ok?0.1:0,why:`You've done this one ${n} times today. New ones earn full XP.`};
+  if(!ok&&n>1) return {m:0,why:''};
+  let m=n===2?0.5:1, why=n===2?'Second time today: half XP.':'';
+  if(self&&ok&&R.sx>120){ m*=0.25; why='Lots of self-checked answers today: less XP. Typing answers earns full XP.'; }
+  if(day>=4000){ m*=0.25; why=why||'Big day! After 4,000 XP, answers earn a quarter.'; } else if(day>=2500){ m*=0.5; why=why||'Big day! After 2,500 XP, answers earn half.'; }
+  return {m,why}; }
+function fairXP(full,parts,g){ if(g.m>=1) return [full,parts]; const n=Math.max(0,Math.round(full*g.m)); if(!n) return [0,[]]; return [n,[['right',g.why||'Reduced XP',n]]]; }
+let xpNote='';
 function record(id,ok,ctx){ bumpDay(); const st=U.stats[id]||[0,0,0,0,0]; const was=st[0]?st[2]:null; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); st[4]=ok?(st[4]||0)+1:0; U.stats[id]=st;
   const C=U.counts||(U.counts={}); if(ok&&was===0) C.comeback=(C.comeback||0)+1; if(ok&&U.opts.timer==='20') C.timed=(C.timed||0)+1;
   const words=ctx?ctx.words:((ok&&quiz&&quiz.last&&quiz.last.part)?quiz.last.words:null), stk=ctx?ctx.streak:(quiz?quiz.streak||0:0);
   lastEv={ok, words, sessionStreak:stk};
   const sb=Math.min(10,2*Math.max(0,stk-1)), quick=words!=null&&words<=3;
-  gainXP(ok?10+(quick?5:0)+sb:1, ok?[['right','Right answer',10]].concat(quick?[['quick',`Quick Draw (${words} word${words===1?'':'s'})`,5]]:[],sb?[['streak',`${stk} in a row`,sb]]:[]):[['try','For trying',1]]); }
+  const self=!!(!ctx&&quiz&&quiz.last&&quiz.last.marked&&!('typed' in quiz.last)), lr=!ctx&&quiz&&quiz.res?quiz.res[quiz.res.length-1]:null, ms=ctx?null:(lr&&lr.ms!=null?lr.ms:null);
+  const g=xpGuard('q'+id,ok,ms,self,!!ctx); xpNote=g.why;
+  const [n,parts]=fairXP(ok?10+(quick?5:0)+sb:1, ok?[['right','Right answer',10]].concat(quick?[['quick',`Quick Draw (${words} word${words===1?'':'s'})`,5]]:[],sb?[['streak',`${stk} in a row`,sb]]:[]):[['try','For trying',1]], g);
+  if(!ctx&&quiz&&g.m===0) quiz.streak=0;   // spammed answers don't build a streak bonus
+  if(n) gainXP(n,parts); else if(g.why) xpZero(g.why); }
+function xpZero(why){ clearTimeout(XPG.zt); XPG.zt=setTimeout(()=>{ try{ toast(`<b>No XP for that one</b><span>${esc(why)}</span>`); }catch(e){} },80); }
 function submitAnswer(typed,rest){
   const id=quiz.ids[quiz.i], q=Q[id];
   typed=(typed||'').trim(); rest=(rest||'').trim();
@@ -3053,7 +3075,7 @@ function vCheck(){
   vc.last={diff,result,ok,ms,marked:true,overridden:false,msg:ok?rightMsg(vc.streak,result==='close'):(vc.timeout?"Time's up! ":'')+wrongMsg()}; vc.timeout=false; vc.deadline=null; vRecord(k,ok); vc.state='fb'; render(); react(ok,vc.streak);
 }
 function vRecord(k,ok){ bumpDay(); const map=vc.kind==='rev'?(U.rstats||(U.rstats={})):U.vstats; const st=map[k]||[0,0,0,0]; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); map[k]=st; vc.res.push({k,ok,ms:vc.last&&vc.last.ms}); studyMs(vc.last&&vc.last.ms);
-  const C=U.counts||(U.counts={}); if(ok){ if(vc.kind==='rev') C.rright=(C.rright||0)+1; else C.vright=(C.vright||0)+1; } lastEv={ok,sessionStreak:vc.streak||0}; const vs=vc.streak||0, vsb=Math.min(10,2*Math.max(0,vs-1)); gainXP(ok?10+vsb:1, ok?[['right','Right answer',10]].concat(vsb?[['streak',`${vs} in a row`,vsb]]:[]):[['try','For trying',1]]); save(); }
+  const C=U.counts||(U.counts={}); if(ok){ if(vc.kind==='rev') C.rright=(C.rright||0)+1; else C.vright=(C.vright||0)+1; } lastEv={ok,sessionStreak:vc.streak||0}; const vs=vc.streak||0, vsb=Math.min(10,2*Math.max(0,vs-1)); { const g=xpGuard((vc.kind==='rev'?'r':'v')+k,ok,vc.last&&vc.last.ms,vc.mode==='think'); xpNote=g.why; const [n,parts]=fairXP(ok?10+vsb:1, ok?[['right','Right answer',10]].concat(vsb?[['streak',`${vs} in a row`,vsb]]:[]):[['try','For trying',1]],g); if(n) gainXP(n,parts); else if(g.why) xpZero(g.why); } save(); }
 function vReveal(){ if(!vc||vc.state!=='ask')return; vc.last={marked:false,timeout:!!vc.timeout,ms:vElapsed()}; vc.timeout=false; vc.deadline=null; vc.state='fb'; render(); }
 function vMark(ok){ if(!vc||vc.state!=='fb'||vc.last.marked)return; vc.streak=ok?(vc.streak||0)+1:0; vc.last.marked=true; vc.last.ok=ok; vc.last.msg=ok?rightMsg(vc.streak,false):wrongMsg(); vRecord(vc.keys[vc.i],ok); render(); react(ok,vc.streak); }
 function vNext(){ vc.i++; vc.state='ask'; vc.last=null; vc.draft=''; vc.deadline=null; vc.t0=null; vc.away=null; if(vc.i>=vc.keys.length){vc.done=true;
@@ -3229,7 +3251,10 @@ const XP_RULES=[
  ['🗓️','Daily Challenge','+20','Once a day, plus 30 more if you get every one right.'],
  ['⚡','Speed Round','+20','Each time you beat your best score.'],
  ['⚔️','Boss Battle','+50','The first time you beat a chapter boss, then +15 for each win after that.'],
- ['🎵','Song listened to','+20','Play any John Song all the way through on the Songs page.']];
+ ['🎵','Song listened to','+20','Play any John Song all the way through on the Songs page (each song pays twice a day, up to 200 XP a day from songs).'],
+ ['🔁','Same question again','½, then 1','A question you already did today pays half the 2nd time and only 1 XP after that.'],
+ ['🐢','Too fast','0','Answers faster than you could read them, or more than 14 in a minute, earn no XP.'],
+ ['🌙','Big days','½ after 2,500','After 2,500 XP in one day, answers earn half (a quarter after 4,000).']];
 // XP earned on the Songs page is written to this quizzer's saved record; pick it up when we come back
 function absorbSongXP(){ if(!me||!U) return; const d=lsGet('u:'+me,null); const had=(U.counts&&U.counts.songs)||0, now=(d&&d.counts&&d.counts.songs)||0; if(now<=had) return; const k=now-had, gain=k*20; U.counts=U.counts||{}; U.counts.songs=now; gainXP(gain,[['song',`${k} song${k>1?'s':''} listened to`,gain]]); save(); try{ render(); }catch(e){} }
 addEventListener('storage',e=>{ if(me&&e.key===K+'u:'+me) absorbSongXP(); });
