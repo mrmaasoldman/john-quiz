@@ -2311,7 +2311,7 @@ function xpGuard(key,ok,ms,self,paced){ const d=dayKey(); if(!U.rep||U.rep.d!==d
   XPG.recent=XPG.recent.filter(t=>now-t<60000); XPG.recent.push(now);
   const n=R.m[key]=(R.m[key]||0)+1; if(self&&ok) R.sx=(R.sx||0)+1;
   const day=(U.xpDays&&U.xpDays[d])||0;
-  if(ms!=null&&ms<(self?3000:1200)) return {m:0,why:'Too fast to count. Take a second to think it through.'};
+  if(ms!=null&&ms<1000) return {m:0,why:'Too fast to count. Take a second to think it through.'};
   if(!paced&&XPG.recent.length>14) return {m:0,why:'Whoa, slow down! More than 14 answers a minute earns no XP.'};
   if(n>=3) return {m:ok?0.1:0,why:`You've done this one ${n} times today. New ones earn full XP.`};
   if(!ok&&n>1) return {m:0,why:''};
@@ -3253,7 +3253,7 @@ const XP_RULES=[
  ['⚔️','Boss Battle','+50','The first time you beat a chapter boss, then +15 for each win after that.'],
  ['🎵','Song listened to','+20','Play any John Song all the way through on the Songs page.'],
  ['🔁','Same question again','½, then 1','A question you already did today pays half the 2nd time and only 1 XP after that.'],
- ['🐢','Too fast','0','Answers faster than you could read them, or more than 14 in a minute, earn no XP.'],
+ ['🐢','Too fast','0','Answers in under 1 second, or more than 14 in a minute, earn no XP.'],
  ['🌙','Big days','½ after 2,500','After 2,500 XP in one day, answers earn half (a quarter after 4,000).']];
 // XP earned on the Songs page is written to this quizzer's saved record; pick it up when we come back
 function absorbSongXP(){ if(!me||!U) return; const d=lsGet('u:'+me,null); const had=(U.counts&&U.counts.songs)||0, now=(d&&d.counts&&d.counts.songs)||0; if(now<=had) return; const k=now-had, gain=k*20; U.counts=U.counts||{}; U.counts.songs=now; gainXP(gain,[['song',`${k} song${k>1?'s':''} listened to`,gain]]); save(); try{ render(); }catch(e){} }
