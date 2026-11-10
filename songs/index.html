@@ -1780,11 +1780,6 @@ function qzChip(){ const el=$('#quizlink'); if(!el||el.hidden) return; const n=q
 function awardXP(sg){ sg=sg||song; if(!sg) return false;
   const n=qzName(); if(!n) return false; let raw=null; try{ raw=localStorage.getItem(QK+'u:'+n); }catch(e){} if(!raw) return false; let u; try{ u=JSON.parse(raw); }catch(e){ return false; } if(!u||typeof u!=='object') return false;
   if(jqCheck(QK,n,raw)==='bad') return false;  // the save was edited outside the app: the quiz page will put it back first
-  // fair XP: each song pays twice a day, and songs pay up to 200 XP a day
-  const dk0=qzDay(); if(!u.songDay||u.songDay.d!==dk0) u.songDay={d:dk0,m:{},x:0}; const SD=u.songDay;
-  if((SD.m[sg.id]||0)>=2){ xpNote(`${sg.title} already earned XP twice today. Try another song!`); return false; }
-  if(SD.x+XP_PER_SONG>200){ xpNote("You've earned today's 200 song XP. Keep listening, it still helps you memorize!"); return false; }
-  SD.m[sg.id]=(SD.m[sg.id]||0)+1; SD.x+=XP_PER_SONG;
   const before=levelOf(u.xp); u.xp=(u.xp||0)+XP_PER_SONG;
   u.xpLog=u.xpLog||[]; u.xpLog.unshift({t:Date.now(),n:XP_PER_SONG,w:`Listened to ${sg.title}`}); if(u.xpLog.length>30) u.xpLog.length=30;
   u.xpDays=u.xpDays||{}; const dk=qzDay(); u.xpDays[dk]=(u.xpDays[dk]||0)+XP_PER_SONG;
