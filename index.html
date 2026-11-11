@@ -2307,18 +2307,11 @@ function feedback(q){
 /* ---------- fair XP: answers only pay full XP when they're real practice ---------- */
 // too fast to have read it, the same question again today, or a flood of taps all earn less
 const XPG={recent:[]};
-function xpGuard(key,ok,ms,self,paced){ const d=dayKey(); if(!U.rep||U.rep.d!==d) U.rep={d,m:{},sx:0}; const R=U.rep, now=Date.now();
+function xpGuard(key,ok,ms,self,paced){ const now=Date.now();
   XPG.recent=XPG.recent.filter(t=>now-t<60000); XPG.recent.push(now);
-  const n=R.m[key]=(R.m[key]||0)+1; if(self&&ok) R.sx=(R.sx||0)+1;
-  const day=(U.xpDays&&U.xpDays[d])||0;
   if(ms!=null&&ms<1000) return {m:0,why:'Too fast to count. Take a second to think it through.'};
   if(!paced&&XPG.recent.length>25) return {m:0,why:'Whoa, slow down! More than 25 answers a minute earns no XP.'};
-  if(n>=3) return {m:ok?0.1:0,why:`You've done this one ${n} times today. New ones earn full XP.`};
-  if(!ok&&n>1) return {m:0,why:''};
-  let m=n===2?0.5:1, why=n===2?'Second time today: half XP.':'';
-  if(self&&ok&&R.sx>120){ m*=0.25; why='Lots of self-checked answers today: less XP. Typing answers earns full XP.'; }
-  if(day>=4000){ m*=0.25; why=why||'Big day! After 4,000 XP, answers earn a quarter.'; } else if(day>=2500){ m*=0.5; why=why||'Big day! After 2,500 XP, answers earn half.'; }
-  return {m,why}; }
+  return {m:1,why:''}; }
 function fairXP(full,parts,g){ if(g.m>=1) return [full,parts]; const n=Math.max(0,Math.round(full*g.m)); if(!n) return [0,[]]; return [n,[['right',g.why||'Reduced XP',n]]]; }
 let xpNote='';
 function record(id,ok,ctx){ bumpDay(); const st=U.stats[id]||[0,0,0,0,0]; const was=st[0]?st[2]:null; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); st[4]=ok?(st[4]||0)+1:0; U.stats[id]=st;
@@ -3252,9 +3245,7 @@ const XP_RULES=[
  ['⚡','Speed Round','+20','Each time you beat your best score.'],
  ['⚔️','Boss Battle','+50','The first time you beat a chapter boss, then +15 for each win after that.'],
  ['🎵','Song listened to','+20','Play any John Song all the way through on the Songs page.'],
- ['🔁','Same question again','½, then 1','A question you already did today pays half the 2nd time and only 1 XP after that.'],
- ['🐢','Too fast','0','Answers in under 1 second, or more than 25 in a minute, earn no XP.'],
- ['🌙','Big days','½ after 2,500','After 2,500 XP in one day, answers earn half (a quarter after 4,000).']];
+ ['🐢','Too fast','0','Answers in under 1 second, or more than 25 in a minute, earn no XP.']];
 // XP earned on the Songs page is written to this quizzer's saved record; pick it up when we come back
 function absorbSongXP(){ if(!me||!U) return; const d=lsGet('u:'+me,null); const had=(U.counts&&U.counts.songs)||0, now=(d&&d.counts&&d.counts.songs)||0; if(now<=had) return; const k=now-had, gain=k*20; U.counts=U.counts||{}; U.counts.songs=now; gainXP(gain,[['song',`${k} song${k>1?'s':''} listened to`,gain]]); save(); try{ render(); }catch(e){} }
 addEventListener('storage',e=>{ if(me&&e.key===K+'u:'+me) absorbSongXP(); });
