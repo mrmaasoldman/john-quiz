@@ -67,6 +67,8 @@ html.inframe{background:#000} html.inframe body{overflow:hidden}
 .mpop-in{position:relative;width:min(460px,100%);max-height:calc(100dvh - 32px);overflow:auto;transform:translateY(14px) scale(.98);transition:transform .3s cubic-bezier(.2,.9,.3,1.1);box-shadow:0 24px 60px -20px rgba(0,0,0,.6)}
 .mpop.show .mpop-in{transform:none}
 .mpop-x{position:absolute;top:12px;right:12px}
+
+
 </style>
 </head>
 <body>
@@ -890,6 +892,7 @@ input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--win-muted
 .sjseats{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;color:var(--muted)}
 .sbuzzed.small{flex-direction:column;gap:2px;padding:10px}
 
+
 </style>
 <style id="skins">
 html[data-dfont] .label{font-size:12.5px;letter-spacing:.07em}
@@ -1640,6 +1643,50 @@ html[data-skin="legend"] .panel::after{content:'👑';position:absolute;top:4px;
 @keyframes twinkle{to{opacity:.35}}
 @keyframes fall{to{transform:translateY(calc(100vh + 240px))}}
 @media (prefers-reduced-motion:reduce){#amb::before,#amb::after,#amb i,#amb b,html[data-skin] .panel::after,html[data-skin] .bar::after{animation:none!important}}
+
+/* ---------- laptop / desktop layout (phones never reach this width) ---------- */
+@media (min-width:1100px){
+  .bar-in{max-width:1240px;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:8px 18px;padding:8px 28px}
+  .bar-in>.brand{grid-column:1;grid-row:1;margin-right:0}
+  .bar-in>.who{grid-column:3;grid-row:1}
+  .bar-in>.topsongs{grid-column:4;grid-row:1;position:static!important;transform:none!important;margin:0!important}
+  .bar-in>.tabs{grid-column:1/-1;grid-row:2;justify-self:center;overflow:visible}
+  .tabs button{padding:8px 16px;font-size:14.5px}
+  .wrap{max-width:1240px;padding-inline:28px}
+  /* practice + verse card setup: chapters on the left, options on the right */
+  .t-practice>section,.t-verses>section{grid-template-columns:minmax(0,1fr) minmax(360px,420px);align-items:start;column-gap:22px}
+  .t-practice>section>*,.t-verses>section>*{grid-column:1/-1}
+  .t-practice>section{grid-auto-flow:row dense}
+  .t-practice>section>.panel:has(.chgrid){grid-column:1}
+  .t-practice>section>.panel.opts{grid-column:2;grid-row:span 2;grid-template-columns:1fr 1fr;position:sticky;top:130px}
+  .t-practice>section>.startbar{grid-column:1}
+  .t-practice .chgrid{gap:8px}
+  .t-practice .chgrid .ch{min-height:76px}
+  .t-verses>section>.panel.opts{grid-template-columns:repeat(3,1fr)}
+  /* quizzing: a comfortable reading width, bigger type */
+  .t-quiz,.t-results{max-width:960px}
+  .t-quiz .qcard{padding:30px 34px}
+  /* games */
+  .t-games .gamegrid{grid-template-columns:repeat(4,1fr);gap:16px}
+  .t-games>section{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;column-gap:18px}
+  .t-games>section>*{grid-column:1/-1}
+  .t-games>section>.panel.evbanner{grid-column:1}
+  .t-games>section>.panel.evbanner~div:not(.panel):not(.gamegrid){grid-column:1/-1;grid-row:1}
+  .t-games>section>.panel.evbanner+div+.panel{grid-column:2;grid-row:2}
+  /* high scores: team board and quizzer board side by side */
+  .t-scores>section{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;column-gap:20px}
+  .t-scores>section>*{grid-column:1/-1}
+  .t-scores>section>.lbpanel{grid-column:auto}
+  /* progress: two columns of cards; wide tables keep the full width */
+  .t-progress>section{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;column-gap:18px}
+  .t-progress>section>*{grid-column:1/-1}
+  .t-progress>section>.lvlpanel,.t-progress>section>.panel.row{grid-column:auto;align-self:stretch}
+  /* memory verses: plan on the left, verse grids in two columns */
+  .t-materials .memgrid2{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
+  .t-materials>section>div:last-child:has(>.memch){display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
+  .mpop-in{width:min(560px,100%)}
+}
+@media (min-width:1400px){ .t-games .gamegrid{grid-template-columns:repeat(4,1fr)} .t-practice>section,.t-verses>section{grid-template-columns:minmax(0,1fr) 460px} }
 </style>
 
 <div id="app"></div>
@@ -1991,7 +2038,7 @@ function render(){
     </div>
     <div class="who">${dayPill()}${lvlChip()}<button class="sndbtn" id="musbtn" aria-label="${musicOn()&&mus.playing?'Stop music':'Play music'}" title="Music ${musicOn()&&mus.playing?'on':'off'}" style="${musicOn()&&mus.playing?'':'opacity:.55'}">🎵</button><button class="sndbtn" id="sndbtn" aria-label="${soundOn()?'Turn sound off':'Turn sound on'}" title="Sound ${soundOn()?'on':'off'}">${soundOn()?'🔊':'🔇'}</button><span class="whoname">${avC(myAv(),26,me)}${esc(me)}</span> <button id="switch">Switch</button></div>
   </div></header>`));
-  const w=document.createElement('main'); w.className='wrap'; if(tab!==lastEnterTab){ w.classList.add('enter'); lastEnterTab=tab; setTimeout(()=>w.classList.remove('enter'),1400); } app.append(w);
+  const w=document.createElement('main'); w.className='wrap t-'+(tab==='practice'&&quiz?(quiz.done?'results':'quiz'):tab==='verses'&&typeof vc!=='undefined'&&vc?(vc.done?'results':'quiz'):tab); if(tab!==lastEnterTab){ w.classList.add('enter'); lastEnterTab=tab; setTimeout(()=>w.classList.remove('enter'),1400); } app.append(w);
   if(tab==='practice') w.append(quiz ? (quiz.done? resultsView() : quizView()) : setupView());
   if(tab==='progress') w.append(progressView());
   if(tab==='scores'){ try{ w.append(scoresView()); }catch(err){ w.append(h(`<section><div><div class="label">High Scores</div><h2>Who's on top?</h2></div><div class="panel"><p class="hint" style="margin:0">The high scores hit a snag. Tap Refresh, or tell Mr. Maas: ${esc(err&&err.message||err)}</p><button class="btn small" id="lbrefresh" style="margin-top:10px">Refresh</button></div></section>`)); } }
