@@ -1666,13 +1666,11 @@ html[data-skin="legend"] .panel::after{content:'👑';position:absolute;top:4px;
   /* quizzing: a comfortable reading width, bigger type */
   .t-quiz,.t-results{max-width:960px}
   .t-quiz .qcard{padding:30px 34px}
-  /* games */
-  .t-games .gamegrid{grid-template-columns:repeat(4,1fr);gap:16px}
-  .t-games>section{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;column-gap:18px}
-  .t-games>section>*{grid-column:1/-1}
-  .t-games>section>.panel.evbanner{grid-column:1}
-  .t-games>section>.panel.evbanner~div:not(.panel):not(.gamegrid){grid-column:1/-1;grid-row:1}
-  .t-games>section>.panel.evbanner+div+.panel{grid-column:2;grid-row:2}
+  /* games: one clean column, cards in an even grid; inside a game, a comfortable width */
+  .t-games .gamegrid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));grid-auto-rows:1fr;gap:16px}
+  .t-games .gamegrid .gamecard{align-content:start;grid-template-rows:auto auto 1fr auto;height:100%}
+  .t-games .gamegrid .gamecard .pill{align-self:end}
+  .wrap.t-games:not(:has(.gamegrid)),.wrap.live{max-width:1000px}
   /* high scores: team board and quizzer board side by side */
   .t-scores>section{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;column-gap:20px}
   .t-scores>section>*{grid-column:1/-1}
@@ -1686,7 +1684,7 @@ html[data-skin="legend"] .panel::after{content:'👑';position:absolute;top:4px;
   .t-materials>section>div:last-child:has(>.memch){display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
   .mpop-in{width:min(560px,100%)}
 }
-@media (min-width:1400px){ .t-games .gamegrid{grid-template-columns:repeat(4,1fr)} .t-practice>section,.t-verses>section{grid-template-columns:minmax(0,1fr) 460px} }
+@media (min-width:1400px){ .t-practice>section,.t-verses>section{grid-template-columns:minmax(0,1fr) 460px} }
 </style>
 
 <div id="app"></div>
