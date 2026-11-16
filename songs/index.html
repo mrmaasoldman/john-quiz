@@ -731,9 +731,43 @@ body.npopen .toast{bottom:calc(150px + var(--sab));z-index:50}
 .st-empty{display:grid;justify-items:center;text-align:center;gap:6px;padding:26px 18px;border-radius:20px;color:var(--sub);font-size:14px}
 .st-empty svg{width:34px;height:34px;fill:var(--accent);opacity:.8}
 .st-empty b{color:var(--fg);font-size:16px}
+
+/* ---------- quiz-theme details: pattern, drifting bits, shaped covers, tinted hero ---------- */
+html[data-skin] .lib{isolation:isolate}
+#skinamb{position:sticky;top:0;height:0;z-index:-1;pointer-events:none}
+#skinamb[hidden]{display:none}
+#skinamb>div{position:absolute;top:0;left:calc(-1 * max(16px,var(--sal)));right:calc(-1 * max(16px,var(--sar)));height:100vh;height:100dvh;overflow:hidden;contain:strict}
+#skinamb .pat{position:absolute;inset:0;opacity:var(--pat-o,.5)}
+#skinamb b{position:absolute;top:0;left:0;font-weight:400;font-size:var(--z,22px);line-height:1;opacity:var(--o,.5);will-change:transform;animation:var(--an) var(--d,20s) linear infinite;animation-delay:var(--dl,0s);filter:saturate(1.1)}
+@keyframes skFall{from{transform:translate3d(var(--x),-8vh,0) rotate(0)}to{transform:translate3d(calc(var(--x) + var(--sw,6vw)),108vh,0) rotate(var(--r,180deg))}}
+@keyframes skRise{from{transform:translate3d(var(--x),108vh,0) rotate(0)}to{transform:translate3d(calc(var(--x) + var(--sw,6vw)),-10vh,0) rotate(var(--r,40deg))}}
+@keyframes skDrift{from{transform:translate3d(-12vw,var(--y),0)}to{transform:translate3d(112vw,calc(var(--y) + var(--sw,4vh)),0)}}
+@keyframes skFloat{0%,100%{transform:translate3d(var(--x),var(--y),0) rotate(-6deg)}50%{transform:translate3d(calc(var(--x) + var(--sw,3vw)),calc(var(--y) - 4vh),0) rotate(8deg)}}
+@keyframes skTwinkle{0%,100%{transform:translate3d(var(--x),var(--y),0) scale(.7);opacity:.15}50%{transform:translate3d(var(--x),var(--y),0) scale(1.15);opacity:var(--o,.6)}}
+@media (prefers-reduced-motion:reduce){#skinamb b{animation:none;transform:translate3d(var(--x),var(--y,30vh),0)}}
+body.npopen #skinamb b{animation-play-state:paused}
+html[data-skin] .hero .bg2{background:linear-gradient(to bottom,var(--hero1),rgba(0,0,0,.22) 46%,var(--hero2))}
+html[data-skin] .hero .eyebrow::before{content:var(--emb);margin-right:6px;letter-spacing:0}
+html[data-skin] .hero .mark{box-shadow:0 0 0 2px var(--frame),0 8px 22px -8px var(--sig2)}
+html[data-skin] .sect h2::after{content:var(--emb);margin-left:8px;font-size:.72em;vertical-align:.08em}
+html[data-skin] .album .cover{box-shadow:0 0 0 2px var(--frame),0 12px 24px -12px var(--sig3)}
+html[data-skin] .row .th{box-shadow:0 0 0 1.5px var(--frame)}
+html[data-skin] .chap{box-shadow:inset 3px 0 0 var(--accent)}
+html[data-skin] .mini .card>.ctl button:first-child{box-shadow:0 4px 14px -2px var(--sig2)}
+html[data-skin] .tabbar>.blob i{background:color-mix(in srgb,var(--accent) 22%,transparent)}
+html[data-skin] .st-hero .sh{background:radial-gradient(120% 90% at 100% 0%,var(--hero1),transparent 60%),linear-gradient(180deg,rgba(10,8,20,.15),rgba(10,8,20,.62))}
+html[data-skin] .st-tile.t1{--g:linear-gradient(135deg,var(--sig1),var(--sig2));--sh:var(--sig2)}
+html[data-skin] .st-tile.t4{--g:linear-gradient(135deg,var(--sig2),var(--sig3));--sh:var(--sig3)}
+html[data-skin] .st-tile .ring .fg{stroke:var(--accent)}
+html[data-shape="pixel"] .album .cover,html[data-shape="pixel"] .album .cover img{border-radius:4px}
+html[data-shape="pixel"] .row .th,html[data-shape="pixel"] .row .th img{border-radius:3px}
+html[data-shape="pixel"] .album .cover{box-shadow:0 0 0 3px var(--frame),4px 4px 0 3px rgba(0,0,0,.35)}
+html[data-shape="pixel"] .chap,html[data-shape="pixel"] .st-tile,html[data-shape="pixel"] .st-week,html[data-shape="pixel"] .st-hero,html[data-shape="pixel"] .st-chs{border-radius:8px}
+html[data-shape="pixel"] .hero .mark{border-radius:6px}
+html[data-shape="pixel"] .sect h2{letter-spacing:0;text-shadow:2px 2px 0 var(--wash2)}
 </style>
 
-<main class="lib" id="lib">
+<main class="lib" id="lib"><div id="skinamb" aria-hidden="true" hidden><div><div class="pat"></div></div></div>
   <div class="libin">
     <header class="hero" id="hero"><div class="bg0" id="herobg0"></div><div class="bg" id="herobg"></div><div class="bg2"></div>
       <div class="mark" aria-hidden="true">J</div>
@@ -1792,16 +1826,52 @@ const lum=h=>{ const [r,g,b]=hx(h).map(v=>{ v/=255; return v<=.03928?v/12.92:Mat
 const contrast=(a,b)=>{ const x=lum(a),y=lum(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); };
 const rgba=(h,a)=>{ const c=hx(h); return `rgba(${c[0]},${c[1]},${c[2]},${a})`; };
 const SKIN_VARS=['--bg','--fg','--sub','--accent','--tint','--sig','--sig1','--sig2','--sig3','--wash1','--wash2','--wash3','--serif','--thumb','--c1','--c2','--c3'];
+
+// what each theme adds on top of its colors: little drifting things, a background pattern, how they move, and the shape of covers
+const QDET={overworld:['🌼🌱🦋☁️','dots','float','pixel'],candy:['🍬🍭☁️💗','dots','fall','round'],dungeon:['🗝️🕯️🛡️💎','bricks','float','pixel'],brick:['🧱⭐🍄🪙','bricks','rise','pixel'],
+ rose:['🌹🌸🍃','dots','fall','round'],robot:['🤖⚙️🔩💡','grid','float','pixel'],space:['🪐⭐🚀☄️','stars','drift','round'],castle:['🏰⚔️👑🕯️','bricks','float','pixel'],
+ pocket:['🎮🕹️👾','grid','float','pixel'],hedgehog:['💍⚡💨','checks','drift','round'],fairy:['✨🧚🦋🌙','stars','twinkle','round'],galaxy:['🚀👾⭐','stars','fall','pixel'],
+ maze:['👻🍒🟡','dots','drift','pixel'],blocks:['🟥🟦🟨🟩','grid','fall','pixel'],volcano:['🌋🔥💎','waves','rise','pixel'],ice:['❄️🧊💎','diamonds','fall','round'],
+ arena:['🥊⚡🏆','stripes','float','pixel'],dino:['🦕🦖🌿🥚','dots','float','round'],ocean:['🐠🫧🐚🐙','waves','rise','round'],pizza:['🍕🍅🧀🌿','checks','fall','round'],
+ comic:['💥⭐💬','halftone','float','round'],farm:['🐄🌾🚜🐔','stripes','float','round'],stadium:['⚽🏀🏈🏆','stripes','float','round'],elements:['🔥💧🌪️🪨','waves','rise','round'],
+ camp:['🏕️🔥🌲⭐','stars','twinkle','round'],groovy:['✌️🌼🌈☮️','waves','float','round'],build:['🚧🔨🧱⚠️','hazard','float','pixel'],harvest:['🍂🍁🦃🌽','dots','fall','round'],
+ winter:['❄️⛄🎄','stars','fall','round'],race:['🏁🏎️💨','checks','drift','pixel'],legend:['👑⚔️✨🏆','diamonds','twinkle','pixel']};
+function skinPattern(kind,c1,c2,dark){ const a=dark?.16:.2, b=dark?.1:.13, A=rgba(c1,a), B=rgba(c2,b);
+  switch(kind){
+    case 'grid': return [`linear-gradient(${A} 1px,transparent 1px),linear-gradient(90deg,${A} 1px,transparent 1px)`,'26px 26px'];
+    case 'bricks': return [`linear-gradient(${A} 2px,transparent 2px),linear-gradient(90deg,${A} 2px,transparent 2px),linear-gradient(90deg,${A} 2px,transparent 2px)`,'48px 24px,48px 48px,48px 48px','0 0,0 0,24px 24px'];
+    case 'stars': return [`radial-gradient(${rgba(c1,dark?.7:.5)} 1px,transparent 1.6px),radial-gradient(${rgba(c2,dark?.6:.4)} 1.2px,transparent 1.8px),radial-gradient(${rgba('#ffffff',dark?.5:.0)} .8px,transparent 1.4px)`,'90px 90px,140px 140px,60px 60px','10px 20px,70px 90px,30px 50px'];
+    case 'stripes': return [`repeating-linear-gradient(90deg,${A} 0 26px,transparent 26px 52px)`,'auto'];
+    case 'hazard': return [`repeating-linear-gradient(-45deg,${A} 0 14px,transparent 14px 28px)`,'auto'];
+    case 'checks': return [`conic-gradient(${A} 25%,transparent 0 50%,${A} 0 75%,transparent 0)`,'34px 34px'];
+    case 'waves': return [`radial-gradient(circle at 50% 100%,transparent 16px,${A} 17px 19px,transparent 20px),radial-gradient(circle at 0 0,transparent 16px,${B} 17px 19px,transparent 20px)`,'40px 22px,40px 22px','0 0,20px 11px'];
+    case 'diamonds': return [`linear-gradient(45deg,${A} 12%,transparent 12.5% 87%,${A} 87.5%),linear-gradient(-45deg,${B} 12%,transparent 12.5% 87%,${B} 87.5%)`,'34px 34px'];
+    case 'halftone': return [`radial-gradient(${rgba(c1,dark?.3:.34)} 3.2px,transparent 3.8px)`,'16px 16px'];
+    default: return [`radial-gradient(${rgba(c1,dark?.34:.4)} 1.6px,transparent 2.2px),radial-gradient(${rgba(c2,dark?.26:.3)} 1.6px,transparent 2.2px)`,'26px 26px,26px 26px','0 0,13px 13px']; } }
+function skinDetail(id,T,dark,bg,s1,s2,s3){ const amb=$('#skinamb'), de=document.documentElement, st=de.style;
+  ['--emb','--hero1','--hero2','--frame'].forEach(v=>st.removeProperty(v)); delete de.dataset.shape;
+  if(!id){ if(amb){ amb.hidden=true; amb.dataset.skin=''; amb.querySelectorAll('b').forEach(b=>b.remove()); } return; }
+  const D=QDET[id]||['✨','dots','float','round'], em=Array.from(D[0].matchAll(/\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*/gu),m=>m[0]);
+  st.setProperty('--emb',`"${em[0]}"`); st.setProperty('--hero1',rgba(s3,.42)); st.setProperty('--hero2',rgba(mixc(bg,'#000000',dark?.2:.78),.9)); st.setProperty('--frame',rgba(T.fr||s2,dark?.75:.85));
+  de.dataset.shape=D[3]; if(!amb) return; amb.hidden=false;
+  const pat=amb.querySelector('.pat'), P=skinPattern(D[1],s3,s1,dark); pat.style.backgroundImage=P[0]; pat.style.backgroundSize=P[1]; pat.style.backgroundPosition=P[2]||'0 0';
+  if(amb.dataset.skin===id) return; amb.dataset.skin=id; amb.querySelectorAll('b').forEach(b=>b.remove());
+  // the same handful of bits every time for a theme, so it doesn't jump around when the page comes back
+  let seed=[...id].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7); const rnd=()=>{ seed=(seed*1664525+1013904223)|0; return ((seed>>>0)%10000)/10000; };
+  const an={fall:'skFall',rise:'skRise',drift:'skDrift',float:'skFloat',twinkle:'skTwinkle'}[D[2]]||'skFloat', n=D[2]==='float'||D[2]==='twinkle'?11:13, box=amb.firstElementChild;
+  for(let k=0;k<n;k++){ const b=document.createElement('b'); b.textContent=em[k%em.length]; const dur=D[2]==='float'?9+rnd()*8:D[2]==='twinkle'?4+rnd()*5:D[2]==='drift'?18+rnd()*18:16+rnd()*16;
+    b.style.cssText=`--an:${an};--x:${(rnd()*92).toFixed(1)}vw;--y:${(6+rnd()*84).toFixed(1)}vh;--z:${(15+rnd()*17).toFixed(0)}px;--o:${(dark?.34:.42)+rnd()*.22};--d:${dur.toFixed(1)}s;--dl:-${(rnd()*dur).toFixed(1)}s;--sw:${((rnd()-.5)*14).toFixed(1)}vw;--r:${(rnd()*360-180).toFixed(0)}deg`;
+    box.append(b); } }
 function quizThemeId(){ const n=qzName(); if(!n) return null; const u=qzGet('u:'+n,null); if(!u) return null; return QTHEMES[u.theme]?u.theme:'overworld'; }
 function skinOn(){ return lsGet('skin','quiz')!=='normal'; }
 function applySkin(){ const de=document.documentElement, st=de.style, id=quizThemeId(), btn=$('#skintog');
   SKIN_VARS.forEach(v=>st.removeProperty(v)); de.removeAttribute('data-theme'); delete de.dataset.skin;
   const onSite=!$('#quizlink').hidden;
   if(btn){ btn.hidden=!(id&&onSite); }
-  if(!id||!onSite){ skinMeta(null); return; }
+  if(!id||!onSite){ skinDetail(null); skinMeta(null); return; }
   const T=QTHEMES[id], on=skinOn();
   if(btn){ btn.setAttribute('aria-pressed',on); btn.querySelector('span').textContent=on?T.n:'Normal'; btn.title=on?`Using your ${T.n} theme. Tap for the normal look.`:`Normal look. Tap for your ${T.n} theme.`; }
-  if(!on){ skinMeta(null); return; }
+  if(!on){ skinDetail(null); skinMeta(null); return; }
   const dark=lum(T.bg)<.32, bg=dark?mixc(T.bg,'#000000',.28):mixc(T.bg,'#ffffff',.55);
   const fg=dark?mixc(T.ink&&lum(T.ink)>.5?T.ink:'#ffffff','#ffffff',.35):mixc(T.ink&&lum(T.ink)<.3?T.ink:'#15131c','#000000',.15);
   // an accent that reads on this background: the theme's own colors first, nudged lighter or darker if needed
@@ -1812,7 +1882,7 @@ function applySkin(){ const de=document.documentElement, st=de.style, id=quizThe
   if(T.f) set['--serif']=T.f+',"Fraunces",Georgia,serif';
   de.setAttribute('data-theme',dark?'dark':'light'); de.dataset.skin=id; Object.entries(set).forEach(([k,v])=>st.setProperty(k,v));
   if(T.gf&&!document.getElementById('skinfont-'+id)){ const l=document.createElement('link'); l.id='skinfont-'+id; l.rel='stylesheet'; l.href='https://fonts.googleapis.com/css2?family='+T.gf+'&display=swap'; document.head.append(l); }
-  skinMeta(bg); }
+  skinDetail(id,T,dark,bg,s1,s2,s3); skinMeta(bg); }
 function skinMeta(c){ let m=document.querySelector('meta[name="theme-color"]:not([media])'); if(!c){ if(m&&m.dataset.skin) m.remove(); return; } if(!m){ m=document.createElement('meta'); m.name='theme-color'; m.dataset.skin='1'; document.head.append(m); } m.content=c; }
 function qzChip(){ const el=$('#quizlink'); if(!el||el.hidden) return; const n=qzName(); const old=el.querySelector('.lv'); if(old) old.remove(); if(!n) return; const u=qzGet('u:'+n,null); if(!u) return; const lv=document.createElement('span'); lv.className='lv'; lv.textContent='Lv '+levelOf(u.xp); el.append(lv); }
 function awardXP(sg){ sg=sg||song; if(!sg) return false;
