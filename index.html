@@ -1818,21 +1818,120 @@ html[data-skin="legend"] .panel::after{content:'👑';position:absolute;top:4px;
 @media (max-width:520px){ .co-add{grid-template-columns:minmax(0,1fr)!important} .co-hello h2{font-size:26px} }
 @media (prefers-reduced-motion:reduce){ .co-next.ready{animation:none} }
 
-.t-practice>section.co-on{grid-template-columns:minmax(0,1fr)!important;max-width:880px;margin-inline:auto;width:100%}
-.t-practice>section.co-on>*{grid-column:1/-1!important;grid-row:auto!important;position:static!important}
-section.co-on .co-qz{align-self:auto}
+/* coach screens: hide the student bits (streak, level, tabs) so there's nothing extra to figure out */
+html.co-mode .bar-in>.who,html.co-mode .bar-in>.tabs{display:none!important}
+html.co-mode .bar-in>.brand span{display:none}
 
-/* phone and tablet: one column in the order you use it — question, answer, scores, next, then the verse */
+/* ===== coach layouts ===== */
+html.co-mode .bar-in>.topsongs{display:none!important}
+.co-bar{display:grid;gap:10px}
+.co-barjudge{display:none}
+.co-barjudge p{margin:0;font-size:16px;text-align:center}
+/* ---- laptop: spread out, one thing per area ---- */
+@media (min-width:1100px){
+  html.co-mode .wrap{max-width:1320px}
+  html.co-mode .bar-in{grid-template-columns:1fr!important;padding-block:8px!important;row-gap:0!important}
+  section.co-on>.co-hello{margin-bottom:0!important}
+  section.co-on>.co-hello p{margin-top:2px}
+  .t-practice>section.co-on{grid-template-columns:minmax(0,1.25fr) minmax(380px,1fr)!important;grid-template-rows:auto auto auto auto auto 1fr auto auto;column-gap:44px;row-gap:16px;align-items:start;max-width:none}
+  .t-practice>section.co-on>*{position:static!important;grid-row:auto}
+  section.co-on>.co-hello{grid-column:1/-1!important;grid-row:1!important;margin-bottom:8px}
+  section.co-on>.co-step.s1{grid-column:1!important;grid-row:2!important}
+  section.co-on>.panel:has(.chgrid){grid-column:1!important;grid-row:3/8!important}
+  section.co-on>.co-step.s2{grid-column:2!important;grid-row:2!important}
+  section.co-on>.co-qz{grid-column:2!important;grid-row:3!important;align-self:start}
+  section.co-on>.co-step.s3{grid-column:2!important;grid-row:4!important;margin-top:14px}
+  section.co-on>.co-go{grid-column:2!important;grid-row:5!important}
+  section.co-on>.co-more{grid-column:1/-1!important;grid-row:8!important;margin-top:10px}
+  section.co-on>.co-switch{grid-column:1/-1!important}
+  section.co-on .chgrid .ch{min-height:72px}
+  section.co-on .co-add{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)!important}
+  section.co-on .co-addbtn{grid-column:1/-1}
+  .t-coach .co-desk{grid-template-columns:minmax(0,1fr) 440px!important;column-gap:44px!important;row-gap:20px}
+  .t-coach .co-read{gap:18px}
+  .t-coach .co-q{padding:26px 32px!important}
+  .t-coach .co-qtext{font-size:clamp(26px,2.5vw,38px)}
+  .t-coach .co-pair{gap:18px}
+  .t-coach .co-ans,.t-coach .co-verse{padding:20px 24px}
+  .t-coach .co-sheet{gap:14px;top:84px!important}
+  .t-coach .co-sheethead{display:none}
+  .t-coach .co-thead{padding:9px 16px}
+  .t-coach .co-prow{grid-template-columns:minmax(0,1fr) auto auto!important;padding:8px 12px;gap:6px 14px}
+  .t-coach .co-pname{margin:0;padding:9px 12px;flex-wrap:nowrap}
+  .t-coach .co-pname em{flex-basis:auto;margin-left:auto;white-space:nowrap}
+  .t-coach .co-pstat{order:2;flex-wrap:nowrap;white-space:nowrap}
+  .t-coach .co-pscore{order:3;min-width:38px}
+  .t-coach .co-judge{order:4}
+  .t-coach .co-read>.row:first-child h2{font-size:24px!important}
+}
+/* ---- tablet: one column in the order you use it ---- */
 @media (max-width:1099px){
   .t-coach .co-desk{display:flex;flex-direction:column}
   .t-coach .co-read,.t-coach .co-pair{display:contents}
   .t-coach .co-read>.row:first-child{order:1} .t-coach .co-tip{order:2} .t-coach .co-q{order:3} .t-coach .co-ans{order:4}
-  .t-coach .co-sheet{order:5} .t-coach .co-next{order:6} .t-coach .co-verse{order:7} .t-coach .co-read>.co-more{order:8}
+  .t-coach .co-sheet{order:5} .t-coach .co-bar{order:6} .t-coach .co-verse{order:7} .t-coach .co-read>.co-more{order:8}
+  .t-practice>section.co-on>.co-go{position:sticky!important;bottom:10px;z-index:6;box-shadow:0 8px 24px -6px rgba(0,0,0,.5)}
+}
+/* ---- phone: the question, the answer, everyone's name and the next button all on one screen ---- */
+@media (max-width:760px){
+  html.co-mode .bar-in{padding-block:6px!important;gap:0!important}
+  html.co-mode .wrap{padding-top:10px}
+  .t-coach{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))!important}
+  .t-coach .co-desk{gap:8px}
+  .t-coach .co-read>.row:first-child .label{display:none}
+  .t-coach .co-read>.row:first-child h2{font-size:19px!important}
+  .t-coach .co-read>.row:first-child{flex-wrap:nowrap;align-items:center!important}
+  .t-coach .co-read>.row:first-child .row{flex-wrap:nowrap;gap:6px}
+  .t-coach .co-read>.row:first-child .btn{padding:6px 9px;font-size:12px;min-height:0;white-space:nowrap}
+  .t-coach .co-read>.row:first-child h2{white-space:nowrap}
+  html.co-mode .bar-in>.brand{font-size:12px}
+  html.co-mode .bar{min-height:0}
+  .t-coach .co-tip{padding:8px 12px!important;font-size:14.5px;line-height:1.35;outline-width:2px;outline-offset:-2px}
+  .t-coach .co-tip b{font-size:15px}
+  .t-coach .co-q,.t-coach .co-ans{padding:12px 14px!important;gap:4px}
+  .t-coach .co-q .label,.t-coach .co-ans .label{font-size:10px}
+  .t-coach .co-qtext{font-size:20px;line-height:1.22}
+  .t-coach .co-ref{padding:1px 8px;font-size:13px}
+  .t-coach .co-a{font-size:17px;line-height:1.25}
+  .t-coach .co-sheethead,.co-wide{display:none}
+  .t-coach .co-sheet{gap:8px}
+  .t-coach .co-tcard{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:6px 8px 8px!important;overflow:visible}
+  .t-coach .co-thead{grid-column:1/-1;padding:0 4px 2px;background:none;border:0}
+  .t-coach .co-thead small{display:inline;margin-left:8px}
+  .t-coach .co-tot{font-size:18px} .t-coach .co-tot small{display:inline;margin-left:4px}
+  .t-coach .co-prow{display:grid;grid-template-columns:minmax(0,1fr) auto!important;gap:2px 6px;padding:0;border:0!important;position:relative}
+  .t-coach .co-pname{grid-column:1/-1;margin:0;padding:7px 30px 21px 8px;min-height:50px;align-items:flex-start}
+  .t-coach .co-pname span{font-size:15px}
+  .t-coach .co-pname kbd,.t-coach .co-pname em{display:none}
+  .t-coach .co-pscore{position:absolute;right:8px;top:7px;font-size:15px;pointer-events:none}
+  .t-coach .co-pstat{position:absolute;left:8px;bottom:4px;font-size:11px!important;gap:6px!important;pointer-events:none;flex-wrap:nowrap;white-space:nowrap}
+  .t-coach .co-pstat .co-pill{font-size:9px;padding:0 5px}
+  .t-coach .co-prow.sel .co-pname{border-color:var(--accent);outline:2px solid var(--accent)}
+  .t-coach .co-prow .co-judge{display:none}
+  .t-coach .co-bar{position:fixed;left:0;right:0;bottom:0;z-index:60;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--bg);border-top:2px solid var(--line);box-shadow:0 -10px 24px -12px rgba(0,0,0,.45)}
+  .t-coach .co-bar.judging .co-barjudge{display:grid;gap:8px}
+  .t-coach .co-bar.judging .co-next{display:none}
+  .t-coach .co-bar .co-jb button{min-height:54px}
+  .t-coach .co-next{min-height:54px!important;padding:12px 16px!important;font-size:17px!important}
+  .t-coach .co-verse{padding:12px 14px}
+  .t-coach .co-verse p{font-size:16px}
+  .co-hello h2{font-size:24px} .co-hello p{font-size:15.5px}
+  .co-step h3{font-size:18px} .co-num{width:34px;height:34px;font-size:17px}
+  section.co-on .chgrid{grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:5px}
+  section.co-on .chgrid .ch{min-height:46px;padding:4px 0}
+  section.co-on .chgrid .ch b{font-size:16px} section.co-on .chgrid .ch small{font-size:9.5px}
 }
 
-/* coach screens: hide the student bits (streak, level, tabs) so there's nothing extra to figure out */
-html.co-mode .bar-in>.who,html.co-mode .bar-in>.tabs{display:none!important}
-html.co-mode .bar-in>.brand span{display:none}
+/* short phones: drop the extras so every name still fits above the button */
+@media (max-width:760px) and (max-height:720px){
+  html.co-mode:has(.t-coach) .bar{display:none}
+  .t-coach .co-q .label{display:none}
+  .t-coach .co-q>.row{justify-content:flex-end!important;margin-bottom:-4px}
+  .t-coach .co-tip{font-size:13.5px}
+  .t-coach{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))!important}
+}
+
+@media (min-width:1100px){ .t-practice>section.co-on>.co-go{position:sticky!important;bottom:18px;z-index:6;box-shadow:0 10px 26px -8px rgba(0,0,0,.55)} }
 </style>
 
 <div id="app"></div>
@@ -2337,15 +2436,15 @@ function setupView(){
   const seg=(key,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-opt="${key}" data-val="${v}" aria-pressed="${o[key]===v}">${l}</button>`).join('')}</div>`;
   const f=h(`<section class="${COACH_ON&&CO.on?'co-on':''}">
     ${(COACH_ON&&CO.on)?`<div class="co-hello"><h2>Quiz your team</h2><p>You read the questions out loud. The app shows you the answer and keeps score. <b>3 easy steps.</b></p></div>`:qotdBanner()+eventBanners()}
-    ${(COACH_ON&&CO.on)?`<div class="co-step"><span class="co-num">1</span><div><h3>Pick the chapters</h3><p>Tap a chapter number to pick it. Tap it again to choose single verses.</p></div></div>`:`<div><div class="label">Practice</div><h2 style="font-size:28px;font-weight:800">Choose chapters and verses</h2></div>`}
+    ${(COACH_ON&&CO.on)?`<div class="co-step s1"><span class="co-num">1</span><div><h3>Pick the chapters</h3><p>Tap a chapter to add it. Tap it again to take it away.</p></div></div>`:`<div><div class="label">Practice</div><h2 style="font-size:28px;font-weight:800">Choose chapters and verses</h2></div>`}
     <div class="panel" style="display:grid;gap:14px">
       <div class="row" style="justify-content:space-between">
-        <span class="muted" style="font-size:14px">Tap a chapter to pick its verses.</span>
+        <span class="muted" style="font-size:14px">${COACH_ON&&CO.on?'Green chapters are in the quiz.':'Tap a chapter to pick its verses.'}</span>
         <div class="row"><button class="btn ghost small" id="selall">All of John</button><button class="btn ghost small" id="selnone">Clear</button></div>
       </div>
       <div class="chgrid">${CH.map(c=>{const [n,st]=chState(c);return `<button class="ch ${st} ${openCh===c?'open':''}" data-ch="${c}" aria-label="Chapter ${c}"><b>${c}</b><small>${n?n+'/'+qVerses[c].length:'·'}</small></button>`}).join('')}</div>
       ${openCh?`<div class="vpanel">
-        <div class="row" style="justify-content:space-between"><b>Chapter ${openCh}</b>
+        <div class="row" style="justify-content:space-between"><b>Chapter ${openCh}${COACH_ON&&CO.on?' <span class="hint" style="font-weight:400">· want only some verses? Tap them off.</span>':''}</b>
         <div class="row"><button class="btn ghost small" id="chall">Whole chapter</button><button class="btn ghost small" id="chnone">None</button></div></div>
         <div class="vgrid">${qVerses[openCh].map(v=>`<button class="v ${s.has(openCh+':'+v)?'on':''} ${U.mem[openCh+':'+v]?'mem':''}" data-v="${v}" title="${byVerse[openCh+':'+v].length} questions">${v}</button>`).join('')}</div>
         <span class="hint">Gold dot = a verse you've marked memorized.</span>
@@ -2457,14 +2556,14 @@ function coGroups(list,get=x=>x){ const m=new Map(); list.forEach(x=>{ const p=g
 // the coach half of the Practice page: same chapter and verse picker above, these panels instead of the solo options
 function coachSetupPanels(){ const by=coPool(), chs=coChapters(by), nq=chs.reduce((a,c)=>a+by[c].length,0), r=CO.rules, ready=CO.roster.length&&chs.length;
   const teamNames=[...new Set(CO.roster.map(p=>(p.team||'').trim()).filter(Boolean))], lastTeam=CO.lastTeam||'';
-  return `<div class="co-step"><span class="co-num">2</span><div><h3>Who is playing?</h3><p>Type each quizzer's name and press <b>Add</b>. Teams are optional.</p></div></div>
+  return `<div class="co-step s2"><span class="co-num">2</span><div><h3>Who is playing?</h3><p>Type each quizzer's name and press <b>Add</b>. Teams are optional.</p></div></div>
     <div class="panel co-panel co-qz">
       <form id="coadd" class="co-add"><label class="co-fld"><span>Name</span><input type="text" id="coname" placeholder="Example: Abby" maxlength="30" autocomplete="off" enterkeyhint="done"></label>
         <label class="co-fld"><span>Team <i>(optional)</i></span><input type="text" id="coteam" placeholder="Example: Blue team" maxlength="30" list="coteams" autocomplete="off" value="${esc(lastTeam)}"></label>
         <button class="btn co-addbtn" type="submit">+ Add</button><datalist id="coteams">${teamNames.map(n=>`<option value="${esc(n)}">`).join('')}</datalist></form>
       ${CO.roster.length?`<div class="co-roster">${coGroups(CO.roster).map(g=>`<div class="co-team"><b>${esc(g.name)}</b><div class="co-chips">${g.list.map(p=>`<span class="co-chip">${esc(p.name)}<button data-co="del" data-id="${p.id}" aria-label="Remove ${esc(p.name)}" title="Remove ${esc(p.name)}">×</button></span>`).join('')}</div></div>`).join('')}</div>`:'<p class="co-empty">Nobody added yet.</p>'}
     </div>
-    <div class="co-step"><span class="co-num">3</span><div><h3>Start the quiz</h3><p>${ready?`Ready! ${CO.roster.length} quizzer${CO.roster.length===1?'':'s'}, ${nq} question${nq===1?'':'s'} to pick from. Official rules, ${r.count?r.count+' questions':'until you stop'}.`:!chs.length?'First pick at least one chapter in step 1.':'First add at least one quizzer in step 2.'}</p></div></div>
+    <div class="co-step s3"><span class="co-num">3</span><div><h3>Start the quiz</h3><p>${ready?`Ready! ${CO.roster.length} quizzer${CO.roster.length===1?'':'s'}, ${nq} question${nq===1?'':'s'} to pick from. Official rules, ${r.count?r.count+' questions':'until you stop'}.`:!chs.length?'First pick at least one chapter in step 1.':'First add at least one quizzer in step 2.'}</p></div></div>
     <button class="btn co-go" data-co="start" ${ready?'':'disabled'}>Start the quiz ▶</button>
     <details class="panel co-more" ${CO.moreOpen?'open':''}><summary>More settings <span class="hint">(you can skip these)</span></summary>
       <div class="co-panel" style="margin-top:12px">
@@ -2505,19 +2604,20 @@ function coachView(){ const M=CO.match;
       <div class="panel"><div class="label" style="margin-bottom:8px">Every ruling</div>${coLog(M)}</div>
     </div><aside class="co-sheet">${coSheet(M,false)}</aside></section>`); }
   const q=Q[M.cur.qid], v=vText(q.c,q.v)||'', prev=vText(q.c,q.v-1), nxt=vText(q.c,q.v+1), last=M.total&&M.n>=M.total, sh=CO.show, closed=M.cur.closed;
-  const tip=closed?'All done with this one. Press the big button for the next question.':coSel?'Now tap <b>Right</b> or <b>Wrong</b> under their name.':'Read the question out loud. When someone buzzes in, <b>tap their name</b> under Scores.';
+  const tip=closed?'All done with this one. Press the big button for the next question.':coSel?'Now tap <b>Right</b> or <b>Wrong</b>.':'Read it out loud. When someone buzzes in, <b>tap their name</b>.';
   return h(`<section class="co-desk"><div class="co-read">
     <div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="label">Quiz your team · no XP</div><h2 style="font-size:28px;font-weight:800">Question ${M.n}${M.total?` <span class="muted" style="font-weight:500">of ${M.total}</span>`:''}</h2></div>
-      <div class="row"><button class="btn ghost small" data-co="undo" ${M.undo.length?'':'disabled'}>↩ Undo</button><button class="btn ghost small" data-co="end">Stop the quiz</button></div></div>
+      <div class="row"><button class="btn ghost small" data-co="undo" ${M.undo.length?'':'disabled'}>↩ Undo</button><button class="btn ghost small" data-co="end">Stop<span class="co-wide"> the quiz</span></button></div></div>
     <div class="panel co-tip ${closed?'done':''}" role="status">${coFlash?`<b>${esc(coFlash.text)}</b><br>`:''}${tip}</div>
     <div class="panel co-q"><div class="row" style="justify-content:space-between"><span class="label">Read this out loud</span><span class="co-ref mono">John ${q.c}:${q.v}</span></div>
       <div class="co-qtext">${esc(coQ(q.q))}</div></div>
     <div class="co-pair">
       <div class="panel co-ans"><div class="row" style="justify-content:space-between"><span class="label">The answer</span><button class="x" data-co="show" data-k="ans">${sh.ans?'Hide':'Show'}</button></div><div class="${sh.ans?'':'co-blur'}">${q.a.map(a=>`<div class="co-a">${esc(a)}</div>`).join('')}</div></div>
-      <div class="panel co-verse"><div class="row" style="justify-content:space-between"><span class="label">The verse</span><span class="row"><button class="x" data-co="show" data-k="ctx">${sh.ctx?'Just this verse':'Show nearby verses'}</button></span></div>
+      <div class="panel co-verse"><div class="row" style="justify-content:space-between"><span class="label">The verse · John ${q.c}:${q.v}</span><span class="row"><button class="x" data-co="show" data-k="ctx">${sh.ctx?'Just this verse':'Show nearby verses'}</button></span></div>
         ${sh.ctx&&prev?`<p class="ctx"><sup>${q.v-1}</sup>${esc(prev)}</p>`:''}<p><sup>${q.v}</sup>${esc(v)}</p>${sh.ctx&&nxt?`<p class="ctx"><sup>${q.v+1}</sup>${esc(nxt)}</p>`:''}</div>
     </div>
-    <button class="btn co-next ${closed?'ready':''}" data-co="next">${closed?(last?'See the final scores ▶':'Next question ▶'):(last?'Nobody got it · see the final scores ▶':'Nobody got it · next question ▶')}</button>
+    <div class="co-bar ${coSel&&!closed?'judging':''}">${coSel&&!closed&&M.players[coSel]?`<div class="co-barjudge"><p>Did <b>${esc(M.players[coSel].name)}</b> answer right?</p><div class="co-jb"><button class="co-yes" data-co="rule" data-t="right" data-id="${coSel}">✓ Right</button><button class="co-no" data-co="rule" data-t="wrong" data-id="${coSel}">✗ Wrong</button></div><div class="co-jx"><button class="x" data-co="rule" data-t="foul" data-id="${coSel}">Foul (jumped too early)</button><button class="x" data-co="unsel">Cancel</button></div></div>`:''}
+      <button class="btn co-next ${closed?'ready':''}" data-co="next">${closed?(last?'See the final scores ▶':'Next question ▶'):(last?'Nobody got it · final scores ▶':'Nobody got it · next ▶')}</button></div>
     <details class="panel co-more"><summary>Timer and extra tools <span class="hint">(optional)</span></summary>
       <div style="display:grid;gap:12px;margin-top:12px">
         <div class="co-clock" id="coclock"><span class="t">–</span><span class="m">Timer is off</span><button class="btn ghost small" data-co="jump" ${closed?'disabled':''}>Start 3-second buzz-in timer</button><button class="x" data-co="stopclock">Stop timer</button></div>
@@ -2540,7 +2640,7 @@ if(COACH_ON){
     else if(a==='start'||a==='again') coStart();
     else if(a==='tosetup'){ CO.match=null; CO.on=true; coSave(); render(); }
     else if(!M) return;
-    else if(a==='sel'){ coSel=t.dataset.id; coStartClock('answer',coSel); renderKeep(); coPaintClock(); const j=document.querySelector('.co-judge'); if(j&&innerWidth<1100) j.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+    else if(a==='sel'){ coSel=t.dataset.id; coStartClock('answer',coSel); renderKeep(); coPaintClock(); }
     else if(a==='rule') coRule(t.dataset.id,t.dataset.t);
     else if(a==='unsel'){ coSel=null; coStopClock(); renderKeep(); }
     else if(a==='show'){ CO.show[t.dataset.k]=!CO.show[t.dataset.k]; coSave(); renderKeep(); coPaintClock(); }
@@ -5174,7 +5274,10 @@ function liveTeamWatch(){ const L=live; if(!L||L.role!=='host'||L.phase==='done'
 function wire(){
   const on=(sel,fn)=>{const e=$(sel);if(e)e.onclick=fn};
   // setup
-  document.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{const c=+b.dataset.ch;openCh=openCh===c?null:c;render()});
+  document.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{const c=+b.dataset.ch;
+    if(COACH_ON&&CO.on&&tab==='practice'&&!quiz){ // coach mode: one tap adds the whole chapter, a second tap takes it away
+      const s=selSet(), has=qVerses[c].some(v=>s.has(c+':'+v)); qVerses[c].forEach(v=>has?s.delete(c+':'+v):s.add(c+':'+v)); U.sel=[...s]; save(); openCh=has?null:c; renderKeep(); return; }
+    openCh=openCh===c?null:c;render()});
   paintVerses('.v[data-v]','v',keys=>{ const s=selSet(), on=keys.mode; keys.forEach(v=>{ const k=openCh+':'+v; on?s.add(k):s.delete(k); }); U.sel=[...s]; save(); render(); });
   on('#selall',()=>{U.sel=Object.keys(byVerse);save();render()});
   on('#selnone',()=>{U.sel=[];save();render()});
