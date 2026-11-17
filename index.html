@@ -2023,6 +2023,84 @@ html.co-mode .bar-in>.topsongs{display:none!important}
 .co-open{gap:8px}
 .co-switch{padding:14px 0 4px}
 html.co-mode .bar-in>.brand span{display:inline}
+
+/* clock, quotes, halftime */
+.co-switches{display:grid;gap:4px;padding:10px 16px!important}
+.co-sw{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.co-sw:first-child{border-top:0}
+.co-sw>div{display:grid;gap:2px;min-width:0}
+.co-sw b{font-size:16px}
+.co-clockbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 14px!important}
+.co-game{display:flex;align-items:baseline;gap:10px;padding-right:16px;border-right:2px solid var(--line)}
+.co-game b{font:800 30px var(--f-display);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.co-game.low b{color:var(--warn)} .co-game.over b{color:var(--bad);animation:coNow .6s ease-in-out infinite alternate}
+.co-clockbar .co-clock{flex:1;min-width:220px;padding:0;border:0;background:none;display:flex;align-items:center;gap:10px}
+.co-clockbar .co-clock .t{font:800 26px var(--f-display);min-width:34px;text-align:center;font-variant-numeric:tabular-nums}
+.co-clockbar .co-clock .m{flex:1;font-size:14px}
+.co-readbtn{margin-left:auto;white-space:nowrap}
+.co-qtag{justify-self:start;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:99px;border:2px solid var(--gold);color:var(--gold)}
+.co-q.is-quote{outline:3px dashed var(--gold);outline-offset:-6px}
+.co-quote{font-family:var(--f-read,var(--f-text))!important;font-weight:500!important;line-height:1.55}
+.co-break .co-win{gap:8px}
+.co-breakclock{display:flex;align-items:baseline;gap:10px;margin-top:6px}
+.co-breakclock b{font:800 34px var(--f-display);font-variant-numeric:tabular-nums}
+.co-teamwarn{border-radius:12px;padding:10px 14px;border:3px solid var(--warn);font-size:15.5px;line-height:1.4;animation:coIn .4s cubic-bezier(.2,.9,.3,1.2) both}
+.co-teamwarn b{color:var(--warn)}
+.co-warnbox{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:95;width:min(560px,calc(100% - 24px));display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;border-radius:14px;background:var(--surface);color:var(--ink);border:3px solid var(--warn);box-shadow:0 18px 40px -12px rgba(0,0,0,.6);font-size:16px;animation:coIn .35s cubic-bezier(.2,.9,.3,1.2) both}
+.co-warnbox b{color:var(--warn)}
+.co-warnbox .btn{margin-left:auto}
+@media (max-width:760px){
+  .co-clockbar{gap:8px;padding:6px 10px!important}
+  .co-game{padding-right:10px} .co-game b{font-size:22px} .co-game .label{display:none}
+  .co-clockbar .co-clock{min-width:0} .co-clockbar .co-clock .t{font-size:20px;min-width:24px} .co-clockbar .co-clock .m{font-size:12px;line-height:1.25}
+  .co-readbtn{padding:6px 10px!important;font-size:13px!important}
+  .co-game .x{font-size:11px}
+  .co-qtag{font-size:10.5px;padding:2px 8px}
+  .t-coach .co-clockbar{order:2} 
+}
+@media (max-width:1099px){ .t-coach .co-clockbar{order:2} }
+
+
+.co-cref,.co-narrow{display:none}
+@media (max-width:760px){
+  .co-wide{display:none} .co-narrow{display:inline}
+  .t-coach .co-read>.qtop{display:none}
+  .t-coach .co-cref{display:inline-block;font-size:14px!important;padding:3px 8px!important;flex:none}
+  .t-coach .co-clockbar{flex-wrap:nowrap!important;gap:8px!important;padding:6px 8px!important;align-items:center}
+  .t-coach .co-game{gap:4px;padding-right:8px;border-right-width:2px;align-items:center}
+  .t-coach .co-game .label{display:none}
+  .t-coach .co-game b{font-size:21px}
+  .t-coach .co-pausebtn{font-size:15px;text-decoration:none}
+  .t-coach .co-clockbar .co-clock{min-width:0;flex:1;gap:6px}
+  .t-coach .co-clockbar .co-clock .t{font-size:21px;min-width:22px}
+  .t-coach .co-clockbar .co-clock .m{display:none}
+  .t-coach .co-readbtn{padding:7px 10px!important;font-size:12.5px!important;flex:none}
+  .t-coach .co-q{padding:12px 14px!important;gap:8px}
+  .t-coach .co-q .qtext{font-size:19px}
+  .t-coach .co-ans{padding:8px 12px!important;gap:2px}
+  .t-coach .co-ans .label{font-size:9.5px}
+  .t-coach .co-ans .ans{font-size:16px!important;line-height:1.3}
+  .t-coach .co-quote{font-size:14.5px!important;line-height:1.4!important}
+  .t-coach .co-tip{font-size:12.5px;line-height:1.3}
+  .t-coach .co-flash{padding:6px 10px!important}
+  .t-coach .co-teamwarn{font-size:13.5px;padding:7px 10px}
+  .t-coach .co-thead{padding:0 4px!important}
+  .t-coach .co-tcard{padding:5px 7px 7px!important;gap:4px}
+  .t-coach .co-pname{min-height:46px;padding-top:6px;padding-bottom:19px}
+  .t-coach .co-desk{gap:7px}
+  html.co-mode .wrap{padding-top:6px}
+}
+@media (max-width:760px) and (max-height:720px){
+  .t-coach .co-q .qtext{font-size:17px}
+  .t-coach .co-tip{display:none}
+  .t-coach .co-ans .label{display:none}
+  .t-coach .co-ans>.row{position:absolute;right:20px}
+  .t-coach .co-qtag{font-size:9.5px}
+  .t-coach .co-pname{min-height:42px;padding-top:4px;padding-bottom:17px}
+  .t-coach .co-ans>div:last-child{max-height:92px;overflow:auto;overscroll-behavior:contain}
+  .t-coach .co-q{padding:8px 10px!important;gap:5px} .t-coach .co-desk{gap:5px} .t-coach .co-clockbar{padding:4px 8px!important} .t-coach .co-pname{min-height:40px} .t-coach .co-tcard{padding:4px 6px 6px!important}
+  .t-coach .co-q .qtext{max-height:66px;overflow:auto}
+}
 </style>
 
 <div id="app"></div>
@@ -2591,19 +2669,22 @@ function parseRange(str,versesOf=c=>qVerses[c]){
 
 /* ---------- coach mode (beta): you read the questions out loud and score real quizzers. No XP. ---------- */
 const COACH_ON=true, COACH_GUEST=!!window.COACH_BETA;
-let CO=Object.assign({on:!!window.COACH_BETA,roster:[],w:{},rules:{mode:'bqf',pts:20,qout:4,eout:3,pen:0,rebound:false,repeat:false,count:20},show:{ans:true,verse:true,ctx:false},match:null},COACH_ON?lsGet('coach',{}):{});
+let CO=Object.assign({on:!!window.COACH_BETA,roster:[],w:{},rules:{mode:'bqf',pts:20,qout:4,eout:3,pen:0,rebound:false,repeat:false,count:20,quotes:true,clock:true},show:{ans:true,verse:true,ctx:false},match:null},COACH_ON?lsGet('coach',{}):{});
 let coSel=null, coClock=null, coTick=null, coFlash=null, coFx=null, coFresh=false;
+if(CO.rules.quotes===undefined) CO.rules.quotes=true; if(CO.rules.clock===undefined) CO.rules.clock=true;
 const coSave=()=>lsSet('coach',CO);
 const coTeamKey=p=>(p.team||'').trim().toLowerCase();
 const CO_HUES=['var(--accent)','var(--gold)','var(--good)','var(--accent2)','var(--warn)','var(--bad)'];
-function coRules(){ const r=CO.rules; return r.mode==='bqf'?{bqf:true,pts:20,qout:5,eout:3,perfectOnly:true,rebound:false,teamErr:true,milestone:true,pen:0}:{bqf:false,pts:+r.pts||20,qout:+r.qout||4,eout:+r.eout||3,perfectOnly:false,rebound:!!r.rebound,teamErr:false,milestone:false,pen:+r.pen||0}; }
+function coRules(){ const r=CO.rules, x={quotes:r.quotes!==false,clock:r.clock!==false}; return Object.assign(x,r.mode==='bqf'?{bqf:true,pts:20,qout:5,eout:3,perfectOnly:true,rebound:false,teamErr:true,milestone:true,pen:0}:{bqf:false,pts:+r.pts||20,qout:+r.qout||4,eout:+r.eout||3,perfectOnly:false,rebound:!!r.rebound,teamErr:false,milestone:false,pen:+r.pen||0}); }
 // the material is whatever is picked on this page: chapter -> the question ids in the chosen verses
 function coPool(){ const by={}; selSet().forEach(k=>{ const ids=byVerse[k]; if(!ids||!ids.length) return; const c=+k.split(':')[0]; (by[c]=by[c]||[]).push(...ids); }); return by; }
 function coChapters(by=coPool()){ return Object.keys(by).map(Number).sort((a,b)=>a-b); }
 const coW=c=>Math.max(1,Math.min(100,+CO.w[c]||50));
 function coPct(c,chs){ const tot=chs.reduce((a,x)=>a+coW(x),0); return tot?coW(c)/tot*100:0; }
 function coTeam(M,p){ const k=coTeamKey(p); if(!k) return null; return M.teams[k]||(M.teams[k]={name:p.team.trim(),errors:0,ded:0,bonus:0,right:{},ms:4,fpend:null}); }
-function coTeamError(M,p){ const t=coTeam(M,p); if(!t) return ''; t.errors++; const d=t.errors<=3?0:t.errors<=6?10:20; t.ded+=d; return d?`Team error ${t.errors}: −${d} for ${t.name}`:`Team error ${t.errors} for ${t.name} (first 3 are free)`; }
+function coTeamError(M,p){ const t=coTeam(M,p); if(!t) return ''; t.errors++; const d=t.errors<=3?0:t.errors<=6?10:20; t.ded+=d;
+  if(M.rules.bqf&&(t.errors===3||t.errors===6)) M.warn={team:t.name,n:t.errors,text:t.errors===3?`${t.name}: that's 3 team errors. From now on, every team error costs 10 points.`:`${t.name}: that's 6 team errors. From now on, every team error costs 20 points.`};
+  return d?`Team error ${t.errors}: −${d} for ${t.name}`:`Team error ${t.errors} for ${t.name} (first 3 are free)`; }
 function coError(M,p,R){ let pts=0, note='Wrong answer'; p.errors++; p.streak=0; if(R.pen){ p.score-=R.pen; pts=-R.pen; } if(R.teamErr){ const n=coTeamError(M,p); if(n) note+=' · '+n; } if(p.errors>=R.eout){ p.out='error'; note+=' · Errored out'; } return {pts,note}; }
 function coRule(pid,type){ const M=CO.match; if(!M||M.done) return; const p=M.players[pid], cur=M.cur, R=M.rules; if(!p||p.out||!cur||cur.closed) return; if(cur.tried&&cur.tried[pid]&&type!=='foul') return;
   M.undo.push(JSON.stringify({players:M.players,teams:M.teams,cur:M.cur,log:M.log.length,n:M.n})); if(M.undo.length>60) M.undo.shift();
@@ -2620,10 +2701,11 @@ function coRule(pid,type){ const M=CO.match; if(!M||M.done) return; const p=M.pl
     else if(t&&t.fpend&&t.fpend!==pid){ note='Foul · two teammates with a foul each make a team error'; if(R.teamErr) note+=' · '+coTeamError(M,p); t.fpend=null; }
     else if(t) t.fpend=pid;
     note+=' · Read the question again for everyone'; }
-  M.log.push({n:M.n,qid:cur.qid,pid,type,pts,note}); coFlash={kind,text:`${p.name}: ${note}`}; coStopClock(); coSel=null; coSave();
+  M.log.push({n:M.n,qid:cur.qid,quote:cur.quote||null,pid,type,pts,note}); coFlash={kind,text:`${p.name}: ${note}`}; coStopClock(); coSel=null; coSave();
   const big=type==='right'&&(p.out==='quiz'||((M.teams[tkey]||{}).bonus||0)>bonus0);
   coFx={pid,kind,pts,from,to:p.score,big,streak:p.streak||0,out:p.out};
-  renderKeep(); coFxRun(); }
+  if(M.warn&&M.cur) M.cur.warn=M.warn.text; renderKeep(); coFxRun(); if(M.warn){ const w=M.warn; M.warn=null; coWarn(w); } }
+function coWarn(w){ try{ sfx('buzzer'); }catch(e){} coShout(w.n===3?'3 TEAM ERRORS':'6 TEAM ERRORS',true); }
 // the fun part: confetti, a floating +20, the score counting up, a shake for a miss
 function coFxRun(){ const fx=coFx; coFx=null; if(!fx) return; const row=document.querySelector(`[data-prow="${fx.pid}"]`);
   try{ sfx(fx.kind==='good'?(fx.big?'cheer':'ding'):fx.kind==='bad'?'buzz':'tick'); }catch(e){}
@@ -2639,25 +2721,54 @@ function coShout(text,big){ if(reduceMotion()) return; const card=document.query
 const coInit=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 function coFinale(){ const M=CO.match; if(!M||!M.log.some(e=>e.type==='right')) return; try{ sfx('cheer'); celebrate(true); }catch(e){} }
 function coUndo(){ const M=CO.match; if(!M||!M.undo.length) return; const wasDone=M.done; const u=JSON.parse(M.undo.pop()); M.players=u.players; M.teams=u.teams; M.cur=u.cur; M.n=u.n; M.log.length=u.log; M.done=false; coFlash={kind:'',text:'Undid the last ruling.'}; coStopClock(); coSave(); if(wasDone){ render(); scrollTo(0,0); } else renderKeep(); }
+// about 15% quote questions ("Quote John 3:16"), from verses in the chosen material
+function coPickQuote(M){ const keys=[...new Set(Object.values(M.pool).flat().map(id=>Q[id].c+':'+Q[id].v))].filter(k=>CO.rules.repeat||!M.usedV[k]); if(!keys.length) return null;
+  const k=keys[Math.floor(Math.random()*keys.length)]; M.usedV[k]=1; const [c,v]=k.split(':').map(Number); return {c,v,qid:(byVerse[k]||[])[0]}; }
+function coNewQ(M){ if(M.rules.quotes&&Math.random()<0.15){ const qt=coPickQuote(M); if(qt&&qt.qid!=null) return {qid:qt.qid,quote:{c:qt.c,v:qt.v},closed:false,rebound:false,tried:{}}; }
+  return {qid:coPick(M),closed:false,rebound:false,tried:{}}; }
 function coPick(M){ const rep=!!CO.rules.repeat, last=M.cur?M.cur.qid:-1;
   const pool=Object.keys(M.pool).map(c=>({c:+c,w:coW(c),ids:M.pool[c].filter(id=>rep?id!==last:!M.used[id])})).filter(x=>x.ids.length);
   if(!pool.length){ if(!Object.keys(M.used).length) return M.pool[Object.keys(M.pool)[0]][0]; M.used={}; coFlash={kind:'warn',text:'Every question in this material has been asked, so they can come up again from here on.'}; return coPick(M); }
   let r=Math.random()*pool.reduce((a,x)=>a+x.w,0), ch=pool[pool.length-1]; for(const x of pool){ r-=x.w; if(r<=0){ ch=x; break; } }
   const id=ch.ids[Math.floor(Math.random()*ch.ids.length)]; M.used[id]=1; return id; }
+const CO_HALF=6*60000, CO_OT1=2*60000, CO_OT=60000, CO_BREAK=60000;
+let coGT=null;
+const coMMSS=ms=>{ const t=Math.max(0,Math.ceil(ms/1000)); return Math.floor(t/60)+':'+String(t%60).padStart(2,'0'); };
+function coTimed(M){ return !!(M&&M.gc); }
+function coGameLeft(M){ const g=M.gc; return g.run?g.left-(Date.now()-g.t):g.left; }
+function coGamePause(M,on){ const g=M.gc; if(!g) return; if(on&&g.run){ g.left=coGameLeft(M); g.run=false; } else if(!on&&!g.run&&g.left>0&&g.phase==='play'){ g.t=Date.now(); g.run=true; } coSave(); }
+function coGameTick(){ const M=CO.match; if(!M||!M.gc||M.done){ clearInterval(coGT); coGT=null; return; } const g=M.gc;
+  if(g.phase==='play'&&g.run&&coGameLeft(M)<=0){ g.left=0; g.run=false; g.expired=true; coSave(); try{ sfx('buzzer'); }catch(e){}
+    coFlash={kind:'warn',text:g.half==='ot'?'Time is up in overtime! Finish this question, then press Next.':g.half===1?'Time! That is the end of the first half. Finish this question, then press Next.':'Time! That is the end of the quiz. Finish this question, then press Next.'}; renderKeep(); coPaintClock(); }
+  const el=document.getElementById('cogame'); if(el){ const v=g.phase==='play'?coGameLeft(M):Math.max(0,g.breakEnd-Date.now()); el.textContent=coMMSS(v); el.parentElement.classList.toggle('low',g.phase==='play'&&v<=30000&&v>0); el.parentElement.classList.toggle('over',g.phase==='play'&&v<=0); } }
+function coGameRun(){ if(!coGT) coGT=setInterval(coGameTick,250); }
+function coTotals(M){ return coGroups(Object.keys(M.players),id=>M.players[id]).filter(g=>g.key!=='~').map(g=>{ const t=M.teams[g.key]; return {key:g.key,name:g.name,total:g.list.reduce((a,id)=>a+M.players[id].score,0)+(t?t.bonus-t.ded:0)}; }); }
+function coTiedTeams(M){ const T=coTotals(M), keys=new Set(); T.forEach(a=>T.forEach(b=>{ if(a!==b&&a.total===b.total){ keys.add(a.key); keys.add(b.key); } })); return [...keys]; }
+// a half (or overtime) has run out and its last question is done
+function coPeriodEnd(M){ const g=M.gc; M.cur=null; g.expired=false;
+  if(g.half===1){ g.phase='half'; g.breakEnd=Date.now()+CO_BREAK; coFlash=null; return true; }
+  const tied=coTiedTeams(M); if(tied.length&&Object.values(M.players).some(p=>!p.out&&tied.includes(coTeamKey(p)))){ g.phase='otbreak'; g.otTeams=tied; g.breakEnd=Date.now()+CO_BREAK; coFlash=null; return true; }
+  return false; }
+function coStartPeriod(){ const M=CO.match; if(!M||!M.gc) return; const g=M.gc;
+  if(g.phase==='half'){ g.half=2; g.left=CO_HALF; } else if(g.phase==='otbreak'){ g.ot=(g.ot||0)+1; g.half='ot'; g.left=g.ot===1?CO_OT1:CO_OT; }
+  g.phase='play'; g.t=Date.now(); g.run=true; M.n++; M.cur=coNewQ(M); coFlash=null; coSave(); coFresh=true; render(); coFresh=false; scrollTo(0,0); coGameRun(); try{ sfx('chime'); }catch(e){} }
+function coPeriodName(g){ return g.half===1?'1st half':g.half===2?'2nd half':'Overtime'+(g.ot>1?' '+g.ot:''); }
 function coStart(){ const pool=coPool(); if(!CO.roster.length||!Object.keys(pool).length) return; coSel=null; coFlash=null; const players={}; CO.roster.forEach(p=>players[p.id]={name:p.name,team:p.team||'',score:0,correct:0,errors:0,fouls:0,out:null});
-  CO.match={players,teams:{},used:{},pool,log:[],undo:[],n:0,cur:null,done:false,total:+CO.rules.count||0,rules:coRules(),label:'John '+rangeLabel(U.sel)}; coNext(true); }
-function coNext(first){ const M=CO.match; if(!M) return; if(M.cur&&!M.cur.closed&&!first) M.log.push({n:M.n,qid:M.cur.qid,pid:null,type:'none',pts:0,note:'No question (nobody answered)'});
+  const R=coRules(), timed=R.bqf&&R.clock;
+  CO.match={players,teams:{},used:{},usedV:{},pool,log:[],undo:[],n:0,cur:null,done:false,total:timed?0:(+CO.rules.count||0),rules:R,label:'John '+rangeLabel(U.sel),gc:timed?{half:1,left:CO_HALF,t:Date.now(),run:true,phase:'play',ot:0}:null}; coNext(true); if(timed) coGameRun(); }
+function coNext(first){ const M=CO.match; if(!M) return; if(M.cur&&!M.cur.closed&&!first) M.log.push({n:M.n,qid:M.cur.qid,quote:M.cur.quote||null,pid:null,type:'none',pts:0,note:'No question (nobody answered)'});
   M.undo=[]; coSel=null; coStopClock();
+  if(M.gc&&M.gc.expired&&!first){ if(coPeriodEnd(M)){ coSave(); render(); scrollTo(0,0); try{ sfx('chime'); }catch(e){} return; } M.done=true; M.cur=null; coSave(); render(); scrollTo(0,0); coFinale(); return; }
   if((M.total&&M.n>=M.total)||!Object.values(M.players).some(p=>!p.out)){ M.done=true; M.cur=null; coSave(); render(); scrollTo(0,0); coFinale(); return; }
-  coFlash=null; M.n++; M.cur={qid:coPick(M),closed:false,rebound:false,tried:{}}; coSave(); coFresh=true; render(); coFresh=false; scrollTo(0,0); try{ sfx('tick'); }catch(e){} }
-function coSwap(){ const M=CO.match; if(!M||!M.cur||M.cur.closed) return; M.cur={qid:coPick(M),closed:false,rebound:false,tried:{}}; coFlash={kind:'',text:'Swapped in a different question. That one was not counted.'}; coSave(); renderKeep(); }
+  coFlash=null; M.n++; M.cur=coNewQ(M); coSave(); coFresh=true; render(); coFresh=false; scrollTo(0,0); try{ sfx('tick'); }catch(e){} }
+function coSwap(){ const M=CO.match; if(!M||!M.cur||M.cur.closed) return; M.cur=coNewQ(M); coFlash={kind:'',text:'Swapped in a different question. That one was not counted.'}; coSave(); renderKeep(); }
 // clocks: 3 seconds to jump, then 5 to begin answering and 20 to finish
 function coStartClock(kind,pid){ coStopClock(); coClock={kind,pid,t0:Date.now()}; coTick=setInterval(coPaintClock,200); }
 function coStopClock(){ clearInterval(coTick); coTick=null; coClock=null; }
 function coClockView(){ if(!coClock||!CO.match) return null; const s=(Date.now()-coClock.t0)/1000;
   if(coClock.kind==='jump'){ const left=3-s; return left>0?{t:Math.ceil(left),msg:'Waiting for a jump',cls:'go'}:{t:0,msg:'No question: nobody jumped in 3 seconds',cls:'over'}; }
-  const name=(CO.match.players[coClock.pid]||{}).name||''; if(s<5) return {t:Math.ceil(5-s),msg:`${name} must begin answering`,cls:'go'}; if(s<20) return {t:Math.ceil(20-s),msg:`${name} has this long to finish`,cls:s>15?'warn':'go'}; return {t:0,msg:`Time. ${name}'s 20 seconds are up`,cls:'over'}; }
-function coPaintClock(){ const el=document.getElementById('coclock'); if(!el){ if(!CO.match||CO.match.done) coStopClock(); return; } const v=coClockView(); el.className='co-clock '+(v?v.cls:''); el.querySelector('.t').textContent=v?v.t:'–'; el.querySelector('.m').textContent=v?v.msg:'Clock is stopped'; }
+  const name=(CO.match.players[coClock.pid]||{}).name||'', lim=CO.match.cur&&CO.match.cur.quote?30:20; if(s<5) return {t:Math.ceil(5-s),msg:`${name}: start answering`,cls:'go'}; if(s<lim) return {t:Math.ceil(lim-s),msg:`${name}: ${lim} seconds to finish`,cls:s>lim-5?'warn':'go'}; return {t:0,msg:`Time! ${name}'s ${lim} seconds are up`,cls:'over'}; }
+function coPaintClock(){ const el=document.getElementById('coclock'); if(!el){ if(!CO.match||CO.match.done) coStopClock(); return; } const v=coClockView(); el.className='co-clock '+(v?v.cls:''); el.querySelector('.t').textContent=v?v.t:'–'; el.querySelector('.m').textContent=v?v.msg:'Tap “Done reading” when you finish the question'; if(v&&v.t===0&&!coClock.beeped){ coClock.beeped=true; try{ sfx('buzz'); }catch(e){} } }
 const coQ=x=>/[?.!]$/.test(x)?x:x+'?';
 const coSeg=(k,opts,cur)=>`<div class="seg">${opts.map(([v,l])=>`<button data-co="set" data-k="${k}" data-v="${v}" aria-pressed="${String(cur)===String(v)}">${l}</button>`).join('')}</div>`;
 function coGroups(list,get=x=>x){ const m=new Map(); list.forEach(x=>{ const p=get(x), k=coTeamKey(p)||'~'; if(!m.has(k)) m.set(k,{key:k,name:p.team?p.team.trim():'No team',list:[]}); m.get(k).list.push(x); }); return [...m.values()]; }
@@ -2671,11 +2782,15 @@ function coachSetupPanels(){ const by=coPool(), chs=coChapters(by), nq=chs.reduc
         <button class="btn co-addbtn" type="submit">+ Add</button><datalist id="coteams">${teamNames.map(n=>`<option value="${esc(n)}">`).join('')}</datalist></form>
       ${CO.roster.length?`<div class="co-roster">${coGroups(CO.roster).map(g=>`<div class="co-team"><b>${esc(g.name)}</b><div class="co-chips">${g.list.map(p=>`<span class="co-chip ${CO.newId===p.id?'new':''}"><i class="co-av co-mini">${esc(coInit(p.name))}</i>${esc(p.name)}<button data-co="del" data-id="${p.id}" aria-label="Remove ${esc(p.name)}" title="Remove ${esc(p.name)}">×</button></span>`).join('')}</div></div>`).join('')}</div>`:'<p class="co-empty">Nobody added yet.</p>'}
     </div>
-    <div class="co-step s3"><span class="co-num">3</span><div><h3>Start the quiz</h3><p>${ready?`Ready! ${CO.roster.length} quizzer${CO.roster.length===1?'':'s'}, ${nq} question${nq===1?'':'s'} to pick from. Official rules, ${r.count?r.count+' questions':'until you stop'}.`:!chs.length?'First pick at least one chapter in step 1.':'First add at least one quizzer in step 2.'}</p></div></div>
+    <div class="co-step s3"><span class="co-num">3</span><div><h3>Start the quiz</h3><p>${ready?`Ready! ${CO.roster.length} quizzer${CO.roster.length===1?'':'s'}, ${nq} question${nq===1?'':'s'} to pick from. ${r.mode==='bqf'?'Official rules':'Your own rules'}, ${r.mode==='bqf'&&r.clock?'two 6-minute halves (overtime if teams tie)':r.count?r.count+' questions':'until you stop'}.`:!chs.length?'First pick at least one chapter in step 1.':'First add at least one quizzer in step 2.'}</p></div></div>
+    <div class="panel co-switches">
+      <div class="co-sw"><div><b>⏱ Clock</b><span class="hint">${r.clock?(r.mode==='bqf'?'Runs the 6-minute halves and every answer timer for you.':'Times each buzz-in and answer for you.'):'No timers at all.'}</span></div>${coSeg('clock',[['1','On'],['','Off']],r.clock?'1':'')}</div>
+      <div class="co-sw"><div><b>📜 Quote questions</b><span class="hint">${r.quotes?'About 1 in 7 questions: “Quote John 3:16.” They get 30 seconds.':'Only regular questions.'}</span></div>${coSeg('quotes',[['1','On'],['','Off']],r.quotes?'1':'')}</div>
+    </div>
     <button class="btn co-go ${ready?'shine':''}" data-co="start" ${ready?'':'disabled'}>Start the quiz ▶</button>
     <details class="panel co-more" ${CO.moreOpen?'open':''}><summary>More settings <span class="hint">(you can skip these)</span></summary>
       <div class="co-panel" style="margin-top:12px">
-      <div class="opt"><span class="label">How many questions</span>${coSeg('count',[[10,'10'],[15,'15'],[20,'20'],[30,'30'],[0,'Until I stop']],r.count)}</div>
+      ${r.mode==='bqf'&&r.clock?'<div class="opt"><span class="label">Length</span><span class="hint">Two 6-minute halves with a 1-minute halftime. If teams are tied at the end, overtime: 2 minutes, then 1 minute until someone wins. (Turn the clock off to pick a number of questions instead.)</span></div>':`<div class="opt"><span class="label">How many questions</span>${coSeg('count',[[10,'10'],[15,'15'],[20,'20'],[30,'30'],[0,'Until I stop']],r.count)}</div>`}
       <div class="opt"><span class="label">Rules</span>${coSeg('mode',[['bqf','Official rules'],['custom','My own']],r.mode)}
         ${r.mode==='bqf'?`<span class="hint">20 points for a right answer. A quizzer is done after 5 right (+10 bonus if no mistakes) or 3 wrong. A team's first 3 wrong answers are free, then they cost points. Two fouls count as a wrong answer.</span>`:''}</div>
       ${r.mode==='bqf'?'':`<div class="opt"><span class="label">Points for a right answer</span>${coSeg('pts',[[10,'10'],[20,'20']],r.pts)}</div>
@@ -2694,8 +2809,8 @@ function coSheet(M,liveSheet){ const R=M.rules; let num=0; const groups=coGroups
   const best=Math.max(0,...Object.values(M.players).map(p=>p.score)), totals=groups.map(g=>{ const t=M.teams[g.key]; return g.list.reduce((a,id)=>a+M.players[id].score,0)+(t?t.bonus-t.ded:0); }), bestT=Math.max(0,...totals), teamsN=groups.filter(g=>g.key!=='~').length;
   return groups.map((g,gi)=>{ const t=M.teams[g.key], total=totals[gi], lead=teamsN>1&&g.key!=='~'&&total>0&&total===bestT&&totals.filter(x=>x===bestT).length===1;
     return `<div class="panel co-tcard ${lead?'lead':''}" style="--tc:${CO_HUES[gi%CO_HUES.length]}"><div class="co-thead"><div><b><i class="co-tdot"></i>${esc(g.name)}${lead?' <span class="co-lead">In the lead</span>':''}</b>${g.key!=='~'&&t&&(t.errors||t.bonus)?`<small>${t.errors} team mistake${t.errors===1?'':'s'}${t.ded?` (−${t.ded})`:''}${t.bonus?` · bonus +${t.bonus}`:''}</small>`:''}</div><span class="co-tot">${total}<small>points</small></span></div>
-    ${g.list.map(id=>{ const p=M.players[id]; num++; const tried=M.cur&&M.cur.tried&&M.cur.tried[id], can=liveSheet&&!p.out&&M.cur&&!M.cur.closed&&!tried, on=coSel===id&&can, top=p.score>0&&p.score===best;
-      const status=p.out==='quiz'?'<span class="co-pill q">🏅 Quizzed out</span>':p.out==='error'?'<span class="co-pill e">Done · too many wrong</span>':tried?'<span class="co-pill e">Missed this one</span>':'';
+    ${g.list.map(id=>{ const p=M.players[id]; num++; const tried=M.cur&&M.cur.tried&&M.cur.tried[id], sitOut=M.gc&&M.gc.half==='ot'&&M.gc.otTeams&&!M.gc.otTeams.includes(coTeamKey(p)), can=liveSheet&&!p.out&&!sitOut&&M.cur&&!M.cur.closed&&!tried, on=coSel===id&&can, top=p.score>0&&p.score===best;
+      const status=sitOut?'<span class="co-pill f">Sits out overtime</span>':p.out==='quiz'?'<span class="co-pill q">🏅 Quizzed out</span>':p.out==='error'?'<span class="co-pill e">Done · too many wrong</span>':tried?'<span class="co-pill e">Missed this one</span>':'';
       return `<div class="co-prow ${on?'sel':''} ${p.out?'out':''} ${p.out==='quiz'?'won':''} ${top?'top':''}" data-prow="${id}">
         <button class="co-pname" data-co="sel" data-id="${id}" ${can?'':'disabled'}><i class="co-av">${esc(coInit(p.name))}${top?'<u>👑</u>':''}</i><span>${esc(p.name)}</span>${(p.streak||0)>=2?`<s class="co-fire">🔥${p.streak}</s>`:''}${can&&!on?'<em>tap if they buzz in</em>':''}</button>
         <span class="co-pscore">${p.score}</span>
@@ -2706,9 +2821,9 @@ function coSheet(M,liveSheet){ const R=M.rules; let num=0; const groups=coGroups
 // one little square per question: green if someone got it, red if not, glowing for the one being asked
 function coTrack(M){ const by={}; M.log.forEach(e=>{ if(e.type==='right') by[e.n]='ok'; else if(e.type!=='foul'&&by[e.n]!=='ok') by[e.n]='no'; }); const n=M.total||Math.max(M.n,10);
   return `<div class="co-track" aria-hidden="true">${Array.from({length:n},(_,i)=>{ const k=i+1; return `<i class="${k===M.n&&!M.done?(M.cur&&M.cur.closed?(by[k]||'no'):'now'):k<=M.n?(by[k]||'no'):''}"></i>`; }).join('')}</div>`; }
-function coLog(M){ return M.log.length?`<div class="co-log">${M.log.slice().reverse().map(e=>{ const q=Q[e.qid], p=e.pid?M.players[e.pid]:null; return `<div><span class="muted">#${e.n}</span><span class="mono">${q.c}:${q.v}</span><span>${p?`<b>${esc(p.name)}</b> · `:''}${esc(e.note)}</span><span class="co-pts ${e.pts>0?'plus':e.pts<0?'minus':''}">${e.pts>0?'+'+e.pts:e.pts||''}</span></div>`; }).join('')}</div>`:'<p class="hint" style="margin:0">Rulings show up here as you make them.</p>'; }
-function coachView(){ const M=CO.match;
-  if(M.done||!M.cur){ const ps=Object.values(M.players).slice().sort((a,b)=>b.score-a.score||b.correct-a.correct);
+function coLog(M){ return M.log.length?`<div class="co-log">${M.log.slice().reverse().map(e=>{ const q=e.quote||Q[e.qid], p=e.pid?M.players[e.pid]:null; return `<div><span class="muted">#${e.n}</span><span class="mono">${e.quote?'📜':''}${q.c}:${q.v}</span><span>${p?`<b>${esc(p.name)}</b> · `:''}${esc(e.note)}</span><span class="co-pts ${e.pts>0?'plus':e.pts<0?'minus':''}">${e.pts>0?'+'+e.pts:e.pts||''}</span></div>`; }).join('')}</div>`:'<p class="hint" style="margin:0">Rulings show up here as you make them.</p>'; }
+function coachView(){ const M=CO.match; if(M&&M.gc&&!M.done) coGameRun();
+  if(M.done||(!M.cur&&!(M.gc&&M.gc.phase!=='play'))){ const ps=Object.values(M.players).slice().sort((a,b)=>b.score-a.score||b.correct-a.correct);
     const groups=coGroups(Object.values(M.players)).filter(g=>g.key!=='~').map(g=>{ const t=M.teams[g.key]; return {name:g.name,total:g.list.reduce((a,p)=>a+p.score,0)+(t?t.bonus-t.ded:0)}; }).sort((a,b)=>b.total-a.total);
     const any=ps.length&&ps[0].score>0, tie=groups.length>1&&groups[0].total===groups[1].total;
     const head=groups.length>1?(tie?`It's a tie! ${groups[0].total} to ${groups[1].total}`:`${esc(groups[0].name)} wins!`):any?`${esc(ps[0].name)} wins!`:'Quiz finished!';
@@ -2723,30 +2838,44 @@ function coachView(){ const M=CO.match;
       <div class="panel"><div class="tbl-wrap"><table class="co-table"><thead><tr><th>Quizzer</th><th>Team</th><th class="n">Points</th><th class="n">Right</th><th class="n">Wrong</th><th class="n">Fouls</th><th></th></tr></thead><tbody>${ps.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.team||'–')}</td><td class="n"><b>${p.score}</b></td><td class="n">${p.correct}</td><td class="n">${p.errors}</td><td class="n">${p.fouls}</td><td>${p.out==='quiz'?'<span class="co-pill q">Quizzed out</span>':p.out==='error'?'<span class="co-pill e">Too many wrong</span>':''}</td></tr>`).join('')}</tbody></table></div></div>
       <details class="panel co-more"><summary>Everything that happened</summary><div style="margin-top:10px">${coLog(M)}</div></details>
     </div><aside class="co-sheet">${coSheet(M,false)}</aside></section>`); }
-  const q=Q[M.cur.qid], v=vText(q.c,q.v)||'', prev=vText(q.c,q.v-1), nxt=vText(q.c,q.v+1), last=M.total&&M.n>=M.total, sh=CO.show, closed=M.cur.closed;
-  const rights=M.log.filter(e=>e.type==='right').length, misses=M.log.filter(e=>e.type==='wrong').length;
-  const tip=closed?'Done with this one. Press <b>Next question</b>.':coSel?'Tap <b>Right</b> or <b>Wrong</b>.':'Read it out loud. When someone buzzes in, <b>tap their name</b>.';
-  const answers=q.a.map(a=>`<div class="ans">${esc(a)}</div>`).join('<div class="hint">or</div>');
+  const g=M.gc, R=M.rules;
+  if(g&&(g.phase==='half'||g.phase==='otbreak')){ const T=coTotals(M).sort((x,y)=>y.total-x.total), ot=g.phase==='otbreak';
+    return h(`<section class="co-desk co-break"><div class="co-read">
+      <div class="panel co-win"><div class="co-trophy" aria-hidden="true">${ot?'⚖️':'⏸'}</div><h2>${ot?'Tied! Overtime':'Halftime'}</h2>
+        <p>${T.map(t=>`${esc(t.name)} ${t.total}`).join(' · ')||''}</p>
+        <span class="hint">${ot?`Only ${g.otTeams.map(k=>esc((T.find(t=>t.key===k)||{}).name||k)).join(' and ')} play. ${(g.ot||0)===0?'2 minutes':'1 minute'} on the clock.`:'Read the scores out loud. Coaches get a 1-minute break.'}</span>
+        <div class="co-breakclock"><span class="label">Break</span><b id="cogame">${coMMSS(g.breakEnd-Date.now())}</b></div></div>
+      <button class="btn co-go shine" data-co="period">${ot?'Start overtime ▶':'Start the 2nd half ▶'}</button>
+    </div><aside class="co-sheet">${coSheet(M,false)}</aside></section>`); }
+  const q=Q[M.cur.qid], quote=M.cur.quote, qc=quote?quote.c:q.c, qv=quote?quote.v:q.v, v=vText(qc,qv)||'', prev=vText(qc,qv-1), nxt=vText(qc,qv+1), last=M.total&&M.n>=M.total, sh=CO.show, closed=M.cur.closed;
+  const rights=M.log.filter(e=>e.type==='right').length, misses=M.log.filter(e=>e.type==='wrong').length, ending=g&&g.expired;
+  const tip=closed?(ending?'Time is up. Press <b>Next</b> to finish the '+(g.half===1?'half':'quiz')+'.':'Done with this one. Press <b>Next question</b>.'):coSel?'Tap <b>Right</b> or <b>Wrong</b>.':R.clock?'Read it out loud, then tap <b>Done reading</b>. When someone buzzes in, <b>tap their name</b>.':'Read it out loud. When someone buzzes in, <b>tap their name</b>.';
+  const answers=quote?`<div class="ans co-quote">${esc(v)}</div>`:q.a.map(a=>`<div class="ans">${esc(a)}</div>`).join('<div class="hint">or</div>');
+  const nextLbl=ending?(g.half===1?'Go to halftime →':'Finish the quiz →'):closed?(last?'See the final scores →':'Next question →'):(last?'Nobody got it · final scores →':'Nobody got it · next →');
+  const gameLeft=g?coGameLeft(M):0;
   return h(`<section class="co-desk"><div class="co-read">
-    <div class="qtop"><span class="ref">John ${q.c}:${q.v}</span>
-      <div class="tally"><span>${M.n}${M.total?' / '+M.total:''}</span><span class="g">✓ ${rights}</span><span class="b">✗ ${misses}</span></div></div>
-    ${coTrack(M)}
-    <div class="qcard co-q ${coFresh?'fresh':''} ${closed&&coFlash?(coFlash.kind==='good'?'is-right':coFlash.kind==='bad'?'is-wrong':''):''}">
-      <div class="qtext">${esc(coQ(q.q))}</div>
-      <div class="fb co-ans" style="background:var(--sunk)"><div class="row" style="justify-content:space-between"><span class="label">Answer</span><button class="x" data-co="show" data-k="ans">${sh.ans?'Hide':'Show'}</button></div><div class="${sh.ans?'':'co-blur'}">${answers}</div></div>
+    <div class="qtop"><span class="ref">John ${qc}:${qv}</span>
+      <div class="tally"><span>${g?coPeriodName(g)+' · Q'+M.n:M.n+(M.total?' / '+M.total:'')}</span><span class="g">✓ ${rights}</span><span class="b">✗ ${misses}</span></div></div>
+    ${R.clock?`<div class="panel co-clockbar"><span class="ref co-cref">Jn ${qc}:${qv}</span>
+      ${g?`<div class="co-game ${gameLeft<=30000&&gameLeft>0?'low':''} ${gameLeft<=0?'over':''}"><span class="label">${coPeriodName(g)}</span><b id="cogame">${coMMSS(gameLeft)}</b><button class="x co-pausebtn" data-co="pause" title="${g.run?'Pause the clock for a timeout':'Start the clock again'}">${g.run?'<span class="co-wide">Pause (timeout)</span><span class="co-narrow">⏸</span>':g.left>0?'<span class="co-wide">Resume clock</span><span class="co-narrow">▶</span>':''}</button></div>`:''}
+      <div class="co-clock" id="coclock"><span class="t">–</span><span class="m">Tap “Done reading” when you finish the question</span>
+        <button class="btn small co-readbtn" data-co="jump" ${closed||coSel?'disabled':''}>Done reading</button></div>
+    </div>`:coTrack(M)}
+    <div class="qcard co-q ${coFresh?'fresh':''} ${quote?'is-quote':''} ${closed&&coFlash?(coFlash.kind==='good'?'is-right':coFlash.kind==='bad'?'is-wrong':''):''}">
+      ${quote?'<span class="co-qtag">📜 Quote question · 30 seconds</span>':''}
+      <div class="qtext">${quote?`Quote John ${qc}:${qv}.`:esc(coQ(q.q))}</div>
+      <div class="fb co-ans" style="background:var(--sunk)"><div class="row" style="justify-content:space-between"><span class="label">${quote?'The verse, word for word':'Answer'}</span><button class="x" data-co="show" data-k="ans">${sh.ans?'Hide':'Show'}</button></div><div class="${sh.ans?'':'co-blur'}">${answers}</div></div>
       ${coFlash?`<div class="fb ${coFlash.kind==='good'?'good':coFlash.kind==='bad'?'bad':''} co-flash"><div class="hype">${esc(coFlash.text)}</div></div>`:''}
+      ${M.cur.warn?`<div class="co-teamwarn" role="alert">📣 <b>Say this to the team:</b> ${esc(M.cur.warn)}</div>`:''}
       <span class="hint co-tip">${tip}</span>
     </div>
     <div class="co-bar ${coSel&&!closed?'judging':''}">${coSel&&!closed&&M.players[coSel]?`<div class="co-barjudge"><p>Did <b>${esc(M.players[coSel].name)}</b> answer right?</p><div class="co-jb"><button class="co-yes" data-co="rule" data-t="right" data-id="${coSel}">✓ Right</button><button class="co-no" data-co="rule" data-t="wrong" data-id="${coSel}">✗ Wrong</button></div><div class="co-jx"><button class="x" data-co="rule" data-t="foul" data-id="${coSel}">Foul (jumped too early)</button><button class="x" data-co="unsel">Cancel</button></div></div>`:''}
-      <button class="btn co-next ${closed?'ready':''}" data-co="next">${closed?(last?'See the final scores →':'Next question →'):(last?'Nobody got it · final scores →':'Nobody got it · next →')}</button></div>
-    <div class="panel co-tools">
-      <div class="co-clock" id="coclock"><span class="t">–</span><span class="m">Timer is off</span><button class="btn ghost small" data-co="jump" ${closed?'disabled':''}>3-second buzz-in timer</button><button class="x" data-co="stopclock">Stop timer</button></div>
-      <div class="row"><button class="btn ghost small" data-co="undo" ${M.undo.length?'':'disabled'}>↩ Undo</button><button class="btn ghost small" data-co="swap" ${closed?'disabled':''}>Skip question</button><button class="btn ghost small" data-co="end">End quiz</button><span class="hint co-keys"><kbd>1</kbd>–<kbd>9</kbd> quizzer · <kbd>C</kbd> right · <kbd>E</kbd> wrong · <kbd>N</kbd> next</span></div>
-    </div>
-    <div class="panel co-verse"><div class="row" style="justify-content:space-between"><span class="label">John ${q.c}:${q.v}</span><button class="x" data-co="show" data-k="ctx">${sh.ctx?'Just this verse':'Nearby verses'}</button></div>
-      ${sh.ctx&&prev?`<p class="ctx"><sup>${q.v-1}</sup>${esc(prev)}</p>`:''}<p><sup>${q.v}</sup>${esc(v)}</p>${sh.ctx&&nxt?`<p class="ctx"><sup>${q.v+1}</sup>${esc(nxt)}</p>`:''}</div>
+      <button class="btn co-next ${closed?'ready':''}" data-co="next">${nextLbl}</button></div>
+    <div class="panel co-tools"><div class="row"><button class="btn ghost small" data-co="undo" ${M.undo.length?'':'disabled'}>↩ Undo</button><button class="btn ghost small" data-co="swap" ${closed?'disabled':''}>Skip question</button><button class="btn ghost small" data-co="end">End quiz</button><span class="hint co-keys"><kbd>R</kbd> done reading · <kbd>1</kbd>–<kbd>9</kbd> quizzer · <kbd>C</kbd> right · <kbd>E</kbd> wrong · <kbd>N</kbd> next</span></div></div>
+    ${quote?'':`<div class="panel co-verse"><div class="row" style="justify-content:space-between"><span class="label">John ${qc}:${qv}</span><button class="x" data-co="show" data-k="ctx">${sh.ctx?'Just this verse':'Nearby verses'}</button></div>
+      ${sh.ctx&&prev?`<p class="ctx"><sup>${qv-1}</sup>${esc(prev)}</p>`:''}<p><sup>${qv}</sup>${esc(v)}</p>${sh.ctx&&nxt?`<p class="ctx"><sup>${qv+1}</sup>${esc(nxt)}</p>`:''}</div>`}
   </div><aside class="co-sheet">${coSheet(M,true)}<div class="panel co-logp"><div class="label" style="margin-bottom:6px">What happened</div>${coLog(M)}</div></aside></section>`); }
-function coResultsText(M){ const lines=['John Quiz · Coach mode results',`${M.label||''} · ${M.n} questions · ${M.rules.bqf?'Official BQF rules':'Custom rules'}`,''];
+function coResultsText(M){ const lines=['John Quiz · Coach mode results',`${M.label||''} · ${M.n} questions${M.gc?(M.gc.ot?' · '+M.gc.ot+' overtime period'+(M.gc.ot>1?'s':''):' · two 6-minute halves'):''} · ${M.rules.bqf?'Official BQF rules':'Custom rules'}`,''];
   coGroups(Object.values(M.players)).forEach(g=>{ const t=M.teams[g.key], tot=g.list.reduce((a,p)=>a+p.score,0)+(t?t.bonus-t.ded:0); lines.push(`${g.name}: ${tot} points${t?` (team errors ${t.errors}, bonus +${t.bonus}, deductions −${t.ded})`:''}`); g.list.forEach(p=>lines.push(`  ${p.name}: ${p.score} pts, ${p.correct} correct, ${p.errors} errors, ${p.fouls} fouls${p.out==='quiz'?', quizzed out':p.out==='error'?', errored out':''}`)); lines.push(''); }); return lines.join('\n'); }
 if(COACH_ON){
   document.addEventListener('click',e=>{ const t=e.target.closest('[data-co]'); if(!t||!U||t.disabled) return; const a=t.dataset.co, M=CO.match;
@@ -2754,19 +2883,21 @@ if(COACH_ON){
     else if(a==='off'||a==='leave'){ CO.on=false; if(a==='leave') CO.match=null; coSave(); render(); scrollTo(0,0); }
     else if(a==='del'){ CO.roster=CO.roster.filter(p=>p.id!==t.dataset.id); coSave(); renderKeep(); }
     else if(a==='clear'){ CO.roster=[]; coSave(); renderKeep(); }
-    else if(a==='set'){ const k=t.dataset.k, v=t.dataset.v; CO.rules[k]=k==='mode'?v:(k==='rebound'||k==='repeat')?!!v:+v; coSave(); renderKeep(); }
+    else if(a==='set'){ const k=t.dataset.k, v=t.dataset.v; CO.rules[k]=k==='mode'?v:(k==='rebound'||k==='repeat'||k==='quotes'||k==='clock')?!!v:+v; coSave(); renderKeep(); }
     else if(a==='even'){ const by=coPool(), chs=coChapters(by), mx=Math.max(...chs.map(c=>by[c].length)); chs.forEach(c=>CO.w[c]=t.dataset.v==='q'?Math.max(1,Math.round(by[c].length/mx*100)):50); coSave(); renderKeep(); }
     else if(a==='start'||a==='again') coStart();
     else if(a==='tosetup'){ CO.match=null; CO.on=true; coSave(); render(); }
     else if(!M) return;
-    else if(a==='sel'){ coSel=t.dataset.id; coStartClock('answer',coSel); renderKeep(); coPaintClock(); }
+    else if(a==='sel'){ coSel=t.dataset.id; if(M.rules.clock) coStartClock('answer',coSel); else coStopClock(); renderKeep(); coPaintClock(); }
     else if(a==='rule') coRule(t.dataset.id,t.dataset.t);
     else if(a==='unsel'){ coSel=null; coStopClock(); renderKeep(); }
     else if(a==='show'){ CO.show[t.dataset.k]=!CO.show[t.dataset.k]; coSave(); renderKeep(); coPaintClock(); }
     else if(a==='next') coNext(); else if(a==='swap') coSwap(); else if(a==='undo') coUndo();
     else if(a==='jump'){ coSel=null; coStartClock('jump'); renderKeep(); coPaintClock(); }
-    else if(a==='stopclock'){ coStopClock(); coPaintClock(); }
-    else if(a==='end'){ M.done=true; coStopClock(); coSave(); render(); scrollTo(0,0); coFinale(); }
+
+    else if(a==='end'){ M.done=true; coStopClock(); if(M.gc) coGamePause(M,true); coSave(); render(); scrollTo(0,0); coFinale(); }
+    else if(a==='pause'){ if(M.gc){ coGamePause(M,M.gc.run); renderKeep(); coPaintClock(); } }
+    else if(a==='period') coStartPeriod();
     else if(a==='copy'){ const txt=coResultsText(M), b=t, fb=()=>{ const ta=document.getElementById('cores'); if(ta){ ta.hidden=false; ta.value=txt; ta.focus(); ta.select(); } b.textContent='Copy the text below'; };
       try{ navigator.clipboard.writeText(txt).then(()=>{ b.textContent='Copied'; },fb); }catch(err){ fb(); } } });
   document.addEventListener('toggle',e=>{ if(e.target&&e.target.classList&&e.target.classList.contains('co-more')){ CO.moreOpen=e.target.open; coSave(); } },true);
@@ -2776,9 +2907,9 @@ if(COACH_ON){
     chs.forEach(c=>{ const el=document.querySelector(`[data-copc="${c}"]`); if(el) el.textContent=Math.round(coPct(c,chs))+'%'; }); document.querySelectorAll('.co-wbar i').forEach((el,k)=>{ el.style.width=coPct(chs[k],chs)+'%'; }); });
   document.addEventListener('keydown',e=>{ const M=CO.match; if(!M||M.done||!M.cur||tab!=='practice'||live||e.metaKey||e.ctrlKey||e.altKey) return; const t=e.target; if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
     const k=e.key.toLowerCase(), order=coGroups(Object.keys(M.players),id=>M.players[id]).flatMap(g=>g.list);
-    if(/^[1-9]$/.test(k)){ const id=order[+k-1]; if(id&&!M.players[id].out&&!M.cur.closed){ coSel=id; coStartClock('answer',id); renderKeep(); coPaintClock(); } e.preventDefault(); }
+    if(/^[1-9]$/.test(k)){ const id=order[+k-1]; if(id&&!M.players[id].out&&!M.cur.closed){ coSel=id; if(M.rules.clock) coStartClock('answer',id); renderKeep(); coPaintClock(); } e.preventDefault(); }
     else if(k==='c'&&coSel) coRule(coSel,'right'); else if(k==='e'&&coSel) coRule(coSel,'wrong'); else if(k==='f'&&coSel) coRule(coSel,'foul');
-    else if(k==='n'){ coNext(); e.preventDefault(); } else if(k==='u') coUndo(); else if(k==='r'&&!M.cur.closed){ coSel=null; coStartClock('jump'); renderKeep(); coPaintClock(); }
+    else if(k==='n'){ coNext(); e.preventDefault(); } else if(k==='u') coUndo(); else if(k==='r'&&!M.cur.closed&&M.rules.clock){ coSel=null; coStartClock('jump'); renderKeep(); coPaintClock(); }
     else if(k==='escape'){ coSel=null; coStopClock(); renderKeep(); } else return; e.stopImmediatePropagation(); },true);
 }
 
