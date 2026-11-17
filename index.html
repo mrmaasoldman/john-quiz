@@ -2019,6 +2019,10 @@ html.co-mode .bar-in>.topsongs{display:none!important}
 .t-coach .co-q>*{order:0!important}
 .t-coach .co-q>.co-tip{order:3!important}
 .t-coach .co-clock .btn{margin-left:auto}
+
+.co-open{gap:8px}
+.co-switch{padding:14px 0 4px}
+html.co-mode .bar-in>.brand span{display:inline}
 </style>
 
 <div id="app"></div>
@@ -2371,7 +2375,7 @@ function render(){
     <div class="who">${dayPill()}${lvlChip()}<button class="sndbtn" id="musbtn" aria-label="${musicOn()&&mus.playing?'Stop music':'Play music'}" title="Music ${musicOn()&&mus.playing?'on':'off'}" style="${musicOn()&&mus.playing?'':'opacity:.55'}">🎵</button><button class="sndbtn" id="sndbtn" aria-label="${soundOn()?'Turn sound off':'Turn sound on'}" title="Sound ${soundOn()?'on':'off'}">${soundOn()?'🔊':'🔇'}</button><span class="whoname">${avC(myAv(),26,me)}${esc(me)}</span> <button id="switch">Switch</button></div>
   </div></header>`));
   const w=document.createElement('main'); w.className='wrap t-'+(tab==='practice'&&quiz?(quiz.done?'results':'quiz'):tab==='verses'&&typeof vc!=='undefined'&&vc?(vc.done?'results':'quiz'):tab); if(tab!==lastEnterTab){ w.classList.add('enter'); lastEnterTab=tab; setTimeout(()=>w.classList.remove('enter'),1400); } app.append(w);
-  document.documentElement.classList.toggle('co-mode',COACH_ON&&tab==='practice'&&(CO.on||!!CO.match)&&!quiz);
+  document.documentElement.classList.toggle('co-mode',COACH_ON&&tab==='practice'&&!!CO.match&&!quiz&&!CO.match.done);
   if(tab==='practice'){ if(COACH_ON&&CO.match&&!quiz){ w.className='wrap t-coach'; w.append(coachView()); } else w.append(quiz ? (quiz.done? resultsView() : quizView()) : setupView()); }
   if(tab==='progress') w.append(progressView());
   if(tab==='scores'){ try{ w.append(scoresView()); }catch(err){ w.append(h(`<section><div><div class="label">High Scores</div><h2>Who's on top?</h2></div><div class="panel"><p class="hint" style="margin:0">The high scores hit a snag. Tap Refresh, or tell Mr. Maas: ${esc(err&&err.message||err)}</p><button class="btn small" id="lbrefresh" style="margin-top:10px">Refresh</button></div></section>`)); } }
@@ -2565,7 +2569,7 @@ function setupView(){
     </div>
     ${pool.length?'':`<p class="hint" style="margin:0">${U.sel.length?'No questions match those filters. Try "All" questions or turn off "Only verses I\'ve memorized".':'Pick at least one chapter or verse above.'}</p>`}
 `}
-    ${COACH_ON?`<div class="co-switch">${CO.on?'<button class="x" data-co="off">Practice by myself instead</button>':'<button class="btn ghost" data-co="on"><span aria-hidden="true">🎙️</span> Coach mode <span class="co-beta">Beta</span></button><span class="hint">Quiz other people out loud and keep score. No XP.</span>'}</div>`:''}
+    ${COACH_ON?`<div class="co-switch">${CO.on?'<button class="btn ghost small" data-co="off">← Practice by myself instead</button>':'<button class="btn co-open" data-co="on"><span aria-hidden="true">🎙️</span> Coach mode <span class="co-beta">New</span></button><span class="hint">Quiz a group out loud: you read, the app shows the answer and keeps score. No XP.</span>'}</div>`:''}
   </section>`);
   return f;
 }
@@ -2586,8 +2590,8 @@ function parseRange(str,versesOf=c=>qVerses[c]){
 }
 
 /* ---------- coach mode (beta): you read the questions out loud and score real quizzers. No XP. ---------- */
-const COACH_ON=!!window.COACH_BETA;
-let CO=Object.assign({on:false,roster:[],w:{},rules:{mode:'bqf',pts:20,qout:4,eout:3,pen:0,rebound:false,repeat:false,count:20},show:{ans:true,verse:true,ctx:false},match:null},COACH_ON?lsGet('coach',{}):{});
+const COACH_ON=true, COACH_GUEST=!!window.COACH_BETA;
+let CO=Object.assign({on:!!window.COACH_BETA,roster:[],w:{},rules:{mode:'bqf',pts:20,qout:4,eout:3,pen:0,rebound:false,repeat:false,count:20},show:{ans:true,verse:true,ctx:false},match:null},COACH_ON?lsGet('coach',{}):{});
 let coSel=null, coClock=null, coTick=null, coFlash=null, coFx=null, coFresh=false;
 const coSave=()=>lsSet('coach',CO);
 const coTeamKey=p=>(p.team||'').trim().toLowerCase();
@@ -2634,13 +2638,13 @@ function coShout(text,big){ if(reduceMotion()) return; const card=document.query
   const r=card.getBoundingClientRect(), el=document.createElement('div'); el.className='shout'+(big?' big':''); el.textContent=text||L[(shoutN++)%L.length]; el.style.top=Math.max(70,r.top+r.height*.35)+'px'; document.body.appendChild(el); setTimeout(()=>el.remove(),1300); }
 const coInit=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 function coFinale(){ const M=CO.match; if(!M||!M.log.some(e=>e.type==='right')) return; try{ sfx('cheer'); celebrate(true); }catch(e){} }
-function coUndo(){ const M=CO.match; if(!M||!M.undo.length) return; const u=JSON.parse(M.undo.pop()); M.players=u.players; M.teams=u.teams; M.cur=u.cur; M.n=u.n; M.log.length=u.log; M.done=false; coFlash={kind:'',text:'Undid the last ruling.'}; coStopClock(); coSave(); renderKeep(); }
+function coUndo(){ const M=CO.match; if(!M||!M.undo.length) return; const wasDone=M.done; const u=JSON.parse(M.undo.pop()); M.players=u.players; M.teams=u.teams; M.cur=u.cur; M.n=u.n; M.log.length=u.log; M.done=false; coFlash={kind:'',text:'Undid the last ruling.'}; coStopClock(); coSave(); if(wasDone){ render(); scrollTo(0,0); } else renderKeep(); }
 function coPick(M){ const rep=!!CO.rules.repeat, last=M.cur?M.cur.qid:-1;
   const pool=Object.keys(M.pool).map(c=>({c:+c,w:coW(c),ids:M.pool[c].filter(id=>rep?id!==last:!M.used[id])})).filter(x=>x.ids.length);
   if(!pool.length){ if(!Object.keys(M.used).length) return M.pool[Object.keys(M.pool)[0]][0]; M.used={}; coFlash={kind:'warn',text:'Every question in this material has been asked, so they can come up again from here on.'}; return coPick(M); }
   let r=Math.random()*pool.reduce((a,x)=>a+x.w,0), ch=pool[pool.length-1]; for(const x of pool){ r-=x.w; if(r<=0){ ch=x; break; } }
   const id=ch.ids[Math.floor(Math.random()*ch.ids.length)]; M.used[id]=1; return id; }
-function coStart(){ const pool=coPool(); if(!CO.roster.length||!Object.keys(pool).length) return; const players={}; CO.roster.forEach(p=>players[p.id]={name:p.name,team:p.team||'',score:0,correct:0,errors:0,fouls:0,out:null});
+function coStart(){ const pool=coPool(); if(!CO.roster.length||!Object.keys(pool).length) return; coSel=null; coFlash=null; const players={}; CO.roster.forEach(p=>players[p.id]={name:p.name,team:p.team||'',score:0,correct:0,errors:0,fouls:0,out:null});
   CO.match={players,teams:{},used:{},pool,log:[],undo:[],n:0,cur:null,done:false,total:+CO.rules.count||0,rules:coRules(),label:'John '+rangeLabel(U.sel)}; coNext(true); }
 function coNext(first){ const M=CO.match; if(!M) return; if(M.cur&&!M.cur.closed&&!first) M.log.push({n:M.n,qid:M.cur.qid,pid:null,type:'none',pts:0,note:'No question (nobody answered)'});
   M.undo=[]; coSel=null; coStopClock();
@@ -2714,7 +2718,7 @@ function coachView(){ const M=CO.match;
       <div class="panel co-win"><div class="co-trophy" aria-hidden="true">🏆</div><h2>${head}</h2>${sub?`<p>${sub}</p>`:''}<span class="hint">${M.n} question${M.n===1?'':'s'} · ${M.rules.bqf?'Official rules':'My rules'} · no XP was given</span></div>
       ${pod.length?`<div class="co-podium">${[1,0,2].filter(k=>pod[k]).map(k=>`<div class="co-pod p${k+1}"><span class="co-medal">${medals[k]}</span><i class="co-av co-xl">${esc(coInit(pod[k].name))}</i><b>${esc(pod[k].name)}</b><span class="co-podpts">${pod[k].score}</span><small>✓ ${pod[k].correct} right</small><div class="co-block"></div></div>`).join('')}</div>`:''}
       <div class="row"><button class="btn co-go" data-co="again">Play again with the same people ▶</button></div>
-      <div class="row"><button class="btn ghost" data-co="tosetup">Change who's playing or the chapters</button><button class="btn ghost" data-co="copy" id="cocopy">Copy results</button>${M.undo.length?'<button class="btn ghost" data-co="undo">Undo last ruling</button>':''}</div>
+      <div class="row"><button class="btn ghost" data-co="tosetup">Change who's playing or the chapters</button><button class="btn ghost" data-co="leave">Done · back to my practice</button><button class="btn ghost" data-co="copy" id="cocopy">Copy results</button>${M.undo.length?'<button class="btn ghost" data-co="undo">Undo last ruling</button>':''}</div>
       <textarea id="cores" hidden style="width:100%;height:180px"></textarea>
       <div class="panel"><div class="tbl-wrap"><table class="co-table"><thead><tr><th>Quizzer</th><th>Team</th><th class="n">Points</th><th class="n">Right</th><th class="n">Wrong</th><th class="n">Fouls</th><th></th></tr></thead><tbody>${ps.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.team||'–')}</td><td class="n"><b>${p.score}</b></td><td class="n">${p.correct}</td><td class="n">${p.errors}</td><td class="n">${p.fouls}</td><td>${p.out==='quiz'?'<span class="co-pill q">Quizzed out</span>':p.out==='error'?'<span class="co-pill e">Too many wrong</span>':''}</td></tr>`).join('')}</tbody></table></div></div>
       <details class="panel co-more"><summary>Everything that happened</summary><div style="margin-top:10px">${coLog(M)}</div></details>
@@ -2746,8 +2750,8 @@ function coResultsText(M){ const lines=['John Quiz · Coach mode results',`${M.l
   coGroups(Object.values(M.players)).forEach(g=>{ const t=M.teams[g.key], tot=g.list.reduce((a,p)=>a+p.score,0)+(t?t.bonus-t.ded:0); lines.push(`${g.name}: ${tot} points${t?` (team errors ${t.errors}, bonus +${t.bonus}, deductions −${t.ded})`:''}`); g.list.forEach(p=>lines.push(`  ${p.name}: ${p.score} pts, ${p.correct} correct, ${p.errors} errors, ${p.fouls} fouls${p.out==='quiz'?', quizzed out':p.out==='error'?', errored out':''}`)); lines.push(''); }); return lines.join('\n'); }
 if(COACH_ON){
   document.addEventListener('click',e=>{ const t=e.target.closest('[data-co]'); if(!t||!U||t.disabled) return; const a=t.dataset.co, M=CO.match;
-    if(a==='on'){ CO.on=true; coSave(); renderKeep(); }
-    else if(a==='off'||a==='leave'){ CO.on=false; if(a==='leave') CO.match=null; coSave(); render(); }
+    if(a==='on'){ CO.on=true; coSave(); render(); scrollTo(0,0); }
+    else if(a==='off'||a==='leave'){ CO.on=false; if(a==='leave') CO.match=null; coSave(); render(); scrollTo(0,0); }
     else if(a==='del'){ CO.roster=CO.roster.filter(p=>p.id!==t.dataset.id); coSave(); renderKeep(); }
     else if(a==='clear'){ CO.roster=[]; coSave(); renderKeep(); }
     else if(a==='set'){ const k=t.dataset.k, v=t.dataset.v; CO.rules[k]=k==='mode'?v:(k==='rebound'||k==='repeat')?!!v:+v; coSave(); renderKeep(); }
@@ -2763,7 +2767,7 @@ if(COACH_ON){
     else if(a==='jump'){ coSel=null; coStartClock('jump'); renderKeep(); coPaintClock(); }
     else if(a==='stopclock'){ coStopClock(); coPaintClock(); }
     else if(a==='end'){ M.done=true; coStopClock(); coSave(); render(); scrollTo(0,0); coFinale(); }
-    else if(a==='copy'){ const txt=coResultsText(M), b=t, fb=()=>{ const ta=document.getElementById('cores'); if(ta){ ta.hidden=false; ta.value=txt; ta.focus(); ta.select(); } b.textContent='Select all and copy'; };
+    else if(a==='copy'){ const txt=coResultsText(M), b=t, fb=()=>{ const ta=document.getElementById('cores'); if(ta){ ta.hidden=false; ta.value=txt; ta.focus(); ta.select(); } b.textContent='Copy the text below'; };
       try{ navigator.clipboard.writeText(txt).then(()=>{ b.textContent='Copied'; },fb); }catch(err){ fb(); } } });
   document.addEventListener('toggle',e=>{ if(e.target&&e.target.classList&&e.target.classList.contains('co-more')){ CO.moreOpen=e.target.open; coSave(); } },true);
   document.addEventListener('submit',e=>{ if(!e.target||e.target.id!=='coadd') return; e.preventDefault(); const n=document.getElementById('coname').value.trim(), tm=document.getElementById('coteam').value.trim(); if(!n){ document.getElementById('coname').focus(); return; } CO.lastTeam=tm;
@@ -5508,8 +5512,8 @@ Object.assign(SHOUT,{dino:["RAWR!", "DINO-MITE!", "STOMP!"],ocean:["SPLASH!", "F
 Object.assign(STREAK_WORD,{dino:"stomp",ocean:"wave",pizza:"slice streak",comic:"power-up",farm:"harvest",stadium:"win streak",camp:"ember run",groovy:"groove",elements:"element chain",build:"build"});
 Object.assign(TROPHY,{dino:"\ud83e\udd96",ocean:"\ud83d\udc2c",pizza:"\ud83c\udf55",comic:"\u2b50",farm:"\ud83c\udf3d",stadium:"\ud83c\udfc8",camp:"\ud83c\udfd5\ufe0f",groovy:"\ud83c\udf3c",elements:"\ud83d\udd2e",build:"\ud83c\udfd7\ufe0f"});
 const last=lsGet('last',null); if(last && users.includes(last)) loadUser(last);
-if(COACH_ON&&!me){ const n='Coach'; if(!users.includes(n)){ users.push(n); lsSet('users',users); } const u=Object.assign(blankUser(),{team:NO_TEAM,grp:'other',nextMeet:null}); if(!lsGet('u:'+n,null)) lsSet('u:'+n,u); lsSet('last',n); loadUser(n); if(U&&!U.team){ U.team=NO_TEAM; save(); } if(!me){ me=n; U=u; } }
-if(COACH_ON){ try{ lsSet('ann:songxp',true); }catch(e){} if(!lsGet('coach',null)) CO.on=true; mpPrompt=function(){}; }
+if(COACH_GUEST&&!me){ const n='Coach'; if(!users.includes(n)){ users.push(n); lsSet('users',users); } const u=Object.assign(blankUser(),{team:NO_TEAM,grp:'other',nextMeet:null}); if(!lsGet('u:'+n,null)) lsSet('u:'+n,u); lsSet('last',n); loadUser(n); if(U&&!U.team){ U.team=NO_TEAM; save(); } if(!me){ me=n; U=u; } }
+if(COACH_GUEST){ try{ lsSet('ann:songxp',true); }catch(e){} mpPrompt=function(){}; }
 render();
 cloud.status='off';
 })();
