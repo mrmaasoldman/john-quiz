@@ -1840,7 +1840,8 @@ html.co-mode .bar-in>.topsongs{display:none!important}
   section.co-on>.co-step.s2{grid-column:2!important;grid-row:2!important}
   section.co-on>.co-qz{grid-column:2!important;grid-row:3!important;align-self:start}
   section.co-on>.co-step.s3{grid-column:2!important;grid-row:4!important;margin-top:14px}
-  section.co-on>.co-go{grid-column:2!important;grid-row:5!important}
+  section.co-on>.co-switches{grid-column:2!important;grid-row:5!important}
+  section.co-on>.co-go{grid-column:2!important;grid-row:6!important}
   section.co-on>.co-more{grid-column:1/-1!important;grid-row:8!important;margin-top:10px}
   section.co-on>.co-switch{grid-column:1/-1!important}
   section.co-on .chgrid .ch{min-height:72px}
@@ -2106,6 +2107,11 @@ html.co-mode .bar-in>.brand span{display:inline}
   .t-coach .co-q .qtext{max-height:66px;overflow:auto}
 }
 
+/* desktop + phone fixes */
+.co-sw .seg{display:flex!important;flex-wrap:nowrap;flex:none;gap:6px}
+.co-sw .seg button{min-width:52px}
+.co-win h2{font-size:26px!important;line-height:1.35}
+.t-coach .co-tools .btn,.co-desk .co-read>.row .btn.ghost{font:700 14px var(--f-read)!important;letter-spacing:0;text-shadow:none!important;min-height:40px}
 /* phone polish (desktop untouched) */
 .co-clock .s{display:none}
 @media (max-width:760px){
