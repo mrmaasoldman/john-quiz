@@ -2669,9 +2669,9 @@ function parseRange(str,versesOf=c=>qVerses[c]){
 
 /* ---------- coach mode (beta): you read the questions out loud and score real quizzers. No XP. ---------- */
 const COACH_ON=true, COACH_GUEST=!!window.COACH_BETA;
-let CO=Object.assign({on:!!window.COACH_BETA,roster:[],w:{},rules:{mode:'bqf',pts:20,qout:4,eout:3,pen:0,rebound:false,repeat:false,count:20,quotes:true,clock:true},show:{ans:true,verse:true,ctx:false},match:null},COACH_ON?lsGet('coach',{}):{});
+let CO=Object.assign({on:!!window.COACH_BETA,roster:[],w:{},rules:{mode:'bqf',pts:20,qout:4,eout:3,pen:0,rebound:false,repeat:false,count:20,quotes:true,clock:true,mix:'random'},show:{ans:true,verse:true,ctx:false},match:null},COACH_ON?lsGet('coach',{}):{});
 let coSel=null, coClock=null, coTick=null, coFlash=null, coFx=null, coFresh=false;
-if(CO.rules.quotes===undefined) CO.rules.quotes=true; if(CO.rules.clock===undefined) CO.rules.clock=true;
+if(CO.rules.quotes===undefined) CO.rules.quotes=true; if(!CO.rules.mix) CO.rules.mix='random'; if(CO.rules.clock===undefined) CO.rules.clock=true;
 const coSave=()=>lsSet('coach',CO);
 const coTeamKey=p=>(p.team||'').trim().toLowerCase();
 const CO_HUES=['var(--accent)','var(--gold)','var(--good)','var(--accent2)','var(--warn)','var(--bad)'];
@@ -2727,7 +2727,8 @@ function coPickQuote(M){ const keys=[...new Set(Object.values(M.pool).flat().map
 function coNewQ(M){ if(M.rules.quotes&&Math.random()<0.15){ const qt=coPickQuote(M); if(qt&&qt.qid!=null) return {qid:qt.qid,quote:{c:qt.c,v:qt.v},closed:false,rebound:false,tried:{}}; }
   return {qid:coPick(M),closed:false,rebound:false,tried:{}}; }
 function coPick(M){ const rep=!!CO.rules.repeat, last=M.cur?M.cur.qid:-1;
-  const pool=Object.keys(M.pool).map(c=>({c:+c,w:coW(c),ids:M.pool[c].filter(id=>rep?id!==last:!M.used[id])})).filter(x=>x.ids.length);
+  const pool=Object.keys(M.pool).map(c=>({c:+c,w:0,ids:M.pool[c].filter(id=>rep?id!==last:!M.used[id])})).filter(x=>x.ids.length);
+  pool.forEach(x=>x.w=M.mix==='custom'?coW(x.c):x.ids.length);
   if(!pool.length){ if(!Object.keys(M.used).length) return M.pool[Object.keys(M.pool)[0]][0]; M.used={}; coFlash={kind:'warn',text:'Every question in this material has been asked, so they can come up again from here on.'}; return coPick(M); }
   let r=Math.random()*pool.reduce((a,x)=>a+x.w,0), ch=pool[pool.length-1]; for(const x of pool){ r-=x.w; if(r<=0){ ch=x; break; } }
   const id=ch.ids[Math.floor(Math.random()*ch.ids.length)]; M.used[id]=1; return id; }
@@ -2755,7 +2756,7 @@ function coStartPeriod(){ const M=CO.match; if(!M||!M.gc) return; const g=M.gc;
 function coPeriodName(g){ return g.half===1?'1st half':g.half===2?'2nd half':'Overtime'+(g.ot>1?' '+g.ot:''); }
 function coStart(){ const pool=coPool(); if(!CO.roster.length||!Object.keys(pool).length) return; coSel=null; coFlash=null; const players={}; CO.roster.forEach(p=>players[p.id]={name:p.name,team:p.team||'',score:0,correct:0,errors:0,fouls:0,out:null});
   const R=coRules(), timed=R.bqf&&R.clock;
-  CO.match={players,teams:{},used:{},usedV:{},pool,log:[],undo:[],n:0,cur:null,done:false,total:timed?0:(+CO.rules.count||0),rules:R,label:'John '+rangeLabel(U.sel),gc:timed?{half:1,left:CO_HALF,t:Date.now(),run:true,phase:'play',ot:0}:null}; coNext(true); if(timed) coGameRun(); }
+  CO.match={players,teams:{},used:{},usedV:{},mix:CO.rules.mix==='custom'?'custom':'random',pool,log:[],undo:[],n:0,cur:null,done:false,total:timed?0:(+CO.rules.count||0),rules:R,label:'John '+rangeLabel(U.sel),gc:timed?{half:1,left:CO_HALF,t:Date.now(),run:true,phase:'play',ot:0}:null}; coNext(true); if(timed) coGameRun(); }
 function coNext(first){ const M=CO.match; if(!M) return; if(M.cur&&!M.cur.closed&&!first) M.log.push({n:M.n,qid:M.cur.qid,quote:M.cur.quote||null,pid:null,type:'none',pts:0,note:'No question (nobody answered)'});
   M.undo=[]; coSel=null; coStopClock();
   if(M.gc&&M.gc.expired&&!first){ if(coPeriodEnd(M)){ coSave(); render(); scrollTo(0,0); try{ sfx('chime'); }catch(e){} return; } M.done=true; M.cur=null; coSave(); render(); scrollTo(0,0); coFinale(); return; }
@@ -2782,7 +2783,7 @@ function coachSetupPanels(){ const by=coPool(), chs=coChapters(by), nq=chs.reduc
         <button class="btn co-addbtn" type="submit">+ Add</button><datalist id="coteams">${teamNames.map(n=>`<option value="${esc(n)}">`).join('')}</datalist></form>
       ${CO.roster.length?`<div class="co-roster">${coGroups(CO.roster).map(g=>`<div class="co-team"><b>${esc(g.name)}</b><div class="co-chips">${g.list.map(p=>`<span class="co-chip ${CO.newId===p.id?'new':''}"><i class="co-av co-mini">${esc(coInit(p.name))}</i>${esc(p.name)}<button data-co="del" data-id="${p.id}" aria-label="Remove ${esc(p.name)}" title="Remove ${esc(p.name)}">×</button></span>`).join('')}</div></div>`).join('')}</div>`:'<p class="co-empty">Nobody added yet.</p>'}
     </div>
-    <div class="co-step s3"><span class="co-num">3</span><div><h3>Start the quiz</h3><p>${ready?`Ready! ${CO.roster.length} quizzer${CO.roster.length===1?'':'s'}, ${nq} question${nq===1?'':'s'} to pick from. ${r.mode==='bqf'?'Official rules':'Your own rules'}, ${r.mode==='bqf'&&r.clock?'two 6-minute halves (overtime if teams tie)':r.count?r.count+' questions':'until you stop'}.`:!chs.length?'First pick at least one chapter in step 1.':'First add at least one quizzer in step 2.'}</p></div></div>
+    <div class="co-step s3"><span class="co-num">3</span><div><h3>Start the quiz</h3><p>${ready?`Ready! ${CO.roster.length} quizzer${CO.roster.length===1?'':'s'}, ${nq} question${nq===1?'':'s'} to pick from. ${r.mode==='bqf'?'Official rules':'Your own rules'}, ${r.mode==='bqf'&&r.clock?'two 6-minute halves (overtime if teams tie)':r.count?r.count+' questions':'until you stop'}${r.mix==='custom'&&chs.length>1?', your chapter percentages':''}.`:!chs.length?'First pick at least one chapter in step 1.':'First add at least one quizzer in step 2.'}</p></div></div>
     <div class="panel co-switches">
       <div class="co-sw"><div><b>⏱ Clock</b><span class="hint">${r.clock?(r.mode==='bqf'?'Runs the 6-minute halves and every answer timer for you.':'Times each buzz-in and answer for you.'):'No timers at all.'}</span></div>${coSeg('clock',[['1','On'],['','Off']],r.clock?'1':'')}</div>
       <div class="co-sw"><div><b>📜 Quote questions</b><span class="hint">${r.quotes?'About 1 in 7 questions: “Quote John 3:16.” They get 30 seconds.':'Only regular questions.'}</span></div>${coSeg('quotes',[['1','On'],['','Off']],r.quotes?'1':'')}</div>
@@ -2799,10 +2800,11 @@ function coachSetupPanels(){ const by=coPool(), chs=coChapters(by), nq=chs.reduc
       <div class="opt"><span class="label">Points lost for a wrong answer</span>${coSeg('pen',[[0,'None'],[5,'5'],[10,'10']],r.pen)}</div>
       <div class="opt"><span class="label">After a wrong answer, others can try for half points</span>${coSeg('rebound',[['','No'],['1','Yes']],r.rebound?'1':'')}</div>`}
       <div class="opt"><span class="label">Same question can come up twice</span>${coSeg('repeat',[['','No'],['1','Yes']],r.repeat?'1':'')}</div>
-      ${chs.length>1?`<div class="opt"><span class="label">How often each chapter comes up</span>
+      ${chs.length>1?`<div class="opt"><span class="label">How often each chapter comes up</span>${coSeg('mix',[['random','Normal (random)'],['custom','I\'ll set it']],r.mix==='custom'?'custom':'random')}
+        ${r.mix!=='custom'?`<span class="hint">Every question has the same chance, so chapters with more questions come up more. ${chs.map(c=>`John ${c} ${Math.round(by[c].length/nq*100)}%`).join(' · ')}</span>`:`
         <div class="co-wbar">${chs.map((c,k)=>`<i style="width:${coPct(c,chs)}%;background:${CO_HUES[k%CO_HUES.length]}"></i>`).join('')}</div>
         <div class="co-wlist">${chs.map(c=>`<div class="co-wrow"><b>John ${c}</b><input type="range" min="1" max="100" value="${coW(c)}" data-cow="${c}" aria-label="How often John ${c} comes up"><span class="hint">${by[c].length} Q</span><span class="co-pc" data-copc="${c}">${Math.round(coPct(c,chs))}%</span></div>`).join('')}</div>
-        <span class="hint">Slide a chapter to the right to hear it more often.</span><div class="row"><button class="btn ghost small" data-co="even" data-v="1">Make them even</button></div></div>`:''}
+        <span class="hint">Slide a chapter to the right to hear it more often.</span><div class="row"><button class="btn ghost small" data-co="even" data-v="1">Make them even</button></div>`}</div>`:''}
       ${CO.roster.length?'<div class="opt"><span class="label">Quizzers</span><button class="x" data-co="clear">Remove everyone</button></div>':''}
       </div></details>`; }
 function coSheet(M,liveSheet){ const R=M.rules; let num=0; const groups=coGroups(Object.keys(M.players),id=>M.players[id]);
@@ -2883,7 +2885,7 @@ if(COACH_ON){
     else if(a==='off'||a==='leave'){ CO.on=false; if(a==='leave') CO.match=null; coSave(); render(); scrollTo(0,0); }
     else if(a==='del'){ CO.roster=CO.roster.filter(p=>p.id!==t.dataset.id); coSave(); renderKeep(); }
     else if(a==='clear'){ CO.roster=[]; coSave(); renderKeep(); }
-    else if(a==='set'){ const k=t.dataset.k, v=t.dataset.v; CO.rules[k]=k==='mode'?v:(k==='rebound'||k==='repeat'||k==='quotes'||k==='clock')?!!v:+v; coSave(); renderKeep(); }
+    else if(a==='set'){ const k=t.dataset.k, v=t.dataset.v; CO.rules[k]=(k==='mode'||k==='mix')?v:(k==='rebound'||k==='repeat'||k==='quotes'||k==='clock')?!!v:+v; coSave(); renderKeep(); }
     else if(a==='even'){ const by=coPool(), chs=coChapters(by), mx=Math.max(...chs.map(c=>by[c].length)); chs.forEach(c=>CO.w[c]=t.dataset.v==='q'?Math.max(1,Math.round(by[c].length/mx*100)):50); coSave(); renderKeep(); }
     else if(a==='start'||a==='again') coStart();
     else if(a==='tosetup'){ CO.match=null; CO.on=true; coSave(); render(); }
