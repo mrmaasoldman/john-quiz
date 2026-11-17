@@ -5210,6 +5210,8 @@ Object.assign(SHOUT,{dino:["RAWR!", "DINO-MITE!", "STOMP!"],ocean:["SPLASH!", "F
 Object.assign(STREAK_WORD,{dino:"stomp",ocean:"wave",pizza:"slice streak",comic:"power-up",farm:"harvest",stadium:"win streak",camp:"ember run",groovy:"groove",elements:"element chain",build:"build"});
 Object.assign(TROPHY,{dino:"\ud83e\udd96",ocean:"\ud83d\udc2c",pizza:"\ud83c\udf55",comic:"\u2b50",farm:"\ud83c\udf3d",stadium:"\ud83c\udfc8",camp:"\ud83c\udfd5\ufe0f",groovy:"\ud83c\udf3c",elements:"\ud83d\udd2e",build:"\ud83c\udfd7\ufe0f"});
 const last=lsGet('last',null); if(last && users.includes(last)) loadUser(last);
+if(COACH_ON&&!me){ const n='Coach'; if(!users.includes(n)){ users.push(n); lsSet('users',users); } const u=Object.assign(blankUser(),{team:NO_TEAM,grp:'other',nextMeet:null}); if(!lsGet('u:'+n,null)) lsSet('u:'+n,u); lsSet('last',n); loadUser(n); if(U&&!U.team){ U.team=NO_TEAM; save(); } if(!me){ me=n; U=u; } }
+if(COACH_ON){ try{ lsSet('ann:songxp',true); }catch(e){} if(!lsGet('coach',null)) CO.on=true; mpPrompt=function(){}; }
 render();
 cloud.status='off';
 })();
