@@ -455,7 +455,7 @@ textarea#cores{border:1px solid var(--line2);border-radius:8px;padding:10px;back
 /* reference beside the question */
 .qhead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .qhead .qtext{flex:1;min-width:0}
-.qref{flex:none;margin-top:.3em;font-size:15px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:4px 10px;border-radius:6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.qref{color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap;margin-right:.15em}
 .qtop .ref:empty{display:none}
 .qtop{justify-content:flex-end}
 .qtop .ref:not(:empty){margin-right:auto}
@@ -469,7 +469,8 @@ textarea#cores{border:1px solid var(--line2);border-radius:8px;padding:10px;back
 .co-others .oa{display:block;color:var(--muted);font-size:13px}
 .co-others .oa i{font-style:normal;opacity:.8}
 @media (min-width:1000px) and (min-height:560px){ html.co-mode .qcard{flex:0 0 auto;max-height:60%} html.co-mode .co-read:not(:has(.co-verse)) .qcard{flex:1 1 auto;max-height:none} html.co-mode .co-verse{flex:1 1 0;min-height:96px;max-height:none} }
-@media (max-width:760px){ .qref{font-size:13px;padding:3px 8px} .qhead{gap:10px} }
+
+.co-clockbar .co-cref{display:none!important}
 @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 
 </style>
@@ -1252,7 +1253,7 @@ function coachView(){ const M=CO.match; if(M&&M.gc&&!M.done) coGameRun();
     </div>`:coTrack(M)}
     <div class="qcard co-q ${coFresh?'fresh':''} ${quote?'is-quote':''} ${closed&&coFlash?(coFlash.kind==='good'?'is-right':coFlash.kind==='bad'?'is-wrong':''):''}">
       ${quote?'<span class="co-qtag">Quote question · 30 seconds</span>':''}
-      <div class="qhead"><div class="qtext">${quote?`Quote John ${qc}:${qv}.`:esc(coQ(q.q))}</div>${quote?'':`<span class="qref">John ${qc}:${qv}</span>`}</div>
+      <div class="qhead"><div class="qtext">${quote?`Quote John ${qc}:${qv}.`:`<span class="qref">John ${qc}:${qv}</span> ${esc(coQ(q.q))}`}</div></div>
       <div class="fb co-ans" style="background:var(--sunk)"><div class="row" style="justify-content:space-between"><span class="label">${quote?'The verse, word for word':'Answer'}</span><button class="x" data-co="show" data-k="ans">${sh.ans?'Hide':'Show'}</button></div><div class="${sh.ans?'':'co-blur'}">${answers}</div></div>
       ${coFlash?`<div class="fb ${coFlash.kind==='good'?'good':coFlash.kind==='bad'?'bad':''} co-flash"><div class="hype">${esc(coFlash.text)}</div></div>`:''}
       ${M.cur.warn?`<div class="co-teamwarn" role="alert"><b>Announce:</b> ${esc(M.cur.warn)}</div>`:''}
