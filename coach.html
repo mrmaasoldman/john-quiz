@@ -4034,7 +4034,7 @@ const SEAT={dev:null,raw:null,up:[],claim:null,msg:'',err:'',sim:false};
 const SEAT_HID=!!(navigator.hid&&window.isSecureContext&&(()=>{ try{ return !document.featurePolicy||document.featurePolicy.allowsFeature('hid'); }catch(e){ return true; } })());
 const SEAT_WEB='https://mrmaasoldman.github.io/john-quiz/coach.html';
 if(!CO.seats) CO.seats={map:{},flip:[false,false,false]};
-if(!CO.seats.sit) CO.seats.sit=[0,0,0]; // what a PRESSED pad reads, per string bit (ACME: 0)
+if(!CO.seats.sit||!CO.seats.v3){ CO.seats.sit=[0,0,0]; CO.seats.v3=1; } // what a PRESSED pad reads, per string bit (ACME: 0). Released pad = buzz in.
 function seatKey(s,b){ return s+':'+b; }
 function seatLabel(k){ const [s,b]=k.split(':').map(Number); const i=CO.seats.flip[s]?4-b:b; return 'String '+(s+1)+', seat '+(i+1); }
 function seatOf(pid){ return Object.keys(CO.seats.map).find(k=>CO.seats.map[k]===pid)||null; }
@@ -4048,10 +4048,9 @@ function seatOnReport(bytes){
   if(prev&&prev[0]===bytes[0]&&prev[1]===bytes[1]&&prev[2]===bytes[2]) return;
   // pads that just let go (someone got up), on any seat
   const rose=[]; if(prev) for(let s=0;s<3;s++) for(let b=0;b<5;b++){ const k=seatKey(s,b); if(seatOpenPad(bytes,k)&&!seatOpenPad(prev,k)) rose.push(k); }
-  // quizzers who are up now, keeping the order they got up in
-  const now=[]; for(let s=0;s<3;s++) for(let b=0;b<5;b++){ const k=seatKey(s,b); if(seatIsUp(k)) now.push(k); }
-  const fresh=prev?now.filter(k=>!SEAT.up.includes(k)):[];
-  SEAT.up=SEAT.up.filter(k=>now.includes(k)).concat(prev?fresh:now);
+  // only a real release (pressed -> let go) counts as buzzing in; keep the order they let go in
+  const fresh=rose.filter(k=>CO.seats.map[k]&&!SEAT.up.includes(k));
+  SEAT.up=SEAT.up.filter(k=>seatIsUp(k)).concat(fresh);
   if(SEAT.claim&&rose.length) seatClaim(rose[0]);
   else if(fresh.length) seatJumped(fresh);
   else if(rose.length&&!CO.seats.map[rose[0]]&&CO.match&&!CO.match.done){ SEAT.msg=seatLabel(rose[0])+' buzzed in, but no quizzer is set to that seat.'; }
@@ -4101,9 +4100,9 @@ function seatPanel(){
     const opts=k=>`<option value="">—</option>${ros.map(p=>`<option value="${p.id}" ${CO.seats.map[k]===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}`;
     body=`<div class="cs-grid">${[0,1,2].map(s=>`<div class="cs-row"><span class="cs-sl">String ${s+1}</span>${[0,1,2,3,4].map(i=>{ const b=CO.seats.flip[s]?4-i:i, k=seatKey(s,b), i2=SEAT.up.indexOf(k); return `<label class="cs-seat ${i2>=0?'up':''}" data-seatk="${k}"><span class="cs-n">${i+1}<i class="cs-st"></i><em class="cs-ord">${i2>=0?i2+1:''}</em></span><select data-csmap="${k}" aria-label="${seatLabel(k)}">${opts(k)}</select></label>`; }).join('')}<button class="x" data-cs="flip" data-s="${s}" title="Seat 1 is on the other end">Flip</button></div>`).join('')}</div>
       ${SEAT.claim?`<div class="cs-claim"><b>${esc(seatName(SEAT.claim.ids[SEAT.claim.i]))}</b>, stand up now. <span class="hint">(${SEAT.claim.i+1} of ${SEAT.claim.ids.length})</span><span class="row"><button class="btn ghost small" data-cs="skip">Skip</button><button class="btn ghost small" data-cs="stop">Stop</button></span></div>`:''}
-      <p class="hint">Sitting on a pad = waiting. Getting off the pad = buzzing in. If seats show <b>up</b> while people are sitting, have everyone sit and click <b>Everyone's sitting</b>.</p>
+      <p class="hint"><b>Pressed = waiting. Released = buzzed in.</b> Press a pad and its seat should say <b>sitting</b>; let go and it should say <b>up</b>.${CO.seats.sit.some(x=>x)?' <b>(Pads are flipped.)</b>':''}</p>
       <p class="cs-msg" id="csmsg" ${SEAT.msg?'':'hidden'}>${esc(SEAT.msg)}</p>
-      <div class="row"><button class="btn ghost small" data-cs="claim" ${ros.length?'':'disabled'}>Set seats by jumping</button><button class="btn ghost small" data-cs="auto" ${ros.length?'':'disabled'}>Fill in team order</button><button class="btn ghost small" data-cs="base" title="Click while every quizzer is sitting on their pad">Everyone's sitting: set pads</button>${Object.keys(CO.seats.map).length?'<button class="x" data-cs="clear">Clear seats</button>':''}</div>`;
+      <div class="row"><button class="btn ghost small" data-cs="claim" ${ros.length?'':'disabled'}>Set seats by jumping</button><button class="btn ghost small" data-cs="auto" ${ros.length?'':'disabled'}>Fill in team order</button><button class="btn ghost small" data-cs="pol" title="Only if pressing a pad buzzes someone in">Pads backwards? Flip</button>${Object.keys(CO.seats.map).length?'<button class="x" data-cs="clear">Clear seats</button>':''}</div>`;
   }
   return `<div class="panel cs-panel"><div class="co-sw" style="padding:0 0 10px"><div><b>Jump seats</b><span class="hint">${on?(SEAT.sim?'Test mode (no seat box).':'Seat box connected. The first quizzer to jump gets the question.'):'Optional. Use a USB seat box so jumps pick the quizzer for you.'}</span></div>
     ${on?(SEAT.sim?'<button class="btn ghost small" data-cs="simoff">Stop test</button>':'<span class="cs-ok">● Connected</span>'):(SEAT_HID?'<button class="btn small" data-cs="connect">Connect seat box</button>':'')}</div>
@@ -4112,7 +4111,7 @@ function seatPanel(){
 document.addEventListener('click',e=>{ const t=e.target.closest('[data-cs]'); if(!t) return; const a=t.dataset.cs; SEAT.msg='';
   if(a==='connect') seatConnect();
   else if(a==='flip'){ const s=+t.dataset.s; CO.seats.flip[s]=!CO.seats.flip[s]; coSave(); renderKeep(); }
-  else if(a==='base'){ if(SEAT.raw){ CO.seats.sit=SEAT.raw.slice(); coSave(); SEAT.up=[]; SEAT.msg='Pads set. Every seat with someone on it now reads "sitting".'; } else SEAT.msg='No signal from the seat box yet. Have someone stand up and sit down, then try again.'; renderKeep(); }
+  else if(a==='pol'){ const flipped=CO.seats.sit.some(x=>x); CO.seats.sit=flipped?[0,0,0]:[31,31,31]; coSave(); SEAT.up=[]; SEAT.msg=flipped?'Pads back to normal: released = buzzed in.':'Pads flipped. Use this only if pressing a pad was buzzing people in.'; renderKeep(); }
   else if(a==='claim'){ SEAT.claim={ids:coGroups(CO.roster).flatMap(g=>g.list.map(p=>p.id)),i:0}; renderKeep(); }
   else if(a==='skip'){ if(SEAT.claim){ SEAT.claim.i++; if(SEAT.claim.i>=SEAT.claim.ids.length) SEAT.claim=null; } renderKeep(); }
   else if(a==='stop'){ SEAT.claim=null; renderKeep(); }
@@ -4122,12 +4121,6 @@ document.addEventListener('click',e=>{ const t=e.target.closest('[data-cs]'); if
 });
 document.addEventListener('change',e=>{ const t=e.target; if(!t||!t.dataset||!t.dataset.csmap) return; const k=t.dataset.csmap, v=t.value;
   Object.keys(CO.seats.map).forEach(x=>{ if(v&&CO.seats.map[x]===v) delete CO.seats.map[x]; }); if(v) CO.seats.map[k]=v; else delete CO.seats.map[k]; coSave(); renderKeep(); });
-// safety check when a quiz starts: if every quizzer on a string reads "up", those pads read backwards, so flip them
-function seatSanity(){ if(!SEAT.raw) return; let fixed=false;
-  for(let s=0;s<3;s++){ const ks=Object.keys(CO.seats.map).filter(k=>+k.split(':')[0]===s); if(ks.length<2) continue;
-    if(ks.every(k=>seatOpenPad(SEAT.raw,k))){ ks.forEach(k=>{ const b=+k.split(':')[1]; CO.seats.sit[s]^=(1<<b); }); fixed=true; } }
-  if(fixed){ coSave(); SEAT.up=[]; SEAT.msg='Some pads read backwards, so I flipped them.'; } }
-document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-co="start"]')) try{ seatSanity(); }catch(err){} },true);
 // repaint lights after every render
 const seatRender0=render; render=function(){ seatRender0(); try{ seatPaint(); }catch(e){} };
 // test hook: lets a coach try it without the box (and lets us test it)
