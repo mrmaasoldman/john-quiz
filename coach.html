@@ -208,13 +208,13 @@ section.co-on{display:grid;gap:16px}
 .qcard.is-right{border-left-color:var(--good)}
 .qcard.is-wrong{border-left-color:var(--bad)}
 .co-qtag{align-self:flex-start;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent2);background:color-mix(in srgb,var(--accent2) 12%,transparent);padding:3px 9px;border-radius:5px}
-.qtext{font-size:clamp(20px,2vw,27px);font-weight:600;line-height:1.3;letter-spacing:-.012em;text-wrap:pretty}
+.qtext{font-size:clamp(23px,2.3vw,31px);font-weight:650;line-height:1.28;letter-spacing:-.015em;text-wrap:pretty;color:var(--ink)}
 .fb{border-radius:8px;padding:12px 14px}
-.co-ans{background:var(--sunk)!important;border:1px solid var(--line)}
+.co-ans{background:none!important;border:0;border-top:1px dashed var(--line2);border-radius:0;padding:10px 0 0;transition:color .15s}
 .co-ans>.row{justify-content:space-between;margin-bottom:4px}
-.co-ans .label{color:var(--good)}
-.ans{font-size:18px;font-weight:600;line-height:1.35}
-.ans.co-quote{font-size:18px;font-weight:500;line-height:1.5}
+.co-ans .label{color:var(--muted)}
+.ans{font-size:15.5px;font-weight:500;line-height:1.4;color:var(--muted)}
+.ans.co-quote{font-size:15.5px;font-weight:400;line-height:1.5}
 .co-ans .hint{font-size:12px;margin:2px 0}
 .co-blur{filter:blur(7px);user-select:none}
 .co-flash{border:1px solid var(--line)}
@@ -331,7 +331,7 @@ textarea#cores{border:1px solid var(--line2);border-radius:8px;padding:10px;back
   html.co-mode .co-prow.sel .co-pname em{opacity:0}
 }
 @media (min-width:1000px) and (max-height:760px){
-  html.co-mode .qtext{font-size:22px}
+  html.co-mode .qtext{font-size:25px}
   html.co-mode .qcard{padding:14px 18px;gap:10px}
   html.co-mode .co-clockbar{padding-block:7px}
   html.co-mode .co-game b{font-size:26px}
@@ -384,8 +384,8 @@ textarea#cores{border:1px solid var(--line2);border-radius:8px;padding:10px;back
   .co-pausebtn{min-width:0;padding:7px 11px}
   .co-pausebtn .pl{display:none}
   .qcard{padding:14px 14px 12px;gap:10px}
-  .qtext{font-size:19px}
-  .ans{font-size:16.5px}
+  .qtext{font-size:21px}
+  .ans{font-size:14.5px}
   .co-verse p{font-size:15px}
   .co-tools .row{gap:8px}
   .co-tools .btn{flex:1;min-height:42px;font-size:14px}
@@ -415,9 +415,9 @@ textarea#cores{border:1px solid var(--line2);border-radius:8px;padding:10px;back
 }
 .co-sw .seg{flex-wrap:nowrap;flex:none}
 @media (min-width:1000px) and (min-height:900px){
-  html.co-mode .qtext{font-size:32px}
-  html.co-mode .ans{font-size:22px}
-  html.co-mode .ans.co-quote{font-size:20px}
+  html.co-mode .qtext{font-size:36px}
+  html.co-mode .ans{font-size:18px}
+  html.co-mode .ans.co-quote{font-size:17px}
   html.co-mode .co-verse p{font-size:18px}
   html.co-mode .co-game b{font-size:36px}
 }
@@ -448,6 +448,10 @@ textarea#cores{border:1px solid var(--line2);border-radius:8px;padding:10px;back
 .cs-chip{display:inline-flex;align-items:center;gap:5px;margin-left:10px;vertical-align:3px;font-size:11px;font-weight:600;color:var(--good);background:var(--good-soft);padding:2px 8px;border-radius:99px;letter-spacing:0}
 .cs-chip i{width:6px;height:6px;border-radius:50%;background:var(--good)}
 @media (max-width:760px){ .cs-row{grid-template-columns:repeat(5,minmax(0,1fr))} .cs-sl{grid-column:1/-1} .cs-row>.x{grid-column:1/-1;justify-self:start} }
+/* the answer stays quiet while you read; it steps forward once someone buzzes in */
+.co-read:has(.co-bar.judging) .co-ans .label,.co-desk:has(.co-prow.sel) .co-ans .label{color:var(--good)}
+.co-read:has(.co-bar.judging) .ans,.co-desk:has(.co-prow.sel) .ans{color:var(--ink);font-weight:600}
+.co-read:has(.co-bar.judging) .ans.co-quote,.co-desk:has(.co-prow.sel) .ans.co-quote{font-weight:500}
 @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 
 </style>
