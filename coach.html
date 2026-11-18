@@ -437,6 +437,9 @@ textarea#cores{border:1px solid var(--line2);border-radius:8px;padding:10px;back
 .cs-ord:empty{display:none}
 .cs-seat select{width:100%;min-width:0;border:0;background:none;font-size:12.5px;font-weight:600;padding:0;color:var(--ink);text-overflow:ellipsis}
 .cs-seat.up{background:var(--warn-soft);border-color:var(--warn)}
+.cs-st{font-style:normal;font-weight:600;font-size:10px;color:var(--muted);margin-left:auto;margin-right:4px;text-transform:uppercase;letter-spacing:.04em}
+.cs-seat.sat .cs-st{color:var(--good)}
+.cs-seat.up .cs-st{color:var(--warn)}
 .cs-claim{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:var(--accent-soft);border:1px solid var(--accent);font-size:14.5px}
 .cs-claim .row{margin-left:auto}
 .cs-msg{font-size:13px;color:var(--muted)}
@@ -4017,50 +4020,57 @@ if(COACH_ONLY){ CO.on=true; tab='practice'; document.documentElement.classList.a
    - When it connects, the program sends output report 0 with bytes [9, 1, 0, ...].
    - Each input report has one byte per seat string (team): byte 0 = string 1, 1 = string 2, 2 = string 3.
      Bits 0-4 are the five seat pads (bit 0 = seat 1 when the string feeds from the left).
-   - ACME pads and QUIZ TIME (closed-circuit) pads read opposite ways, and a finger jumper flips one seat.
-     We handle all of that by remembering what each seat reads while everyone is sitting
-     ("baseline"); a seat that reads differently from its baseline is standing.
+   - Quizzers SIT on the pads: a pressed pad = sitting, a pad that lets go = buzzed in.
+     On ACME pads (the program's default) a pressed pad reads 0 and an open pad reads 1.
+     QUIZ TIME (closed-circuit) pads read the other way, and a finger jumper flips one seat,
+     so "Everyone's sitting" saves what each pad reads while pressed (CO.seats.sit).
+   - Seats with no quizzer set are ignored, so empty pads never buzz in.
    - Order matters: the first seat to stand is the jump winner, then 2nd, 3rd, ... */
-const SEAT={dev:null,raw:null,base:null,up:[],claim:null,msg:'',err:'',sim:false};
+const SEAT={dev:null,raw:null,up:[],claim:null,msg:'',err:'',sim:false};
 const SEAT_HID=!!(navigator.hid&&window.isSecureContext&&(()=>{ try{ return !document.featurePolicy||document.featurePolicy.allowsFeature('hid'); }catch(e){ return true; } })());
 const SEAT_WEB='https://mrmaasoldman.github.io/john-quiz/coach.html';
 if(!CO.seats) CO.seats={map:{},flip:[false,false,false]};
+if(!CO.seats.sit) CO.seats.sit=[0,0,0]; // what a PRESSED pad reads, per string bit (ACME: 0)
 function seatKey(s,b){ return s+':'+b; }
 function seatLabel(k){ const [s,b]=k.split(':').map(Number); const i=CO.seats.flip[s]?4-b:b; return 'String '+(s+1)+', seat '+(i+1); }
 function seatOf(pid){ return Object.keys(CO.seats.map).find(k=>CO.seats.map[k]===pid)||null; }
 function seatName(pid){ const p=(CO.roster.find(r=>r.id===pid))||(CO.match&&CO.match.players[pid]); return p?p.name:''; }
-function seatIsUp(k){ if(!SEAT.raw||!SEAT.base) return false; const [s,b]=k.split(':').map(Number); return (((SEAT.raw[s]^SEAT.base[s])>>b)&1)===1; }
+function seatOpenPad(raw,k){ const [s,b]=k.split(':').map(Number); return (((raw[s]^CO.seats.sit[s])>>b)&1)===1; } // pad not pressed
+function seatIsUp(k){ return !!SEAT.raw&&!!CO.seats.map[k]&&seatOpenPad(SEAT.raw,k); }
 function seatCanAnswer(M,id){ const p=M.players[id]; if(!p||p.out||!M.cur||M.cur.closed) return false; if(M.cur.tried&&M.cur.tried[id]) return false;
   if(M.gc&&M.gc.half==='ot'&&M.gc.otTeams&&!M.gc.otTeams.includes(coTeamKey(p))) return false; return true; }
 function seatOnReport(bytes){
   const prev=SEAT.raw; SEAT.raw=bytes;
-  if(!SEAT.base){ SEAT.base=bytes.slice(); }
   if(prev&&prev[0]===bytes[0]&&prev[1]===bytes[1]&&prev[2]===bytes[2]) return;
-  // who is standing now, keeping the order they stood up in
+  // pads that just let go (someone got up), on any seat
+  const rose=[]; if(prev) for(let s=0;s<3;s++) for(let b=0;b<5;b++){ const k=seatKey(s,b); if(seatOpenPad(bytes,k)&&!seatOpenPad(prev,k)) rose.push(k); }
+  // quizzers who are up now, keeping the order they got up in
   const now=[]; for(let s=0;s<3;s++) for(let b=0;b<5;b++){ const k=seatKey(s,b); if(seatIsUp(k)) now.push(k); }
-  const fresh=now.filter(k=>!SEAT.up.includes(k));
-  SEAT.up=SEAT.up.filter(k=>now.includes(k)).concat(fresh);
-  if(fresh.length) seatJumped(fresh);
+  const fresh=prev?now.filter(k=>!SEAT.up.includes(k)):[];
+  SEAT.up=SEAT.up.filter(k=>now.includes(k)).concat(prev?fresh:now);
+  if(SEAT.claim&&rose.length) seatClaim(rose[0]);
+  else if(fresh.length) seatJumped(fresh);
+  else if(rose.length&&!CO.seats.map[rose[0]]&&CO.match&&!CO.match.done){ SEAT.msg=seatLabel(rose[0])+' buzzed in, but no quizzer is set to that seat.'; }
   seatPaint();
 }
+// assigning seats: the next pad that lets go belongs to the quizzer we asked to stand up
+function seatClaim(k){ const c=SEAT.claim; Object.keys(CO.seats.map).forEach(x=>{ if(CO.seats.map[x]===c.ids[c.i]) delete CO.seats.map[x]; });
+  CO.seats.map[k]=c.ids[c.i]; coSave(); try{ sfx('ding'); }catch(e){} c.i++; if(c.i>=c.ids.length){ SEAT.claim=null; SEAT.msg='All seats are set. Have everyone sit back down.'; } renderKeep(); }
 function seatJumped(fresh){
-  // assigning seats: the next seat that stands belongs to the quizzer we asked to stand
-  if(SEAT.claim){ const k=fresh[0], c=SEAT.claim; Object.keys(CO.seats.map).forEach(x=>{ if(CO.seats.map[x]===c.ids[c.i]) delete CO.seats.map[x]; });
-    CO.seats.map[k]=c.ids[c.i]; coSave(); try{ sfx('ding'); }catch(e){} c.i++; if(c.i>=c.ids.length){ SEAT.claim=null; SEAT.msg='All seats are set. Have everyone sit down.'; } renderKeep(); return; }
   const M=CO.match; if(!M||M.done||!M.cur||M.cur.closed||coSel||tab!=='practice') return;
   // first eligible quizzer in jump order gets the question
   for(const k of SEAT.up){ const id=CO.seats.map[k]; if(id&&seatCanAnswer(M,id)){ coSel=id; coSetPause(M,false); if(M.rules.clock) coStartClock('answer',id); try{ sfx('tick'); }catch(e){} renderKeep(); coPaintClock(); return; } }
-  const k=fresh[0]; if(!CO.seats.map[k]){ SEAT.msg=seatLabel(k)+' jumped, but no quizzer is set to that seat.'; seatPaint(); }
 }
 // light up seats without rebuilding the page
 function seatPaint(){
-  document.querySelectorAll('[data-seatk]').forEach(el=>{ const k=el.dataset.seatk, i=SEAT.up.indexOf(k); el.classList.toggle('up',i>=0); const o=el.querySelector('.cs-ord'); if(o) o.textContent=i>=0?(i+1):''; });
+  document.querySelectorAll('[data-seatk]').forEach(el=>{ const k=el.dataset.seatk, i=SEAT.up.indexOf(k), open=!!SEAT.raw&&seatOpenPad(SEAT.raw,k);
+    el.classList.toggle('up',i>=0); el.classList.toggle('sat',!!SEAT.raw&&!open); const o=el.querySelector('.cs-ord'); if(o) o.textContent=i>=0?(i+1):''; const st=el.querySelector('.cs-st'); if(st) st.textContent=!SEAT.raw?'':open?(CO.seats.map[k]?'up':'empty'):'sitting'; });
   document.querySelectorAll('[data-seatp]').forEach(el=>{ const k=seatOf(el.dataset.seatp), i=k?SEAT.up.indexOf(k):-1; el.hidden=i<0; el.textContent=i<0?'':(i===0?'1st':i===1?'2nd':i===2?'3rd':(i+1)+'th'); el.classList.toggle('first',i===0); });
   const m=document.getElementById('csmsg'); if(m){ m.textContent=SEAT.msg||''; m.hidden=!SEAT.msg; }
 }
 async function seatOpen(dev){
   try{ if(!dev.opened) await dev.open(); }catch(e){ SEAT.err='Could not open the seat box. Close the Quiz Master program if it is running, then try again.'; renderKeep(); return; }
-  SEAT.dev=dev; SEAT.err=''; SEAT.raw=null; SEAT.base=null; SEAT.up=[];
+  SEAT.dev=dev; SEAT.err=''; SEAT.raw=null; SEAT.up=[];
   dev.oninputreport=e=>{ const d=e.data; seatOnReport([d.byteLength>0?d.getUint8(0):0,d.byteLength>1?d.getUint8(1):0,d.byteLength>2?d.getUint8(2):0]); };
   try{ let len=64; const r=(dev.collections||[]).flatMap(c=>c.outputReports||[])[0]; if(r&&r.items&&r.items.length) len=Math.max(2,Math.round(r.items.reduce((a,it)=>a+it.reportSize*it.reportCount,0)/8)); const out=new Uint8Array(len); out[0]=9; out[1]=1; await dev.sendReport(r?r.reportId:0,out); }catch(e){}
   renderKeep();
@@ -4085,10 +4095,11 @@ function seatPanel(){
   else if(!on){ body=`<p class="hint">Plug the seat box into this computer, then connect it. Close the old Quiz Master program first if it's open.</p>`; }
   else {
     const opts=k=>`<option value="">—</option>${ros.map(p=>`<option value="${p.id}" ${CO.seats.map[k]===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}`;
-    body=`<div class="cs-grid">${[0,1,2].map(s=>`<div class="cs-row"><span class="cs-sl">String ${s+1}</span>${[0,1,2,3,4].map(i=>{ const b=CO.seats.flip[s]?4-i:i, k=seatKey(s,b), i2=SEAT.up.indexOf(k); return `<label class="cs-seat ${i2>=0?'up':''}" data-seatk="${k}"><span class="cs-n">${i+1}<em class="cs-ord">${i2>=0?i2+1:''}</em></span><select data-csmap="${k}" aria-label="${seatLabel(k)}">${opts(k)}</select></label>`; }).join('')}<button class="x" data-cs="flip" data-s="${s}" title="Seat 1 is on the other end">Flip</button></div>`).join('')}</div>
+    body=`<div class="cs-grid">${[0,1,2].map(s=>`<div class="cs-row"><span class="cs-sl">String ${s+1}</span>${[0,1,2,3,4].map(i=>{ const b=CO.seats.flip[s]?4-i:i, k=seatKey(s,b), i2=SEAT.up.indexOf(k); return `<label class="cs-seat ${i2>=0?'up':''}" data-seatk="${k}"><span class="cs-n">${i+1}<i class="cs-st"></i><em class="cs-ord">${i2>=0?i2+1:''}</em></span><select data-csmap="${k}" aria-label="${seatLabel(k)}">${opts(k)}</select></label>`; }).join('')}<button class="x" data-cs="flip" data-s="${s}" title="Seat 1 is on the other end">Flip</button></div>`).join('')}</div>
       ${SEAT.claim?`<div class="cs-claim"><b>${esc(seatName(SEAT.claim.ids[SEAT.claim.i]))}</b>, stand up now. <span class="hint">(${SEAT.claim.i+1} of ${SEAT.claim.ids.length})</span><span class="row"><button class="btn ghost small" data-cs="skip">Skip</button><button class="btn ghost small" data-cs="stop">Stop</button></span></div>`:''}
+      <p class="hint">Sitting on a pad = waiting. Getting off the pad = buzzing in. If seats show <b>up</b> while people are sitting, have everyone sit and click <b>Everyone's sitting</b>.</p>
       <p class="cs-msg" id="csmsg" ${SEAT.msg?'':'hidden'}>${esc(SEAT.msg)}</p>
-      <div class="row"><button class="btn ghost small" data-cs="claim" ${ros.length?'':'disabled'}>Set seats by jumping</button><button class="btn ghost small" data-cs="auto" ${ros.length?'':'disabled'}>Fill in team order</button><button class="btn ghost small" data-cs="base" title="Use this when everyone is sitting">Everyone's seated: reset lights</button>${Object.keys(CO.seats.map).length?'<button class="x" data-cs="clear">Clear seats</button>':''}</div>`;
+      <div class="row"><button class="btn ghost small" data-cs="claim" ${ros.length?'':'disabled'}>Set seats by jumping</button><button class="btn ghost small" data-cs="auto" ${ros.length?'':'disabled'}>Fill in team order</button><button class="btn ghost small" data-cs="base" title="Click while every quizzer is sitting on their pad">Everyone's sitting: set pads</button>${Object.keys(CO.seats.map).length?'<button class="x" data-cs="clear">Clear seats</button>':''}</div>`;
   }
   return `<div class="panel cs-panel"><div class="co-sw" style="padding:0 0 10px"><div><b>Jump seats</b><span class="hint">${on?(SEAT.sim?'Test mode (no seat box).':'Seat box connected. The first quizzer to jump gets the question.'):'Optional. Use a USB seat box so jumps pick the quizzer for you.'}</span></div>
     ${on?(SEAT.sim?'<button class="btn ghost small" data-cs="simoff">Stop test</button>':'<span class="cs-ok">● Connected</span>'):(SEAT_HID?'<button class="btn small" data-cs="connect">Connect seat box</button>':'')}</div>
@@ -4097,7 +4108,7 @@ function seatPanel(){
 document.addEventListener('click',e=>{ const t=e.target.closest('[data-cs]'); if(!t) return; const a=t.dataset.cs; SEAT.msg='';
   if(a==='connect') seatConnect();
   else if(a==='flip'){ const s=+t.dataset.s; CO.seats.flip[s]=!CO.seats.flip[s]; coSave(); renderKeep(); }
-  else if(a==='base'){ if(SEAT.raw){ SEAT.base=SEAT.raw.slice(); } SEAT.up=[]; SEAT.msg='Lights reset. Everyone should be dark now.'; renderKeep(); }
+  else if(a==='base'){ if(SEAT.raw){ CO.seats.sit=SEAT.raw.slice(); coSave(); SEAT.up=[]; SEAT.msg='Pads set. Every seat with someone on it now reads "sitting".'; } else SEAT.msg='No signal from the seat box yet. Have someone stand up and sit down, then try again.'; renderKeep(); }
   else if(a==='claim'){ SEAT.claim={ids:coGroups(CO.roster).flatMap(g=>g.list.map(p=>p.id)),i:0}; renderKeep(); }
   else if(a==='skip'){ if(SEAT.claim){ SEAT.claim.i++; if(SEAT.claim.i>=SEAT.claim.ids.length) SEAT.claim=null; } renderKeep(); }
   else if(a==='stop'){ SEAT.claim=null; renderKeep(); }
@@ -4107,10 +4118,16 @@ document.addEventListener('click',e=>{ const t=e.target.closest('[data-cs]'); if
 });
 document.addEventListener('change',e=>{ const t=e.target; if(!t||!t.dataset||!t.dataset.csmap) return; const k=t.dataset.csmap, v=t.value;
   Object.keys(CO.seats.map).forEach(x=>{ if(v&&CO.seats.map[x]===v) delete CO.seats.map[x]; }); if(v) CO.seats.map[k]=v; else delete CO.seats.map[k]; coSave(); renderKeep(); });
+// safety check when a quiz starts: if every quizzer on a string reads "up", those pads read backwards, so flip them
+function seatSanity(){ if(!SEAT.raw) return; let fixed=false;
+  for(let s=0;s<3;s++){ const ks=Object.keys(CO.seats.map).filter(k=>+k.split(':')[0]===s); if(ks.length<2) continue;
+    if(ks.every(k=>seatOpenPad(SEAT.raw,k))){ ks.forEach(k=>{ const b=+k.split(':')[1]; CO.seats.sit[s]^=(1<<b); }); fixed=true; } }
+  if(fixed){ coSave(); SEAT.up=[]; SEAT.msg='Some pads read backwards, so I flipped them.'; } }
+document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-co="start"]')) try{ seatSanity(); }catch(err){} },true);
 // repaint lights after every render
 const seatRender0=render; render=function(){ seatRender0(); try{ seatPaint(); }catch(e){} };
 // test hook: lets a coach try it without the box (and lets us test it)
-window.seatSim=function(bytes){ SEAT.sim=true; if(!SEAT.raw){ SEAT.base=null; } seatOnReport(bytes); };
+window.seatSim=function(bytes){ SEAT.sim=true; seatOnReport(bytes); };
 
 render();
 cloud.status='off';
