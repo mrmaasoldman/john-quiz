@@ -452,6 +452,24 @@ textarea#cores{border:1px solid var(--line2);border-radius:8px;padding:10px;back
 .co-read:has(.co-bar.judging) .co-ans .label,.co-desk:has(.co-prow.sel) .co-ans .label{color:var(--good)}
 .co-read:has(.co-bar.judging) .ans,.co-desk:has(.co-prow.sel) .ans{color:var(--ink);font-weight:600}
 .co-read:has(.co-bar.judging) .ans.co-quote,.co-desk:has(.co-prow.sel) .ans.co-quote{font-weight:500}
+/* reference beside the question */
+.qhead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.qhead .qtext{flex:1;min-width:0}
+.qref{flex:none;margin-top:.3em;font-size:15px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:4px 10px;border-radius:6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.qtop .ref:empty{display:none}
+.qtop{justify-content:flex-end}
+.qtop .ref:not(:empty){margin-right:auto}
+.qtop .ref .cs-chip{margin-left:0}
+/* other questions from the same verse */
+.co-others{margin-top:6px;padding-top:10px;border-top:1px dashed var(--line2)}
+.co-others ol{margin:6px 0 0;padding-left:20px;display:grid;gap:6px}
+.co-others li{font-size:14px;line-height:1.4;color:var(--ink)}
+.co-others li::marker{color:var(--muted);font-size:12px}
+.co-others .oq{font-weight:500}
+.co-others .oa{display:block;color:var(--muted);font-size:13px}
+.co-others .oa i{font-style:normal;opacity:.8}
+@media (min-width:1000px) and (min-height:560px){ html.co-mode .qcard{flex:0 0 auto;max-height:60%} html.co-mode .co-read:not(:has(.co-verse)) .qcard{flex:1 1 auto;max-height:none} html.co-mode .co-verse{flex:1 1 0;min-height:96px;max-height:none} }
+@media (max-width:760px){ .qref{font-size:13px;padding:3px 8px} .qhead{gap:10px} }
 @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 
 </style>
@@ -1225,7 +1243,7 @@ function coachView(){ const M=CO.match; if(M&&M.gc&&!M.done) coGameRun();
   const nextLbl=ending?(g.half===1?'Go to halftime →':'Finish the quiz →'):closed?(last?'See the final scores →':'Next question →'):(last?'Nobody got it · final scores →':'Nobody got it · next →');
   const gameLeft=g?coGameLeft(M):0;
   return h(`<section class="co-desk"><div class="co-read">
-    <div class="qtop"><span class="ref">John ${qc}:${qv}${window.COACH_ONLY?seatChip():''}</span>
+    <div class="qtop"><span class="ref">${window.COACH_ONLY?seatChip():''}</span>
       <div class="tally"><span>${g?coPeriodName(g)+' · Q'+M.n:M.n+(M.total?' / '+M.total:'')}</span><span class="g">✓ ${rights}</span><span class="b">✗ ${misses}</span></div></div>
     ${R.clock?`<div class="panel co-clockbar ${M.paused?'paused':''}"><span class="ref co-cref">Jn ${qc}:${qv}</span>
       ${g?`<div class="co-game ${gameLeft<=30000&&gameLeft>0?'low':''} ${gameLeft<=0?'over':''}"><span class="label">${coPeriodName(g)}</span><b id="cogame">${coMMSS(gameLeft)}</b><span class="co-addt"><button class="btn ghost small" data-co="addt" data-ms="1000" title="Add 1 second">+1s</button><button class="btn ghost small" data-co="addt" data-ms="10000" title="Add 10 seconds">+10s</button></span></div>`:''}
@@ -1234,7 +1252,7 @@ function coachView(){ const M=CO.match; if(M&&M.gc&&!M.done) coGameRun();
     </div>`:coTrack(M)}
     <div class="qcard co-q ${coFresh?'fresh':''} ${quote?'is-quote':''} ${closed&&coFlash?(coFlash.kind==='good'?'is-right':coFlash.kind==='bad'?'is-wrong':''):''}">
       ${quote?'<span class="co-qtag">Quote question · 30 seconds</span>':''}
-      <div class="qtext">${quote?`Quote John ${qc}:${qv}.`:esc(coQ(q.q))}</div>
+      <div class="qhead"><div class="qtext">${quote?`Quote John ${qc}:${qv}.`:esc(coQ(q.q))}</div>${quote?'':`<span class="qref">John ${qc}:${qv}</span>`}</div>
       <div class="fb co-ans" style="background:var(--sunk)"><div class="row" style="justify-content:space-between"><span class="label">${quote?'The verse, word for word':'Answer'}</span><button class="x" data-co="show" data-k="ans">${sh.ans?'Hide':'Show'}</button></div><div class="${sh.ans?'':'co-blur'}">${answers}</div></div>
       ${coFlash?`<div class="fb ${coFlash.kind==='good'?'good':coFlash.kind==='bad'?'bad':''} co-flash"><div class="hype">${esc(coFlash.text)}</div></div>`:''}
       ${M.cur.warn?`<div class="co-teamwarn" role="alert"><b>Announce:</b> ${esc(M.cur.warn)}</div>`:''}
@@ -1243,9 +1261,12 @@ function coachView(){ const M=CO.match; if(M&&M.gc&&!M.done) coGameRun();
     <div class="co-bar ${coSel&&!closed?'judging':''}">${coSel&&!closed&&M.players[coSel]?`<div class="co-barjudge"><p>Did <b>${esc(M.players[coSel].name)}</b> answer right?</p><div class="co-jb"><button class="co-yes" data-co="rule" data-t="right" data-id="${coSel}">✓ Right</button><button class="co-no" data-co="rule" data-t="wrong" data-id="${coSel}">✗ Wrong</button></div><div class="co-jx"><button class="x" data-co="rule" data-t="foul" data-id="${coSel}">Foul (jumped too early)</button><button class="x" data-co="unsel">Cancel</button></div></div>`:''}
       <button class="btn co-next ${closed?'ready':''}" data-co="next">${nextLbl}</button></div>
     <div class="panel co-tools"><div class="row"><button class="btn ghost small" data-co="undo" ${M.undo.length?'':'disabled'}>↩ Undo</button><button class="btn ghost small" data-co="end">End quiz</button><span class="hint co-keys"><kbd>1</kbd>–<kbd>9</kbd> quizzer · <kbd>C</kbd> right · <kbd>E</kbd> wrong · <kbd>N</kbd> next · <kbd>P</kbd> pause</span></div></div>
-    ${quote?'':`<div class="panel co-verse"><div class="row" style="justify-content:space-between"><span class="label">John ${qc}:${qv}</span><button class="x" data-co="show" data-k="ctx">${sh.ctx?'Just this verse':'Nearby verses'}</button></div>
-      ${sh.ctx&&prev?`<p class="ctx"><sup>${qv-1}</sup>${esc(prev)}</p>`:''}<p><sup>${qv}</sup>${esc(v)}</p>${sh.ctx&&nxt?`<p class="ctx"><sup>${qv+1}</sup>${esc(nxt)}</p>`:''}</div>`}
+    ${quote?(window.COACH_ONLY?coQuotePanel(qc,qv):''):`<div class="panel co-verse"><div class="row" style="justify-content:space-between"><span class="label">John ${qc}:${qv}</span><button class="x" data-co="show" data-k="ctx">${sh.ctx?'Just this verse':'Nearby verses'}</button></div>
+      ${sh.ctx&&prev?`<p class="ctx"><sup>${qv-1}</sup>${esc(prev)}</p>`:''}<p><sup>${qv}</sup>${esc(v)}</p>${sh.ctx&&nxt?`<p class="ctx"><sup>${qv+1}</sup>${esc(nxt)}</p>`:''}${window.COACH_ONLY?coSameVerse(q,qc,qv):''}</div>`}
   </div><aside class="co-sheet">${coSheet(M,true)}<div class="panel co-logp"><div class="label" style="margin-bottom:6px">What happened</div>${coLog(M)}</div></aside></section>`); }
+function coSameVerse(q,c,v){ const o=Q.filter(x=>x&&x!==q&&x.c===c&&x.v===v); if(!o.length) return '';
+  return `<div class="co-others"><div class="label">Other questions on this verse (${o.length})</div><ol>${o.map(x=>`<li><span class="oq">${esc(coQ(x.q))}</span><span class="oa">${x.a.map(esc).join(' <i>or</i> ')}</span></li>`).join('')}</ol></div>`; }
+function coQuotePanel(c,v){ const o=coSameVerse(null,c,v); return o?`<div class="panel co-verse"><div class="row"><span class="label">John ${c}:${v}</span></div>${o.replace('Other questions on this verse','Questions on this verse')}</div>`:''; }
 function coResultsText(M){ const lines=['John Quiz · Coach mode results',`${M.label||''} · ${M.n} questions${M.gc?(M.gc.ot?' · '+M.gc.ot+' overtime period'+(M.gc.ot>1?'s':''):' · two 6-minute halves'):''} · ${M.rules.bqf?'Official BQF rules':'Custom rules'}`,''];
   coGroups(Object.values(M.players)).forEach(g=>{ const t=M.teams[g.key], tot=g.list.reduce((a,p)=>a+p.score,0)+(t?t.bonus-t.ded:0); lines.push(`${g.name}: ${tot} points${t?` (team errors ${t.errors}, bonus +${t.bonus}, deductions −${t.ded})`:''}`); g.list.forEach(p=>lines.push(`  ${p.name}: ${p.score} pts, ${p.correct} correct, ${p.errors} errors, ${p.fouls} fouls${p.out==='quiz'?', quizzed out':p.out==='error'?', errored out':''}`)); lines.push(''); }); return lines.join('\n'); }
 if(COACH_ON){
