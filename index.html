@@ -2144,6 +2144,47 @@ html.co-only .tabs,html.co-only .topsongs,html.co-only #musbtn,html.co-only .who
   .co-desk .co-read>.row .btn.ghost{flex:1 1 auto;font:700 14px var(--f-read)!important;letter-spacing:0;text-shadow:none!important;min-height:42px}
   .co-pod .co-block{height:34px} .co-pod.p1 .co-block{height:56px} .co-pod.p3 .co-block{height:20px}
 }
+
+/* coach: reference before the question, quieter answer, same-verse list, laptop note, jump seats */
+.t-coach .qref{color:var(--accent);white-space:nowrap;margin-right:.2em}
+.t-coach .co-ans{background:transparent;border-top:1px dashed var(--line)}
+.t-coach .co-ans .ans{opacity:.62;transition:opacity .15s}
+.co-desk:has(.co-prow.sel) .co-ans .ans,.co-read:has(.co-bar.judging) .co-ans .ans{opacity:1}
+.co-others{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+.co-others ol{margin:6px 0 0;padding-left:20px;display:grid;gap:6px}
+.co-others li{font:14px/1.4 var(--f-read);color:var(--ink)}
+.co-others .oa{display:block;color:var(--muted);font-size:13px}
+.co-others .oa i{font-style:normal;opacity:.8}
+.co-laptop{display:none;font:14px/1.45 var(--f-read);border-color:var(--warn)!important}
+.co-laptop b{color:var(--warn)}
+@media (max-width:999px),(pointer:coarse){ .co-laptop{display:block} }
+.cs-panel{display:grid;gap:10px}
+.cs-panel .co-sw{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cs-panel .co-sw>div{display:grid;gap:2px}
+.cs-ok{font:600 13px var(--f-read);color:var(--good);white-space:nowrap}
+.cs-err{font:13.5px var(--f-read);color:var(--bad)}
+.cs-panel a{color:var(--accent);font-weight:600}
+.cs-grid{display:grid;gap:6px}
+.cs-row{display:grid;grid-template-columns:62px repeat(5,minmax(0,1fr)) auto;align-items:center;gap:6px}
+.cs-sl{font:600 12px var(--f-read);color:var(--muted)}
+.cs-seat{display:grid;gap:3px;padding:5px;border:1px solid var(--line);border-radius:8px;background:var(--sunk);min-width:0}
+.cs-n{display:flex;align-items:center;font:700 11px var(--f-read);color:var(--muted)}
+.cs-st{font-style:normal;font-weight:600;font-size:10px;margin-left:auto;margin-right:4px;text-transform:uppercase;letter-spacing:.04em}
+.cs-seat.sat .cs-st{color:var(--good)}
+.cs-seat.up{border-color:var(--warn);box-shadow:inset 0 0 0 2px var(--warn)}
+.cs-seat.up .cs-st{color:var(--warn)}
+.cs-ord{font-style:normal;color:#fff;background:var(--warn);border-radius:4px;padding:0 5px;min-width:16px;text-align:center}
+.cs-ord:empty{display:none}
+.cs-seat select{width:100%;min-width:0;border:0;background:none;font:600 12.5px var(--f-read);padding:0;color:var(--ink)}
+.cs-claim{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;border:2px solid var(--accent);font:14.5px var(--f-read)}
+.cs-claim .row{margin-left:auto}
+.cs-msg{font:13px var(--f-read);color:var(--muted)}
+.cs-light{font:700 10.5px var(--f-read);padding:2px 6px;border-radius:4px;background:var(--warn);color:#fff;flex:none}
+.cs-light.first{background:var(--good)}
+.cs-chip{display:inline-flex;align-items:center;gap:5px;font:600 11px var(--f-read);color:var(--good)}
+.cs-chip i{width:7px;height:7px;border-radius:50%;background:var(--good)}
+.qtop .ref:empty{display:none}
+@media (max-width:760px){ .cs-row{grid-template-columns:repeat(5,minmax(0,1fr))} .cs-sl{grid-column:1/-1} .cs-row>.x{grid-column:1/-1;justify-self:start} .t-coach .co-clockbar .co-cref{display:none} }
 </style>
 
 <div id="app"></div>
@@ -2647,7 +2688,7 @@ function setupView(){
   const o=U.opts;
   const seg=(key,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-opt="${key}" data-val="${v}" aria-pressed="${o[key]===v}">${l}</button>`).join('')}</div>`;
   const f=h(`<section class="${COACH_ON&&CO.on?'co-on':''}">
-    ${(COACH_ON&&CO.on)?`<div class="co-hello"><h2>Quiz your team</h2><p>You read the questions out loud. The app shows you the answer and keeps score. <b>3 easy steps.</b></p></div>`:qotdBanner()+eventBanners()}
+    ${(COACH_ON&&CO.on)?`<div class="co-hello"><h2>Quiz your team</h2><p>You read the questions out loud. The app shows you the answer and keeps score. <b>3 easy steps.</b></p></div><div class="panel co-laptop" role="note"><b>💻 Use a laptop for Coach mode.</b> It's made for a laptop or computer screen, and the jump seats only work on a computer in Chrome or Edge.</div>`:qotdBanner()+eventBanners()}
     ${(COACH_ON&&CO.on)?`<div class="co-step s1 ${coChapters().length?'ok':''}"><span class="co-num">${coChapters().length?'✓':'1'}</span><div><h3>Pick the chapters</h3><p>Tap a chapter to add it. Tap it again to take it away.</p></div></div>`:`<div><div class="label">Practice</div><h2 style="font-size:28px;font-weight:800">Choose chapters and verses</h2></div>`}
     <div class="panel" style="display:grid;gap:14px">
       <div class="row" style="justify-content:space-between">
@@ -2842,6 +2883,7 @@ function coachSetupPanels(){ const by=coPool(), chs=coChapters(by), nq=chs.reduc
       <div class="co-sw"><div><b>⏱ Clock</b><span class="hint">${r.clock?(r.mode==='bqf'?'Runs the 6-minute halves and every answer timer for you.':'Times each buzz-in and answer for you.'):'No timers at all.'}</span></div>${coSeg('clock',[['1','On'],['','Off']],r.clock?'1':'')}</div>
       <div class="co-sw"><div><b>📜 Quote questions</b><span class="hint">${r.quotes?'About 1 in 7 questions: “Quote John 3:16.” They get 30 seconds.':'Only regular questions.'}</span></div>${coSeg('quotes',[['1','On'],['','Off']],r.quotes?'1':'')}</div>
     </div>
+    ${seatPanel()}
     <button class="btn co-go ${ready?'shine':''}" data-co="start" ${ready?'':'disabled'}>Start the quiz ▶</button>
     <details class="panel co-more" ${CO.moreOpen?'open':''}><summary>More settings <span class="hint">(you can skip these)</span></summary>
       <div class="co-panel" style="margin-top:12px">
@@ -2868,7 +2910,7 @@ function coSheet(M,liveSheet){ const R=M.rules; let num=0; const groups=coGroups
     ${g.list.map(id=>{ const p=M.players[id]; num++; const tried=M.cur&&M.cur.tried&&M.cur.tried[id], sitOut=M.gc&&M.gc.half==='ot'&&M.gc.otTeams&&!M.gc.otTeams.includes(coTeamKey(p)), can=liveSheet&&!p.out&&!sitOut&&M.cur&&!M.cur.closed&&!tried, on=coSel===id&&can, top=p.score>0&&p.score===best;
       const status=sitOut?'<span class="co-pill f">Sits out overtime</span>':p.out==='quiz'?'<span class="co-pill q">🏅 Quizzed out</span>':p.out==='error'?'<span class="co-pill e">Done · too many wrong</span>':tried?'<span class="co-pill e">Missed this one</span>':'';
       return `<div class="co-prow ${on?'sel':''} ${p.out?'out':''} ${p.out==='quiz'?'won':''} ${top?'top':''}" data-prow="${id}">
-        <button class="co-pname" data-co="sel" data-id="${id}" ${can?'':'disabled'}><i class="co-av">${esc(coInit(p.name))}${top?'<u>👑</u>':''}</i><span>${esc(p.name)}</span>${(p.streak||0)>=2?`<s class="co-fire">🔥${p.streak}</s>`:''}${can&&!on?'<em>tap if they buzz in</em>':''}</button>
+        <button class="co-pname" data-co="sel" data-id="${id}" ${can?'':'disabled'}><i class="co-av">${esc(coInit(p.name))}${top?'<u>👑</u>':''}</i><span>${esc(p.name)}</span>${seatBadge(id)}${(p.streak||0)>=2?`<s class="co-fire">🔥${p.streak}</s>`:''}${can&&!on?'<em>tap if they buzz in</em>':''}</button>
         <span class="co-pscore">${p.score}</span>
         <div class="co-pstat"><span title="Right answers" class="${p.correct?'co-oks':''}">✓ ${p.correct}</span><span title="Wrong answers" class="${p.errors?'co-errs':''}">✗ ${p.errors}</span>${p.fouls?`<span class="co-pill f">${p.fouls} foul${p.fouls>1?'s':''}</span>`:''}${status}</div>
         ${on?`<div class="co-judge"><p>Did <b>${esc(p.name)}</b> answer right?</p><div class="co-jb"><button class="co-yes" data-co="rule" data-t="right" data-id="${id}">✓ Right</button><button class="co-no" data-co="rule" data-t="wrong" data-id="${id}">✗ Wrong</button></div>
@@ -2910,7 +2952,7 @@ function coachView(){ const M=CO.match; if(M&&M.gc&&!M.done) coGameRun();
   const nextLbl=ending?(g.half===1?'Go to halftime →':'Finish the quiz →'):closed?(last?'See the final scores →':'Next question →'):(last?'Nobody got it · final scores →':'Nobody got it · next →');
   const gameLeft=g?coGameLeft(M):0;
   return h(`<section class="co-desk"><div class="co-read">
-    <div class="qtop"><span class="ref">John ${qc}:${qv}</span>
+    <div class="qtop"><span class="ref">${seatChip()}</span>
       <div class="tally"><span>${g?coPeriodName(g)+' · Q'+M.n:M.n+(M.total?' / '+M.total:'')}</span><span class="g">✓ ${rights}</span><span class="b">✗ ${misses}</span></div></div>
     ${R.clock?`<div class="panel co-clockbar ${M.paused?'paused':''}"><span class="ref co-cref">Jn ${qc}:${qv}</span>
       ${g?`<div class="co-game ${gameLeft<=30000&&gameLeft>0?'low':''} ${gameLeft<=0?'over':''}"><span class="label">${coPeriodName(g)}</span><b id="cogame">${coMMSS(gameLeft)}</b><span class="co-addt"><button class="btn ghost small" data-co="addt" data-ms="1000" title="Add 1 second">+1s</button><button class="btn ghost small" data-co="addt" data-ms="10000" title="Add 10 seconds">+10s</button></span></div>`:''}
@@ -2919,8 +2961,8 @@ function coachView(){ const M=CO.match; if(M&&M.gc&&!M.done) coGameRun();
     </div>`:coTrack(M)}
     <div class="qcard co-q ${coFresh?'fresh':''} ${quote?'is-quote':''} ${closed&&coFlash?(coFlash.kind==='good'?'is-right':coFlash.kind==='bad'?'is-wrong':''):''}">
       ${quote?'<span class="co-qtag">📜 Quote question · 30 seconds</span>':''}
-      <div class="qtext">${quote?`Quote John ${qc}:${qv}.`:esc(coQ(q.q))}</div>
-      <div class="fb co-ans" style="background:var(--sunk)"><div class="row" style="justify-content:space-between"><span class="label">${quote?'The verse, word for word':'Answer'}</span><button class="x" data-co="show" data-k="ans">${sh.ans?'Hide':'Show'}</button></div><div class="${sh.ans?'':'co-blur'}">${answers}</div></div>
+      <div class="qtext">${quote?`Quote John ${qc}:${qv}.`:`<span class="qref">John ${qc}:${qv}</span> ${esc(coQ(q.q))}`}</div>
+      <div class="fb co-ans"><div class="row" style="justify-content:space-between"><span class="label">${quote?'The verse, word for word':'Answer'}</span><button class="x" data-co="show" data-k="ans">${sh.ans?'Hide':'Show'}</button></div><div class="${sh.ans?'':'co-blur'}">${answers}</div></div>
       ${coFlash?`<div class="fb ${coFlash.kind==='good'?'good':coFlash.kind==='bad'?'bad':''} co-flash"><div class="hype">${esc(coFlash.text)}</div></div>`:''}
       ${M.cur.warn?`<div class="co-teamwarn" role="alert">📣 <b>Say this to the team:</b> ${esc(M.cur.warn)}</div>`:''}
       <span class="hint co-tip">${tip}</span>
@@ -2928,9 +2970,12 @@ function coachView(){ const M=CO.match; if(M&&M.gc&&!M.done) coGameRun();
     <div class="co-bar ${coSel&&!closed?'judging':''}">${coSel&&!closed&&M.players[coSel]?`<div class="co-barjudge"><p>Did <b>${esc(M.players[coSel].name)}</b> answer right?</p><div class="co-jb"><button class="co-yes" data-co="rule" data-t="right" data-id="${coSel}">✓ Right</button><button class="co-no" data-co="rule" data-t="wrong" data-id="${coSel}">✗ Wrong</button></div><div class="co-jx"><button class="x" data-co="rule" data-t="foul" data-id="${coSel}">Foul (jumped too early)</button><button class="x" data-co="unsel">Cancel</button></div></div>`:''}
       <button class="btn co-next ${closed?'ready':''}" data-co="next">${nextLbl}</button></div>
     <div class="panel co-tools"><div class="row"><button class="btn ghost small" data-co="undo" ${M.undo.length?'':'disabled'}>↩ Undo</button><button class="btn ghost small" data-co="end">End quiz</button><span class="hint co-keys"><kbd>1</kbd>–<kbd>9</kbd> quizzer · <kbd>C</kbd> right · <kbd>E</kbd> wrong · <kbd>N</kbd> next · <kbd>P</kbd> pause</span></div></div>
-    ${quote?'':`<div class="panel co-verse"><div class="row" style="justify-content:space-between"><span class="label">John ${qc}:${qv}</span><button class="x" data-co="show" data-k="ctx">${sh.ctx?'Just this verse':'Nearby verses'}</button></div>
-      ${sh.ctx&&prev?`<p class="ctx"><sup>${qv-1}</sup>${esc(prev)}</p>`:''}<p><sup>${qv}</sup>${esc(v)}</p>${sh.ctx&&nxt?`<p class="ctx"><sup>${qv+1}</sup>${esc(nxt)}</p>`:''}</div>`}
+    ${quote?coQuotePanel(qc,qv):`<div class="panel co-verse"><div class="row" style="justify-content:space-between"><span class="label">John ${qc}:${qv}</span><button class="x" data-co="show" data-k="ctx">${sh.ctx?'Just this verse':'Nearby verses'}</button></div>
+      ${sh.ctx&&prev?`<p class="ctx"><sup>${qv-1}</sup>${esc(prev)}</p>`:''}<p><sup>${qv}</sup>${esc(v)}</p>${sh.ctx&&nxt?`<p class="ctx"><sup>${qv+1}</sup>${esc(nxt)}</p>`:''}${coSameVerse(q,qc,qv)}</div>`}
   </div><aside class="co-sheet">${coSheet(M,true)}<div class="panel co-logp"><div class="label" style="margin-bottom:6px">What happened</div>${coLog(M)}</div></aside></section>`); }
+function coSameVerse(q,c,v){ const o=Q.filter(x=>x&&x!==q&&x.c===c&&x.v===v); if(!o.length) return '';
+  return `<div class="co-others"><div class="label">Other questions on this verse (${o.length})</div><ol>${o.map(x=>`<li><span class="oq">${esc(coQ(x.q))}</span><span class="oa">${x.a.map(esc).join(' <i>or</i> ')}</span></li>`).join('')}</ol></div>`; }
+function coQuotePanel(c,v){ const o=coSameVerse(null,c,v); return o?`<div class="panel co-verse"><div class="row"><span class="label">John ${c}:${v}</span></div>${o.replace('Other questions on this verse','Questions on this verse')}</div>`:''; }
 function coResultsText(M){ const lines=['John Quiz · Coach mode results',`${M.label||''} · ${M.n} questions${M.gc?(M.gc.ot?' · '+M.gc.ot+' overtime period'+(M.gc.ot>1?'s':''):' · two 6-minute halves'):''} · ${M.rules.bqf?'Official BQF rules':'Custom rules'}`,''];
   coGroups(Object.values(M.players)).forEach(g=>{ const t=M.teams[g.key], tot=g.list.reduce((a,p)=>a+p.score,0)+(t?t.bonus-t.ded:0); lines.push(`${g.name}: ${tot} points${t?` (team errors ${t.errors}, bonus +${t.bonus}, deductions −${t.ded})`:''}`); g.list.forEach(p=>lines.push(`  ${p.name}: ${p.score} pts, ${p.correct} correct, ${p.errors} errors, ${p.fouls} fouls${p.out==='quiz'?', quizzed out':p.out==='error'?', errored out':''}`)); lines.push(''); }); return lines.join('\n'); }
 if(COACH_ON){
@@ -5702,6 +5747,114 @@ const last=lsGet('last',null); if(last && users.includes(last)) loadUser(last);
 if(COACH_GUEST&&!me){ const n='Coach'; if(!users.includes(n)){ users.push(n); lsSet('users',users); } const u=Object.assign(blankUser(),{team:NO_TEAM,grp:'other',nextMeet:null}); if(!lsGet('u:'+n,null)) lsSet('u:'+n,u); lsSet('last',n); loadUser(n); if(U&&!U.team){ U.team=NO_TEAM; save(); } if(!me){ me=n; U=u; } }
 if(COACH_GUEST){ try{ lsSet('ann:songxp',true); }catch(e){} mpPrompt=function(){}; }
 if(COACH_ONLY){ CO.on=true; tab='practice'; document.documentElement.classList.add('co-only'); document.title='John Quiz Coach'; }
+/* ---------- Jump seats (USB seat box) ----------
+   How the box talks, read from the pqo Quiz Master program:
+   - USB HID device, vendor 0x04D8 (Microchip), product 0x0000.
+   - When it connects, the program sends output report 0 with bytes [9, 1, 0, ...].
+   - Each input report has one byte per seat string (team): byte 0 = string 1, 1 = string 2, 2 = string 3.
+     Bits 0-4 are the five seat pads (bit 0 = seat 1 when the string feeds from the left).
+   - Quizzers SIT on the pads: a pressed pad = sitting, a pad that lets go = buzzed in.
+     On ACME pads (the program's default) a pressed pad reads 0 and an open pad reads 1.
+     QUIZ TIME (closed-circuit) pads read the other way, and a finger jumper flips one seat,
+     so "Everyone's sitting" saves what each pad reads while pressed (CO.seats.sit).
+   - Seats with no quizzer set are ignored, so empty pads never buzz in.
+   - Order matters: the first seat to stand is the jump winner, then 2nd, 3rd, ... */
+const SEAT={dev:null,raw:null,up:[],claim:null,msg:'',err:'',sim:false};
+const SEAT_HID=!!(navigator.hid&&window.isSecureContext&&(()=>{ try{ return !document.featurePolicy||document.featurePolicy.allowsFeature('hid'); }catch(e){ return true; } })());
+const SEAT_WEB='https://mrmaasoldman.github.io/john-quiz/coach.html';
+if(!CO.seats) CO.seats={map:{},flip:[false,false,false]};
+if(!CO.seats.sit||!CO.seats.v3){ CO.seats.sit=[0,0,0]; CO.seats.v3=1; } // what a PRESSED pad reads, per string bit (ACME: 0). Released pad = buzz in.
+function seatKey(s,b){ return s+':'+b; }
+function seatLabel(k){ const [s,b]=k.split(':').map(Number); const i=CO.seats.flip[s]?4-b:b; return 'String '+(s+1)+', seat '+(i+1); }
+function seatOf(pid){ return Object.keys(CO.seats.map).find(k=>CO.seats.map[k]===pid)||null; }
+function seatName(pid){ const p=(CO.roster.find(r=>r.id===pid))||(CO.match&&CO.match.players[pid]); return p?p.name:''; }
+function seatOpenPad(raw,k){ const [s,b]=k.split(':').map(Number); return (((raw[s]^CO.seats.sit[s])>>b)&1)===1; } // pad not pressed
+function seatIsUp(k){ return !!SEAT.raw&&!!CO.seats.map[k]&&seatOpenPad(SEAT.raw,k); }
+function seatCanAnswer(M,id){ const p=M.players[id]; if(!p||p.out||!M.cur||M.cur.closed) return false; if(M.cur.tried&&M.cur.tried[id]) return false;
+  if(M.gc&&M.gc.half==='ot'&&M.gc.otTeams&&!M.gc.otTeams.includes(coTeamKey(p))) return false; return true; }
+function seatOnReport(bytes){
+  const prev=SEAT.raw; SEAT.raw=bytes;
+  if(prev&&prev[0]===bytes[0]&&prev[1]===bytes[1]&&prev[2]===bytes[2]) return;
+  // pads that just let go (someone got up), on any seat
+  const rose=[]; if(prev) for(let s=0;s<3;s++) for(let b=0;b<5;b++){ const k=seatKey(s,b); if(seatOpenPad(bytes,k)&&!seatOpenPad(prev,k)) rose.push(k); }
+  // only a real release (pressed -> let go) counts as buzzing in; keep the order they let go in
+  const fresh=rose.filter(k=>CO.seats.map[k]&&!SEAT.up.includes(k));
+  SEAT.up=SEAT.up.filter(k=>seatIsUp(k)).concat(fresh);
+  if(SEAT.claim&&rose.length) seatClaim(rose[0]);
+  else if(fresh.length) seatJumped(fresh);
+  else if(rose.length&&!CO.seats.map[rose[0]]&&CO.match&&!CO.match.done){ SEAT.msg=seatLabel(rose[0])+' buzzed in, but no quizzer is set to that seat.'; }
+  seatPaint();
+}
+// assigning seats: the next pad that lets go belongs to the quizzer we asked to stand up
+function seatClaim(k){ const c=SEAT.claim; Object.keys(CO.seats.map).forEach(x=>{ if(CO.seats.map[x]===c.ids[c.i]) delete CO.seats.map[x]; });
+  CO.seats.map[k]=c.ids[c.i]; coSave(); try{ sfx('ding'); }catch(e){} c.i++; if(c.i>=c.ids.length){ SEAT.claim=null; SEAT.msg='All seats are set. Have everyone sit back down.'; } renderKeep(); }
+function seatJumped(fresh){
+  const M=CO.match; if(!M||M.done||!M.cur||M.cur.closed||coSel||tab!=='practice') return;
+  // first eligible quizzer in jump order gets the question
+  for(const k of SEAT.up){ const id=CO.seats.map[k]; if(id&&seatCanAnswer(M,id)){ coSel=id; coSetPause(M,false); if(M.rules.clock) coStartClock('answer',id); try{ sfx('tick'); }catch(e){} renderKeep(); coPaintClock(); return; } }
+}
+// light up seats without rebuilding the page
+function seatPaint(){
+  document.querySelectorAll('[data-seatk]').forEach(el=>{ const k=el.dataset.seatk, i=SEAT.up.indexOf(k), open=!!SEAT.raw&&seatOpenPad(SEAT.raw,k);
+    el.classList.toggle('up',i>=0); el.classList.toggle('sat',!!SEAT.raw&&!open); const o=el.querySelector('.cs-ord'); if(o) o.textContent=i>=0?(i+1):''; const st=el.querySelector('.cs-st'); if(st) st.textContent=!SEAT.raw?'':open?(CO.seats.map[k]?'up':'empty'):'sitting'; });
+  document.querySelectorAll('[data-seatp]').forEach(el=>{ const k=seatOf(el.dataset.seatp), i=k?SEAT.up.indexOf(k):-1; el.hidden=i<0; el.textContent=i<0?'':(i===0?'1st':i===1?'2nd':i===2?'3rd':(i+1)+'th'); el.classList.toggle('first',i===0); });
+  const m=document.getElementById('csmsg'); if(m){ m.textContent=SEAT.msg||''; m.hidden=!SEAT.msg; }
+}
+async function seatOpen(dev){
+  try{ if(!dev.opened) await dev.open(); }catch(e){ SEAT.err='Could not open the seat box. Close the Quiz Master program if it is running, then try again.'; renderKeep(); return; }
+  SEAT.dev=dev; SEAT.err=''; SEAT.raw=null; SEAT.up=[];
+  dev.oninputreport=e=>{ const d=e.data; seatOnReport([d.byteLength>0?d.getUint8(0):0,d.byteLength>1?d.getUint8(1):0,d.byteLength>2?d.getUint8(2):0]); };
+  try{ let len=64; const r=(dev.collections||[]).flatMap(c=>c.outputReports||[])[0]; if(r&&r.items&&r.items.length) len=Math.max(2,Math.round(r.items.reduce((a,it)=>a+it.reportSize*it.reportCount,0)/8)); const out=new Uint8Array(len); out[0]=9; out[1]=1; await dev.sendReport(r?r.reportId:0,out); }catch(e){}
+  renderKeep();
+}
+async function seatConnect(){
+  if(!SEAT_HID){ SEAT.err='Jump seats need Chrome or Edge on a computer.'; renderKeep(); return; }
+  try{ const [dev]=await navigator.hid.requestDevice({filters:[{vendorId:0x04d8}]}); if(dev) await seatOpen(dev); }
+  catch(e){ SEAT.err=window.top!==window?'This preview can\'t reach USB devices. Open the web version: '+SEAT_WEB:'The browser did not allow the seat box. Try again and pick it from the list.'; renderKeep(); }
+}
+if(SEAT_HID){
+  navigator.hid.getDevices().then(ds=>{ const d=ds.find(x=>x.vendorId===0x04d8); if(d) seatOpen(d); }).catch(()=>{});
+  navigator.hid.addEventListener('connect',e=>{ if(e.device.vendorId===0x04d8&&!SEAT.dev) seatOpen(e.device); });
+  navigator.hid.addEventListener('disconnect',e=>{ if(SEAT.dev&&e.device===SEAT.dev){ SEAT.dev=null; SEAT.up=[]; SEAT.raw=null; SEAT.err='The seat box was unplugged.'; renderKeep(); } });
+}
+function seatOn(){ return !!(SEAT.dev||SEAT.sim); }
+function seatBadge(id){ return seatOn()&&seatOf(id)?`<b class="cs-light" data-seatp="${id}" hidden></b>`:''; }
+function seatChip(){ if(!seatOn()) return ''; return `<span class="cs-chip" title="Seat box connected"><i></i>Seats</span>`; }
+function seatPanel(){
+  const on=seatOn(), ros=CO.roster;
+  let body='';
+  if(!SEAT_HID&&!SEAT.sim){ body=`<p class="hint">Jump seats work in <b>Chrome or Edge on a computer</b> with the seat box plugged in by USB.${/claude/.test(location.hostname)||window.top!==window?` This preview can't reach USB devices, so open the web version: <a href="${SEAT_WEB}" target="_blank" rel="noopener">${SEAT_WEB.replace('https://','')}</a>`:''}</p>`; }
+  else if(!on){ body=`<p class="hint">Plug the seat box into this computer, then connect it. Close the old Quiz Master program first if it's open.</p>`; }
+  else {
+    const opts=k=>`<option value="">—</option>${ros.map(p=>`<option value="${p.id}" ${CO.seats.map[k]===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}`;
+    body=`<div class="cs-grid">${[0,1,2].map(s=>`<div class="cs-row"><span class="cs-sl">String ${s+1}</span>${[0,1,2,3,4].map(i=>{ const b=CO.seats.flip[s]?4-i:i, k=seatKey(s,b), i2=SEAT.up.indexOf(k); return `<label class="cs-seat ${i2>=0?'up':''}" data-seatk="${k}"><span class="cs-n">${i+1}<i class="cs-st"></i><em class="cs-ord">${i2>=0?i2+1:''}</em></span><select data-csmap="${k}" aria-label="${seatLabel(k)}">${opts(k)}</select></label>`; }).join('')}<button class="x" data-cs="flip" data-s="${s}" title="Seat 1 is on the other end">Flip</button></div>`).join('')}</div>
+      ${SEAT.claim?`<div class="cs-claim"><b>${esc(seatName(SEAT.claim.ids[SEAT.claim.i]))}</b>, stand up now. <span class="hint">(${SEAT.claim.i+1} of ${SEAT.claim.ids.length})</span><span class="row"><button class="btn ghost small" data-cs="skip">Skip</button><button class="btn ghost small" data-cs="stop">Stop</button></span></div>`:''}
+      <p class="hint"><b>Pressed = waiting. Released = buzzed in.</b> Press a pad and its seat should say <b>sitting</b>; let go and it should say <b>up</b>.${CO.seats.sit.some(x=>x)?' <b>(Pads are flipped.)</b>':''}</p>
+      <p class="cs-msg" id="csmsg" ${SEAT.msg?'':'hidden'}>${esc(SEAT.msg)}</p>
+      <div class="row"><button class="btn ghost small" data-cs="claim" ${ros.length?'':'disabled'}>Set seats by jumping</button><button class="btn ghost small" data-cs="auto" ${ros.length?'':'disabled'}>Fill in team order</button><button class="btn ghost small" data-cs="pol" title="Only if pressing a pad buzzes someone in">Pads backwards? Flip</button>${Object.keys(CO.seats.map).length?'<button class="x" data-cs="clear">Clear seats</button>':''}</div>`;
+  }
+  return `<div class="panel cs-panel"><div class="co-sw" style="padding:0 0 10px"><div><b>Jump seats</b><span class="hint">${on?(SEAT.sim?'Test mode (no seat box).':'Seat box connected. The first quizzer to jump gets the question.'):'Optional. Use a USB seat box so jumps pick the quizzer for you.'}</span></div>
+    ${on?(SEAT.sim?'<button class="btn ghost small" data-cs="simoff">Stop test</button>':'<span class="cs-ok">● Connected</span>'):(SEAT_HID?'<button class="btn small" data-cs="connect">Connect seat box</button>':'')}</div>
+    ${SEAT.err?`<p class="cs-err">${esc(SEAT.err)}</p>`:''}${body}</div>`;
+}
+document.addEventListener('click',e=>{ const t=e.target.closest('[data-cs]'); if(!t) return; const a=t.dataset.cs; SEAT.msg='';
+  if(a==='connect') seatConnect();
+  else if(a==='flip'){ const s=+t.dataset.s; CO.seats.flip[s]=!CO.seats.flip[s]; coSave(); renderKeep(); }
+  else if(a==='pol'){ const flipped=CO.seats.sit.some(x=>x); CO.seats.sit=flipped?[0,0,0]:[31,31,31]; coSave(); SEAT.up=[]; SEAT.msg=flipped?'Pads back to normal: released = buzzed in.':'Pads flipped. Use this only if pressing a pad was buzzing people in.'; renderKeep(); }
+  else if(a==='claim'){ SEAT.claim={ids:coGroups(CO.roster).flatMap(g=>g.list.map(p=>p.id)),i:0}; renderKeep(); }
+  else if(a==='skip'){ if(SEAT.claim){ SEAT.claim.i++; if(SEAT.claim.i>=SEAT.claim.ids.length) SEAT.claim=null; } renderKeep(); }
+  else if(a==='stop'){ SEAT.claim=null; renderKeep(); }
+  else if(a==='auto'){ CO.seats.map={}; coGroups(CO.roster).filter(g=>g.list.length).slice(0,3).forEach((g,s)=>g.list.slice(0,5).forEach((p,i)=>{ const b=CO.seats.flip[s]?4-i:i; CO.seats.map[seatKey(s,b)]=p.id; })); coSave(); SEAT.msg='Team 1 is on string 1, team 2 on string 2, and so on, seat 1 first. Check the names above.'; renderKeep(); }
+  else if(a==='clear'){ CO.seats.map={}; coSave(); renderKeep(); }
+  else if(a==='simoff'){ SEAT.sim=false; renderKeep(); }
+});
+document.addEventListener('change',e=>{ const t=e.target; if(!t||!t.dataset||!t.dataset.csmap) return; const k=t.dataset.csmap, v=t.value;
+  Object.keys(CO.seats.map).forEach(x=>{ if(v&&CO.seats.map[x]===v) delete CO.seats.map[x]; }); if(v) CO.seats.map[k]=v; else delete CO.seats.map[k]; coSave(); renderKeep(); });
+// repaint lights after every render
+const seatRender0=render; render=function(){ seatRender0(); try{ seatPaint(); }catch(e){} };
+// test hook: lets a coach try it without the box (and lets us test it)
+window.seatSim=function(bytes){ SEAT.sim=true; seatOnReport(bytes); };
+
 render();
 cloud.status='off';
 })();
