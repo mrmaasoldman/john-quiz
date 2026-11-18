@@ -2107,6 +2107,8 @@ html.co-mode .bar-in>.brand span{display:inline}
   .t-coach .co-q .qtext{max-height:66px;overflow:auto}
 }
 
+/* stand-alone coach app: hide the rest of the site */
+html.co-only .tabs,html.co-only .topsongs,html.co-only #musbtn,html.co-only .who>*:not(#sndbtn),html.co-only .co-switch,html.co-only [data-co="leave"],html.co-only #switch{display:none!important}
 /* desktop + phone fixes */
 .co-sw .seg{display:flex!important;flex-wrap:nowrap;flex:none;gap:6px}
 .co-sw .seg button{min-width:52px}
@@ -2218,7 +2220,7 @@ function save(){ if(!me) return; U.saved=Date.now(); lsSet('u:'+me,U); scheduleS
 /* ---------- cloud saving: every quizzer gets a save code, and their progress is copied to the cloud ----------
    The database key is a hash of the code, and the list of saves can't be read, so a save only opens with its code. */
 const SAVE_DB='https://john-quiz-2-default-rtdb.firebaseio.com'.replace(/\/+$/,'');
-const saveOn=()=>/^https?:\/\/[^_]/.test(SAVE_DB)&&!!(window.crypto&&crypto.subtle&&window.TextEncoder);
+const saveOn=()=>!window.COACH_ONLY&&/^https?:\/\/[^_]/.test(SAVE_DB)&&!!(window.crypto&&crypto.subtle&&window.TextEncoder);
 const SC_ABC='23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 let csTimer=null, csPullAt=0; const cs={st:'',at:0,busy:false,again:false};
 const scNorm=c=>String(c||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -2486,7 +2488,7 @@ function render(){
   setTimeout(announceSongs,900);
   if(tab==='memory') tab='materials';
   app.append(h(`<header class="bar"><div class="bar-in">
-    <div class="brand"><b>John Quiz</b><span>BQF · Sept 2026 set</span></div>
+    <div class="brand"><b>${COACH_ONLY?'John Quiz Coach':'John Quiz'}</b><span>BQF · Sept 2026 set</span></div>
     <a class="topsongs" href="${SONGS_URL}" title="Open the John Songs"><span class="mnote" aria-hidden="true">🎵</span><span class="mnote two" aria-hidden="true">🎶</span>Music</a>
     <div class="tabs" role="tablist">
       ${['practice','games','verses','scores','progress','materials'].map(t=>`<button role="tab" data-tab="${t}" aria-selected="${tab===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}
@@ -2709,7 +2711,7 @@ function parseRange(str,versesOf=c=>qVerses[c]){
 }
 
 /* ---------- coach mode (beta): you read the questions out loud and score real quizzers. No XP. ---------- */
-const COACH_ON=true, COACH_GUEST=!!window.COACH_BETA;
+const COACH_ON=true, COACH_ONLY=!!window.COACH_ONLY, COACH_GUEST=!!(window.COACH_BETA||window.COACH_ONLY);
 let CO=Object.assign({on:!!window.COACH_BETA,roster:[],w:{},rules:{mode:'bqf',pts:20,qout:4,eout:3,pen:0,rebound:false,repeat:false,count:20,quotes:true,clock:true,mix:'random'},show:{ans:true,verse:true,ctx:false},match:null},COACH_ON?lsGet('coach',{}):{});
 let coSel=null, coClock=null, coTick=null, coFlash=null, coFx=null, coFresh=false;
 if(CO.rules.quotes===undefined) CO.rules.quotes=true; if(!CO.rules.mix) CO.rules.mix='random'; if(CO.rules.clock===undefined) CO.rules.clock=true;
@@ -2934,7 +2936,7 @@ function coResultsText(M){ const lines=['John Quiz · Coach mode results',`${M.l
 if(COACH_ON){
   document.addEventListener('click',e=>{ const t=e.target.closest('[data-co]'); if(!t||!U||t.disabled) return; const a=t.dataset.co, M=CO.match;
     if(a==='on'){ CO.on=true; coSave(); render(); scrollTo(0,0); }
-    else if(a==='off'||a==='leave'){ CO.on=false; if(a==='leave') CO.match=null; coSave(); render(); scrollTo(0,0); coKeepAwake(); }
+    else if(a==='off'||a==='leave'){ CO.on=COACH_ONLY; if(a==='leave') CO.match=null; coSave(); render(); scrollTo(0,0); coKeepAwake(); }
     else if(a==='del'){ CO.roster=CO.roster.filter(p=>p.id!==t.dataset.id); coSave(); renderKeep(); }
     else if(a==='clear'){ CO.roster=[]; coSave(); renderKeep(); }
     else if(a==='set'){ const k=t.dataset.k, v=t.dataset.v; CO.rules[k]=(k==='mode'||k==='mix')?v:(k==='rebound'||k==='repeat'||k==='quotes'||k==='clock')?!!v:+v; coSave(); renderKeep(); }
@@ -3940,7 +3942,7 @@ const TRACKS=[
 ];
 const MUSIC_VOL={low:.25,med:.5,high:.85};
 const mus={el:null,gain:null,src:null,track:null,playing:false};
-const musicOn=()=>lsGet('music',false)===true;
+const musicOn=()=>!COACH_ONLY&&lsGet('music',false)===true;
 const musicVol=()=>MUSIC_VOL[lsGet('musicvol','med')]||.5;
 function musicOpen(t){ if(!t.need) return true; if(!U) return false; const n=t.need;
   if(n.level) return levelOf(U.xp).level>=n.level; if(n.bosses) return Object.keys(U.bosses||{}).length>=n.bosses; if(n.speed) return ((U.hs&&U.hs.speed)||0)>=n.speed; return false; }
@@ -4858,7 +4860,7 @@ function wireGames(){
 }
 
 /* ---------- teacher progress sheet (Google Sheets) ---------- */
-const SHEET_URL='https://script.google.com/macros/s/AKfycbwuMn5RzT0fGVk5vt8qmWUsuFYjrGUe87ytVAD1qodJ0XC2qfY4BIpIEGdtcleGAvYf/exec', SHEET_KEY='jq-maas-2026';
+const SHEET_URL=COACH_ONLY?'':'https://script.google.com/macros/s/AKfycbwuMn5RzT0fGVk5vt8qmWUsuFYjrGUe87ytVAD1qodJ0XC2qfY4BIpIEGdtcleGAvYf/exec', SHEET_KEY='jq-maas-2026';
 let sheetTimer=null, sheetLast='';
 function sheetSummary(){ const r=summary(me,U), {streak,best}=streakFrom(goalDaysOf(U.days)), td=U.daily&&U.daily[dayKey()];
   return {key:SHEET_KEY,sk:ownKey(),name:me,mem:r.mem,goal:r.goal,goalN:r.goalN,goalMem:r.goalMem,att:r.att,right:r.right,solid:r.solid,streak,best,today:todayCount(),
@@ -5699,6 +5701,7 @@ Object.assign(TROPHY,{dino:"\ud83e\udd96",ocean:"\ud83d\udc2c",pizza:"\ud83c\udf
 const last=lsGet('last',null); if(last && users.includes(last)) loadUser(last);
 if(COACH_GUEST&&!me){ const n='Coach'; if(!users.includes(n)){ users.push(n); lsSet('users',users); } const u=Object.assign(blankUser(),{team:NO_TEAM,grp:'other',nextMeet:null}); if(!lsGet('u:'+n,null)) lsSet('u:'+n,u); lsSet('last',n); loadUser(n); if(U&&!U.team){ U.team=NO_TEAM; save(); } if(!me){ me=n; U=u; } }
 if(COACH_GUEST){ try{ lsSet('ann:songxp',true); }catch(e){} mpPrompt=function(){}; }
+if(COACH_ONLY){ CO.on=true; tab='practice'; document.documentElement.classList.add('co-only'); document.title='John Quiz Coach'; }
 render();
 cloud.status='off';
 })();
