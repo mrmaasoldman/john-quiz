@@ -2110,6 +2110,11 @@ html.co-mode .bar-in>.brand span{display:inline}
 /* desktop + phone fixes */
 .co-sw .seg{display:flex!important;flex-wrap:nowrap;flex:none;gap:6px}
 .co-sw .seg button{min-width:52px}
+.pbars{display:inline-block;width:11px;height:13px;vertical-align:-1px;background:linear-gradient(90deg,currentColor 0 4px,transparent 4px 7px,currentColor 7px 11px)}
+.co-pausebtn{display:inline-flex!important;align-items:center;justify-content:center;gap:6px}
+.co-addt{display:inline-flex;gap:4px;margin-left:8px;flex:none;align-self:center}
+.co-addt .btn{padding:4px 8px!important;font:700 12.5px var(--f-read)!important;letter-spacing:0;text-shadow:none!important;min-height:0;line-height:1.2}
+.co-game{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
 .co-win h2{font-size:26px!important;line-height:1.35}
 .t-coach .co-tools .btn,.co-desk .co-read>.row .btn.ghost{font:700 14px var(--f-read)!important;letter-spacing:0;text-shadow:none!important;min-height:40px}
 /* phone polish (desktop untouched) */
@@ -2123,6 +2128,11 @@ html.co-mode .bar-in>.brand span{display:inline}
   .t-coach .co-clockbar .co-clock.paused .s{color:var(--warn);opacity:1}
   .t-coach .co-clockbar .co-clock:not(.go):not(.warn):not(.over):not(.paused) .t{display:none}
   .t-coach .co-tools{padding:8px 10px!important}
+  .t-coach .co-clockbar .co-addt{margin-left:2px;gap:3px}
+  .t-coach .co-clockbar .co-addt .btn{padding:5px 6px!important;font-size:12px!important}
+  .t-coach .co-clockbar .co-pausebtn .pl{display:none}
+  .t-coach .co-clockbar .co-pausebtn{padding:7px 11px!important;font-size:15px!important}
+  .t-coach .co-clockbar .co-clock{min-width:0;flex:1}
   .t-coach .co-tools .row{gap:8px;flex-wrap:nowrap}
   .t-coach .co-tools .btn{flex:1;min-height:42px;font:700 14px var(--f-read)!important;letter-spacing:0;text-shadow:none!important}
   .t-coach .co-tools .co-keys{display:none}
@@ -2770,6 +2780,11 @@ function coTimed(M){ return !!(M&&M.gc); }
 function coGameLeft(M){ const g=M.gc; return g.run?g.left-(Date.now()-g.t):g.left; }
 function coGamePause(M,on){ const g=M.gc; if(!g) return; if(on&&g.run){ g.left=coGameLeft(M); g.run=false; } else if(!on&&!g.run&&g.left>0&&g.phase==='play'){ g.t=Date.now(); g.run=true; } coSave(); }
 function coSetPause(M,on){ on=!!on; if(!M||!!M.paused===on) return; M.paused=on; if(M.gc&&M.gc.phase==='play') coGamePause(M,on); if(coClock){ if(on) coClock.pausedAt=Date.now(); else if(coClock.pausedAt){ coClock.t0+=Date.now()-coClock.pausedAt; coClock.pausedAt=null; } } coSave(); }
+function coAddTime(M,ms){ const g=M.gc;
+  if(g&&g.phase==='play'){ g.left=Math.max(0,coGameLeft(M))+ms; if(g.run) g.t=Date.now();
+    if(g.expired){ g.expired=false; coFlash=null; if(!M.paused){ g.t=Date.now(); g.run=true; } } }
+  else if(coClock){ coClock.t0+=ms; coClock.beeped=false; }
+  coSave(); }
 function coGameTick(){ const M=CO.match; if(!M||!M.gc||M.done){ clearInterval(coGT); coGT=null; return; } const g=M.gc;
   if(g.phase==='play'&&g.run&&coGameLeft(M)<=0){ g.left=0; g.run=false; g.expired=true; coSave(); try{ sfx('buzzer'); }catch(e){}
     coFlash={kind:'warn',text:g.half==='ot'?'Time is up in overtime! Finish this question, then press Next.':g.half===1?'Time! That is the end of the first half. Finish this question, then press Next.':'Time! That is the end of the quiz. Finish this question, then press Next.'}; renderKeep(); coPaintClock(); }
@@ -2896,9 +2911,9 @@ function coachView(){ const M=CO.match; if(M&&M.gc&&!M.done) coGameRun();
     <div class="qtop"><span class="ref">John ${qc}:${qv}</span>
       <div class="tally"><span>${g?coPeriodName(g)+' · Q'+M.n:M.n+(M.total?' / '+M.total:'')}</span><span class="g">✓ ${rights}</span><span class="b">✗ ${misses}</span></div></div>
     ${R.clock?`<div class="panel co-clockbar ${M.paused?'paused':''}"><span class="ref co-cref">Jn ${qc}:${qv}</span>
-      ${g?`<div class="co-game ${gameLeft<=30000&&gameLeft>0?'low':''} ${gameLeft<=0?'over':''}"><span class="label">${coPeriodName(g)}</span><b id="cogame">${coMMSS(gameLeft)}</b></div>`:''}
-      <div class="co-clock" id="coclock"><span class="t">–</span><span class="m">When someone buzzes in, tap their name</span><span class="s">Waiting…</span></div>
-      <button class="btn small co-pausebtn ${M.paused?'on':''}" data-co="pause" title="${M.paused?'Start the clock again (P)':'Stop the clock for a timeout or a question (P)'}">${M.paused?'▶ Resume':'⏸ Pause'}</button>
+      ${g?`<div class="co-game ${gameLeft<=30000&&gameLeft>0?'low':''} ${gameLeft<=0?'over':''}"><span class="label">${coPeriodName(g)}</span><b id="cogame">${coMMSS(gameLeft)}</b><span class="co-addt"><button class="btn ghost small" data-co="addt" data-ms="1000" title="Add 1 second">+1s</button><button class="btn ghost small" data-co="addt" data-ms="10000" title="Add 10 seconds">+10s</button></span></div>`:''}
+      <div class="co-clock" id="coclock"><span class="t">–</span><span class="m">When someone buzzes in, tap their name</span><span class="s">Waiting…</span>${g?'':'<span class="co-addt"><button class="btn ghost small" data-co="addt" data-ms="1000" title="Add 1 second to the answer timer">+1s</button><button class="btn ghost small" data-co="addt" data-ms="10000" title="Add 10 seconds to the answer timer">+10s</button></span>'}</div>
+      <button class="btn small co-pausebtn ${M.paused?'on':''}" data-co="pause" title="${M.paused?'Start the clock again (P)':'Stop the clock for a timeout or a question (P)'}">${M.paused?'<span class="pi">▶</span><span class="pl"> Resume</span>':'<span class="pi pbars" aria-hidden="true"></span><span class="pl"> Pause</span>'}</button>
     </div>`:coTrack(M)}
     <div class="qcard co-q ${coFresh?'fresh':''} ${quote?'is-quote':''} ${closed&&coFlash?(coFlash.kind==='good'?'is-right':coFlash.kind==='bad'?'is-wrong':''):''}">
       ${quote?'<span class="co-qtag">📜 Quote question · 30 seconds</span>':''}
@@ -2934,6 +2949,7 @@ if(COACH_ON){
     else if(a==='next') coNext(); else if(a==='swap') coSwap(); else if(a==='undo') coUndo();
 
     else if(a==='end'){ M.done=true; coStopClock(); if(M.gc) coGamePause(M,true); coSave(); render(); scrollTo(0,0); coKeepAwake(); coFinale(); }
+    else if(a==='addt'){ coAddTime(M,+t.dataset.ms||1000); renderKeep(); coGameTick&&M.gc&&coGameTick(); coPaintClock(); }
     else if(a==='pause'){ coSetPause(M,!M.paused); renderKeep(); coPaintClock(); try{ sfx('tick'); }catch(e){} }
     else if(a==='period') coStartPeriod();
     else if(a==='copy'){ const txt=coResultsText(M), b=t, fb=()=>{ const ta=document.getElementById('cores'); if(ta){ ta.hidden=false; ta.value=txt; ta.focus(); ta.select(); } b.textContent='Copy the text below'; };
