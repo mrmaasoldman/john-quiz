@@ -9,6 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&display=optional">
 <style>
 /* Layout: a music app — library (hero, search, chapters, songs) and chapter pages in one scroll view; floating mini player; full-screen Now Playing with lyrics as the main screen, artwork view, and an Up Next sheet */
@@ -308,10 +309,11 @@ html,body{overscroll-behavior-x:none}
 .row[aria-current="true"] .th .eq{display:flex}
 .row .n{width:52px;text-align:center;color:var(--sub);font-variant-numeric:tabular-nums;font-size:15px}
 .row[aria-current="true"] .n{color:var(--accent)}
-.eq i{width:4px;background:#fff;border-radius:2px;height:8px;animation:eq .9s ease-in-out infinite alternate}
+.eq i{width:4px;background:#fff;border-radius:2px;height:18px;transform:scaleY(.4);transform-origin:bottom;animation:eq .9s ease-in-out infinite alternate;animation-play-state:paused}
+body.playing .eq i{animation-play-state:running}
 .eq i:nth-child(2){animation-delay:.2s}.eq i:nth-child(3){animation-delay:.4s}
 .paused .eq i{animation-play-state:paused}
-@keyframes eq{from{height:5px}to{height:18px}}
+@keyframes eq{from{transform:scaleY(.28)}to{transform:scaleY(1)}}
 .row .tt{min-width:0}
 .row .tt b{display:block;font-weight:500;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row[aria-current="true"] .tt b{color:var(--accent)}
@@ -371,6 +373,7 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .mini .card>.bar i{display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:0 50%;background:var(--sig1);will-change:transform}
 
 /* ---------- now playing: a sheet with two pages — the whole current verse, then the scrolling lyrics ---------- */
+.np:not(.open) *,.np:not(.open) *::before,.np:not(.open) *::after{animation-play-state:paused!important}
 .np{position:fixed;inset:0;z-index:20;transform:translateY(104%);transition:transform .5s cubic-bezier(.32,.72,0,1);background:#0b0b10;color:var(--np-fg);will-change:transform;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .np.open{transform:translateY(0)}
 .np.drag{transition:none}
@@ -571,7 +574,8 @@ body.npopen .tabbar{transform:translateX(-50%) translateY(40px);opacity:0}
 .unow .qbar{position:absolute;left:12px;right:12px;bottom:0;height:3px;background:rgba(255,255,255,.14)}
 .unow .qbar i{display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:0 50%;background:linear-gradient(90deg,var(--tint),#fff);will-change:transform}
 .unow .eq{position:relative;display:flex;align-items:flex-end;gap:3px;height:22px;width:24px;margin-right:4px}
-.unow .eq i{width:4px;border-radius:2px;background:color-mix(in srgb,var(--tint) 80%,#fff);height:30%;animation:eqb 1s ease-in-out infinite;transform-origin:bottom}
+.unow .eq i{width:4px;border-radius:2px;background:color-mix(in srgb,var(--tint) 80%,#fff);height:30%;animation:eqb 1s ease-in-out infinite;transform-origin:bottom;animation-play-state:paused}
+body.playing .unow .eq i{animation-play-state:running}
 .unow .eq i:nth-child(2){animation-delay:.2s;height:70%} .unow .eq i:nth-child(3){animation-delay:.4s;height:50%}
 body.paused .unow .eq i{animation-play-state:paused;height:25%}
 @keyframes eqb{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
@@ -1050,7 +1054,7 @@ async function makeArt(ch){
   COL[ch]={tint:lighten(cols[0],.62,.55),c:cols.map(c=>lighten(c,.42,.45))};
   let v=x.createLinearGradient(0,W*.5,0,W); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,.62)'); x.fillStyle=v; x.fillRect(0,0,W,W);
   x.shadowColor='rgba(0,0,0,.5)'; x.shadowBlur=18;
-  x.fillStyle='rgba(255,255,255,.85)'; x.font='700 24px '+getComputedStyle(document.documentElement).getPropertyValue('--ui'); x.fillText(CH[ch].label||'JOHN',45,W-152);
+  x.fillStyle='rgba(255,255,255,.85)'; x.font='700 24px '+(makeArt.ui||(makeArt.ui=getComputedStyle(document.documentElement).getPropertyValue('--ui')||'system-ui, sans-serif')); x.fillText(CH[ch].label||'JOHN',45,W-152);
   x.fillStyle='#fff'; x.font='800 136px Fraunces, Georgia, serif'; x.fillText(CH[ch].big||String(ch),40,W-32);
   const t=document.createElement('canvas'); t.width=t.height=240; t.getContext('2d').drawImage(c,0,0,240,240);
   const [cover,thumb]=await Promise.all([toBlob(c,'image/jpeg',.86),toBlob(t,'image/jpeg',.82)]);
@@ -1475,8 +1479,12 @@ function updateVerse(force){
   if(!song) return; const t=audio.currentTime; const idx=verseAt(t);
   if(idx!==curVerse||force){ const prev=curVerse; curVerse=idx; renderVerse(idx); if(!force&&idx>=0&&prev!==idx&&!audio.paused&&!seeking){ haptic('soft'); } }
   const nowMs=performance.now(); if(nowMs-fitCheckAt>700){ fitCheckAt=nowMs; if(verseOverflows()) fitVerse(); }
-  if(idx>=0){ const ws=$('#vtext').querySelectorAll('.w'); let now=-1; verses[idx].words.forEach((w,k)=>{ if(t>=w.t-0.1) now=k; }); ws.forEach((el,k)=>{ el.classList.toggle('on',k<=now); el.classList.toggle('now',k===now); }); }
+  if(idx>=0){ let now=-1; verses[idx].words.forEach((w,k)=>{ if(t>=w.t-0.1) now=k; }); litWords(VW,$('#vtext'),idx,now,force); }
 }
+// the words only get touched when the lit word actually changes (not every frame), and the list of word pieces is looked up once per verse or line
+const VW={}, LW={};
+function litWords(c,host,idx,now,force){ if(!host) return; if(c.idx!==idx||!c.ws||!c.ws.length||!c.ws[0].isConnected||c.host!==host){ c.idx=idx; c.host=host; c.ws=host.querySelectorAll('.w'); c.now=null; }
+  if(c.now===now&&!force) return; c.now=now; c.ws.forEach((el,k)=>{ el.classList.toggle('on',k<=now); el.classList.toggle('now',k===now); }); }
 $('#tapR').onclick=()=>{ const i=curVerse>=0?curVerse:(-curVerse-2); const n=verses[i+1]; if(n){ audio.currentTime=Math.max(0,n.start-0.05); audio.play().catch(()=>{}); } };
 $('#tapL').onclick=()=>{ const i=curVerse>=0?curVerse:(-curVerse-1); const cur=verses[i]; if(cur&&audio.currentTime-cur.start>2.5){ audio.currentTime=Math.max(0,cur.start-0.05); return; } const p=verses[i-1]; if(p){ audio.currentTime=Math.max(0,p.start-0.05); audio.play().catch(()=>{}); } };
 // a small height change (a browser toolbar sliding away) is not a reason to re-set the verse while you're reading it; a real resize or rotation is
@@ -1546,7 +1554,7 @@ function updateLyrics(force){
     if(i>=0) followLine(i,!!force); else if(force) animateScroll(lySc(),lyTop(),0);
     LY.followed=i;
   }
-  if(i>=0&&!lines[i].dots){ const ws=els[i].querySelectorAll('.w'); let now=-1; lines[i].words.forEach((w,k)=>{ if(t>=w.t-0.1) now=k; }); ws.forEach((el,k)=>{ el.classList.toggle('on',k<=now); el.classList.toggle('now',k===now); }); }
+  if(i>=0&&!lines[i].dots&&els[i]){ let now=-1; lines[i].words.forEach((w,k)=>{ if(t>=w.t-0.1) now=k; }); litWords(LW,els[i],i,now,force); }
 }
 function scheduleSettle(){ clearTimeout(LY.settleT); LY.settleT=setTimeout(settle,150); }
 function settle(){
@@ -1589,14 +1597,14 @@ function setIcons(playing){
   const p='<path d="M8 5v14l11-7z"/>', pa='<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>';
   $('#pi').innerHTML=$('#minipi').innerHTML=playing?pa:p;
   $('#play').setAttribute('aria-label',playing?'Pause':'Play'); $('#miniplay').setAttribute('aria-label',playing?'Pause':'Play');
-  $('#np').classList.toggle('paused',!playing); document.body.classList.toggle('paused',!playing);
+  $('#np').classList.toggle('paused',!playing); document.body.classList.toggle('paused',!playing); document.body.classList.toggle('playing',!!playing);
 }
 audio.addEventListener('play',()=>{setIcons(true); $('#resume').innerHTML=''; if(song){ noteHistory(song.id); renderRecent(); }}); audio.addEventListener('pause',()=>{setIcons(false); saveProgress(true);});
 audio.addEventListener('ended',()=>{ lsSet('last',null); next(); });
 audio.addEventListener('timeupdate',tick);
 audio.addEventListener('loadedmetadata',()=>{ if(resumeAt&&resumeAt<audio.duration-5){ audio.currentTime=resumeAt; } resumeAt=null; updateTime(); });
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveProgress(true); });
-(function loop(){ let k=0; (function f(){ k++; if(song&&!audio.paused){ const open=np.classList.contains('open'); if(open||k%6===0) updateTime(); if(open){ updateVerse(); updateLyrics(); } } requestAnimationFrame(f); })(); })();
+// (the clock that moves the progress bar, words and glow runs further down, beside the glow it also draws)
 $('#play').onclick=toggle; $('#miniplay').onclick=e=>{e.stopPropagation();toggle()};
 $('#next').onclick=next; $('#mininext').onclick=e=>{e.stopPropagation();next()}; $('#prev').onclick=prev;
 function setRepeatUI(){ const one=repeat==='one'; $('#rep').setAttribute('aria-pressed',loopAll); $('#rep').setAttribute('aria-label',loopAll?'Repeat the list: on':'Repeat the list'); $('#rep1').setAttribute('aria-pressed',one||!!loopRange); $('#rep1 span').textContent=loopRange?`${loopRange.a}${loopRange.b!==loopRange.a?'–'+loopRange.b:''}`:'Repeat'; }
@@ -1703,12 +1711,17 @@ const AUR={cols:['hsl(230 60% 55%)','hsl(340 60% 50%)','hsl(190 60% 45%)'],cv:$(
 function sizeAurora(){ AUR.cv.width=Math.max(48,Math.round(innerWidth/8)); AUR.cv.height=Math.max(48,Math.round(innerHeight/8)); }
 sizeAurora(); addEventListener('resize',sizeAurora);
 function drawAurora(now){
-  if(now-AUR.last<50){ return; } AUR.last=now; const c=AUR.cv, x=c.getContext('2d'), w=c.width, h=c.height, t=now/1000;
+  if(now-AUR.last<26){ return; } AUR.last=now; const c=AUR.cv, x=c.getContext('2d'), w=c.width, h=c.height, t=now/1000;
   x.clearRect(0,0,w,h); x.globalCompositeOperation='lighter';
   const B=[[.28+.16*Math.sin(t*.11),.22+.14*Math.cos(t*.13),.8],[.78+.12*Math.sin(t*.09+2),.42+.16*Math.sin(t*.1+1),.85],[.45+.22*Math.cos(t*.08+4),.95+.1*Math.sin(t*.12+3),.9]];
   B.forEach((b,i)=>{ const R=b[2]*Math.max(w,h); const g=x.createRadialGradient(b[0]*w,b[1]*h,0,b[0]*w,b[1]*h,R); g.addColorStop(0,AUR.cols[i].replace(')',' / .62)')); g.addColorStop(.55,AUR.cols[i].replace(')',' / .18)')); g.addColorStop(1,AUR.cols[i].replace(')',' / 0)')); x.fillStyle=g; x.fillRect(0,0,w,h); });
 }
-(function auroraLoop(now){ const open=np.classList.contains('open'); if(open&&!np.classList.contains('anim')&&!np.classList.contains('drag')&&!reduce) drawAurora(now||0); if(open) requestAnimationFrame(auroraLoop); else setTimeout(()=>requestAnimationFrame(auroraLoop),300); })(0);
+/* one clock for the open player: progress, lit words and the glow all move on the same frame, about 30 times a second
+   (a 4px bar or a soft glow can't look any smoother at 60, and every extra frame costs the laptop). With the player shut it's a few quiet checks a second, so the page can sleep. */
+(function clock(){ let k=0; (function f(now){ k++; const vis=!document.hidden, open=vis&&np.classList.contains('open'), on=vis&&song&&!audio.paused;
+  if(on){ updateTime(); if(open){ updateVerse(); updateLyrics(); } }
+  if(open&&!np.classList.contains('anim')&&!np.classList.contains('drag')&&!reduce&&(on||k%2===0)) drawAurora(now||performance.now());
+  setTimeout(()=>requestAnimationFrame(f),open?28:(on?120:350)); })(performance.now()); })();
 let npAnimT=0; function npMoving(){ np.classList.add('anim'); clearTimeout(npAnimT); npAnimT=setTimeout(()=>np.classList.remove('anim'),620); }
 np.addEventListener('transitionend',e=>{ if(e.target===np&&e.propertyName==='transform'){ clearTimeout(npAnimT); np.classList.remove('anim'); } });
 // only one cover flies at a time: starting a new flight lands any earlier one at once, so a page closed mid-open never leaves a cover hanging
@@ -2247,15 +2260,22 @@ function mirrorPos(){ if(!mirGeo||document.body.classList.contains('npopen')) re
 function glassify(el){ if(!el.querySelector(':scope>.refl')){ const r=document.createElement('i'); r.className='refl'; r.setAttribute('aria-hidden','true'); el.prepend(r); } return el; }
 document.body.append($('#chapter'));
 document.querySelectorAll('.glass').forEach(glassify);
-if(!reduce){ mirrorMake($('#minicard')); mirrorMake($('#tabbar'));
+if(false){ mirrorMake($('#minicard')); mirrorMake($('#tabbar'));
   const mo=new MutationObserver(mirrorSync); mo.observe($('#lib'),{childList:true,subtree:true,attributes:true,attributeFilter:['aria-pressed','aria-expanded','src']}); mo.observe($('#chapter'),{childList:true,subtree:true,attributes:true,attributeFilter:['aria-pressed','src']});
   let mirRaf=0; const onS=()=>{ if(!mirRaf) mirRaf=requestAnimationFrame(()=>{ mirRaf=0; mirrorPos(); }); }; $('#lib').addEventListener('scroll',onS,{passive:true}); $('#chapter').addEventListener('scroll',onS,{passive:true}); addEventListener('resize',()=>setTimeout(mirrorMeasure,80)); setTimeout(mirrorMeasure,600); mirrorSync(); }
 /* ---------- glass light: the highlights drift with tilting and the mouse (not with scrolling: restyling every pane per scrolled frame cost too much) ---------- */
 (function(){ const R=document.documentElement; let tx=0,ty=0,x=0,y=0,raf=0,lastT=0;
+  // the light lives on one small rule for the glass panes only: writing it on the page root restyled every element on screen each frame the mouse moved
+  let LR=null; try{ const ls=document.createElement('style'); ls.textContent='.glass{--lx:0;--ly:0}'; document.head.append(ls); LR=ls.sheet.cssRules[0].style; }catch(e){}
+  // better still: only the panes actually on screen get the new light (an off-screen pane picks it up the moment it scrolls into view)
+  const VIS=new Set(); let io=null; try{ io=new IntersectionObserver(es=>es.forEach(e=>{ const g=e.target; if(e.isIntersecting){ VIS.add(g); g.style.setProperty('--lx',x.toFixed(2)); g.style.setProperty('--ly',y.toFixed(2)); } else VIS.delete(g); })); }catch(e){}
+  if(io){ const seen=new WeakSet(); let wq=0; const watch=()=>{ wq=0; document.querySelectorAll('.glass').forEach(g=>{ if(!seen.has(g)){ seen.add(g); io.observe(g); } }); };
+    watch(); new MutationObserver(()=>{ if(!wq) wq=setTimeout(watch,250); }).observe(document.body,{childList:true,subtree:true}); }
+  const put=(k,v)=>{ if(io) VIS.forEach(g=>g.style.setProperty(k,v)); else if(LR) LR.setProperty(k,v); else R.style.setProperty(k,v); };
   const ua=navigator.userAgent; if(/Chrome\//.test(ua)&&!/Edg\/|OPR\//.test(ua)&&!/iPhone|iPad|iPod|Android/.test(ua)&&!reduce) R.classList.add('lens'); // only desktop Chromium bends the backdrop through SVG
   const busy=()=>{ const b=document.body.classList; return b.contains('paging')||b.contains('morphing')||b.contains('folding')||b.contains('moving'); };
   const step=(now)=>{ raf=0; if(busy()){ raf=requestAnimationFrame(step); return; } const k=Math.min(1,(now-(lastT||now-16))/16)*.1; lastT=now; x+=(tx-x)*k; y+=(ty-y)*k;
-    if(Math.abs(tx-x)+Math.abs(ty-y)<.006){ x=tx; y=ty; } R.style.setProperty('--lx',x.toFixed(2)); R.style.setProperty('--ly',y.toFixed(2)); if(x!==tx||y!==ty) raf=requestAnimationFrame(step); };
+    if(Math.abs(tx-x)+Math.abs(ty-y)<.006){ x=tx; y=ty; } put('--lx',x.toFixed(2)); put('--ly',y.toFixed(2)); if(x!==tx||y!==ty) raf=requestAnimationFrame(step); };
   const aim=(a,b)=>{ const nx=Math.max(-1,Math.min(1,a)), ny=Math.max(-1,Math.min(1,b)); if(Math.abs(nx-tx)+Math.abs(ny-ty)<.02) return; tx=nx; ty=ny; if(!raf&&!reduce) raf=requestAnimationFrame(step); };
   let mt=0; addEventListener('pointermove',e=>{ if(e.pointerType!=='mouse') return; const n=performance.now(); if(n-mt<16) return; mt=n; aim(e.clientX/innerWidth*2-1, e.clientY/innerHeight*2-1); },{passive:true});
   // no motion sensors: on phones the reflections move with the page instead, so nothing ever asks for permission
