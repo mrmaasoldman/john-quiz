@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Meet Day</title>
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<style>
+:root{
+  --bg:#0f1a2e; --panel:#17243d; --panel2:#1e2e4c; --line:#2b3d5f;
+  --text:#eef3fb; --dim:#9fb0cc; --faint:#6f82a3;
+  --good:#3ecf8e; --bad:#ff6b6b; --warn:#ffc04d; --live:#ff4d6d;
+  --MS:#e6b43c; --BL:#53a8ff; --WOC:#ff7a3d;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 24px) env(safe-area-inset-left)}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.wrap{max-width:760px;margin:0 auto;padding:0 12px}
+header{position:sticky;top:0;z-index:5;background:rgba(15,26,46,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:center;gap:8px;padding:10px 0 8px}
+h1{font-size:20px;margin:0;font-weight:800;letter-spacing:.2px;flex:1}
+.conn{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--faint)}
+.dot.on{background:var(--good);box-shadow:0 0 0 3px rgba(62,207,142,.18)}
+.dot.bad{background:var(--bad)}
+select{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;max-width:58vw}
+.chips{display:flex;gap:6px;padding:0 0 10px;overflow-x:auto}
+.chip{padding:6px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:600;white-space:nowrap;color:var(--dim)}
+.chip.on{color:#0f1a2e;background:var(--text);border-color:var(--text)}
+.chip.MS.on{background:var(--MS);border-color:var(--MS)} .chip.BL.on{background:var(--BL);border-color:var(--BL)} .chip.WOC.on{background:var(--WOC);border-color:var(--WOC)}
+.banner{margin:10px 0;padding:10px 12px;border-radius:12px;background:#2a2410;border:1px solid #6b5517;color:#ffe3a0;font-size:14px;display:flex;gap:10px;align-items:center}
+.banner button{margin-left:auto;background:var(--warn);color:#241a00;font-weight:700;border-radius:8px;padding:6px 10px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:18px 2px 8px;font-weight:700}
+.glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;border-left:5px solid var(--c)}
+.gname{font-weight:800;font-size:15px}
+.gstats{display:flex;gap:12px;margin:6px 0 4px;font-size:13px;color:var(--dim)}
+.gstats b{color:var(--text);font-size:16px}
+.gnext{font-size:13px;color:var(--dim)}
+.gnext b{color:var(--text)}
+.qcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;width:100%;text-align:left;display:block}
+.qcard.live{border-color:var(--live);box-shadow:0 0 0 1px var(--live) inset}
+.qtop{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);margin-bottom:6px}
+.qtop .nm{font-weight:700;color:var(--text)}
+.badge{margin-left:auto;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--panel2);color:var(--dim)}
+.badge.live{background:var(--live);color:#fff}
+.badge.final{background:#24364f;color:#cfe0ff}
+.trow{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:15px}
+.trow .pl{width:30px;font-size:12px;color:var(--faint)}
+.trow .tn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow .sc{font-weight:800;font-variant-numeric:tabular-nums;min-width:40px;text-align:right}
+.trow.ours .tn{font-weight:800;color:var(--c)}
+.last{font-size:12px;color:var(--dim);margin-top:4px;font-style:italic}
+.empty{color:var(--dim);padding:14px;text-align:center;background:var(--panel);border-radius:14px;border:1px dashed var(--line)}
+/* detail */
+.dhead{display:flex;align-items:center;gap:8px;padding:10px 0}
+.back{padding:6px 10px;background:var(--panel2);border-radius:10px;font-weight:700}
+.dtitle{font-weight:800;font-size:17px;flex:1}
+.clock{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;padding:4px 10px;border-radius:10px;background:var(--panel2)}
+.clock.live{background:var(--live);color:#fff}
+.offgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.oteam{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;border-top:4px solid var(--c,var(--line))}
+.oteam .n{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oteam .s{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums}
+.oteam .m{font-size:12px;color:var(--dim)}
+.feed{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px;max-height:150px;overflow:auto;font-size:13px}
+.feed div{padding:2px 0;border-bottom:1px solid #22324f}
+.feed div:last-child{border:0}
+.feed .t{color:var(--faint);font-variant-numeric:tabular-nums;margin-right:6px}
+.tabs{display:flex;gap:6px;margin:14px 0 8px}
+.tab{flex:1;padding:8px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-weight:700;font-size:14px}
+.tab.on{background:var(--c);color:#111;border-color:var(--c)}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.shead{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel2);font-size:13px;color:var(--dim)}
+.shead b{font-size:22px;color:var(--text);font-variant-numeric:tabular-nums}
+.shead .grow{flex:1}
+.qz{display:flex;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid var(--line)}
+.qz.mis{background:rgba(255,192,77,.10)}
+.qz .who{flex:1;min-width:0}
+.qz .who .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qz .who .sub{font-size:12px;color:var(--dim)}
+.qz .who .sub .w{color:var(--warn);font-weight:700}
+.qz .cnt{font-variant-numeric:tabular-nums;font-weight:800;font-size:14px;min-width:62px;text-align:center}
+.qz.out{opacity:.6}
+.b{min-width:44px;height:44px;border-radius:12px;font-weight:900;font-size:17px}
+.b.ok{background:rgba(62,207,142,.18);color:var(--good)}
+.b.er{background:rgba(255,107,107,.18);color:var(--bad)}
+.b.fo{background:rgba(255,192,77,.16);color:var(--warn);min-width:36px;font-size:14px}
+.b:active{transform:scale(.94)}
+.subhd{padding:6px 12px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);border-top:1px solid var(--line);background:#152138}
+.tools{display:flex;flex-wrap:wrap;gap:6px;padding:10px;border-top:1px solid var(--line)}
+.tools button{padding:9px 12px;border-radius:10px;background:var(--panel2);font-weight:700;font-size:13px}
+.tools .undo{margin-left:auto;background:#3a2330;color:#ffb3c4}
+.note{font-size:12px;color:var(--faint);margin:8px 2px}
+.mlog{font-size:13px;color:var(--dim);padding:8px 12px;border-top:1px solid var(--line);max-height:120px;overflow:auto}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#e9eef8;color:#0f1a2e;padding:8px 14px;border-radius:999px;font-weight:700;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.toast.on{opacity:1}
+.hide{display:none!important}
+body.indetail header .hrow+.hrow,body.indetail .chips{display:none}
+footer{margin:24px 0 0;font-size:12px;color:var(--faint);text-align:center}
+footer a{color:var(--dim)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="hrow">
+    <h1>Meet Day</h1>
+    <div class="conn"><span class="dot" id="dot"></span><span id="connTxt">Connecting…</span></div>
+  </div>
+  <div class="hrow" style="padding-top:0">
+    <select id="eventSel" aria-label="Event"></select>
+    <span id="demoTag" class="badge hide" style="margin-left:0">DEMO</span>
+  </div>
+  <div class="chips" id="chips"></div>
+</div></header>
+
+<main class="wrap">
+  <div id="home">
+    <div id="banner"></div>
+    <h2>Our teams this meet</h2>
+    <div class="glance" id="glance"></div>
+    <h2 id="liveH" class="hide">Live now</h2>
+    <div id="liveList"></div>
+    <h2>Our quizzes</h2>
+    <div id="quizList"></div>
+  </div>
+  <div id="detail" class="hide"></div>
+  <footer>Official scores from <a href="https://quizzing.live/scores/mm" target="_blank" rel="noopener">quizzing.live</a>. Your scoresheet stays on this device.
+    <br><a href="?demo">Try the demo</a> · <a href="../">John Quiz</a></footer>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== Config ===== */
+const TEAMS=[
+  {key:'MS', name:'Master Swords', short:'Swords'},
+  {key:'BL', name:'Blinding Light', short:'Light'},
+  {key:'WOC',name:'Warriors of Christ', short:'WOC'},
+];
+const ORG='mm';
+const BASE_ID=65536;
+const KNOWN={65536:'September Quiz',65538:'October Quiz',65539:'October Championship',65540:'Nov Quiz',65541:'Nov Championship'};
+const DEMO=new URLSearchParams(location.search).has('demo');
+const LS=DEMO?'meetdemo:':'meet:';
+
+const norm=s=>(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+const teamOf=name=>TEAMS.find(t=>norm(t.name)===norm(name));
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const load=(k,d)=>{try{const v=localStorage.getItem(LS+k);return v?JSON.parse(v):d}catch(e){return d}};
+const save=(k,v)=>{try{localStorage.setItem(LS+k,JSON.stringify(v))}catch(e){}};
+
+/* ===== State ===== */
+const S={
+  events:load('events',{...KNOWN}),   // id -> name
+  eventId:null, userPicked:false,
+  tmpl:null,            // schedule template {ename, quizzes:{tid:{r,s,l}}}
+  scores:{},            // tid -> compact score {n,p,tn,ts,pl,u,qid}
+  timers:{},            // tid -> {time,half}
+  filter:load('filter','all'),
+  open:null,            // {tid}
+  det:null,             // {qid,data,names,time,feed:[]}
+  sheetTeam:null,
+  newer:null,
+};
+
+/* ===== Socket layer (real or demo) ===== */
+let ioFn=null;
+function connect(){ return ioFn(DEMO?'demo':'https://quizzing.live',{transports:['websocket'],forceNew:true,reconnection:true}); }
+
+/* ===== Event discovery ===== */
+function probe(id,ms=6000){
+  return new Promise(res=>{
+    const s=connect(); let done=false;
+    const fin=v=>{if(done)return;done=true;try{s.close()}catch(e){};res(v)};
+    s.on('connect',()=>s.emit('is_schedule_viewer',`${ORG}/schedules/${id}`));
+    s.on('sk_schedule',t=>fin(t&&t.ename?{id,name:t.ename}:null));
+    s.on('sk_error',()=>fin(null));
+    setTimeout(()=>fin(null),ms);
+  });
+}
+async function discover(initial){
+  const ids=Object.keys(S.events).map(Number);
+  const max=Math.max(...ids);
+  const look=initial?[max+1,max+2,max+3,max+4]:[max+1,max+2,max+3];
+  const found=(await Promise.all(look.map(id=>probe(id)))).filter(Boolean);
+  let changed=false;
+  for(const f of found){ if(S.events[f.id]!==f.name){S.events[f.id]=f.name;changed=true;} }
+  if(changed){ save('events',S.events); fillEvents(); }
+  const newest=Math.max(...Object.keys(S.events).map(Number));
+  if(initial){ if(!S.userPicked) selectEvent(newest); }
+  else if(found.length && newest!==S.eventId){
+    if(!S.userPicked && allOursFinal()) selectEvent(newest);
+    else { S.newer=newest; renderHome(); }
+  }
+}
+setInterval(()=>discover(false),120000);
+
+function fillEvents(){
+  const sel=$('eventSel');
+  const ids=Object.keys(S.events).map(Number).sort((a,b)=>b-a);
+  sel.innerHTML=ids.map(id=>`<option value="${id}">${esc(S.events[id])}</option>`).join('');
+  if(S.eventId) sel.value=S.eventId;
+}
+$('eventSel').onchange=e=>{S.userPicked=true;selectEvent(Number(e.target.value));};
+
+/* ===== Schedule socket ===== */
+let schedSock=null;
+function selectEvent(id){
+  if(S.eventId===id && schedSock) return;
+  S.eventId=id; S.tmpl=null; S.scores={}; S.timers={}; S.newer=null;
+  $('eventSel').value=id;
+  if(schedSock){try{schedSock.close()}catch(e){}}
+  closeDetail(true);
+  renderHome();
+  const s=schedSock=connect();
+  s.on('connect',()=>{setConn('on');s.emit('is_schedule_viewer',`${ORG}/schedules/${id}`);});
+  s.on('disconnect',()=>setConn('off'));
+  s.on('connect_error',()=>setConn('bad'));
+  s.on('sk_schedule',(t,scores)=>{
+    if(s!==schedSock) return;
+    S.tmpl=t; S.scores={};
+    for(const k in scores){ const q=scores[k]; if(t.quizzes[q.t]) S.scores[q.t]={...q,qid:k}; }
+    if(t.ename && S.events[id]!==t.ename){S.events[id]=t.ename;save('events',S.events);fillEvents();}
+    renderHome(); if(S.open) renderDetail();
+  });
+  s.on('sk_quiz_changed',(key,data)=>{
+    if(s!==schedSock||!data||!S.tmpl||!S.tmpl.quizzes[data.t]) return;
+    S.scores[data.t]={...data,qid:key};
+    if(S.open && S.open.tid==data.t){ if(!S.det||S.det.qid!=key) openDetailSocket(); }
+    renderHomeSoon();
+  });
+  s.on('time_update',(qid,tid,time,half)=>{
+    S.timers[tid]={time,half};
+    if(!S.open) updateClocks(); else if(S.open.tid==tid && !detSock) renderDetailClock();
+  });
+}
+function setConn(st){
+  $('dot').className='dot '+(st==='on'?'on':st==='bad'?'bad':'');
+  $('connTxt').textContent=st==='on'?(DEMO?'Demo live':'Live'):st==='bad'?'Can’t reach scores':'Reconnecting…';
+}
+
+/* ===== Helpers ===== */
+function ourList(){
+  if(!S.tmpl) return [];
+  return Object.entries(S.tmpl.quizzes)
+    .map(([tid,q])=>({tid,q,sc:S.scores[tid]}))
+    .filter(x=>teamsIn(x).some(t=>teamOf(t)))
+    .sort((a,b)=>a.q.r-b.q.r||a.q.s-b.q.s);
+}
+function teamsIn(x){ return (x.sc&&x.sc.tn&&x.sc.tn.length)?x.sc.tn:(x.q.l||[]); }
+function statusOf(x){
+  if(!x.sc) return 'sched';
+  return /^final/i.test(x.sc.p||'')?'final':'live';
+}
+function passes(x){ return S.filter==='all' || teamsIn(x).some(n=>{const t=teamOf(n);return t&&t.key===S.filter}); }
+function allOursFinal(){ const l=ourList(); return l.length>0 && l.every(x=>statusOf(x)==='final'); }
+function quizLabel(q){ return `Round ${q.r+1} · Site ${q.s+1}`; }
+function ordinal(n){ return ['1st','2nd','3rd'][n-1]||n+'th'; }
+function clockTxt(tid){
+  const t=S.timers[tid]; if(!t||t.time==null) return '';
+  return (t.half?'Halftime · ':'')+t.time;
+}
+
+/* ===== Home render ===== */
+let homeT=null;
+function renderHomeSoon(){ clearTimeout(homeT); homeT=setTimeout(()=>{ if(!S.open) renderHome(); else renderDetail(); },60); }
+function renderChips(){
+  const all=[{key:'all',name:'All 3'}].concat(TEAMS);
+  $('chips').innerHTML=all.map(t=>`<button class="chip ${t.key} ${S.filter===t.key?'on':''}" data-k="${t.key}">${esc(t.name)}</button>`).join('');
+  $('chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{S.filter=b.dataset.k;save('filter',S.filter);renderChips();renderHome();});
+}
+function quizCard(x){
+  const st=statusOf(x), sc=x.sc;
+  const names=teamsIn(x);
+  let rows=names.map((n,i)=>({n,s:sc&&sc.ts?sc.ts[i]:null,pl:sc&&sc.pl?sc.pl[i]:null}));
+  if(st==='final') rows.sort((a,b)=>(a.pl||9)-(b.pl||9));
+  else if(st==='live') rows.sort((a,b)=>(b.s||0)-(a.s||0));
+  const badge=st==='live'?`<span class="badge live" data-clock="${x.tid}">● ${esc(clockTxt(x.tid)||sc.p||'Live')}</span>`
+    :st==='final'?`<span class="badge final">${esc(sc.p)}</span>`:`<span class="badge">Scheduled</span>`;
+  return `<button class="qcard ${st==='live'?'live':''}" data-tid="${x.tid}">
+    <div class="qtop"><span class="nm">${quizLabel(x.q)}</span>${badge}</div>
+    ${rows.map(r=>{const t=teamOf(r.n);return `<div class="trow ${t?'ours':''}" style="${t?`--c:var(--${t.key})`:''}">
+      <span class="pl">${st==='final'&&r.pl?ordinal(r.pl):''}</span><span class="tn">${esc(r.n)}</span><span class="sc">${r.s??''}</span></div>`}).join('')}
+    ${sc&&sc.u&&st==='live'?`<div class="last">${esc(sc.u)}</div>`:''}
+  </button>`;
+}
+function glance(){
+  const all=ourList();
+  // points ranking across every team in this event (finals only)
+  const tot={};
+  if(S.tmpl) for(const tid in S.scores){ const sc=S.scores[tid]; if(!/^final/i.test(sc.p||'')) continue;
+    (sc.tn||[]).forEach((n,i)=>{tot[n]=(tot[n]||0)+(sc.ts[i]||0)}); }
+  const ranked=Object.entries(tot).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+  return TEAMS.filter(t=>S.filter==='all'||S.filter===t.key).map(t=>{
+    const mine=all.filter(x=>teamsIn(x).some(n=>teamOf(n)===t));
+    const fin=mine.filter(x=>statusOf(x)==='final');
+    const places=[0,0,0]; let pts=0;
+    fin.forEach(x=>{const i=x.sc.tn.findIndex(n=>teamOf(n)===t); const p=x.sc.pl[i]; if(p>=1&&p<=3)places[p-1]++; pts+=x.sc.ts[i]||0;});
+    const live=mine.find(x=>statusOf(x)==='live');
+    const next=mine.find(x=>statusOf(x)==='sched');
+    const r=ranked.findIndex(n=>teamOf(n)===t);
+    let nx='';
+    if(live){const i=live.sc.tn.findIndex(n=>teamOf(n)===t);nx=`<span style="color:var(--live);font-weight:700">● Live now</span> · ${quizLabel(live.q)} · <b>${live.sc.ts[i]}</b>`;}
+    else if(next){nx=`Next: <b>${quizLabel(next.q)}</b> vs ${esc(next.q.l.filter(n=>teamOf(n)!==t).join(', ')||'TBD')}`;}
+    else if(mine.length) nx='All quizzes finished';
+    else nx='No quizzes in this event';
+    return `<div class="gcard" style="--c:var(--${t.key})">
+      <div class="gname">${esc(t.name)}</div>
+      <div class="gstats"><span><b>${places[0]}</b> 1st</span><span><b>${places[1]}</b> 2nd</span><span><b>${places[2]}</b> 3rd</span><span><b>${pts}</b> pts</span>${r>=0?`<span>#<b>${r+1}</b>/${ranked.length}</span>`:''}</div>
+      <div class="gnext">${nx}</div></div>`;
+  }).join('');
+}
+function renderHome(){
+  if(S.open) return;
+  $('banner').innerHTML=S.newer?`<div class="banner">New event posted: <b>${esc(S.events[S.newer])}</b><button id="goNew">Switch</button></div>`:'';
+  if(S.newer) $('goNew').onclick=()=>{S.userPicked=false;selectEvent(S.newer);};
+  if(!S.tmpl){ $('glance').innerHTML=`<div class="empty">Loading ${esc(S.events[S.eventId]||'schedule')}…</div>`; $('quizList').innerHTML=''; $('liveList').innerHTML=''; $('liveH').classList.add('hide'); return; }
+  $('glance').innerHTML=glance();
+  const list=ourList().filter(passes);
+  const live=list.filter(x=>statusOf(x)==='live');
+  $('liveH').classList.toggle('hide',!live.length);
+  $('liveList').innerHTML=live.map(quizCard).join('');
+  const rest=list.filter(x=>statusOf(x)!=='live');
+  $('quizList').innerHTML=rest.length?rest.map(quizCard).join(''):(live.length?'':`<div class="empty">None of our teams are in ${esc(S.tmpl.ename)}.</div>`);
+  document.querySelectorAll('.qcard').forEach(b=>b.onclick=()=>openQuiz(b.dataset.tid));
+}
+function updateClocks(){
+  document.querySelectorAll('[data-clock]').forEach(el=>{const t=clockTxt(el.dataset.clock); if(t) el.textContent='● '+t;});
+}
+
+/* ===== Detail (one quiz) ===== */
+let detSock=null;
+function openQuiz(tid){
+  S.open={tid}; S.det=null; S.sheetTeam=null;
+  $('home').classList.add('hide'); $('detail').classList.remove('hide'); document.body.classList.add('indetail');
+  history.pushState({q:tid},'' ,'#q'+tid);
+  openDetailSocket(); renderDetail(); scrollTo(0,0);
+}
+function closeDetail(silent){
+  if(detSock){try{detSock.close()}catch(e){}; detSock=null;}
+  if(!S.open) return;
+  S.open=null; S.det=null;
+  $('detail').classList.add('hide'); $('home').classList.remove('hide'); document.body.classList.remove('indetail');
+  if(!silent && location.hash) history.back();
+  renderHome();
+}
+addEventListener('popstate',()=>{ if(S.open) closeDetail(true); });
+function openDetailSocket(){
+  if(detSock){try{detSock.close()}catch(e){}; detSock=null;}
+  const sc=S.scores[S.open.tid]; if(!sc) return;
+  const qid=sc.qid;
+  const feed=load('feed:'+qid,[]);
+  S.det={qid,data:null,names:null,time:null,half:false,feed,lastU:feed.length?feed[feed.length-1].x:null};
+  const s=detSock=connect();
+  s.on('connect',()=>s.emit('is_quiz_viewer',`${ORG}/${qid}`));
+  s.on('time_update',(time,half)=>{ if(s!==detSock)return; S.det.time=time;S.det.half=half;renderDetailClock(); });
+  s.on('sk_quiz_changed',(type,data,db,time)=>{
+    if(s!==detSock||!S.det) return;
+    const d=S.det;
+    if(time!=null) d.time=time;
+    if(type==='load'){d.data=data;d.names=db;}
+    else if(!d.data) return;
+    else if(type==='quiz'){d.data=data;}
+    else if(type==='team'){d.data.teams[data.id]=data;}
+    else if(type==='quizzer'){d.data.quizzers[data.id]=data;}
+    if(d.data && d.data.last && d.data.last!==d.lastU){
+      d.lastU=d.data.last;
+      if(!d.feed.length || d.feed[d.feed.length-1].x!==d.data.last){
+        d.feed.push({t:new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'}),x:d.data.last});
+        if(d.feed.length>120) d.feed.shift(); save('feed:'+qid,d.feed);
+      }
+    }
+    renderDetailSoon();
+  });
+}
+let detT=null;
+function renderDetailSoon(){ clearTimeout(detT); detT=setTimeout(renderDetail,40); }
+
+function officialTeams(){
+  const d=S.det; if(!d||!d.data||!d.names) return null;
+  const arr=[]; for(const k in d.data.teams){ const t=d.data.teams[k]; arr[t.i]={...t,name:d.names.teams[t.id]}; }
+  return arr.filter(Boolean);
+}
+function rosterFor(teamId){
+  const d=S.det; if(!d||!d.data) return [];
+  return Object.values(d.data.quizzers).filter(q=>q.tid==teamId)
+    .map(q=>({...q,name:(d.names.quizzers||{})[q.id]||('Quizzer '+q.id)}))
+    .sort((a,b)=>((a.s==1)-(b.s==1))||(a.s-b.s)||a.name.localeCompare(b.name));
+}
+
+/* scoresheet storage: per quiz + our team name */
+function sheetKey(){ const sc=S.scores[S.open.tid]; return 'sheet:'+(sc?sc.qid:'t'+S.open.tid)+':'+S.sheetTeam; }
+function getSheet(){ return load(sheetKey(),{q:{},adj:[],log:[]}); }
+function putSheet(sh){ save(sheetKey(),sh); }
+const qPts=r=>r.c*20+(r.c>=5&&r.e===0?10:0);
+
+function act(kind,qz){
+  const sh=getSheet();
+  if(qz){ const r=sh.q[qz.id]||(sh.q[qz.id]={c:0,e:0,f:0,name:qz.name});
+    if(kind==='c')r.c++; if(kind==='e')r.e++; if(kind==='f')r.f++;
+    if(kind==='sync'){ const prev={...r}; r.c=qz.p;r.e=qz.e;r.f=qz.f||0; sh.log.push({k:'sync',id:qz.id,prev,txt:`Matched ${qz.name} to official`}); putSheet(sh); toast('Matched to official'); renderDetail(); return; }
+    sh.log.push({k:kind,id:qz.id,txt:`${qz.name} ${kind==='c'?'correct +20':kind==='e'?'error':'foul'}`});
+    if(navigator.vibrate) navigator.vibrate(12);
+  } else {
+    const pts={bon:10,ded:-10}[kind];
+    sh.adj.push(pts); sh.log.push({k:kind,txt:kind==='bon'?'Bonus +10':'Deduction −10'});
+  }
+  putSheet(sh); renderDetail();
+}
+function undo(){
+  const sh=getSheet(); const l=sh.log.pop(); if(!l){toast('Nothing to undo');return;}
+  if(l.k==='sync') sh.q[l.id]=l.prev;
+  else if(l.id!=null){ const r=sh.q[l.id]; if(r){ if(l.k==='c')r.c--; if(l.k==='e')r.e--; if(l.k==='f')r.f--; } }
+  else sh.adj.pop();
+  putSheet(sh); toast('Undid: '+l.txt); renderDetail();
+}
+function resetSheet(){ if(!confirm('Clear your scoresheet for this team in this quiz?')) return; putSheet({q:{},adj:[],log:[]}); renderDetail(); }
+
+function renderDetailClock(){
+  const el=$('dclock'); if(!el) return;
+  const d=S.det, tid=S.open&&S.open.tid;
+  let t=d&&d.time!=null?(d.half?'Halftime · ':'')+d.time:clockTxt(tid);
+  const st=S.scores[tid]?statusOf({sc:S.scores[tid]}):'sched';
+  if(st==='final') t=S.scores[tid].p; else if(st==='sched') t='Scheduled';
+  el.textContent=t||'Live'; el.className='clock '+(st==='live'?'live':'');
+}
+function renderDetail(){
+  if(!S.open) return;
+  const tid=S.open.tid, q=S.tmpl&&S.tmpl.quizzes[tid]; if(!q){closeDetail(true);return;}
+  const x={tid,q,sc:S.scores[tid]};
+  const names=teamsIn(x);
+  const ours=names.map(teamOf).filter(Boolean);
+  if(!S.sheetTeam || !ours.find(t=>t.name===S.sheetTeam)){
+    const pref=TEAMS.find(t=>t.key===S.filter && ours.includes(t));
+    S.sheetTeam=(pref||ours[0]).name;
+  }
+  const ot=officialTeams();
+  const d=S.det;
+  const keep=$('detail').querySelector('.feed'); const feedScroll=keep?keep.scrollTop:0;
+  let h=`<div class="dhead"><button class="back" id="backB">‹ Back</button><div class="dtitle">${quizLabel(q)}</div><span class="clock" id="dclock"></span></div>`;
+  // official panel
+  const offRows=(ot||names.map((n,i)=>({name:n,s:x.sc&&x.sc.ts?x.sc.ts[i]:0,e:null,a:null})));
+  h+=`<div class="offgrid">${offRows.map(t=>{const o=teamOf(t.name);return `<div class="oteam" style="${o?`--c:var(--${o.key})`:''}">
+    <div class="n">${esc(t.name)}</div><div class="s">${t.s??0}</div>
+    <div class="m">${t.e!=null?`${t.e} err · ${t.a} ans`:'&nbsp;'}</div></div>`}).join('')}</div>`;
+  if(d&&d.names&&d.names.qm) h+=`<div class="note">Quizmaster: ${esc(d.names.qm)}</div>`;
+  if(d&&d.feed.length) h+=`<h2>Official updates</h2><div class="feed">${d.feed.slice().reverse().map(f=>`<div><span class="t">${esc(f.t)}</span>${esc(f.x)}</div>`).join('')}</div>`;
+  else if(x.sc&&x.sc.u) h+=`<div class="last" style="margin-top:8px">${esc(x.sc.u)}</div>`;
+
+  // scoresheet
+  h+=`<h2>My scoresheet</h2>`;
+  if(ours.length>1) h+=`<div class="tabs">${ours.map(t=>`<button class="tab ${t.name===S.sheetTeam?'on':''}" style="--c:var(--${t.key})" data-team="${esc(t.name)}">${esc(t.name)}</button>`).join('')}</div>`;
+  const ourT=teamOf(S.sheetTeam);
+  const offTeam=ot&&ot.find(t=>norm(t.name)===norm(S.sheetTeam));
+  const roster=offTeam?rosterFor(offTeam.id):[];
+  const sh=getSheet();
+  if(!roster.length){
+    h+=`<div class="empty">${x.sc?'Loading lineup…':'The lineup appears here as soon as the quiz starts.'}</div>`;
+  } else {
+    let myPts=0,myErr=0;
+    roster.forEach(r=>{const m=sh.q[r.id]||{c:0,e:0,f:0}; myPts+=qPts(m); myErr+=m.e+Math.floor(m.f/2);});
+    const adj=sh.adj.reduce((a,b)=>a+b,0); myPts+=adj;
+    h+=`<div class="sheet" style="--c:var(--${ourT.key})"><div class="shead">
+      <span>Mine<br><b>${myPts}</b></span><span>Official<br><b>${offTeam.s}</b></span>
+      <span class="grow"></span><span style="text-align:right">My errors <b style="font-size:16px">${myErr}</b><br>Official ${offTeam.e}</span></div>`;
+    let subsShown=false;
+    roster.forEach(r=>{
+      if(r.s==1&&!subsShown){subsShown=true;h+=`<div class="subhd">Subs</div>`;}
+      const m=sh.q[r.id]||{c:0,e:0,f:0};
+      const offE=r.e, offF=r.f||0;
+      const mis=(m.c!==r.p)||(m.e!==offE)||(m.f!==offF);
+      const cap=offTeam.c==r.id;
+      h+=`<div class="qz ${mis?'mis':''}">
+        <div class="who"><div class="nm">${cap?'★ ':''}${esc(r.name)}</div>
+          <div class="sub">Official ${r.p}✓ ${offE}✗${offF?` ${offF}F`:''} · ${qPts({c:r.p,e:r.e})} pts${mis?` <span class="w">≠ yours</span> <button class="syncB" data-id="${r.id}" style="color:var(--BL);font-size:12px;font-weight:700;padding:0 4px">match</button>`:''}</div></div>
+        <div class="cnt"><span style="color:var(--good)">${m.c}✓</span> <span style="color:var(--bad)">${m.e}✗</span>${m.f?` <span style="color:var(--warn)">${m.f}F</span>`:''}</div>
+        <button class="b ok" data-a="c" data-id="${r.id}" aria-label="Correct">✓</button>
+        <button class="b er" data-a="e" data-id="${r.id}" aria-label="Error">✗</button>
+        <button class="b fo" data-a="f" data-id="${r.id}" aria-label="Foul">F</button>
+      </div>`;
+    });
+    h+=`<div class="tools"><button data-t="bon">Bonus +10</button><button data-t="ded">Deduct −10</button><button id="resetB">Clear</button><button class="undo" id="undoB">↶ Undo</button></div>`;
+    if(sh.log.length) h+=`<div class="mlog">${sh.log.slice(-8).reverse().map(l=>esc(l.txt)).join('<br>')}</div>`;
+    h+=`</div><div class="note">Highlighted rows don’t match the official count. Your total counts 20 per correct answer plus your bonus/deduction taps; the official total also includes team bonuses and error deductions.</div>`;
+  }
+  $('detail').innerHTML=h;
+  const f2=$('detail').querySelector('.feed'); if(f2) f2.scrollTop=feedScroll;
+  renderDetailClock();
+  $('backB').onclick=()=>closeDetail(false);
+  $('detail').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{S.sheetTeam=b.dataset.team;renderDetail();});
+  const byId=id=>roster.find(r=>String(r.id)===String(id));
+  $('detail').querySelectorAll('.b').forEach(b=>b.onclick=()=>act(b.dataset.a,byId(b.dataset.id)));
+  $('detail').querySelectorAll('.syncB').forEach(b=>b.onclick=()=>act('sync',byId(b.dataset.id)));
+  $('detail').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>act(b.dataset.t,null));
+  if($('undoB')) $('undoB').onclick=undo;
+  if($('resetB')) $('resetB').onclick=resetSheet;
+}
+
+let toastT=null;
+function toast(t){ const el=$('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('on'),1400); }
+
+/* ===== Demo server (fake live meet) ===== */
+function makeDemo(){
+  const hub=new Set();
+  const others=['Zeal','Salt','Remnant','Joy','Energy','Valor','Power','Covenant','Light','Dunamis'];
+  const quizzes={}; let n=0;
+  const plan=[[0,0,['Master Swords','Zeal','Joy']],[0,1,['Warriors of Christ','Blinding Light','Salt']],
+    [1,0,['Blinding Light','Remnant','Energy']],[1,2,['Master Swords','Valor','Power']],
+    [2,1,['Warriors of Christ','Covenant','Light']],[2,0,['Master Swords','Blinding Light','Dunamis']],
+    [3,2,['Warriors of Christ','Zeal','Remnant']],[3,1,['Salt','Joy','Energy']]];
+  plan.forEach(([r,s,l])=>{const id=900000+n++;quizzes[id]={id,t:0,r,s,l};});
+  const tmpl={ename:'Demo Meet',sname:'Demo',id:99,sid:1,r:4,s:3,quizzes};
+  const first=['Levi','Noah','JoJo','Ava','Eli','Grace','Sam','Ruth','Caleb','Anna','Micah','Lydia','Seth','Hope','Jude'];
+  const last=['Miller','Fast','Stone','Reed','Hart','Cole','Lane','Wells'];
+  let qn=1000;
+  const scores={}; const full={};
+  function mkFull(tid){
+    const q=quizzes[tid]; const qid=String(5000+Number(tid)%1000);
+    const teams={},quizzers={},db={qm:'Demo QM',teams:{},quizzers:{}};
+    q.l.forEach((name,i)=>{const id=100+i;teams[id]={id,i,t:0,e:0,p:0,a:0,s:0,c:null};db.teams[id]=name;
+      for(let k=0;k<7;k++){const qid2=qn++;quizzers[qid2]={id:qid2,tid:id,s:k<5?k+1:1,p:0,e:0,f:0};db.quizzers[qid2]=first[(qid2*7)%first.length]+' '+last[(qid2*3)%last.length];if(k===0)teams[id].c=qid2;}});
+    return {qid,data:{id:qid,name:quizLabel(q),period:1,status:'1st Half',teams,quizzers,last:'Quiz started',type:0},db};
+  }
+  // finished, live, scheduled
+  const tids=Object.keys(quizzes);
+  function compact(tid){const f=full[tid];const ts=[],tn=[];Object.values(f.data.teams).sort((a,b)=>a.i-b.i).forEach(t=>{ts.push(t.s);tn.push(f.db.teams[t.id]);});
+    const order=ts.map((v,i)=>i).sort((a,b)=>ts[b]-ts[a]);const pl=[];order.forEach((i,k)=>pl[i]=k+1);
+    return {v:1,s:1,t:Number(tid),n:f.data.name,p:f.data.status,tn,ts,pl,ev:'Demo Meet',u:f.data.last};}
+  function step(tid,final){
+    const f=full[tid];const qs=Object.values(f.data.quizzers).filter(q=>q.s!=1&&q.p<5&&q.e<3);if(!qs.length)return;
+    const qz=qs[Math.floor(Math.random()*qs.length)];const t=f.data.teams[qz.tid];
+    if(Math.random()<.72){qz.p++;t.s+=20+(qz.p===5&&qz.e===0?10:0);if(qz.p===1)t.a++;f.data.last=`${f.db.quizzers[qz.id]}: 20 Points`;}
+    else{qz.e++;t.e++;if(t.e>3)t.s-=10;f.data.last=`${f.db.quizzers[qz.id]}: Error`;}
+    t.p=Object.values(f.data.quizzers).filter(q=>q.tid===t.id).reduce((a,q)=>a+q.p,0);
+    if(!final){emitQ(tid,'quizzer',qz);emitQ(tid,'team',t);emitQ(tid,'quiz',f.data);}
+  }
+  function emitQ(tid,type,data){hub.forEach(c=>{if(c.room==='q:'+full[tid].qid)c.fire('sk_quiz_changed',type,JSON.parse(JSON.stringify(data)))});}
+  tids.slice(0,3).forEach(tid=>{full[tid]=mkFull(tid);for(let i=0;i<22;i++)step(tid,true);full[tid].data.status='Final';full[tid].data.period=4;scores[full[tid].qid]=compact(tid);});
+  const liveTid=tids[3], live2=tids[4]; let clock=8*60;
+  function startLive(tid){full[tid]=mkFull(tid);scores[full[tid].qid]=compact(tid);hub.forEach(c=>{if(c.room==='s')c.fire('sk_quiz_changed',full[tid].qid,compact(tid))});}
+  startLive(liveTid);
+  setTimeout(()=>startLive(live2),9000);
+  setInterval(()=>{clock=Math.max(0,clock-1);const t=`${Math.floor(clock/60)}:${String(clock%60).padStart(2,'0')}`;
+    [liveTid,live2].forEach(tid=>{if(!full[tid])return;hub.forEach(c=>{if(c.room==='s')c.fire('time_update',full[tid].qid,Number(tid),t,false);if(c.room==='q:'+full[tid].qid)c.fire('time_update',t,false);});});},1000);
+  setInterval(()=>{[liveTid,live2].forEach(tid=>{if(!full[tid])return;step(tid,false);const c=compact(tid);scores[full[tid].qid]=c;hub.forEach(s=>{if(s.room==='s')s.fire('sk_quiz_changed',full[tid].qid,c)});});},2600);
+  return function(url,opts){
+    const ls={};const c={room:null,
+      on(ev,fn){(ls[ev]||(ls[ev]=[])).push(fn);return c;},
+      fire(ev,...a){(ls[ev]||[]).forEach(f=>f(...a));},
+      emit(ev,arg){setTimeout(()=>{
+        if(ev==='is_schedule_viewer'){ if(arg.endsWith('/99')||arg.endsWith('/'+(BASE_ID+99))){c.room='s';c.fire('sk_schedule',JSON.parse(JSON.stringify(tmpl)),JSON.parse(JSON.stringify(scores)),{r:4,s:3});} }
+        if(ev==='is_quiz_viewer'){ const qid=arg.split('/')[1];const tid=Object.keys(full).find(k=>full[k].qid===qid);if(tid){c.room='q:'+qid;const f=full[tid];c.fire('sk_quiz_changed','load',JSON.parse(JSON.stringify(f.data)),f.db,undefined);} }
+      },120);},
+      close(){hub.delete(c);}};
+    hub.add(c);setTimeout(()=>c.fire('connect'),50);return c;
+  };
+}
+
+/* ===== Start ===== */
+renderChips();
+function start(){
+  if(DEMO){
+    $('demoTag').classList.remove('hide');
+    ioFn=makeDemo(); S.events={[BASE_ID+99]:'Demo Meet'}; fillEvents(); selectEvent(BASE_ID+99); return;
+  }
+  ioFn=window.io;
+  fillEvents();
+  const newest=Math.max(...Object.keys(S.events).map(Number));
+  selectEvent(newest);          // show the newest known event right away
+  discover(true);               // then look for anything newer
+}
+if(DEMO) start();
+else{
+  const sc=document.createElement('script');
+  sc.src='https://quizzing.live/socket.io/socket.io.js';
+  sc.onload=start;
+  sc.onerror=()=>{setConn('bad');$('glance').innerHTML='<div class="empty">Can’t reach quizzing.live right now. Check your connection and reload.</div>';};
+  document.head.appendChild(sc);
+}
+</script>
+</body>
+</html>
