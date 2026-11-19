@@ -176,6 +176,8 @@ body.npopen #chapter{transform:scale(.94) translateY(-10px)} body.morphing #chap
 .hero .skintog span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hero .skintog[aria-pressed="false"]{opacity:.85}
 .hero .skintog[hidden]{display:none}
+/* phones: the theme switch is just its paint icon (a round button), so it never runs into Quizzing on the right */
+@media (max-width:600px){ .skintog{width:40px;padding:0;justify-content:center;gap:0;max-width:none} .skintog span{display:none} .skintog[aria-pressed="false"]{opacity:.6} }
 .hero .quizlink{position:absolute;top:calc(16px + var(--sat));right:max(20px,var(--sar));height:40px;padding:0 14px 0 8px;border-radius:20px;display:flex;align-items:center;gap:2px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;z-index:2}
 .hero .quizlink svg{width:18px;height:18px;fill:currentColor}
 .hero .quizlink .lv{margin-left:8px;padding:2px 8px;border-radius:999px;background:var(--sig);font-size:12px;font-weight:800}
