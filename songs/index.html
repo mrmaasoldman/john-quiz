@@ -287,6 +287,7 @@ html,body{overscroll-behavior-x:none}
 /* swipe right: the row slides over and a signature-colored pane grows behind it; past the threshold it commits */
 .row{position:relative;touch-action:pan-y}
 .row.swiping{transition:none;z-index:1}
+.row[data-song],.chhd,.qrow{-webkit-user-select:none;user-select:none}
 .row.snap{transition:transform .36s cubic-bezier(.2,.8,.2,1)}
 .row::before{content:"";position:absolute;top:0;bottom:1px;left:0;width:var(--dx,0px);transform:translateX(calc(-1 * var(--dx,0px)));border-radius:10px;background:var(--sig);opacity:0;pointer-events:none}
 .row.swiping::before,.row.snap::before{opacity:1}
@@ -1132,10 +1133,11 @@ function swipeable(el,o){ let sx=0,sy=0,d=0,mode=null,id=null,will=false;
   let wOn=false, wAcc=0, wT=null;
   const wEnd=()=>{ if(!wOn) return; clearTimeout(wT); wOn=false; wheelCool=performance.now()+600; mode='h'; end(); };
   el.addEventListener('wheel',e=>{ if(!wheelSide(e)) return; const now=performance.now();
-    if(!wOn){ const ly=layerOf(el); if(ly!==topLayer()||ly==='chapter') return; if(now<wheelCool){ wheelCool=now+250; e.preventDefault(); return; } if(o.ignore&&e.target.closest(o.ignore)) return; if(Math.sign(-wheelPx(e))!==o.dir) return;
+    if(!wOn){ const ly=layerOf(el); if(ly!==topLayer()) return; if(now<wheelCool){ wheelCool=now+250; e.preventDefault(); return; } if(o.ignore&&e.target.closest(o.ignore)) return; if(Math.sign(-wheelPx(e))!==o.dir) return;
       wOn=true; wAcc=0; will=false; el.classList.add('swiping'); el.classList.remove('snap'); o.onStart&&o.onStart(); }
     e.preventDefault(); e.stopPropagation(); wAcc+=-wheelPx(e)*o.dir; show(wAcc); clearTimeout(wT); if(will&&wAcc>TH()+24){ wEnd(); return; } wT=setTimeout(wEnd,300); },{passive:false});
-  el.addEventListener('pointerdown',e=>{ mode=null; if(e.pointerType==='mouse'||e.button||e.clientX<28||(o.ignore&&e.target.closest(o.ignore))){ mode='x'; return; } /* the left edge belongs to the page's swipe-back */ sx=e.clientX; sy=e.clientY; d=0; id=e.pointerId; will=false; });
+  el.addEventListener('dragstart',e=>e.preventDefault());
+  el.addEventListener('pointerdown',e=>{ mode=null; if(e.button||(e.pointerType!=='mouse'&&e.clientX<28)||(o.ignore&&e.target.closest(o.ignore))||layerOf(el)!==topLayer()){ mode='x'; return; } /* the left edge belongs to the page's swipe-back */ sx=e.clientX; sy=e.clientY; d=0; id=e.pointerId; will=false; });
   el.addEventListener('pointermove',e=>{ if(mode==='x'||mode==='v'||e.pointerId!==id) return; const ddx=e.clientX-sx, ddy=e.clientY-sy;
     if(!mode){ if(Math.abs(ddx)<8&&Math.abs(ddy)<8) return; if(Math.abs(ddx)>Math.abs(ddy)*1.3&&Math.sign(ddx)===o.dir){ mode='h'; try{ el.setPointerCapture(id); }catch(x){} el.classList.add('swiping'); el.classList.remove('snap'); o.onStart&&o.onStart(); } else { mode='v'; return; } }
     show(ddx*o.dir);
