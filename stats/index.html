@@ -86,7 +86,7 @@ footer a{color:var(--dim)}
   <div class="seg" id="tabs"><button data-v="q" class="on">Quizzers</button><button data-v="t">Teams</button></div>
   <div class="chips" id="meets"></div>
   <div class="tools" id="tools">
-    <input id="search" type="search" placeholder="Search name or team" autocomplete="off">
+    <input id="search" type="search" placeholder="Search" autocomplete="off">
     <select id="sortSel" aria-label="Sort by"></select>
   </div>
 </div></header>
@@ -224,8 +224,8 @@ const SORTS_T={
 function renderMeets(){
   const ms=meetsList();
   const chips=[{key:'all',label:'Season'}].concat(ms.map(m=>({key:m.key,label:MONTH_NAME[m.key]||m.ev})));
-  $('meets').innerHTML=chips.map(c=>`<button class="chip ${V.meet===c.key?'on':''}" data-m="${c.key}">${esc(c.label)}</button>`).join('')+
-    `<button class="chip ours ${V.ours?'on':''}" id="oursB">★ Our 3 teams</button>`;
+  $('meets').innerHTML=`<button class="chip ours ${V.ours?'on':''}" id="oursB">★ Ours</button>`+
+    chips.map(c=>`<button class="chip ${V.meet===c.key?'on':''}" data-m="${c.key}">${esc(c.label)}</button>`).join('');
   $('meets').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{V.meet=b.dataset.m;save('meet',V.meet);V.open=null;render();});
   $('oursB').onclick=()=>{V.ours=!V.ours;save('ours',V.ours);V.open=null;render();};
   const n=quizzesIn(V.meet).length;
@@ -315,7 +315,7 @@ function renderList(){
 }
 function render(){
   $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===V.tab));
-  $('search').placeholder=V.tab==='q'?'Search name or team':'Search team';
+  $('search').placeholder=V.tab==='q'?'Search name or team':'Search teams';
   renderMeets(); renderSort(); renderList();
 }
 
