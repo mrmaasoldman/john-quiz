@@ -104,6 +104,8 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);m
 .b.er{background:rgba(255,107,107,.18);color:var(--bad)}
 .b.fo{background:rgba(255,192,77,.16);color:var(--warn);min-width:42px;font-size:14px}
 .b:active{transform:scale(.94)}
+.b.dis{opacity:.28;filter:grayscale(1)}
+.b.dis:active{transform:none}
 .subhd{padding:6px 12px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);border-top:1px solid var(--line);background:#152138}
 .tools{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:6px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:rgba(23,36,61,.97);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
 .tools-in{max-width:760px;margin:0 auto;display:flex;gap:6px;width:100%}
@@ -490,7 +492,11 @@ function act(kind,qz){
     for(let i=0;i<qz.p;i++) sh.ev.push({k:'c',id:qz.id,q:1});
     toast('Matched to official');
   } else if(kind==='plus'||kind==='minus'){ sh.ev.push({k:'adj',pts:kind==='plus'?10:-10}); }
-  else { sh.ev.push({k:kind,id:qz.id}); if(navigator.vibrate) navigator.vibrate(12); }
+  else {
+    const m=scoreSheet(sh.ev,nameOfId).q[qz.id];
+    if(m&&m.out){ sh.undo.pop(); toast(`${qz.name} is ${m.out==='quiz'?'quizzed out (5 right)':'errored out (3 errors)'}`); return; }
+    sh.ev.push({k:kind,id:qz.id}); if(navigator.vibrate) navigator.vibrate(12);
+  }
   putSheet(sh); renderDetail();
   const res=scoreSheet(sh.ev,nameOfId); const last=res.notes[res.notes.length-1];
   if(last && /bonus|quiz-out|quizzed out|errored out|: −/.test(last) && kind!=='sync') toast(last.replace(/^.*? · /,''));
@@ -559,9 +565,9 @@ function renderDetail(){
       h+=`<div class="qz ${mis?'mis':''} ${m.out?'out':''}">
         <div class="who"><div class="nm">${cap?'★ ':''}${esc(r.name)}</div>
           <div class="sub"><b style="color:var(--text)">${m.pts}</b> pts ${tag} · ${mis?`<span class="w">≠</span> `:''}off. ${r.p}✓ ${offE}✗${offF?` ${offF}F`:''}</div>${mis?`<button class="syncB" data-id="${r.id}" style="color:var(--BL);font-size:13px;font-weight:700;padding:4px 0 0">Match official</button>`:''}</div>
-        <button class="b ok" data-a="c" data-id="${r.id}" aria-label="Correct">✓<span class="k">${m.c}</span></button>
-        <button class="b er" data-a="e" data-id="${r.id}" aria-label="Error">✗<span class="k">${m.ed}</span></button>
-        <button class="b fo" data-a="f" data-id="${r.id}" aria-label="Foul">F${m.f?`<span class="k">${m.f}</span>`:''}</button>
+        <button class="b ok ${m.out?'dis':''}" data-a="c" data-id="${r.id}" aria-label="Correct">✓<span class="k">${m.c}</span></button>
+        <button class="b er ${m.out?'dis':''}" data-a="e" data-id="${r.id}" aria-label="Error">✗<span class="k">${m.ed}</span></button>
+        <button class="b fo ${m.out?'dis':''}" data-a="f" data-id="${r.id}" aria-label="Foul">F${m.f?`<span class="k">${m.f}</span>`:''}</button>
       </div>`;
     });
     if(allMatch && diff!==0) h+=`<div class="teamdiff">Every quizzer matches, but the official total is ${Math.abs(diff)} ${diff>0?'higher':'lower'}. That’s usually a challenge, appeal or manual change by the scorekeeper. Use −10 / +10 to line it up.</div>`;
