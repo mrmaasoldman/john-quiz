@@ -982,14 +982,13 @@ const audio=$('#audio');
 const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const lsGet=(k,d)=>{try{const v=localStorage.getItem('jsongs:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}};
 const lsSet=(k,v)=>{try{localStorage.setItem('jsongs:'+k,JSON.stringify(v))}catch(e){}};
-/* listening stats: lifetime totals, kept on this device */
+/* listening stats: this device's own tally (STATS), saved here and inside your quiz profile, so the progress code and cloud save carry it.
+   Every device keeps its own tally; the totals you see add up all of them. Time is measured with a stopwatch while a song is actually playing - no estimates. */
 const dayKey=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-let STATS=lsGet('stats',null);
-if(!STATS||!STATS.songs){ STATS={since:Date.now(),sec:0,n:0,full:0,songs:{},days:{}};
-  /* start from the recent plays already logged so the page isn't blank */
-  const p=lsGet('plays',{})||{}; for(const id in p){ const sg=SONGS.find(x=>x.id===id); const k=(p[id]||[]).length; if(!sg||!k) continue; const sec=k*(sg.dur||0)*.9;
-    STATS.songs[id]={n:k,s:sec,last:Math.max(...p[id])}; STATS.n+=k; STATS.sec+=sec; (p[id]||[]).forEach(t=>{ const dk=dayKey(new Date(t)); STATS.days[dk]=(STATS.days[dk]||0)+(sg.dur||0)*.9; }); STATS.since=Math.min(STATS.since,...p[id]); }
-  lsSet('stats',STATS); }
+const DEV=(()=>{ let d=lsGet('dev',null); if(!d){ d=Date.now().toString(36)+Math.random().toString(36).slice(2,8); lsSet('dev',d); } return d; })();
+const blankStats=()=>({since:Date.now(),sec:0,n:0,full:0,songs:{},days:{},t:0});
+let STATS=lsGet('stats',null); if(!STATS||!STATS.songs) STATS=blankStats();
+let STOTH={}, STALL=null;
 
 /* ---------- lyric lines ---------- */
 // the recognizer marks each word a beat after it starts; pull everything forward so highlights land on the word
@@ -1111,7 +1110,7 @@ function saveProgress(force){ if(!song) return; const now=performance.now(); if(
 /* ---------- library ---------- */
 
 const fmtShort=t=>{ const m=Math.floor(t/60); return m>=60?Math.floor(m/60)+'h '+(m%60)+'m':m>=1?m+'m':Math.round(t)+'s'; };
-function lstatInner(id){ const r=STATS.songs[id]; if(!r||!r.n) return ''; return `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>${r.n.toLocaleString()}<i></i>${fmtShort(r.s)}`; }
+function lstatInner(id){ const r=statAll().songs[id]; if(!r||!r.n) return ''; return `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>${r.n.toLocaleString()}<i></i>${fmtShort(r.s)}`; }
 function lstatHTML(id){ const h=lstatInner(id); return `<span class="lstat${h?'':' none'}" data-ls="${id}" title="Your listens and listening time">${h}</span>`; }
 const statTouched=new Set();
 function statPaint(){ statTouched.forEach(id=>{ const h=lstatInner(id); document.querySelectorAll(`[data-ls="${id}"]`).forEach(e=>{ if(e.innerHTML!==h){ e.innerHTML=h; e.classList.toggle('none',!h); e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); } }); }); statTouched.clear(); }
@@ -2125,17 +2124,30 @@ function hotChapters(pc){ pc=pc||playCounts(); const by={}; SONGS.forEach(s=>{ c
 const heardDur=()=>(audio.duration&&isFinite(audio.duration)&&audio.duration>0?audio.duration:(heardSong&&heardSong.dur||0));
 
 let statDirty=0, statSaveT=null;
-function statSave(){ clearTimeout(statSaveT); statSaveT=null; statDirty=0; lsSet('stats',STATS); statPaint(); }
+function statSave(){ clearTimeout(statSaveT); statSaveT=null; statDirty=0; STATS.t=Date.now(); lsSet('stats',STATS); ssStore(); STALL=null; statPaint(); }
+// put this device's tally into the quiz profile (sealed the same way the quiz page seals it)
+function ssStore(){ try{ const n=qzName(); if(!n) return; const raw=localStorage.getItem(QK+'u:'+n); if(!raw) return; if(jqCheck(QK,n,raw)==='bad') return; const u=JSON.parse(raw); if(!u||typeof u!=='object') return;
+  u.ss=u.ss&&u.ss.d?u.ss:{v:1,d:{}}; u.ss.d[DEV]=STATS; u.saved=Date.now(); jqStore(QK,n,u); }catch(e){} }
+// read the other devices' tallies from the profile (and this device's, if the profile has a newer one)
+function ssLoad(){ try{ const n=qzName(); if(!n) return; const u=qzGet('u:'+n,null); const d=u&&u.ss&&u.ss.d; if(!d) { ssStore(); return; }
+  const mine=d[DEV]; if(mine&&mine.songs&&(mine.t||0)>(STATS.t||0)){ STATS=mine; lsSet('stats',STATS); } else if(!mine) ssStore();
+  STOTH={}; for(const k in d) if(k!==DEV&&d[k]&&d[k].songs) STOTH[k]=d[k]; STALL=null; }catch(e){} }
+// everything added up: this device plus the others
+function statAll(){ if(STALL) return STALL; const A={since:STATS.since,sec:STATS.sec||0,n:STATS.n||0,full:STATS.full||0,songs:{},days:Object.assign({},STATS.days)}; for(const id in STATS.songs) A.songs[id]=Object.assign({},STATS.songs[id]);
+  for(const k in STOTH){ const o=STOTH[k]; A.since=Math.min(A.since,o.since||A.since); A.sec+=o.sec||0; A.n+=o.n||0; A.full+=o.full||0;
+    for(const id in o.songs||{}){ const r=o.songs[id]||{}, a=A.songs[id]||(A.songs[id]={n:0,s:0,last:0,f:0}); a.n+=r.n||0; a.s+=r.s||0; a.f=(a.f||0)+(r.f||0); a.last=Math.max(a.last||0,r.last||0); }
+    for(const dk in o.days||{}) A.days[dk]=(A.days[dk]||0)+(o.days[dk]||0); }
+  return STALL=A; }
 function statSoon(){ if(++statDirty>=20) statSave(); else if(!statSaveT) statSaveT=setTimeout(statSave,8000); }
 function statRec(id){ return STATS.songs[id]||(STATS.songs[id]={n:0,s:0,last:0}); }
-function statTime(id,d){ statTouched.add(id); const r=statRec(id); r.s+=d; STATS.sec+=d; const dk=dayKey(); STATS.days[dk]=(STATS.days[dk]||0)+d;
-  const keys=Object.keys(STATS.days); if(keys.length>400) keys.sort().slice(0,keys.length-400).forEach(k=>delete STATS.days[k]); statSoon(); }
-function statListen(id){ statTouched.add(id); const r=statRec(id); r.n++; r.last=Date.now(); STATS.n++; statSave(); }
+function statTime(id,d){ statTouched.add(id); const r=statRec(id); r.s+=d; STATS.sec+=d; const dk=dayKey(); STATS.days[dk]=(STATS.days[dk]||0)+d; STALL=null;
+  const keys=Object.keys(STATS.days); if(keys.length>150) keys.sort().slice(0,keys.length-150).forEach(k=>delete STATS.days[k]); statSoon(); }
+function statListen(id){ statTouched.add(id); const r=statRec(id); r.n++; r.last=Date.now(); STATS.n++; STALL=null; statSave(); }
 function statFull(id){ STATS.full=(STATS.full||0)+1; statRec(id).f=(statRec(id).f||0)+1; statSave(); }
 addEventListener('pagehide',statSave); document.addEventListener('visibilitychange',()=>{ if(document.hidden) statSave(); });
 audio.addEventListener('pause',()=>{ if(statDirty) statSave(); });
-function statStreak(){ let k=0; const d=new Date(); if(!(STATS.days[dayKey(d)]>=30)) d.setDate(d.getDate()-1); while(STATS.days[dayKey(d)]>=30){ k++; d.setDate(d.getDate()-1); } return k; }
-function renderStats(){ const S=STATS, sec=S.sec, mins=Math.floor(sec/60), H=Math.floor(mins/60), M=mins%60;
+function statStreak(){ const D=statAll().days; let k=0; const d=new Date(); if(!(D[dayKey(d)]>=30)) d.setDate(d.getDate()-1); while(D[dayKey(d)]>=30){ k++; d.setDate(d.getDate()-1); } return k; }
+function renderStats(){ const S=statAll(), sec=S.sec, mins=Math.floor(sec/60), H=Math.floor(mins/60), M=mins%60;
   const heardN=SONGS.filter(s=>(S.songs[s.id]||{}).n>0).length, streak=statStreak(), full=S.full||0;
   const since=new Date(S.since).toLocaleDateString(undefined,{month:'short',day:'numeric',year:new Date(S.since).getFullYear()!==new Date().getFullYear()?'numeric':undefined});
   $('#statmeta').textContent=S.n?`Since ${since} · on this device`:'Your listening shows up here.';
@@ -2176,10 +2188,23 @@ function renderStats(){ const S=STATS, sec=S.sec, mins=Math.floor(sec/60), H=Mat
   wireRows($('#statlist')); if(song) document.querySelectorAll('#statlist [data-song]').forEach(b=>b.setAttribute('aria-current',+b.dataset.song===song.i)); }
 function heardCheck(atEnd){ if(!heardSong) return; const dur=heardLen||heardDur(); if(!(dur>0)) return; if(!playNoted&&heard>=Math.min(45,dur*.5)){ playNoted=true; notePlay(heardSong.id); } if(xpGiven) return; const t=atEnd?dur:audio.currentTime; if(t>=dur-0.75&&heard>=dur*0.9){ xpGiven=true; statFull(heardSong.id); awardXP(heardSong); } }
 audio.addEventListener('timeupdate',()=>{ const t=audio.currentTime; if(heardSong!==song){ heardSong=song; heardLen=heardDur(); heard=0; xpGiven=false; playNoted=false; heardAt=t; return; }
-  if(!heardLen) heardLen=heardDur(); if(heardAt!=null&&!audio.paused){ const d=t-heardAt; if(d>0&&d<12){ heard+=d; statTime(heardSong.id,d); } } heardAt=t; heardCheck(false); });
+  if(!heardLen) heardLen=heardDur(); if(heardAt!=null&&!audio.paused){ const d=t-heardAt; if(d>0&&d<12) heard+=d; } heardAt=t; heardCheck(false); });
 audio.addEventListener('loadedmetadata',()=>{ if(heardSong===song) heardLen=heardDur(); });
 audio.addEventListener('ended',()=>{ if(heardSong&&heardSong!==song){ /* the ended handler that moves on ran first: judge the song that just finished */ } heardCheck(true); heard=0; heardAt=null; xpGiven=false; playNoted=false; heardSong=null; });
 audio.addEventListener('seeking',()=>{ heardAt=null; });
+/* the listening stopwatch: real time on the clock while sound is actually coming out (playing, not paused, not stuck loading).
+   It doesn't care about playback speed or skipping around - one real minute of listening counts as one minute. */
+const LC={on:false,t0:0,id:null};
+function lcFlush(){ if(!LC.on) return; const now=performance.now(), d=(now-LC.t0)/1000; LC.t0=now; if(d>0&&d<900&&LC.id) statTime(LC.id,d); }
+function lcStart(){ lcFlush(); if(!song||audio.paused) return; LC.on=true; LC.t0=performance.now(); LC.id=song.id; }
+function lcStop(){ lcFlush(); LC.on=false; }
+audio.addEventListener('playing',lcStart);
+['pause','waiting','stalled','ended','emptied','abort','error'].forEach(ev=>audio.addEventListener(ev,lcStop));
+audio.addEventListener('timeupdate',()=>{ if(LC.on&&song&&LC.id!==song.id){ lcFlush(); LC.id=song.id; } else if(!LC.on&&!audio.paused&&audio.readyState>=3) lcStart(); });
+setInterval(()=>{ if(LC.on) lcFlush(); },1000);
+addEventListener('pagehide',()=>{ lcFlush(); statSave(); });
+document.addEventListener('visibilitychange',()=>{ lcFlush(); if(!document.hidden) ssLoad(); });
+addEventListener('pageshow',()=>ssLoad());
 /* ---------- juice: tiny gags for each move ---------- */
 function juice(el,cls){ if(!el||reduce) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); el.addEventListener('animationend',()=>el.classList.remove(cls),{once:true}); }
 function ring(el){ if(!el||reduce) return; const r=el.getBoundingClientRect(), d=Math.max(r.width,r.height); const g=document.createElement('i'); g.className='jring'; Object.assign(g.style,{left:(r.left+r.width/2-d/2)+'px',top:(r.top+r.height/2-d/2)+'px',width:d+'px',height:d+'px'}); document.body.append(g); g.onanimationend=()=>g.remove(); }
@@ -2262,6 +2287,7 @@ function refreshArt(c){ document.querySelectorAll(`img[data-art="${c}"]`).forEac
   const cached=await artCacheAll(); CHAPTERS.forEach(c=>useArt(c,cached[artKey(c)]));
   { // a different chapter's photo behind the title every visit (never the same one twice in a row)
     let prev=lsGet('heroch',0), pick; do{ pick=CHAPTERS[Math.random()*CHAPTERS.length|0]; }while(CHAPTERS.length>1&&pick===prev); lsSet('heroch',pick); setHero(pick); }
+  try{ ssLoad(); }catch(e){}
   renderLibrary();
   // the first visit since the verse click arrived: one card that says what it is and where it lives (never again after that)
   if(!lsGet('seen:click',false)){ setTimeout(()=>{ if(!lsGet('seen:click',false)){ const el=$('#intro'); el.hidden=false; requestAnimationFrame(()=>el.classList.add('open')); } },1400);

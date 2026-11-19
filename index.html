@@ -2247,7 +2247,10 @@ function uRepair(name,o){ const g=jqGuardGet(K,name);
 function lsGet(k,d){try{const v=localStorage.getItem(K+k); if(!v) return d; const o=JSON.parse(v);
   if(k.slice(0,2)==='u:'&&o&&typeof o==='object'){ const n=k.slice(2); if(sealSeen.get(n)!==v){ const st=jqCheck(K,n,v); if(st==='bad') return uRepair(n,o); if(st==='legacy'){ try{ jqStore(K,n,o); }catch(e){} } sealSeen.set(n,v); } }
   return o}catch(e){return d}}
-function lsSet(k,v){try{ if(k.slice(0,2)==='u:'){ jqStore(K,k.slice(2),v); sealSeen.delete(k.slice(2)); } else localStorage.setItem(K+k,JSON.stringify(v)); return true}catch(e){return false}}
+// song listening stats (u.ss) keep one tally per device; whenever two copies of a profile meet, each device keeps its newest tally
+function mergeSS(a,b){ if(!(a&&a.d)&&!(b&&b.d)) return a||b; const d={}; [a,b].forEach(x=>{ const m=x&&x.d||{}; for(const k in m){ const e=m[k]; if(!e||typeof e!=='object') continue; if(!d[k]||(e.t||0)>(d[k].t||0)) d[k]=e; } });
+  const ks=Object.keys(d).sort((x,y)=>(d[y].t||0)-(d[x].t||0)); ks.slice(8).forEach(k=>delete d[k]); return {v:1,d}; }
+function lsSet(k,v){try{ if(k.slice(0,2)==='u:'){ try{ const cur=JSON.parse(localStorage.getItem(K+k)||'null'); if(cur&&cur.ss&&v&&typeof v==='object') v.ss=mergeSS(v.ss,cur.ss); }catch(e){} jqStore(K,k.slice(2),v); sealSeen.delete(k.slice(2)); } else localStorage.setItem(K+k,JSON.stringify(v)); return true}catch(e){return false}}
 // seal everyone already saved on this device, then from now on an unsealed save means it was edited
 try{ if(!localStorage.getItem(K+'sigv')){ (JSON.parse(localStorage.getItem(K+'users')||'[]')||[]).forEach(n=>{ const v=localStorage.getItem(K+'u:'+n); if(v&&!localStorage.getItem(K+'s:'+n)&&!localStorage.getItem(K+'g:'+n)){ try{ jqStore(K,n,JSON.parse(v)); }catch(e){} } }); localStorage.setItem(K+'sigv','1'); } }catch(e){}
 const ownKey=()=>U&&U.saveCode?jqSig('own:'+scNorm(U.saveCode)).slice(0,24):'';
@@ -2281,7 +2284,10 @@ async function adoptCloud(name,code,z){ const d=await unpackCode(z); if(!d.signe
 async function cloudPush(){ if(!saveOn()||!me||!U||!U.saveCode) return; if(cs.busy){cs.again=true;return} cs.busy=true; cs.st=cs.st==='ok'?'ok':'saving'; refreshSaveBox(); const name=me, code=U.saveCode;
   try{ const key=await scKey(code), m=await scReq('GET',key+'/m'); if(me!==name) return;
     let took=false; if(cloudWins(m,U)){ const c=await scReq('GET',key); if(me===name&&c&&c.z&&await adoptCloud(name,code,c.z)){ took=true; render(); } }  // another device is ahead: take its copy instead of overwriting it
-    if(!took){ if(U.cloudFix){ delete U.cloudFix; lsSet('u:'+me,U); } const z=await packCode(); if(me!==name) return; await scReq('PUT',key,{m:Object.assign({n:name},scMeta(U)),z}); }
+    if(!took){ if(U.cloudFix){ delete U.cloudFix; lsSet('u:'+me,U); }
+      // keep the song listening from other devices that's already in the cloud copy
+      if(m){ try{ const c=await scReq('GET',key); if(c&&c.z){ const d=await unpackCode(c.z); if(d&&d.signed&&d.u&&d.u.ss&&me===name){ U.ss=mergeSS(U.ss,d.u.ss); lsSet('u:'+me,U); } } }catch(e){} }
+      const z=await packCode(); if(me!==name) return; await scReq('PUT',key,{m:Object.assign({n:name},scMeta(U)),z}); }
     cs.st='ok'; cs.at=Date.now(); if(U&&U.scNew) announceSaveCode(); }
   catch(e){ cs.st=e.denied?'off':'err'; }
   finally{ cs.busy=false; refreshSaveBox(); if(cs.again){cs.again=false;scheduleCloudSave()} } }
