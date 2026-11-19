@@ -46,7 +46,9 @@ svg{display:block}
 /* Liquid glass: nearly clear with a whisper of blur; on browsers that can, the edges bend what's behind them like a lens.
    The light catching the rim and the sheen across the face move as you scroll or tilt the phone. */
 .glass{position:relative;background:var(--g-bg);backdrop-filter:blur(3px) saturate(1.8) brightness(1.06);-webkit-backdrop-filter:blur(3px) saturate(1.8) brightness(1.06);border:1px solid transparent;box-shadow:inset 0 1px 0 var(--g-hi),inset 0 -1px 0 rgba(255,255,255,.12),inset 0 -12px 20px -14px rgba(255,255,255,.45),inset 0 10px 18px -14px rgba(255,255,255,.35),0 10px 28px var(--g-sh)}
-html.lens .glass{backdrop-filter:url(#lglens) blur(2px) saturate(1.8) brightness(1.06)}
+html.lens .glass.gbtn{backdrop-filter:url(#lglens) blur(2px) saturate(1.8) brightness(1.06)}
+/* nothing bends the backdrop while pages slide, sheets open or lists scroll: re-bending every pane each frame is what made motion choppy */
+html.lens body:is(.paging,.morphing,.folding,.moving) .glass.gbtn{backdrop-filter:blur(2px) saturate(1.8) brightness(1.06)}
 /* the floating bars sit over busy lists, so they keep a touch more tint to stay readable */
 .mini .card.glass,.tabbar.glass{background:var(--g-bar,rgba(255,255,255,.66));-webkit-backdrop-filter:blur(6px) saturate(1.8) brightness(1.04);backdrop-filter:blur(6px) saturate(1.8) brightness(1.04)}
 html.lens .mini .card.glass,html.lens .tabbar.glass{backdrop-filter:blur(6px) saturate(1.8) brightness(1.04)}
@@ -2070,12 +2072,16 @@ if(!reduce){ mirrorMake($('#minicard')); mirrorMake($('#tabbar'));
 /* ---------- glass light: the highlights drift with tilting and the mouse (not with scrolling: restyling every pane per scrolled frame cost too much) ---------- */
 (function(){ const R=document.documentElement; let tx=0,ty=0,x=0,y=0,raf=0,lastT=0;
   const ua=navigator.userAgent; if(/Chrome\//.test(ua)&&!/Edg\/|OPR\//.test(ua)&&!/iPhone|iPad|iPod|Android/.test(ua)&&!reduce) R.classList.add('lens'); // only desktop Chromium bends the backdrop through SVG
-  const step=(now)=>{ raf=0; if(now-lastT<40){ raf=requestAnimationFrame(step); return; } lastT=now; x+=(tx-x)*.18; y+=(ty-y)*.18;
+  const busy=()=>{ const b=document.body.classList; return b.contains('paging')||b.contains('morphing')||b.contains('folding')||b.contains('moving'); };
+  const step=(now)=>{ raf=0; if(busy()){ raf=requestAnimationFrame(step); return; } const k=Math.min(1,(now-(lastT||now-16))/16)*.1; lastT=now; x+=(tx-x)*k; y+=(ty-y)*k;
     if(Math.abs(tx-x)+Math.abs(ty-y)<.006){ x=tx; y=ty; } R.style.setProperty('--lx',x.toFixed(2)); R.style.setProperty('--ly',y.toFixed(2)); if(x!==tx||y!==ty) raf=requestAnimationFrame(step); };
   const aim=(a,b)=>{ const nx=Math.max(-1,Math.min(1,a)), ny=Math.max(-1,Math.min(1,b)); if(Math.abs(nx-tx)+Math.abs(ny-ty)<.02) return; tx=nx; ty=ny; if(!raf&&!reduce) raf=requestAnimationFrame(step); };
-  let mt=0; addEventListener('pointermove',e=>{ if(e.pointerType!=='mouse') return; const n=performance.now(); if(n-mt<50) return; mt=n; aim(e.clientX/innerWidth*2-1, e.clientY/innerHeight*2-1); },{passive:true});
+  let mt=0; addEventListener('pointermove',e=>{ if(e.pointerType!=='mouse') return; const n=performance.now(); if(n-mt<16) return; mt=n; aim(e.clientX/innerWidth*2-1, e.clientY/innerHeight*2-1); },{passive:true});
   // no motion sensors: on phones the reflections move with the page instead, so nothing ever asks for permission
 })();
+/* 'moving' on the page while anything scrolls, so expensive glass effects rest until it stops */
+(function(){ const b=document.body; let T=0; const on=()=>{ if(!b.classList.contains('moving')) b.classList.add('moving'); clearTimeout(T); T=setTimeout(()=>b.classList.remove('moving'),180); };
+  document.addEventListener('scroll',on,{passive:true,capture:true}); document.addEventListener('wheel',on,{passive:true,capture:true}); })();
 /* ---------- boot ---------- */
 const EMBEDDED=window.top!==window;
 if(!/claude\.ai$/.test(location.hostname)&&/\/songs\/?(index\.html)?$/.test(location.pathname)){ $('#quizlink').hidden=false; qzChip(); applySkin(); $('#skintog').onclick=()=>{ lsSet('skin',skinOn()?'normal':'quiz'); applySkin(); try{ haptic('soft'); }catch(e){} }; addEventListener('pageshow',applySkin); document.addEventListener('visibilitychange',()=>{ if(!document.hidden) applySkin(); }); addEventListener('storage',e=>{ if(e.key&&e.key.indexOf(QK+'u:')===0) applySkin(); }); if(!EMBEDDED) try{ localStorage.setItem('johnquiz:where','"songs"'); }catch(e){}
