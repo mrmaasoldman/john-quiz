@@ -1051,7 +1051,7 @@ if(CO.rules.quotes===undefined) CO.rules.quotes=true; if(!CO.rules.mix) CO.rules
 const coSave=()=>lsSet('coach',CO);
 const coTeamKey=p=>(p.team||'').trim().toLowerCase();
 const CO_HUES=['var(--accent)','var(--gold)','var(--good)','var(--accent2)','var(--warn)','var(--bad)'];
-function coRules(){ const r=CO.rules, x={quotes:r.quotes!==false,clock:r.clock!==false}; return Object.assign(x,r.mode==='bqf'?{bqf:true,pts:20,qout:5,eout:3,perfectOnly:true,rebound:false,teamErr:true,milestone:true,pen:0}:{bqf:false,pts:+r.pts||20,qout:+r.qout||4,eout:+r.eout||3,perfectOnly:false,rebound:!!r.rebound,teamErr:false,milestone:false,pen:+r.pen||0}); }
+function coRules(){ const r=CO.rules, x={quotes:r.quotes!==false,clock:r.clock!==false}; return Object.assign(x,r.mode==='bqf'?{bqf:true,pts:20,qout:5,eout:3,perfectOnly:true,rebound:false,teamErr:true,milestone:true,pen:0}:{bqf:false,pts:+r.pts||20,qout:+r.qout||4,eout:+r.eout||3,perfectOnly:false,rebound:!!r.rebound,teamErr:false,milestone:true,pen:+r.pen||0}); }
 // the material is whatever is picked on this page: chapter -> the question ids in the chosen verses
 function coPool(){ const by={}; selSet().forEach(k=>{ const ids=byVerse[k]; if(!ids||!ids.length) return; const c=+k.split(':')[0]; (by[c]=by[c]||[]).push(...ids); }); return by; }
 function coChapters(by=coPool()){ return Object.keys(by).map(Number).sort((a,b)=>a-b); }
@@ -4044,7 +4044,8 @@ if(COACH_ONLY){ CO.on=true; tab='practice'; document.documentElement.classList.a
    How the box talks, read from the pqo Quiz Master program:
    - USB HID device, vendor 0x04D8 (Microchip), product 0x0000.
    - When it connects, the program sends output report 0 with bytes [9, 1, 0, ...].
-   - Each input report has one byte per seat string (team): byte 0 = string 1, 1 = string 2, 2 = string 3.
+   - Each input report starts with one extra byte, then one byte per seat string (team): byte 1 = string 1, 2 = string 2, 3 = string 3
+     (checked on Mr. Maas's box: reading bytes 0-2 put string 1 on string 2).
      Bits 0-4 are the five seat pads (bit 0 = seat 1 when the string feeds from the left).
    - Quizzers SIT on the pads: a pressed pad = sitting, a pad that lets go = buzzed in.
      On ACME pads (the program's default) a pressed pad reads 0 and an open pad reads 1.
@@ -4096,7 +4097,7 @@ function seatPaint(){
 async function seatOpen(dev){
   try{ if(!dev.opened) await dev.open(); }catch(e){ SEAT.err='Could not open the seat box. Close the Quiz Master program if it is running, then try again.'; renderKeep(); return; }
   SEAT.dev=dev; SEAT.err=''; SEAT.raw=null; SEAT.up=[];
-  dev.oninputreport=e=>{ const d=e.data; seatOnReport([d.byteLength>0?d.getUint8(0):0,d.byteLength>1?d.getUint8(1):0,d.byteLength>2?d.getUint8(2):0]); };
+  dev.oninputreport=e=>{ const d=e.data, b=i=>d.byteLength>i?d.getUint8(i):0; seatOnReport([b(1),b(2),b(3)]); }; // the box sends one byte before the strings: bytes 1, 2, 3 = strings 1, 2, 3
   try{ let len=64; const r=(dev.collections||[]).flatMap(c=>c.outputReports||[])[0]; if(r&&r.items&&r.items.length) len=Math.max(2,Math.round(r.items.reduce((a,it)=>a+it.reportSize*it.reportCount,0)/8)); const out=new Uint8Array(len); out[0]=9; out[1]=1; await dev.sendReport(r?r.reportId:0,out); }catch(e){}
   renderKeep();
 }
