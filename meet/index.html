@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f1a2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Meet Day">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
 <title>Meet Day</title>
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <style>
@@ -15,30 +19,34 @@
   --MS:#e6b43c; --BL:#53a8ff; --WOC:#ff7a3d;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;touch-action:manipulation;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
+button,.chip,.qcard{-webkit-user-select:none;user-select:none;touch-action:manipulation}
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 24px) env(safe-area-inset-left)}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .wrap{max-width:760px;margin:0 auto;padding:0 12px}
 header{position:sticky;top:0;z-index:5;background:rgba(15,26,46,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-.hrow{display:flex;align-items:center;gap:8px;padding:10px 0 8px}
+.hrow{display:flex;align-items:center;gap:8px;padding:8px 0 6px}
 h1{font-size:20px;margin:0;font-weight:800;letter-spacing:.2px;flex:1}
 .conn{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px;white-space:nowrap}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--faint)}
 .dot.on{background:var(--good);box-shadow:0 0 0 3px rgba(62,207,142,.18)}
 .dot.bad{background:var(--bad)}
-select{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;max-width:58vw}
-.chips{display:flex;gap:6px;padding:0 0 10px;overflow-x:auto}
-.chip{padding:6px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:600;white-space:nowrap;color:var(--dim)}
+select{font:inherit;font-size:16px;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;flex:1;min-width:0;max-width:420px}
+.chips{display:flex;gap:6px;padding:0 0 8px}
+.chip{flex:1;min-height:36px;padding:6px 8px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:600;white-space:nowrap;color:var(--dim)}
 .chip.on{color:#0f1a2e;background:var(--text);border-color:var(--text)}
 .chip.MS.on{background:var(--MS);border-color:var(--MS)} .chip.BL.on{background:var(--BL);border-color:var(--BL)} .chip.WOC.on{background:var(--WOC);border-color:var(--WOC)}
 .banner{margin:10px 0;padding:10px 12px;border-radius:12px;background:#2a2410;border:1px solid #6b5517;color:#ffe3a0;font-size:14px;display:flex;gap:10px;align-items:center}
 .banner button{margin-left:auto;background:var(--warn);color:#241a00;font-weight:700;border-radius:8px;padding:6px 10px}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:18px 2px 8px;font-weight:700}
-.glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
-.gcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;border-left:5px solid var(--c)}
+.glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px}
+.gcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px;border-left:5px solid var(--c)}
+.gtop{display:flex;align-items:baseline;gap:8px}
+.gtop .gname{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gname{font-weight:800;font-size:15px}
-.gstats{display:flex;gap:12px;margin:6px 0 4px;font-size:13px;color:var(--dim)}
-.gstats b{color:var(--text);font-size:16px}
+.gstats{display:flex;gap:10px;margin:2px 0 3px;font-size:12px;color:var(--dim)}
+.gstats b{color:var(--text);font-size:15px}
+.grank{font-size:12px;color:var(--dim);white-space:nowrap}.grank b{color:var(--text);font-size:15px}
 .gnext{font-size:13px;color:var(--dim)}
 .gnext b{color:var(--text)}
 .qcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;width:100%;text-align:left;display:block}
@@ -56,17 +64,19 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);m
 .last{font-size:12px;color:var(--dim);margin-top:4px;font-style:italic}
 .empty{color:var(--dim);padding:14px;text-align:center;background:var(--panel);border-radius:14px;border:1px dashed var(--line)}
 /* detail */
-.dhead{display:flex;align-items:center;gap:8px;padding:10px 0}
-.back{padding:6px 10px;background:var(--panel2);border-radius:10px;font-weight:700}
+.dtop{position:sticky;top:0;z-index:4;background:rgba(15,26,46,.96);backdrop-filter:blur(10px);margin:0 -12px;padding:calc(env(safe-area-inset-top)*0) 12px 8px;border-bottom:1px solid var(--line)}
+.dhead{display:flex;align-items:center;gap:8px;padding:8px 0}
+.back{min-height:40px;padding:6px 12px;background:var(--panel2);border-radius:10px;font-weight:700}
 .dtitle{font-weight:800;font-size:17px;flex:1}
 .clock{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;padding:4px 10px;border-radius:10px;background:var(--panel2)}
 .clock.live{background:var(--live);color:#fff}
 .offgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.oteam{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;border-top:4px solid var(--c,var(--line))}
-.oteam .n{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.oteam .s{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums}
+.oteam{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;min-width:0;border-top:4px solid var(--c,var(--line))}
+.oteam .n{font-weight:700;font-size:13px;line-height:1.15;min-height:2.3em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.oteam .s{font-size:24px;line-height:1.1;font-weight:900;font-variant-numeric:tabular-nums}
 .oteam .m{font-size:12px;color:var(--dim)}
-.feed{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px;max-height:150px;overflow:auto;font-size:13px}
+.feed{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px;max-height:84px;overflow:auto;font-size:13px;-webkit-overflow-scrolling:touch}
+.feed.big{max-height:260px}
 .feed div{padding:2px 0;border-bottom:1px solid #22324f}
 .feed div:last-child{border:0}
 .feed .t{color:var(--faint);font-variant-numeric:tabular-nums;margin-right:6px}
@@ -81,25 +91,30 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);m
 .qz.mis{background:rgba(255,192,77,.10)}
 .qz .who{flex:1;min-width:0}
 .qz .who .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.qz .who .sub{font-size:12px;color:var(--dim)}
+.qz .who .sub{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qz .who .sub .w{color:var(--warn);font-weight:700}
 .qz .cnt{font-variant-numeric:tabular-nums;font-weight:800;font-size:14px;min-width:62px;text-align:center}
 .qz.out{opacity:.6}
-.b{min-width:44px;height:44px;border-radius:12px;font-weight:900;font-size:17px}
+.b{min-width:54px;height:48px;border-radius:12px;font-weight:900;font-size:17px;display:flex;align-items:center;justify-content:center;gap:3px;font-variant-numeric:tabular-nums}
+.b .k{font-size:15px}
 .b.ok{background:rgba(62,207,142,.18);color:var(--good)}
 .b.er{background:rgba(255,107,107,.18);color:var(--bad)}
-.b.fo{background:rgba(255,192,77,.16);color:var(--warn);min-width:36px;font-size:14px}
+.b.fo{background:rgba(255,192,77,.16);color:var(--warn);min-width:42px;font-size:14px}
 .b:active{transform:scale(.94)}
 .subhd{padding:6px 12px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);border-top:1px solid var(--line);background:#152138}
-.tools{display:flex;flex-wrap:wrap;gap:6px;padding:10px;border-top:1px solid var(--line)}
-.tools button{padding:9px 12px;border-radius:10px;background:var(--panel2);font-weight:700;font-size:13px}
-.tools .undo{margin-left:auto;background:#3a2330;color:#ffb3c4}
+.tools{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:6px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:rgba(23,36,61,.97);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+.tools-in{max-width:760px;margin:0 auto;display:flex;gap:6px;width:100%}
+body.indetail main{padding-bottom:84px}
+.clearB{display:block;margin:10px auto 0;padding:8px 14px;border-radius:10px;background:var(--panel);color:var(--dim);font-size:13px;font-weight:700}
+.tools button{flex:1;min-height:46px;padding:8px 6px;border-radius:12px;background:var(--panel2);font-weight:800;font-size:15px}
+.tools .undo{background:#3a2330;color:#ffb3c4}
 .note{font-size:12px;color:var(--faint);margin:8px 2px}
 .mlog{font-size:13px;color:var(--dim);padding:8px 12px;border-top:1px solid var(--line);max-height:120px;overflow:auto}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#e9eef8;color:#0f1a2e;padding:8px 14px;border-radius:999px;font-weight:700;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
 .toast.on{opacity:1}
 .hide{display:none!important}
-body.indetail header .hrow+.hrow,body.indetail .chips{display:none}
+body.indetail header{display:none}
+body.indetail footer{display:none}
 footer{margin:24px 0 0;font-size:12px;color:var(--faint);text-align:center}
 footer a{color:var(--dim)}
 </style>
@@ -258,7 +273,7 @@ function watchEvent(id){
   });
 }
 function setConn(st){
-  $('dot').className='dot '+(st==='on'?'on':st==='bad'?'bad':'');
+  document.querySelectorAll('.dot').forEach(d=>d.className='dot '+(st==='on'?'on':st==='bad'?'bad':''));
   $('connTxt').textContent=st==='on'?(DEMO?'Demo live':'Live'):st==='bad'?'Can’t reach scores':'Reconnecting…';
 }
 
@@ -288,8 +303,9 @@ function clockTxt(tid){
 let homeT=null;
 function renderHomeSoon(){ clearTimeout(homeT); homeT=setTimeout(()=>{ if(!S.open) renderHome(); else renderDetail(); },60); }
 function renderChips(){
-  const all=[{key:'all',name:'All 3'}].concat(TEAMS);
-  $('chips').innerHTML=all.map(t=>`<button class="chip ${t.key} ${S.filter===t.key?'on':''}" data-k="${t.key}">${esc(t.name)}</button>`).join('');
+  const all=[{key:'all',name:'All 3',short:'All'}].concat(TEAMS);
+  const narrow=innerWidth<520;
+  $('chips').innerHTML=all.map(t=>`<button class="chip ${t.key} ${S.filter===t.key?'on':''}" data-k="${t.key}">${esc(narrow?t.short:t.name)}</button>`).join('');
   $('chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{S.filter=b.dataset.k;save('filter',S.filter);renderChips();renderHome();});
 }
 function quizCard(x){
@@ -328,8 +344,8 @@ function glance(){
     else if(mine.length) nx='All quizzes finished';
     else nx='No quizzes in this event';
     return `<div class="gcard" style="--c:var(--${t.key})">
-      <div class="gname">${esc(t.name)}</div>
-      <div class="gstats"><span><b>${places[0]}</b> 1st</span><span><b>${places[1]}</b> 2nd</span><span><b>${places[2]}</b> 3rd</span><span><b>${pts}</b> pts</span>${r>=0?`<span>#<b>${r+1}</b>/${ranked.length}</span>`:''}</div>
+      <div class="gtop"><div class="gname">${esc(t.name)}</div>${r>=0?`<span class="grank">#<b>${r+1}</b> of ${ranked.length}</span>`:''}</div>
+      <div class="gstats"><span><b>${places[0]}</b> 1st</span><span><b>${places[1]}</b> 2nd</span><span><b>${places[2]}</b> 3rd</span><span><b>${pts}</b> pts</span></div>
       <div class="gnext">${nx}</div></div>`;
   }).join('');
 }
@@ -460,14 +476,14 @@ function renderDetail(){
   const ot=officialTeams();
   const d=S.det;
   const keep=$('detail').querySelector('.feed'); const feedScroll=keep?keep.scrollTop:0;
-  let h=`<div class="dhead"><button class="back" id="backB">‹ Back</button><div class="dtitle">${quizLabel(q)}</div><span class="clock" id="dclock"></span></div>`;
+  let h=`<div class="dtop"><div class="dhead"><button class="back" id="backB">‹ Back</button><div class="dtitle">${quizLabel(q).replace('Championship · ','Champ · ')}</div><span class="dot ${$('dot').className.includes('on')?'on':''}" title="Connection"></span><span class="clock" id="dclock"></span></div>`;
   // official panel
   const offRows=(ot||names.map((n,i)=>({name:n,s:x.sc&&x.sc.ts?x.sc.ts[i]:0,e:null,a:null})));
   h+=`<div class="offgrid">${offRows.map(t=>{const o=teamOf(t.name);return `<div class="oteam" style="${o?`--c:var(--${o.key})`:''}">
     <div class="n">${esc(t.name)}</div><div class="s">${t.s??0}</div>
-    <div class="m">${t.e!=null?`${t.e} err · ${t.a} ans`:'&nbsp;'}</div></div>`}).join('')}</div>`;
+    <div class="m">${t.e!=null?`${t.e} err · ${t.a} ans`:'&nbsp;'}</div></div>`}).join('')}</div></div>`;
   if(d&&d.names&&d.names.qm) h+=`<div class="note">Quizmaster: ${esc(d.names.qm)}</div>`;
-  if(d&&d.feed.length) h+=`<h2>Official updates</h2><div class="feed">${d.feed.slice().reverse().map(f=>`<div><span class="t">${esc(f.t)}</span>${esc(f.x)}</div>`).join('')}</div>`;
+  if(d&&d.feed.length) h+=`<h2>Official updates <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--faint)">· tap to expand</span></h2><div class="feed ${S.feedBig?'big':''}" id="feedBox">${d.feed.slice().reverse().map(f=>`<div><span class="t">${esc(f.t)}</span>${esc(f.x)}</div>`).join('')}</div>`;
   else if(x.sc&&x.sc.u) h+=`<div class="last" style="margin-top:8px">${esc(x.sc.u)}</div>`;
 
   // scoresheet
@@ -495,21 +511,21 @@ function renderDetail(){
       const cap=offTeam.c==r.id;
       h+=`<div class="qz ${mis?'mis':''}">
         <div class="who"><div class="nm">${cap?'★ ':''}${esc(r.name)}</div>
-          <div class="sub">Official ${r.p}✓ ${offE}✗${offF?` ${offF}F`:''} · ${qPts({c:r.p,e:r.e})} pts${mis?` <span class="w">≠ yours</span> <button class="syncB" data-id="${r.id}" style="color:var(--BL);font-size:12px;font-weight:700;padding:0 4px">match</button>`:''}</div></div>
-        <div class="cnt"><span style="color:var(--good)">${m.c}✓</span> <span style="color:var(--bad)">${m.e}✗</span>${m.f?` <span style="color:var(--warn)">${m.f}F</span>`:''}</div>
-        <button class="b ok" data-a="c" data-id="${r.id}" aria-label="Correct">✓</button>
-        <button class="b er" data-a="e" data-id="${r.id}" aria-label="Error">✗</button>
-        <button class="b fo" data-a="f" data-id="${r.id}" aria-label="Foul">F</button>
+          <div class="sub">${mis?`<span class="w">≠</span> `:''}Official ${r.p}✓ ${offE}✗${offF?` ${offF}F`:''}</div>${mis?`<button class="syncB" data-id="${r.id}" style="color:var(--BL);font-size:13px;font-weight:700;padding:4px 0 0">Match official</button>`:''}</div>
+        <button class="b ok" data-a="c" data-id="${r.id}" aria-label="Correct">✓<span class="k">${m.c}</span></button>
+        <button class="b er" data-a="e" data-id="${r.id}" aria-label="Error">✗<span class="k">${m.e}</span></button>
+        <button class="b fo" data-a="f" data-id="${r.id}" aria-label="Foul">F${m.f?`<span class="k">${m.f}</span>`:''}</button>
       </div>`;
     });
-    h+=`<div class="tools"><button data-t="bon">Bonus +10</button><button data-t="ded">Deduct −10</button><button id="resetB">Clear</button><button class="undo" id="undoB">↶ Undo</button></div>`;
+    h+=`<div class="tools"><div class="tools-in"><button data-t="bon">Bonus +10</button><button data-t="ded">−10</button><button class="undo" id="undoB">↶ Undo</button></div></div>`;
     if(sh.log.length) h+=`<div class="mlog">${sh.log.slice(-8).reverse().map(l=>esc(l.txt)).join('<br>')}</div>`;
-    h+=`</div><div class="note">Highlighted rows don’t match the official count. Your total counts 20 per correct answer plus your bonus/deduction taps; the official total also includes team bonuses and error deductions.</div>`;
+    h+=`</div><button class="clearB" id="resetB">Clear my scoresheet</button><div class="note">Highlighted rows don’t match the official count. Your total counts 20 per correct answer plus your bonus/deduction taps; the official total also includes team bonuses and error deductions.</div>`;
   }
   $('detail').innerHTML=h;
   const f2=$('detail').querySelector('.feed'); if(f2) f2.scrollTop=feedScroll;
   renderDetailClock();
   $('backB').onclick=()=>closeDetail(false);
+  if($('feedBox')) $('feedBox').onclick=()=>{S.feedBig=!S.feedBig;$('feedBox').classList.toggle('big',S.feedBig);};
   $('detail').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{S.sheetTeam=b.dataset.team;renderDetail();});
   const byId=id=>roster.find(r=>String(r.id)===String(id));
   $('detail').querySelectorAll('.b').forEach(b=>b.onclick=()=>act(b.dataset.a,byId(b.dataset.id)));
@@ -578,6 +594,14 @@ function makeDemo(){
     hub.add(c);setTimeout(()=>c.fire('connect'),50);return c;
   };
 }
+
+/* ===== Keep the screen on while the page is open ===== */
+let wake=null;
+async function keepAwake(){ try{ if('wakeLock' in navigator && document.visibilityState==='visible' && !wake){ wake=await navigator.wakeLock.request('screen'); wake.addEventListener('release',()=>{wake=null}); } }catch(e){} }
+document.addEventListener('visibilitychange',keepAwake);
+addEventListener('pointerdown',keepAwake,{once:true});
+keepAwake();
+let rcT=null; addEventListener('resize',()=>{clearTimeout(rcT);rcT=setTimeout(renderChips,150)});
 
 /* ===== Start ===== */
 renderChips();
