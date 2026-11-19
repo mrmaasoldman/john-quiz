@@ -1100,17 +1100,20 @@ let suppressClickUntil=0;
 let wheelCool=0;
 function wheelSide(e){ return !e.ctrlKey&&Math.abs(e.deltaX)>Math.abs(e.deltaY)*1.2&&Math.abs(e.deltaX)>0.5; }
 function wheelPx(e){ return e.deltaX*(e.deltaMode===1?16:e.deltaMode===2?innerWidth:1); }
+// trackpad gestures only go to the layer on top: Up Next, then the player, then an open album, then the library
+function topLayer(){ if($('#upnext').classList.contains('open')) return 'up'; if(document.body.classList.contains('npopen')) return 'np'; if(view==='chapter') return 'chapter'; return 'library'; }
+function layerOf(el){ if(el.closest('.upnext')) return 'up'; if(el.closest('#np')) return 'np'; if(el.closest('#chapter')) return 'chapter'; return 'library'; }
 function swipeable(el,o){ let sx=0,sy=0,d=0,mode=null,id=null,will=false;
   const TH=()=>Math.min(132,el.offsetWidth*0.38);
   const show=raw=>{ const th=TH(); d=raw; if(d<0) d=0; if(d>th) d=th+(d-th)*0.28;
     el.style.transform=`translateX(${d*o.dir}px)`; el.style.setProperty('--dx',d+'px'); el.style.setProperty('--dxo',Math.min(1,Math.max(0,(d-78)/40)).toFixed(2));
     const w=d>=th; if(w!==will){ will=w; el.classList.toggle('will',w); el.style.setProperty('--dxs',w?'1.12':'1'); if(w) haptic(); } };
   let wOn=false, wAcc=0, wT=null;
-  const wEnd=()=>{ wOn=false; wheelCool=performance.now()+450; mode='h'; end(); };
+  const wEnd=()=>{ if(!wOn) return; clearTimeout(wT); wOn=false; wheelCool=performance.now()+600; mode='h'; end(); };
   el.addEventListener('wheel',e=>{ if(!wheelSide(e)) return; const now=performance.now();
-    if(!wOn){ if(now<wheelCool){ wheelCool=now+250; e.preventDefault(); return; } if(o.ignore&&e.target.closest(o.ignore)) return; if(Math.sign(-wheelPx(e))!==o.dir) return;
+    if(!wOn){ const ly=layerOf(el); if(ly!==topLayer()||ly==='chapter') return; if(now<wheelCool){ wheelCool=now+250; e.preventDefault(); return; } if(o.ignore&&e.target.closest(o.ignore)) return; if(Math.sign(-wheelPx(e))!==o.dir) return;
       wOn=true; wAcc=0; will=false; el.classList.add('swiping'); el.classList.remove('snap'); o.onStart&&o.onStart(); }
-    e.preventDefault(); e.stopPropagation(); wAcc+=-wheelPx(e)*o.dir; show(wAcc); clearTimeout(wT); wT=setTimeout(wEnd,200); },{passive:false});
+    e.preventDefault(); e.stopPropagation(); wAcc+=-wheelPx(e)*o.dir; show(wAcc); clearTimeout(wT); if(will&&wAcc>TH()+24){ wEnd(); return; } wT=setTimeout(wEnd,300); },{passive:false});
   el.addEventListener('pointerdown',e=>{ mode=null; if(e.pointerType==='mouse'||e.button||e.clientX<28||(o.ignore&&e.target.closest(o.ignore))){ mode='x'; return; } /* the left edge belongs to the page's swipe-back */ sx=e.clientX; sy=e.clientY; d=0; id=e.pointerId; will=false; });
   el.addEventListener('pointermove',e=>{ if(mode==='x'||mode==='v'||e.pointerId!==id) return; const ddx=e.clientX-sx, ddy=e.clientY-sy;
     if(!mode){ if(Math.abs(ddx)<8&&Math.abs(ddy)<8) return; if(Math.abs(ddx)>Math.abs(ddy)*1.3&&Math.sign(ddx)===o.dir){ mode='h'; try{ el.setPointerCapture(id); }catch(x){} el.classList.add('swiping'); el.classList.remove('snap'); o.onStart&&o.onStart(); } else { mode='v'; return; } }
@@ -1155,6 +1158,11 @@ function renderLibrary(){
   document.querySelectorAll('#list .chhd').forEach(h=>{ const g=h.closest('.chgroup'), ch=+g.dataset.chg; if(!h.querySelector('.qpane')) h.insertAdjacentHTML('beforeend','<span class="qpane" aria-hidden="true"><i><svg viewBox="0 0 24 24"><path d="M3 6h12v2H3zm0 5h12v2H3zm0 5h8v2H3zm16-4h-2v3h-3v2h3v3h2v-3h3v-2h-3z"/></svg>Add chapter</i></span>');
     swipeable(h,{dir:1,ignore:'.qpane',onCommit:()=>addChapter(ch,h.querySelector('.th img'))}); }); try{ hapticOverlays($('#list')); }catch(e){}
   wireRows($('#list')); renderRecent(); renderResume(); staggerIn($('#albums'));
+  if(!$('#list')._wIn){ $('#list')._wIn=1; let on=false, acc=0, g=null, T=null;
+    $('#list').addEventListener('wheel',e=>{ if(!wheelSide(e)||topLayer()!=='library') return; const now=performance.now(), step=wheelPx(e);
+      if(!on){ if(now<wheelCool){ wheelCool=now+250; e.preventDefault(); return; } if(step<=0) return; g=e.target.closest('.chgroup'); if(!g) return; on=true; acc=0; }
+      e.preventDefault(); acc=Math.max(0,acc+step); const hd=g.querySelector('.chhd'); if(hd){ hd.style.transition='none'; hd.style.transform=`translateX(${-Math.min(70,acc*.35)}px)`; hd.style.opacity=(1-Math.min(.35,acc/600)).toFixed(2); }
+      clearTimeout(T); const fin=()=>{ on=false; wheelCool=performance.now()+600; const go=acc>140; if(hd){ hd.style.transition=''; hd.style.transform=''; hd.style.opacity=''; } if(go){ try{ haptic(); }catch(x){} showChapter(+g.dataset.chg,g.querySelector('.th img')); } }; if(acc>140){ fin(); return; } T=setTimeout(fin,300); },{passive:false}); }
 }
 function renderFavs(){ return;
   const list=SONGS.filter(s=>isFav(s.id)); const el=$('#favsect'); if(!el) return;
@@ -1284,10 +1292,10 @@ function showHome(){
   chap.addEventListener('touchend',end); chap.addEventListener('touchcancel',end);
   // trackpad: two-finger swipe right (not over a song row, which queues it) slides the page away
   let wOn=false, wT=null;
-  chap.addEventListener('wheel',e=>{ if(!wheelSide(e)||view!=='chapter') return; const now=performance.now(), step=-wheelPx(e);
+  chap.addEventListener('wheel',e=>{ if(!wheelSide(e)||topLayer()!=='chapter') return; const now=performance.now(), step=-wheelPx(e);
     if(!wOn){ if(now<wheelCool){ wheelCool=now+250; e.preventDefault(); return; } if(step<=0) return; wOn=true; dx=0; t0=now; mode='pop'; chap.classList.add('sliding'); }
     e.preventDefault(); dx=Math.max(0,dx+step); const p=Math.max(0,Math.min(1,dx/innerWidth)); chap.style.transform=`translateX(${dx}px) scale(${1-.08*p})`; chap.style.opacity=(1-.25*p).toFixed(3);
-    clearTimeout(wT); wT=setTimeout(()=>{ wOn=false; wheelCool=performance.now()+450; if(dx>Math.min(260,innerWidth*.22)) dx=innerWidth; end(); },200); },{passive:false});
+    clearTimeout(wT); const fin=()=>{ wOn=false; wheelCool=performance.now()+600; if(dx>Math.min(260,innerWidth*.22)) dx=innerWidth; end(); }; if(dx>Math.min(260,innerWidth*.22)){ fin(); return; } wT=setTimeout(fin,300); },{passive:false});
 })();
 addEventListener('popstate',e=>{ const st=e.state; if(st&&st.ch&&CH[st.ch]){ if(view!=='chapter'||+$('#chapter').dataset.ch!==st.ch) showChapter(st.ch); } else if(view==='chapter') showHome(); });
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1792,18 +1800,21 @@ $('#npclose').onclick=closeNP; $('#lyclose').onclick=closeNP; $('#vcover').oncli
   np.addEventListener('touchend',end); np.addEventListener('touchcancel',end);
   // trackpad: a fresh two-finger pull down while already at the top closes the sheet (a scroll that just reached the top doesn't)
   let wy=0, wOk=false, wT2=null, wLast=0;
-  np.addEventListener('wheel',e=>{ if(e.ctrlKey) return; const now=performance.now(); const fresh=now-wLast>320; wLast=now;
+  np.addEventListener('wheel',e=>{ if(e.ctrlKey) return; const tl=topLayer(); if(tl!=='np'&&tl!=='up') return; const now=performance.now(); const fresh=now-wLast>380; wLast=now;
     const inUp=!!e.target.closest('.upnext'); const sc=inUp?(e.target.closest('.ulist')||up):npscroll; const col=innerWidth>=900&&e.target.closest('.plyr');
     if(fresh){ wy=0; const atTop=inUp?sc.scrollTop<=0:col?col.scrollTop<=0:npscroll.scrollTop<=0; wOk=e.deltaY<0&&Math.abs(e.deltaY)>Math.abs(e.deltaX)&&atTop&&!e.target.closest('.npctl,.scrub'); }
     if(!wOk) return; const t=inUp?up:np; if(e.deltaY>0){ wOk=false; wy=0; t.style.transform=''; return; }
     e.preventDefault(); wy+=-e.deltaY; t.style.transform=`translateY(${Math.min(160,wy*.5)}px)`;
-    clearTimeout(wT2); wT2=setTimeout(()=>{ const go=wy>170; t.style.transform=''; if(go){ if(inUp) setQueueOpen(false); else closeNP(); } wOk=false; wy=0; },220); },{passive:false});
+    clearTimeout(wT2); const fin=()=>{ const go=wy>170; t.style.transform=''; if(go){ wheelCool=performance.now()+600; if(inUp) setQueueOpen(false); else closeNP(); } wOk=false; wy=0; }; if(wy>170){ fin(); return; } wT2=setTimeout(fin,300); },{passive:false});
   // mouse: drag the header
   let md=false, my0=0, mdy=0; const hdr=$('#vhead');
   hdr.addEventListener('mousedown',e=>{ if(e.target.closest('button')) return; md=true; my0=e.clientY; mdy=0; });
   let mctl=null, mtried=false;
   addEventListener('mousemove',e=>{ if(!md) return; mdy=e.clientY-my0; if(mdy>0){ if(!mctl&&!mtried){ mtried=true; mctl=closeNP(true)||null; } if(mctl){ np.classList.add('drag'); mctl.seek(mdy/(innerHeight*.6)); } else { np.classList.add('drag'); np.style.transform=`translateY(${mdy}px)`; } } });
   addEventListener('mouseup',()=>{ if(!md) return; md=false; mtried=false; np.classList.remove('drag'); if(mctl){ const c=mctl; mctl=null; npMoving(); if(mdy>120) c.go(true); else c.go(false,()=>{ np.classList.remove('closing'); document.body.classList.add('npopen'); }); } else if(mdy>120) closeNP(); else np.style.transform=''; });
+  // trackpad: push up with two fingers on the mini player to open the player
+  { let acc=0, T=null; $('#mini').addEventListener('wheel',e=>{ if(e.ctrlKey||!song||topLayer()!=='library'&&topLayer()!=='chapter') return; if(Math.abs(e.deltaY)<=Math.abs(e.deltaX)) return; e.preventDefault(); if(e.deltaY<0){ acc=0; return; } acc+=e.deltaY;
+    clearTimeout(T); if(acc>120){ acc=0; wheelCool=performance.now()+600; openNP(); return; } T=setTimeout(()=>{ acc=0; },300); },{passive:false}); }
   // mini player: drag up to open
   const mc=$('#minicard'); let m0=0, mdyT=0, on=false, mt0=0, octl=null, otried=false;
   mc.addEventListener('touchstart',e=>{ m0=e.touches[0].clientY; mdyT=0; on=true; mt0=performance.now(); },{passive:true});
