@@ -156,7 +156,7 @@ const save=(k,v)=>{try{localStorage.setItem(LS+k,JSON.stringify(v))}catch(e){}};
 /* ===== State ===== */
 const S={
   events:load('events',{...KNOWN}),   // id -> name
-  eventId:null, userPicked:false,
+  group:null, userPicked:false,
   tmpl:null,            // schedule template {ename, quizzes:{tid:{r,s,l}}}
   scores:{},            // tid -> compact score {n,p,tn,ts,pl,u,qid}
   timers:{},            // tid -> {time,half}
@@ -182,53 +182,72 @@ function probe(id,ms=6000){
     setTimeout(()=>fin(null),ms);
   });
 }
+/* events are grouped into meets by month: "Nov Quiz" + "Nov Championship" */
+const groupOf=id=>{const n=S.events[id]||''; return norm(n.split(' ')[0]).slice(0,3)||String(id);};
+function groups(){
+  const g={};
+  Object.keys(S.events).map(Number).sort((a,b)=>a-b).forEach(id=>{const k=groupOf(id);(g[k]||(g[k]=[])).push(id);});
+  return Object.entries(g).map(([k,ids])=>({k,ids,max:Math.max(...ids)})).sort((a,b)=>b.max-a.max);
+}
+function groupLabel(gr){
+  if(gr.ids.length===1) return S.events[gr.ids[0]];
+  const first=S.events[gr.ids[0]].split(' ')[0];
+  return `${first} meet (${gr.ids.map(id=>S.events[id].split(' ').slice(1).join(' ')).join(' + ')})`;
+}
 async function discover(initial){
   const ids=Object.keys(S.events).map(Number);
   const max=Math.max(...ids);
   const look=initial?[max+1,max+2,max+3,max+4]:[max+1,max+2,max+3];
   const found=(await Promise.all(look.map(id=>probe(id)))).filter(Boolean);
-  let changed=false;
-  for(const f of found){ if(S.events[f.id]!==f.name){S.events[f.id]=f.name;changed=true;} }
-  if(changed){ save('events',S.events); fillEvents(); }
-  const newest=Math.max(...Object.keys(S.events).map(Number));
-  if(initial){ if(!S.userPicked) selectEvent(newest); }
-  else if(found.length && newest!==S.eventId){
-    if(!S.userPicked && allOursFinal()) selectEvent(newest);
-    else { S.newer=newest; renderHome(); }
-  }
+  if(!found.length) return;
+  for(const f of found) S.events[f.id]=f.name;
+  save('events',S.events); fillEvents();
+  const top=groups()[0];
+  if(top.k===S.group){ selectGroup(top.k,true); return; }   // e.g. championship posted later: add it in
+  if(!S.userPicked && (initial || allOursFinal())) selectGroup(top.k);
+  else { S.newer=top.k; renderHome(); }
 }
 setInterval(()=>discover(false),120000);
 
 function fillEvents(){
   const sel=$('eventSel');
-  const ids=Object.keys(S.events).map(Number).sort((a,b)=>b-a);
-  sel.innerHTML=ids.map(id=>`<option value="${id}">${esc(S.events[id])}</option>`).join('');
-  if(S.eventId) sel.value=S.eventId;
+  sel.innerHTML=groups().map(g=>`<option value="${g.k}">${esc(groupLabel(g))}</option>`).join('');
+  if(S.group) sel.value=S.group;
 }
-$('eventSel').onchange=e=>{S.userPicked=true;selectEvent(Number(e.target.value));};
+$('eventSel').onchange=e=>{S.userPicked=true;selectGroup(e.target.value);};
 
-/* ===== Schedule socket ===== */
-let schedSock=null;
-function selectEvent(id){
-  if(S.eventId===id && schedSock) return;
-  S.eventId=id; S.tmpl=null; S.scores={}; S.timers={}; S.newer=null;
-  $('eventSel').value=id;
-  if(schedSock){try{schedSock.close()}catch(e){}}
-  closeDetail(true);
+/* ===== Schedule sockets (one per event in the meet) ===== */
+let schedSocks={};   // eventId -> socket
+function selectGroup(k,addOnly){
+  const gr=groups().find(g=>g.k===k); if(!gr) return;
+  if(!addOnly || S.group!==k){
+    for(const id in schedSocks){try{schedSocks[id].close()}catch(e){}}
+    schedSocks={}; S.group=k; S.tmpl=null; S.scores={}; S.timers={}; S.newer=null;
+    closeDetail(true);
+  }
+  $('eventSel').value=k;
+  gr.ids.forEach(id=>{ if(!schedSocks[id]) watchEvent(id); });
   renderHome();
-  const s=schedSock=connect();
+}
+function watchEvent(id){
+  const s=schedSocks[id]=connect();
+  const mine=()=>schedSocks[id]===s;
   s.on('connect',()=>{setConn('on');s.emit('is_schedule_viewer',`${ORG}/schedules/${id}`);});
-  s.on('disconnect',()=>setConn('off'));
-  s.on('connect_error',()=>setConn('bad'));
+  s.on('disconnect',()=>{ if(mine()) setConn('off'); });
+  s.on('connect_error',()=>{ if(mine()) setConn('bad'); });
   s.on('sk_schedule',(t,scores)=>{
-    if(s!==schedSock) return;
-    S.tmpl=t; S.scores={};
+    if(!mine()) return;
+    if(!S.tmpl) S.tmpl={ename:'',quizzes:{},evs:{}};
+    for(const tid in S.tmpl.quizzes) if(S.tmpl.quizzes[tid].eid===id){ delete S.tmpl.quizzes[tid]; delete S.scores[tid]; }
+    for(const tid in t.quizzes) S.tmpl.quizzes[tid]={...t.quizzes[tid],eid:id,ev:t.ename};
+    S.tmpl.evs[id]=t.ename;
+    S.tmpl.ename=Object.keys(S.tmpl.evs).sort().map(k=>S.tmpl.evs[k]).join(' + ');
     for(const k in scores){ const q=scores[k]; if(t.quizzes[q.t]) S.scores[q.t]={...q,qid:k}; }
     if(t.ename && S.events[id]!==t.ename){S.events[id]=t.ename;save('events',S.events);fillEvents();}
     renderHome(); if(S.open) renderDetail();
   });
   s.on('sk_quiz_changed',(key,data)=>{
-    if(s!==schedSock||!data||!S.tmpl||!S.tmpl.quizzes[data.t]) return;
+    if(!mine()||!data||!S.tmpl||!S.tmpl.quizzes[data.t]) return;
     S.scores[data.t]={...data,qid:key};
     if(S.open && S.open.tid==data.t){ if(!S.det||S.det.qid!=key) openDetailSocket(); }
     renderHomeSoon();
@@ -249,7 +268,7 @@ function ourList(){
   return Object.entries(S.tmpl.quizzes)
     .map(([tid,q])=>({tid,q,sc:S.scores[tid]}))
     .filter(x=>teamsIn(x).some(t=>teamOf(t)))
-    .sort((a,b)=>a.q.r-b.q.r||a.q.s-b.q.s);
+    .sort((a,b)=>a.q.eid-b.q.eid||a.q.r-b.q.r||a.q.s-b.q.s);
 }
 function teamsIn(x){ return (x.sc&&x.sc.tn&&x.sc.tn.length)?x.sc.tn:(x.q.l||[]); }
 function statusOf(x){
@@ -258,7 +277,7 @@ function statusOf(x){
 }
 function passes(x){ return S.filter==='all' || teamsIn(x).some(n=>{const t=teamOf(n);return t&&t.key===S.filter}); }
 function allOursFinal(){ const l=ourList(); return l.length>0 && l.every(x=>statusOf(x)==='final'); }
-function quizLabel(q){ return `Round ${q.r+1} · Site ${q.s+1}`; }
+function quizLabel(q){ const champ=/champ/i.test(q.ev||'')?'Championship · ':''; return `${champ}Round ${q.r+1} · Site ${q.s+1}`; }
 function ordinal(n){ return ['1st','2nd','3rd'][n-1]||n+'th'; }
 function clockTxt(tid){
   const t=S.timers[tid]; if(!t||t.time==null) return '';
@@ -316,9 +335,9 @@ function glance(){
 }
 function renderHome(){
   if(S.open) return;
-  $('banner').innerHTML=S.newer?`<div class="banner">New event posted: <b>${esc(S.events[S.newer])}</b><button id="goNew">Switch</button></div>`:'';
-  if(S.newer) $('goNew').onclick=()=>{S.userPicked=false;selectEvent(S.newer);};
-  if(!S.tmpl){ $('glance').innerHTML=`<div class="empty">Loading ${esc(S.events[S.eventId]||'schedule')}…</div>`; $('quizList').innerHTML=''; $('liveList').innerHTML=''; $('liveH').classList.add('hide'); return; }
+  $('banner').innerHTML=S.newer?`<div class="banner">New meet posted: <b>${esc(groupLabel(groups().find(g=>g.k===S.newer)))}</b><button id="goNew">Switch</button></div>`:'';
+  if(S.newer) $('goNew').onclick=()=>{S.userPicked=false;selectGroup(S.newer);};
+  if(!S.tmpl){ $('glance').innerHTML=`<div class="empty">Loading schedule…</div>`; $('quizList').innerHTML=''; $('liveList').innerHTML=''; $('liveH').classList.add('hide'); return; }
   $('glance').innerHTML=glance();
   const list=ourList().filter(passes);
   const live=list.filter(x=>statusOf(x)==='live');
@@ -565,12 +584,11 @@ renderChips();
 function start(){
   if(DEMO){
     $('demoTag').classList.remove('hide');
-    ioFn=makeDemo(); S.events={[BASE_ID+99]:'Demo Meet'}; fillEvents(); selectEvent(BASE_ID+99); return;
+    ioFn=makeDemo(); S.events={[BASE_ID+99]:'Demo Meet'}; fillEvents(); selectGroup(groupOf(BASE_ID+99)); return;
   }
   ioFn=window.io;
   fillEvents();
-  const newest=Math.max(...Object.keys(S.events).map(Number));
-  selectEvent(newest);          // show the newest known event right away
+  selectGroup(groups()[0].k);   // show the newest known meet right away
   discover(true);               // then look for anything newer
 }
 if(DEMO) start();
