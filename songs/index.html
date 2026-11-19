@@ -743,7 +743,7 @@ html[data-skin] .lib{isolation:isolate}
 #skinamb[hidden]{display:none}
 #skinamb>div{position:absolute;top:0;left:calc(-1 * max(16px,var(--sal)));right:calc(-1 * max(16px,var(--sar)));height:100vh;height:100dvh;overflow:hidden;contain:strict}
 #skinamb .pat{position:absolute;inset:0;opacity:var(--pat-o,.5)}
-#skinamb b{position:absolute;top:0;left:0;font-weight:400;font-size:var(--z,22px);line-height:1;opacity:var(--o,.5);will-change:transform;animation:var(--an) var(--d,20s) linear infinite;animation-delay:var(--dl,0s);filter:saturate(1.1)}
+#skinamb b{position:absolute;top:0;left:0;width:var(--z,22px);height:var(--z,22px);background:var(--c,var(--accent));-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat;opacity:var(--o,.4);will-change:transform;animation:var(--an) var(--d,20s) linear infinite;animation-delay:var(--dl,0s)}
 @keyframes skFall{from{transform:translate3d(var(--x),-8vh,0) rotate(0)}to{transform:translate3d(calc(var(--x) + var(--sw,6vw)),108vh,0) rotate(var(--r,180deg))}}
 @keyframes skRise{from{transform:translate3d(var(--x),108vh,0) rotate(0)}to{transform:translate3d(calc(var(--x) + var(--sw,6vw)),-10vh,0) rotate(var(--r,40deg))}}
 @keyframes skDrift{from{transform:translate3d(-12vw,var(--y),0)}to{transform:translate3d(112vw,calc(var(--y) + var(--sw,4vh)),0)}}
@@ -752,9 +752,9 @@ html[data-skin] .lib{isolation:isolate}
 @media (prefers-reduced-motion:reduce){#skinamb b{animation:none;transform:translate3d(var(--x),var(--y,30vh),0)}}
 body.npopen #skinamb b{animation-play-state:paused}
 html[data-skin] .hero .bg2{background:linear-gradient(to bottom,var(--hero1),rgba(0,0,0,.22) 46%,var(--hero2))}
-html[data-skin] .hero .eyebrow::before{content:var(--emb);margin-right:6px;letter-spacing:0}
+html[data-skin] .hero .eyebrow::before{content:'';display:inline-block;width:1.15em;height:1.15em;margin-right:7px;vertical-align:-.22em;background:currentColor;-webkit-mask:var(--motif) center/contain no-repeat;mask:var(--motif) center/contain no-repeat}
 html[data-skin] .hero .mark{box-shadow:0 0 0 2px var(--frame),0 8px 22px -8px var(--sig2)}
-html[data-skin] .sect h2::after{content:var(--emb);margin-left:8px;font-size:.72em;vertical-align:.08em}
+html[data-skin] .sect h2::after{content:'';display:inline-block;width:.78em;height:.78em;margin-left:10px;vertical-align:-.02em;background:var(--accent);-webkit-mask:var(--motif) center/contain no-repeat;mask:var(--motif) center/contain no-repeat}
 html[data-skin] .album .cover{box-shadow:0 0 0 2px var(--frame),0 12px 24px -12px var(--sig3)}
 html[data-skin] .row .th{box-shadow:0 0 0 1.5px var(--frame)}
 html[data-skin] .chap{box-shadow:inset 3px 0 0 var(--accent)}
@@ -770,6 +770,24 @@ html[data-shape="pixel"] .album .cover{box-shadow:0 0 0 3px var(--frame),4px 4px
 html[data-shape="pixel"] .chap,html[data-shape="pixel"] .st-tile,html[data-shape="pixel"] .st-week,html[data-shape="pixel"] .st-hero,html[data-shape="pixel"] .st-chs{border-radius:8px}
 html[data-shape="pixel"] .hero .mark{border-radius:6px}
 html[data-shape="pixel"] .sect h2{letter-spacing:0;text-shadow:2px 2px 0 var(--wash2)}
+/* the theme's trim along the bottom of the banner */
+html[data-trim] .hero::after{content:'';position:absolute;left:0;right:0;bottom:0;height:var(--trim-h);background:var(--trim);z-index:1;pointer-events:none;opacity:.95}
+html[data-trim] .hero{padding-bottom:calc(22px + var(--trim-h) * .6)}
+/* album covers dressed for the theme */
+html[data-cover="polaroid"] .album .cover,html[data-cover="polaroid"] .album .cover img{border-radius:3px}
+html[data-cover="polaroid"] .album .cover{box-shadow:0 0 0 5px #fbf8f1,0 0 0 6px rgba(0,0,0,.12),0 14px 22px -12px rgba(0,0,0,.5)}
+html[data-cover="polaroid"] .album:nth-child(odd) .cover{rotate:-1.4deg} html[data-cover="polaroid"] .album:nth-child(even) .cover{rotate:1.2deg}
+html[data-cover="sticker"] .album .cover,html[data-cover="sticker"] .album .cover img{border-radius:18px}
+html[data-cover="sticker"] .album .cover{box-shadow:0 0 0 4px #fff,0 0 0 5.5px rgba(20,16,30,.7),4px 5px 0 4px rgba(0,0,0,.16)}
+html[data-cover="neon"] .album .cover{box-shadow:0 0 0 2px var(--sig2),0 0 16px 1px color-mix(in srgb,var(--sig2) 65%,transparent),0 12px 22px -12px var(--sig3)}
+html[data-cover="neon"] .album:hover .cover{box-shadow:0 0 0 2px var(--sig1),0 0 22px 3px color-mix(in srgb,var(--sig1) 70%,transparent)}
+html[data-cover="frost"] .album .cover{box-shadow:0 0 0 1.5px rgba(255,255,255,.9),0 0 0 5px color-mix(in srgb,var(--sig1) 30%,rgba(255,255,255,.35)),0 14px 26px -12px var(--sig3)}
+html[data-cover="frost"] .album .cover::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(140deg,rgba(255,255,255,.38),transparent 38%);pointer-events:none}
+html[data-cover="stone"] .album .cover{box-shadow:0 0 0 2px var(--frame),0 0 0 4.5px rgba(0,0,0,.4),0 0 0 6.5px var(--frame),0 14px 24px -12px rgba(0,0,0,.55)}
+html[data-cover] .album .cover{position:relative}
+html[data-cover="polaroid"] .row .th{box-shadow:0 0 0 2.5px #fbf8f1,0 0 0 3.5px rgba(0,0,0,.12)}
+html[data-cover="sticker"] .row .th{box-shadow:0 0 0 2.5px #fff,0 0 0 3.5px rgba(20,16,30,.55)}
+html[data-cover="neon"] .row .th{box-shadow:0 0 0 1.5px var(--sig2),0 0 8px color-mix(in srgb,var(--sig2) 55%,transparent)}
 </style>
 
 <main class="lib" id="lib"><div id="skinamb" aria-hidden="true" hidden><div><div class="pat"></div></div></div>
@@ -1891,20 +1909,154 @@ function skinPattern(kind,c1,c2,dark){ const a=dark?.16:.2, b=dark?.1:.13, A=rgb
     case 'diamonds': return [`linear-gradient(45deg,${A} 12%,transparent 12.5% 87%,${A} 87.5%),linear-gradient(-45deg,${B} 12%,transparent 12.5% 87%,${B} 87.5%)`,'34px 34px'];
     case 'halftone': return [`radial-gradient(${rgba(c1,dark?.3:.34)} 3.2px,transparent 3.8px)`,'16px 16px'];
     default: return [`radial-gradient(${rgba(c1,dark?.34:.4)} 1.6px,transparent 2.2px),radial-gradient(${rgba(c2,dark?.26:.3)} 1.6px,transparent 2.2px)`,'26px 26px,26px 26px','0 0,13px 13px']; } }
+/* ---------- quiz-theme details: drawn motifs (no emoji), a signature trim, a cover style ---------- */
+// pixel themes get 8x8 sprites; the others get small flat vector shapes. Both are used as masks, so they take the theme's own colors.
+const PIX={
+  heart:['.##..##.','########','########','########','.######.','..####..','...##...','........'],
+  gem:['...##...','..####..','.######.','.######.','.######.','.######.','..####..','...##...'],
+  sword:['......##','.....###','....###.','#..###..','.####...','..##....','.#.##...','#...#...'],
+  key:['..###...','.#...#..','.#...#..','..###...','...#....','...##...','...#....','...##...'],
+  flame:['...#....','...##...','..###...','..####..','.##.###.','.#...##.','.##.###.','..####..'],
+  coin:['..####..','.######.','###..###','###..###','###..###','###..###','.######.','..####..'],
+  star:['...##...','...##...','########','.######.','..####..','.######.','.##..##.','.#....#.'],
+  mushroom:['..####..','.#.##.#.','########','#.####.#','########','..#..#..','..####..','........'],
+  brick:['########','#...#...','########','..#...#.','########','#...#...','########','........'],
+  gear:['..#..#..','.######.','###..###','.#....#.','.#....#.','###..###','.######.','..#..#..'],
+  bolt:['....##..','...##...','..##....','.######.','....##..','...##...','..##....','.#......'],
+  bulb:['..####..','.#....#.','.#....#.','.#....#.','..#..#..','..####..','..####..','...##...'],
+  crown:['........','#..##..#','##.##.##','########','########','.######.','........','........'],
+  invader:['..#..#..','...##...','..####..','.##..##.','########','#.####.#','#.#..#.#','...##...'],
+  ghost:['..####..','.######.','##.##.##','##.##.##','########','########','########','#.##.##.'],
+  cherry:['.....##.','....#...','...#.#..','..#...#.','.##..##.','####.###','####.###','.##...#.'],
+  pellet:['........','..####..','.######.','.######.','.######.','.######.','..####..','........'],
+  tT:['........','........','######..','######..','..##....','..##....','........','........'],
+  tL:['..##....','..##....','..##....','..##....','..####..','..####..','........','........'],
+  tS:['........','...####.','...####.','.####...','.####...','........','........','........'],
+  tO:['........','..####..','..####..','..####..','..####..','........','........','........'],
+  rock:['........','...###..','..#####.','.######.','########','########','.######.','........'],
+  trophy:['########','#.####.#','#.####.#','.######.','..####..','...##...','..####..','.######.'],
+  cone:['...##...','...##...','..####..','..#..#..','.######.','.#....#.','########','########'],
+  flag:['#.#.#.#.','.#.#.#.#','#.#.#.#.','.#.#.#.#','#.......','#.......','#.......','#.......'],
+  spark:['...#....','...#....','..###...','#######.','..###...','...#....','...#....','........'],
+  rocket:['...##...','..####..','..#..#..','..####..','..####..','.######.','##.##.##','...##...'],
+  sprout:['........','.##..##.','####.###','.######.','...##...','...##...','...##...','..####..']};
+const VEC={
+  star:'<path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7L5.8 21l1.6-7L2 9.2l7.1-.6z"/>',
+  heart:'<path d="M12 21s-7.5-4.6-9.5-9.2C1 8.3 3.3 4.5 7 4.5c2.1 0 3.6 1.2 5 3 1.4-1.8 2.9-3 5-3 3.7 0 6 3.8 4.5 7.3C19.5 16.4 12 21 12 21z"/>',
+  sparkle:'<path d="M12 1.5c.7 5.6 3.2 8.4 9 9-5.8.6-8.3 3.4-9 11.5-.7-8.1-3.2-10.9-9-11.5 5.8-.6 8.3-3.4 9-9z"/>',
+  moon:'<path d="M15 2.5a9.5 9.5 0 1 0 6.5 16.4A8 8 0 0 1 15 2.5z"/>',
+  cloud:'<path d="M7 19a4.5 4.5 0 0 1-.7-9 6.3 6.3 0 0 1 12 1.7A3.7 3.7 0 0 1 17.6 19z"/>',
+  drop:'<path d="M12 2.5S5 10.3 5 14.6a7 7 0 0 0 14 0C19 10.3 12 2.5 12 2.5z"/>',
+  flame:'<path d="M12 1.5c1.2 3.8 6 6 6 11.6a6 6 0 0 1-12 0c0-2.7 1.3-4.3 2.7-5.6.1 2 1 3.2 2.3 3.6C10.6 8.3 11 4.6 12 1.5z"/>',
+  leaf:'<path d="M20.5 3.5C10 3.5 4 9 4 16.5c0 1.4.3 2.6.8 3.7L3 22l1.4 1.2 1.7-1.8c1.2.7 2.6 1.1 4.2 1.1 7.8 0 10.2-8.6 10.2-19zM7.5 19.2c2.6-4.6 5.6-8 9.5-11.2-3.2 3.9-5.8 7.4-8 11.8z" fill-rule="evenodd"/>',
+  snow:'<g><rect x="11" y="1.5" width="2" height="21" rx="1"/><rect x="11" y="1.5" width="2" height="21" rx="1" transform="rotate(60 12 12)"/><rect x="11" y="1.5" width="2" height="21" rx="1" transform="rotate(120 12 12)"/><path d="M12 4.5l-2.6-2 1-1.2 1.6 1.3 1.6-1.3 1 1.2zM12 19.5l-2.6 2 1 1.2 1.6-1.3 1.6 1.3 1-1.2z"/></g>',
+  crystal:'<path d="M12 1.5l6.5 7-6.5 14-6.5-14z"/>',
+  gem:'<path d="M6 3h12l4.5 6L12 22 1.5 9z"/>',
+  bubble:'<path d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zm0 2a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM8.6 7.4a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" fill-rule="evenodd"/>',
+  fish:'<path d="M2.5 12c3.2-5.4 9.6-6.4 13.6-2.2L21.5 6.5v11l-5.4-3.3C12.1 18.4 5.7 17.4 2.5 12zm5.6-1.6a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6z" fill-rule="evenodd"/>',
+  shell:'<path d="M12 21L2.5 10a9.5 9.5 0 0 1 19 0zM12 19l1-12h-2zM12 19l4.2-11-1.8-.7zM12 19L7.8 8 9.6 7.3z" fill-rule="evenodd"/>',
+  planet:'<path d="M12 6a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/><path d="M1.5 15.5c-.9-1.8 3.6-4.6 10-6.3s11.4-1.6 11.9.2c.5 1.7-2.8 3.8-7.4 5.4l-.6-1.1c3.3-1.3 5.5-2.7 5.3-3.4-.3-1-4.3-.8-9.1.5S3 14.3 3.2 15.3c.2.7 2.5.9 5.8.4l.3 1.2c-4 .6-7.2.3-7.8-1.4z"/>',
+  comet:'<path d="M15.5 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10zM1.5 21l9.5-9.3 1.5 1.5zM3.5 13.5l7-4.3.6 1.6zM9 21.5l3.9-7.3 1.5.9z"/>',
+  ring:'<path d="M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17zm0 3.4a5.1 5.1 0 1 0 0 10.2 5.1 5.1 0 0 0 0-10.2z" fill-rule="evenodd"/>',
+  bolt:'<path d="M13.5 1.5L4 14h6.5L9 22.5 20 9.5h-6.5z"/>',
+  egg:'<path d="M12 2.5c3.6 0 6.5 6 6.5 11a6.5 6.5 0 0 1-13 0c0-5 2.9-11 6.5-11z"/>',
+  foot:'<path d="M12 11c3.6 0 6 3.3 6 6.3S15.6 22 12 22s-6-1.7-6-4.7S8.4 11 12 11zM5 4.5l3.2 5.6-1.8 1L3.2 5.5zM12 2l1 6.5h-2zM19 4.5l1.8 1-3.2 5.6-1.8-1z"/>',
+  slice:'<path d="M2.5 4.5h19L12 22zM8 7.5a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2zm7 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-3 5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z" fill-rule="evenodd"/>',
+  tomato:'<path d="M12 6.5a8 8 0 1 1 0 15.5 8 8 0 0 1 0-15.5z"/><path d="M12 2l1.4 3.3 3.4-.8-2.1 2.8L12 9.5 9.3 7.3 7.2 4.5l3.4.8z"/>',
+  burst:'<path d="M12 1l2.2 5.3 5.2-2.5-1.6 5.5 5.7 1.2-4.9 3.1 3.4 4.6-5.7-.2.2 5.7L12 19.5l-4.5 3.3.2-5.7-5.7.2 3.4-4.6L.5 9.5l5.7-1.2-1.6-5.5 5.2 2.5z"/>',
+  speech:'<path d="M4 3h16a2.5 2.5 0 0 1 2.5 2.5v9A2.5 2.5 0 0 1 20 17h-9l-5.5 4.5V17H4a2.5 2.5 0 0 1-2.5-2.5v-9A2.5 2.5 0 0 1 4 3z"/>',
+  wheat:'<path d="M11.2 9h1.6v13.5h-1.6z"/><path d="M12 1.5c1.5 1.2 1.6 3.3 0 4.6-1.6-1.3-1.5-3.4 0-4.6zM8 5c2 .2 3.3 1.8 3.2 3.7C9.3 8.6 8 7 8 5zm8 0c0 2-1.3 3.6-3.2 3.7-.1-1.9 1.2-3.5 3.2-3.7zM8 9.5c2 .2 3.3 1.8 3.2 3.7-1.9-.1-3.2-1.7-3.2-3.7zm8 0c0 2-1.3 3.6-3.2 3.7-.1-1.9 1.2-3.5 3.2-3.7z"/>',
+  sun:'<path d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10z"/><path d="M11 .5h2v4h-2zM11 19.5h2v4h-2zM.5 11h4v2h-4zM19.5 11h4v2h-4zM3.5 4.9l1.4-1.4 2.8 2.8-1.4 1.4zM16.3 17.7l1.4-1.4 2.8 2.8-1.4 1.4zM3.5 19.1l2.8-2.8 1.4 1.4-2.8 2.8zM16.3 6.3l2.8-2.8 1.4 1.4-2.8 2.8z"/>',
+  ball:'<path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm0 5l-4 2.9 1.5 4.7h5l1.5-4.7z" fill-rule="evenodd"/>',
+  trophy:'<path d="M6 2.5h12v5a6 6 0 0 1-12 0zM10.8 13h2.4v4.5h-2.4zM7 18.5h10v3H7zM2.5 4h3.3v2H4.5c0 2 1 3.4 2.4 4l-.8 1.8C3.9 10.8 2.5 8.5 2.5 6zm19 0v2c0 2.5-1.4 4.8-3.6 5.8l-.8-1.8c1.4-.6 2.4-2 2.4-4h-1.3V4z"/>',
+  swirl:'<path d="M3 5h18v2.2H3zM5 9.4h15v2.2H5zM7.5 13.8h11v2.2h-11zM10 18.2h6v2.2h-6z"/>',
+  pine:'<path d="M12 1.5l5.5 7.5h-3.2l4.4 6.3h-3.9l3.7 5.2H5.5l3.7-5.2H5.3l4.4-6.3H6.5zM10.8 20.5h2.4V23h-2.4z"/>',
+  tent:'<path d="M12 3l10.5 18H1.5zm0 7.5L8.5 18.5h7z" fill-rule="evenodd"/>',
+  daisy:'<g><ellipse cx="12" cy="5.5" rx="3" ry="4.5"/><ellipse cx="12" cy="5.5" rx="3" ry="4.5" transform="rotate(60 12 12)"/><ellipse cx="12" cy="5.5" rx="3" ry="4.5" transform="rotate(120 12 12)"/><ellipse cx="12" cy="5.5" rx="3" ry="4.5" transform="rotate(180 12 12)"/><ellipse cx="12" cy="5.5" rx="3" ry="4.5" transform="rotate(240 12 12)"/><ellipse cx="12" cy="5.5" rx="3" ry="4.5" transform="rotate(300 12 12)"/></g>',
+  peace:'<path d="M12 1.5a10.5 10.5 0 1 1 0 21 10.5 10.5 0 0 1 0-21zm-1.1 2.3a8.3 8.3 0 0 0-6.4 11.7l6.4-5.2zm2.2 0v6.5l6.4 5.2a8.3 8.3 0 0 0-6.4-11.7zm-2.2 9.4l-5.1 4.1a8.3 8.3 0 0 0 5.1 2.8zm2.2 0v6.9a8.3 8.3 0 0 0 5.1-2.8z" fill-rule="evenodd"/>',
+  acorn:'<path d="M4 9.5C4 6 7.6 3.5 12 3.5S20 6 20 9.5zM11 1h2v3h-2zM5.5 11h13c0 6-3.2 10.5-6.5 11.5C8.7 21.5 5.5 17 5.5 11z"/>',
+  blossom:'<g><circle cx="12" cy="6" r="4.2"/><circle cx="17.7" cy="10.2" r="4.2"/><circle cx="15.5" cy="17" r="4.2"/><circle cx="8.5" cy="17" r="4.2"/><circle cx="6.3" cy="10.2" r="4.2"/></g>',
+  petal:'<path d="M12 2c4.5 4 6.5 8 6.5 11.5a6.5 6.5 0 0 1-13 0C5.5 10 7.5 6 12 2z"/>',
+  candy:'<path d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zM7.3 10.3L1.5 6.5v11l5.8-3.8zM16.7 10.3l5.8-3.8v11l-5.8-3.8z"/>',
+  lolly:'<path d="M12 1.5a7.5 7.5 0 1 1 0 15 7.5 7.5 0 0 1 0-15zM11 16h2v7h-2z"/>',
+  rock:'<path d="M3 19l3-9 5-4 6 2 4 7-2 4z"/>',
+  crown:'<path d="M2.5 7l5 4.5L12 4l4.5 7.5 5-4.5-2 12h-15z"/>'};
+const QDET2={
+  overworld:{m:['heart','gem','sprout'],pix:1,trim:'grass',cover:'pixel',an:'float'},
+  candy:{m:['candy','lolly','heart'],trim:'scallop',cover:'sticker',an:'fall'},
+  dungeon:{m:['key','flame','gem'],pix:1,trim:'battlement',cover:'stone',an:'float'},
+  brick:{m:['coin','star','mushroom'],pix:1,trim:'bricks',cover:'pixel',an:'rise'},
+  rose:{m:['blossom','petal','leaf'],trim:'scallop',cover:'frost',an:'fall'},
+  robot:{m:['gear','bolt','bulb'],pix:1,trim:'circuit',cover:'neon',an:'float'},
+  space:{m:['planet','star','comet'],trim:'stars',cover:'neon',an:'drift'},
+  castle:{m:['crown','sword','flame'],pix:1,trim:'battlement',cover:'stone',an:'float'},
+  pocket:{m:['invader','heart','star'],pix:1,trim:'pixeldots',cover:'neon',an:'float'},
+  hedgehog:{m:['ring','bolt','sparkle'],trim:'checks',cover:'sticker',an:'drift'},
+  fairy:{m:['sparkle','moon','star'],trim:'sparkles',cover:'frost',an:'twinkle'},
+  galaxy:{m:['invader','rocket','star'],pix:1,trim:'stars',cover:'neon',an:'fall'},
+  maze:{m:['ghost','cherry','pellet'],pix:1,trim:'pixeldots',cover:'neon',an:'drift'},
+  blocks:{m:['tT','tL','tS','tO'],pix:1,trim:'blocks',cover:'pixel',an:'fall'},
+  volcano:{m:['flame','gem','rock'],pix:1,trim:'zigzag',cover:'stone',an:'rise'},
+  ice:{m:['snow','crystal','sparkle'],trim:'icicles',cover:'frost',an:'fall'},
+  arena:{m:['bolt','trophy','star'],pix:1,trim:'stripes',cover:'neon',an:'float'},
+  dino:{m:['egg','foot','leaf'],trim:'zigzag',cover:'polaroid',an:'float'},
+  ocean:{m:['bubble','fish','shell'],trim:'waves',cover:'frost',an:'rise'},
+  pizza:{m:['slice','tomato','leaf'],trim:'checks',cover:'sticker',an:'fall'},
+  comic:{m:['burst','speech','star'],trim:'halftone',cover:'sticker',an:'float'},
+  farm:{m:['wheat','egg','sun'],trim:'picket',cover:'polaroid',an:'float'},
+  stadium:{m:['ball','trophy','star'],trim:'stripes',cover:'sticker',an:'float'},
+  elements:{m:['flame','drop','swirl'],trim:'waves',cover:'stone',an:'rise'},
+  camp:{m:['pine','flame','star'],trim:'zigzag',cover:'polaroid',an:'twinkle'},
+  groovy:{m:['daisy','peace','heart'],trim:'rainbow',cover:'sticker',an:'float'},
+  build:{m:['cone','brick','bolt'],pix:1,trim:'hazard',cover:'stone',an:'float'},
+  harvest:{m:['leaf','acorn','wheat'],trim:'scallop',cover:'polaroid',an:'fall'},
+  winter:{m:['snow','pine','star'],trim:'icicles',cover:'frost',an:'fall'},
+  race:{m:['flag','bolt','star'],pix:1,trim:'checks',cover:'neon',an:'drift'},
+  legend:{m:['crown','sword','spark'],pix:1,trim:'battlement',cover:'stone',an:'twinkle'}};
+const motifCache={};
+function motifURL(name,pix){ const k=(pix?'p:':'v:')+name; if(motifCache[k]) return motifCache[k]; let svg;
+  const P=pix&&PIX[name];
+  if(P){ let r=''; P.forEach((row,y)=>[...row].forEach((ch,x)=>{ if(ch==='#') r+=`<rect x="${x}" y="${y}" width="1.02" height="1.02"/>`; })); svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" shape-rendering="crispEdges">${r}</svg>`; }
+  else svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">${VEC[name]||VEC.star}</svg>`;
+  return motifCache[k]=`url("data:image/svg+xml,${encodeURIComponent(svg)}")`; }
+// the trim: a band along the bottom of the banner (and a short one under section titles), drawn from the theme's colors
+function skinTrim(kind,a,b,c,dark){ const A=a, B=b, C=c, W=dark?'rgba(255,255,255,.85)':'#ffffff', K='rgba(0,0,0,.55)';
+  switch(kind){
+    case 'battlement': return [`linear-gradient(90deg,${A} 0 60%,transparent 60%) 0 0/22px 6px repeat-x,linear-gradient(${A},${A}) 0 6px/100% 8px no-repeat`,14];
+    case 'bricks': return [`linear-gradient(${K} 1px,transparent 1px) 0 0/100% 7px,linear-gradient(90deg,${K} 1px,transparent 1px) 0 0/20px 7px,linear-gradient(90deg,${K} 1px,transparent 1px) 10px 7px/20px 7px no-repeat,${A}`,14];
+    case 'grass': return [`conic-gradient(from 135deg at 50% 0,${A} 90deg,transparent 0) 0 0/10px 6px repeat-x,linear-gradient(${A},${A}) 0 5px/100% 9px no-repeat`,14];
+    case 'circuit': return [`linear-gradient(90deg,${A} 0 14px,transparent 14px 18px,${B} 18px 22px,transparent 22px 30px) 0 4px/30px 3px repeat-x,radial-gradient(circle,${B} 2px,transparent 2.5px) 15px 9px/30px 6px repeat-x`,14];
+    case 'pixeldots': return [`radial-gradient(${A} 0 2.5px,transparent 3px) 0 0/16px 14px repeat-x`,14];
+    case 'blocks': return [`linear-gradient(90deg,${A} 0 25%,${B} 0 50%,${C} 0 75%,${W} 0) 0 0/56px 14px repeat-x`,14];
+    case 'checks': return [`conic-gradient(${A} 25%,${W} 0 50%,${A} 0 75%,${W} 0) 0 0/14px 14px`,14];
+    case 'hazard': return [`repeating-linear-gradient(-45deg,${A} 0 9px,#111 9px 18px)`,12];
+    case 'stripes': return [`repeating-linear-gradient(90deg,${A} 0 18px,${B} 18px 36px)`,10];
+    case 'scallop': return [`radial-gradient(circle at 50% 0,${A} 9px,transparent 9.5px) 0 0/20px 14px repeat-x`,12];
+    case 'waves': return [`radial-gradient(circle at 50% 100%,transparent 9px,${A} 9.5px 12px,transparent 12.5px) 0 0/26px 14px repeat-x,radial-gradient(circle at 50% 0,transparent 9px,${B} 9.5px 12px,transparent 12.5px) 13px 2px/26px 14px repeat-x`,14];
+    case 'zigzag': return [`linear-gradient(135deg,${A} 25%,transparent 25%) -8px 0/16px 16px repeat-x,linear-gradient(225deg,${A} 25%,transparent 25%) -8px 0/16px 16px repeat-x`,9];
+    case 'icicles': return [`linear-gradient(${W},${W}) 0 0/100% 3px no-repeat,linear-gradient(135deg,${W} 25%,transparent 25%) -6px 2px/12px 12px repeat-x,linear-gradient(225deg,${W} 25%,transparent 25%) -6px 2px/12px 12px repeat-x`,11];
+    case 'halftone': return [`radial-gradient(${A} 2.2px,transparent 2.7px) 0 0/9px 9px,radial-gradient(${A} 1.4px,transparent 1.9px) 4.5px 4.5px/9px 9px`,14];
+    case 'picket': return [`linear-gradient(${W},${W}) 0 7px/100% 2px no-repeat,conic-gradient(from 135deg at 50% 0,${W} 90deg,transparent 0) 0 0/14px 5px repeat-x,linear-gradient(90deg,${W} 0 8px,transparent 8px 14px) 3px 4px/14px 10px repeat-x`,14];
+    case 'sparkles': return [`radial-gradient(${W} 1.2px,transparent 1.8px) 0 2px/23px 12px,radial-gradient(${A} 1.6px,transparent 2.2px) 11px 7px/23px 12px`,12];
+    case 'stars': return [`radial-gradient(${W} 1px,transparent 1.6px) 0 3px/17px 10px,radial-gradient(${A} 1.4px,transparent 2px) 8px 7px/29px 10px,linear-gradient(90deg,transparent,${A} 30%,${B} 70%,transparent) 0 100%/100% 2px no-repeat`,12];
+    case 'rainbow': return [`linear-gradient(${A} 0 25%,${B} 0 50%,${C} 0 75%,${W} 0)`,18];
+    default: return ['none',0]; } }
 function skinDetail(id,T,dark,bg,s1,s2,s3){ const amb=$('#skinamb'), de=document.documentElement, st=de.style;
-  ['--emb','--hero1','--hero2','--frame'].forEach(v=>st.removeProperty(v)); delete de.dataset.shape;
+  ['--motif','--hero1','--hero2','--frame','--trim','--trim-h'].forEach(v=>st.removeProperty(v)); delete de.dataset.shape; delete de.dataset.cover; delete de.dataset.trim;
   if(!id){ if(amb){ amb.hidden=true; amb.dataset.skin=''; amb.querySelectorAll('b').forEach(b=>b.remove()); } return; }
-  const D=QDET[id]||['✨','dots','float','round'], em=Array.from(D[0].matchAll(/\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*/gu),m=>m[0]);
-  st.setProperty('--emb',`"${em[0]}"`); st.setProperty('--hero1',rgba(s3,.42)); st.setProperty('--hero2',rgba(mixc(bg,'#000000',dark?.2:.78),.9)); st.setProperty('--frame',rgba(T.fr||s2,dark?.75:.85));
-  de.dataset.shape=D[3]; if(!amb) return; amb.hidden=false;
-  const pat=amb.querySelector('.pat'), P=skinPattern(D[1],s3,s1,dark); pat.style.backgroundImage=P[0]; pat.style.backgroundSize=P[1]; pat.style.backgroundPosition=P[2]||'0 0';
+  const D=QDET2[id]||{m:['sparkle'],trim:'',cover:'',an:'float'}, P=QDET[id]||['','dots','float','round'], pix=!!D.pix;
+  st.setProperty('--motif',motifURL(D.m[0],pix)); st.setProperty('--hero1',rgba(s3,.42)); st.setProperty('--hero2',rgba(mixc(bg,'#000000',dark?.2:.78),.9)); st.setProperty('--frame',rgba(T.fr||s2,dark?.75:.85));
+  const tr=skinTrim(D.trim,s1,s2,s3,dark); if(tr[1]){ st.setProperty('--trim',tr[0]); st.setProperty('--trim-h',tr[1]+'px'); de.dataset.trim=D.trim; }
+  de.dataset.shape=pix?'pixel':'round'; if(D.cover) de.dataset.cover=D.cover; if(!amb) return; amb.hidden=false;
+  const pat=amb.querySelector('.pat'), PT=skinPattern(P[1],s3,s1,dark); pat.style.backgroundImage=PT[0]; pat.style.backgroundSize=PT[1]; pat.style.backgroundPosition=PT[2]||'0 0';
   if(amb.dataset.skin===id) return; amb.dataset.skin=id; amb.querySelectorAll('b').forEach(b=>b.remove());
-  // the same handful of bits every time for a theme, so it doesn't jump around when the page comes back
+  // a few drawn pieces, always the same for a theme, kept sparse so the page stays calm
   let seed=[...id].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7); const rnd=()=>{ seed=(seed*1664525+1013904223)|0; return ((seed>>>0)%10000)/10000; };
-  const an={fall:'skFall',rise:'skRise',drift:'skDrift',float:'skFloat',twinkle:'skTwinkle'}[D[2]]||'skFloat', n=D[2]==='float'||D[2]==='twinkle'?11:13, box=amb.firstElementChild;
-  for(let k=0;k<n;k++){ const b=document.createElement('b'); b.textContent=em[k%em.length]; const dur=D[2]==='float'?9+rnd()*8:D[2]==='twinkle'?4+rnd()*5:D[2]==='drift'?18+rnd()*18:16+rnd()*16;
-    b.style.cssText=`--an:${an};--x:${(rnd()*92).toFixed(1)}vw;--y:${(6+rnd()*84).toFixed(1)}vh;--z:${(15+rnd()*17).toFixed(0)}px;--o:${(dark?.34:.42)+rnd()*.22};--d:${dur.toFixed(1)}s;--dl:-${(rnd()*dur).toFixed(1)}s;--sw:${((rnd()-.5)*14).toFixed(1)}vw;--r:${(rnd()*360-180).toFixed(0)}deg`;
+  const an={fall:'skFall',rise:'skRise',drift:'skDrift',float:'skFloat',twinkle:'skTwinkle'}[D.an]||'skFloat', n=D.an==='float'||D.an==='twinkle'?8:9, box=amb.firstElementChild, cols=['var(--sig1)','var(--sig2)','var(--sig3)'];
+  for(let k=0;k<n;k++){ const b=document.createElement('b'); const dur=D.an==='float'?10+rnd()*8:D.an==='twinkle'?4+rnd()*5:D.an==='drift'?20+rnd()*18:18+rnd()*16, z=pix?(14+Math.round(rnd()*2)*6):(14+rnd()*14);
+    b.style.cssText=`--m:${motifURL(D.m[k%D.m.length],pix)};--c:${cols[(k+(k>>1))%3]};--an:${an};--x:${(rnd()*92).toFixed(1)}vw;--y:${(6+rnd()*84).toFixed(1)}vh;--z:${z.toFixed(0)}px;--o:${(dark?.3:.36)+rnd()*.2};--d:${dur.toFixed(1)}s;--dl:-${(rnd()*dur).toFixed(1)}s;--sw:${((rnd()-.5)*14).toFixed(1)}vw;--r:${pix?0:(rnd()*300-150).toFixed(0)}deg`;
     box.append(b); } }
+
 function quizThemeId(){ const n=qzName(); if(!n) return null; const u=qzGet('u:'+n,null); if(!u) return null; return QTHEMES[u.theme]?u.theme:'overworld'; }
 function skinOn(){ return lsGet('skin','quiz')!=='normal'; }
 function applySkin(){ const de=document.documentElement, st=de.style, id=quizThemeId(), btn=$('#skintog');
