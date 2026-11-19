@@ -94,7 +94,10 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);m
 .qz .who .sub{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qz .who .sub .w{color:var(--warn);font-weight:700}
 .qz .cnt{font-variant-numeric:tabular-nums;font-weight:800;font-size:14px;min-width:62px;text-align:center}
-.qz.out{opacity:.6}
+.qz.out .who .nm{opacity:.75}
+.otag{font-size:10px;font-weight:800;letter-spacing:.5px;padding:1px 5px;border-radius:5px;vertical-align:1px}
+.otag.q{background:rgba(62,207,142,.2);color:var(--good)}.otag.e{background:rgba(255,107,107,.2);color:var(--bad)}
+.teamdiff{margin:0;padding:10px 12px;border-top:1px solid var(--line);background:rgba(255,192,77,.10);color:#ffe3a0;font-size:13px}
 .b{min-width:54px;height:48px;border-radius:12px;font-weight:900;font-size:17px;display:flex;align-items:center;justify-content:center;gap:3px;font-variant-numeric:tabular-nums}
 .b .k{font-size:15px}
 .b.ok{background:rgba(62,207,142,.18);color:var(--good)}
@@ -427,33 +430,76 @@ function rosterFor(teamId){
     .sort((a,b)=>((a.s==1)-(b.s==1))||(a.s-b.s)||a.name.localeCompare(b.name));
 }
 
-/* scoresheet storage: per quiz + our team name */
+/* scoresheet storage: per quiz + our team name. The sheet is an ordered list of taps. */
 function sheetKey(){ const sc=S.scores[S.open.tid]; return 'sheet:'+(sc?sc.qid:'t'+S.open.tid)+':'+S.sheetTeam; }
-function getSheet(){ return load(sheetKey(),{q:{},adj:[],log:[]}); }
-function putSheet(sh){ save(sheetKey(),sh); }
-const qPts=r=>r.c*20+(r.c>=5&&r.e===0?10:0);
-
-function act(kind,qz){
-  const sh=getSheet();
-  if(qz){ const r=sh.q[qz.id]||(sh.q[qz.id]={c:0,e:0,f:0,name:qz.name});
-    if(kind==='c')r.c++; if(kind==='e')r.e++; if(kind==='f')r.f++;
-    if(kind==='sync'){ const prev={...r}; r.c=qz.p;r.e=qz.e;r.f=qz.f||0; sh.log.push({k:'sync',id:qz.id,prev,txt:`Matched ${qz.name} to official`}); putSheet(sh); toast('Matched to official'); renderDetail(); return; }
-    sh.log.push({k:kind,id:qz.id,txt:`${qz.name} ${kind==='c'?'correct +20':kind==='e'?'error':'foul'}`});
-    if(navigator.vibrate) navigator.vibrate(12);
-  } else {
-    const pts={bon:10,ded:-10}[kind];
-    sh.adj.push(pts); sh.log.push({k:kind,txt:kind==='bon'?'Bonus +10':'Deduction −10'});
+function getSheet(){
+  const sh=load(sheetKey(),null)||{ev:[],undo:[]};
+  if(!sh.ev){ // older format: counts only
+    const ev=[]; for(const id in (sh.q||{})){ const r=sh.q[id];
+      for(let i=0;i<r.e;i++)ev.push({k:'e',id});for(let i=0;i<r.f;i++)ev.push({k:'f',id});for(let i=0;i<r.c;i++)ev.push({k:'c',id}); }
+    (sh.adj||[]).forEach(p=>ev.push({k:'adj',pts:p}));
+    return {ev,undo:[]};
   }
+  return sh;
+}
+function putSheet(sh){ if(sh.undo.length>80) sh.undo.splice(0,sh.undo.length-80); save(sheetKey(),sh); }
+
+/* Official Bible Quiz Fellowship rules (May 2026):
+   20 per right answer · quiz out at 5 right (+10 only if no errors) · error out at 3 errors
+   team errors: first 3 free, 4th–6th −10, 7th on −20 · +20 team bonus for the 5th, 6th and 7th
+   different quizzers to answer right · 2 fouls by one quizzer = an error · one foul each by two teammates = a team error */
+const RULES={pts:20,qout:5,perfect:10,eout:3,teamBonusFrom:5,teamBonusTo:7,teamBonus:20};
+function teamErrCost(n){ return n<=3?0:n<=6?10:20; }
+function scoreSheet(ev,nameOf){
+  const q={}, T={errors:0,ded:0,bonus:0,right:new Set(),ms:RULES.teamBonusFrom-1,fpend:null,adj:0}, notes=[];
+  const Q=id=>q[id]||(q[id]={c:0,ed:0,f:0,err:0,pts:0,out:null});
+  const teamErr=()=>{ T.errors++; const d=teamErrCost(T.errors); T.ded+=d; return d?` · team error ${T.errors}: −${d}`:` · team error ${T.errors} (free)`; };
+  const errOut=r=>{ if(r.err>=RULES.eout&&!r.out){ r.out='error'; return ' · errored out'; } return ''; };
+  for(const e of ev){
+    if(e.k==='adj'){ T.adj+=e.pts; notes.push(`Adjustment ${e.pts>0?'+':'−'}${Math.abs(e.pts)}`); continue; }
+    if(e.k==='sync'){ notes.push(`${nameOf(e.id)} set to the official count`); continue; }
+    const r=Q(e.id), nm=nameOf(e.id); let n='';
+    if(e.k==='c'){
+      r.c++; r.pts+=RULES.pts; n=`${nm} right +${RULES.pts}`;
+      if(r.c===RULES.qout){ r.out='quiz'; if(r.err===0){ r.pts+=RULES.perfect; n+=` · perfect quiz-out +${RULES.perfect}`; } else n+=' · quizzed out'; }
+      T.right.add(String(e.id));
+      while(T.right.size>T.ms && T.ms<RULES.teamBonusTo){ T.ms++; T.bonus+=RULES.teamBonus; n+=` · team bonus, ${T.ms} quizzers right +${RULES.teamBonus}`; }
+    } else if(e.k==='e'){
+      r.ed++; r.err++; n=`${nm} error`+teamErr()+errOut(r);
+    } else if(e.k==='f'){
+      r.f++;
+      if(r.f%2===0){ r.err++; n=`${nm} 2nd foul = error`+teamErr()+errOut(r); if(T.fpend===String(e.id)) T.fpend=null; }
+      else if(T.fpend && T.fpend!==String(e.id)){ n=`${nm} foul · 2 teammates fouled`+teamErr(); T.fpend=null; }
+      else { T.fpend=String(e.id); n=`${nm} foul`; }
+    }
+    if(!e.q) notes.push(n);
+  }
+  let total=T.bonus-T.ded+T.adj; for(const id in q) total+=q[id].pts;
+  return {q,T,total,notes};
+}
+
+let curRoster=[];
+const nameOfId=id=>{ const r=curRoster.find(x=>String(x.id)===String(id)); return r?r.name:'Quizzer'; };
+function act(kind,qz){
+  const sh=getSheet(); sh.undo.push(JSON.stringify(sh.ev));
+  if(kind==='sync'){
+    sh.ev=sh.ev.filter(e=>String(e.id)!==String(qz.id));
+    sh.ev.push({k:'sync',id:qz.id});
+    for(let i=0;i<qz.e;i++) sh.ev.push({k:'e',id:qz.id,q:1});
+    for(let i=0;i<(qz.f||0);i++) sh.ev.push({k:'f',id:qz.id,q:1});
+    for(let i=0;i<qz.p;i++) sh.ev.push({k:'c',id:qz.id,q:1});
+    toast('Matched to official');
+  } else if(kind==='plus'||kind==='minus'){ sh.ev.push({k:'adj',pts:kind==='plus'?10:-10}); }
+  else { sh.ev.push({k:kind,id:qz.id}); if(navigator.vibrate) navigator.vibrate(12); }
   putSheet(sh); renderDetail();
+  const res=scoreSheet(sh.ev,nameOfId); const last=res.notes[res.notes.length-1];
+  if(last && /bonus|quiz-out|quizzed out|errored out|: −/.test(last) && kind!=='sync') toast(last.replace(/^.*? · /,''));
 }
 function undo(){
-  const sh=getSheet(); const l=sh.log.pop(); if(!l){toast('Nothing to undo');return;}
-  if(l.k==='sync') sh.q[l.id]=l.prev;
-  else if(l.id!=null){ const r=sh.q[l.id]; if(r){ if(l.k==='c')r.c--; if(l.k==='e')r.e--; if(l.k==='f')r.f--; } }
-  else sh.adj.pop();
-  putSheet(sh); toast('Undid: '+l.txt); renderDetail();
+  const sh=getSheet(); const prev=sh.undo.pop(); if(prev==null){toast('Nothing to undo');return;}
+  sh.ev=JSON.parse(prev); putSheet(sh); toast('Undone'); renderDetail();
 }
-function resetSheet(){ if(!confirm('Clear your scoresheet for this team in this quiz?')) return; putSheet({q:{},adj:[],log:[]}); renderDetail(); }
+function resetSheet(){ if(!confirm('Clear your scoresheet for this team in this quiz?')) return; putSheet({ev:[],undo:[]}); renderDetail(); }
 
 function renderDetailClock(){
   const el=$('dclock'); if(!el) return;
@@ -496,30 +542,32 @@ function renderDetail(){
   if(!roster.length){
     h+=`<div class="empty">${x.sc?'Loading lineup…':'The lineup appears here as soon as the quiz starts.'}</div>`;
   } else {
-    let myPts=0,myErr=0;
-    roster.forEach(r=>{const m=sh.q[r.id]||{c:0,e:0,f:0}; myPts+=qPts(m); myErr+=m.e+Math.floor(m.f/2);});
-    const adj=sh.adj.reduce((a,b)=>a+b,0); myPts+=adj;
+    curRoster=roster;
+    const R=scoreSheet(sh.ev,nameOfId), T=R.T;
+    const diff=offTeam.s-R.total;
     h+=`<div class="sheet" style="--c:var(--${ourT.key})"><div class="shead">
-      <span>Mine<br><b>${myPts}</b></span><span>Official<br><b>${offTeam.s}</b></span>
-      <span class="grow"></span><span style="text-align:right">My errors <b style="font-size:16px">${myErr}</b><br>Official ${offTeam.e}</span></div>`;
-    let subsShown=false;
+      <span>Mine<br><b>${R.total}</b></span><span>Official<br><b>${offTeam.s}</b></span>
+      <span class="grow"></span><span style="text-align:right;line-height:1.45">Team errors <b style="font-size:15px">${T.errors}</b>${T.ded?` <span style="color:var(--bad)">−${T.ded}</span>`:''} · off. ${offTeam.e}<br>${T.bonus?`<span style="color:var(--good)">Team bonus +${T.bonus}</span>`:`${T.right.size} of 5 for team bonus`}</span></div>`;
+    let subsShown=false, allMatch=true;
     roster.forEach(r=>{
       if(r.s==1&&!subsShown){subsShown=true;h+=`<div class="subhd">Subs</div>`;}
-      const m=sh.q[r.id]||{c:0,e:0,f:0};
+      const m=R.q[r.id]||{c:0,ed:0,f:0,err:0,pts:0,out:null};
       const offE=r.e, offF=r.f||0;
-      const mis=(m.c!==r.p)||(m.e!==offE)||(m.f!==offF);
+      const mis=(m.c!==r.p)||(m.ed!==offE)||(m.f!==offF); if(mis) allMatch=false;
       const cap=offTeam.c==r.id;
-      h+=`<div class="qz ${mis?'mis':''}">
+      const tag=m.out==='quiz'?'<span class="otag q">QUIZZED OUT</span>':m.out==='error'?'<span class="otag e">ERRORED OUT</span>':'';
+      h+=`<div class="qz ${mis?'mis':''} ${m.out?'out':''}">
         <div class="who"><div class="nm">${cap?'★ ':''}${esc(r.name)}</div>
-          <div class="sub">${mis?`<span class="w">≠</span> `:''}Official ${r.p}✓ ${offE}✗${offF?` ${offF}F`:''}</div>${mis?`<button class="syncB" data-id="${r.id}" style="color:var(--BL);font-size:13px;font-weight:700;padding:4px 0 0">Match official</button>`:''}</div>
+          <div class="sub"><b style="color:var(--text)">${m.pts}</b> pts ${tag} · ${mis?`<span class="w">≠</span> `:''}off. ${r.p}✓ ${offE}✗${offF?` ${offF}F`:''}</div>${mis?`<button class="syncB" data-id="${r.id}" style="color:var(--BL);font-size:13px;font-weight:700;padding:4px 0 0">Match official</button>`:''}</div>
         <button class="b ok" data-a="c" data-id="${r.id}" aria-label="Correct">✓<span class="k">${m.c}</span></button>
-        <button class="b er" data-a="e" data-id="${r.id}" aria-label="Error">✗<span class="k">${m.e}</span></button>
+        <button class="b er" data-a="e" data-id="${r.id}" aria-label="Error">✗<span class="k">${m.ed}</span></button>
         <button class="b fo" data-a="f" data-id="${r.id}" aria-label="Foul">F${m.f?`<span class="k">${m.f}</span>`:''}</button>
       </div>`;
     });
-    h+=`<div class="tools"><div class="tools-in"><button data-t="bon">Bonus +10</button><button data-t="ded">−10</button><button class="undo" id="undoB">↶ Undo</button></div></div>`;
-    if(sh.log.length) h+=`<div class="mlog">${sh.log.slice(-8).reverse().map(l=>esc(l.txt)).join('<br>')}</div>`;
-    h+=`</div><button class="clearB" id="resetB">Clear my scoresheet</button><div class="note">Highlighted rows don’t match the official count. Your total counts 20 per correct answer plus your bonus/deduction taps; the official total also includes team bonuses and error deductions.</div>`;
+    if(allMatch && diff!==0) h+=`<div class="teamdiff">Every quizzer matches, but the official total is ${Math.abs(diff)} ${diff>0?'higher':'lower'}. That’s usually a challenge, appeal or manual change by the scorekeeper. Use −10 / +10 to line it up.</div>`;
+    h+=`<div class="tools"><div class="tools-in"><button data-t="minus">−10</button><button data-t="plus">+10</button><button class="undo" id="undoB">↶ Undo</button></div></div>`;
+    if(R.notes.length) h+=`<div class="mlog">${R.notes.slice(-10).reverse().map(l=>esc(l)).join('<br>')}</div>`;
+    h+=`</div><button class="clearB" id="resetB">Clear my scoresheet</button><div class="note"><b>Scored by BQF rules:</b> 20 per right answer · quiz out at 5 right (+10 if no errors) · error out at 3 · team errors 1–3 free, 4–6 −10, 7+ −20 · +20 team bonus for the 5th, 6th and 7th different quizzers right · 2 fouls by one quizzer = an error · one foul each by two teammates = a team error. −10 / +10 are for anything else.</div>`;
   }
   $('detail').innerHTML=h;
   const f2=$('detail').querySelector('.feed'); if(f2) f2.scrollTop=feedScroll;
@@ -566,11 +614,20 @@ function makeDemo(){
     const order=ts.map((v,i)=>i).sort((a,b)=>ts[b]-ts[a]);const pl=[];order.forEach((i,k)=>pl[i]=k+1);
     return {v:1,s:1,t:Number(tid),n:f.data.name,p:f.data.status,tn,ts,pl,ev:'Demo Meet',u:f.data.last};}
   function step(tid,final){
-    const f=full[tid];const qs=Object.values(f.data.quizzers).filter(q=>q.s!=1&&q.p<5&&q.e<3);if(!qs.length)return;
-    const qz=qs[Math.floor(Math.random()*qs.length)];const t=f.data.teams[qz.tid];
-    if(Math.random()<.72){qz.p++;t.s+=20+(qz.p===5&&qz.e===0?10:0);if(qz.p===1)t.a++;f.data.last=`${f.db.quizzers[qz.id]}: 20 Points`;}
-    else{qz.e++;t.e++;if(t.e>3)t.s-=10;f.data.last=`${f.db.quizzers[qz.id]}: Error`;}
-    t.p=Object.values(f.data.quizzers).filter(q=>q.tid===t.id).reduce((a,q)=>a+q.p,0);
+    const f=full[tid]; f.ev=f.ev||[];
+    const calc=()=>{ const byTeam={};
+      for(const t of Object.values(f.data.teams)){ const ids=Object.values(f.data.quizzers).filter(q=>q.tid===t.id).map(q=>String(q.id));
+        const R=scoreSheet(f.ev.filter(e=>ids.includes(String(e.id))),()=>'');
+        t.s=R.total; t.e=R.T.errors; t.a=R.T.right.size; byTeam[t.id]=R;
+        ids.forEach(id=>{const qq=f.data.quizzers[id], m=R.q[id]; qq.p=m?m.c:0; qq.e=m?m.ed:0; qq.f=m?m.f:0; qq.out=m?m.out:null;}); } };
+    calc();
+    const qs=Object.values(f.data.quizzers).filter(q=>q.s!=1&&!q.out); if(!qs.length) return;
+    const qz=qs[Math.floor(Math.random()*qs.length)];
+    const roll=Math.random(), k=roll<.7?'c':roll<.93?'e':'f';
+    f.ev.push({k,id:qz.id});
+    calc();
+    f.data.last=`${f.db.quizzers[qz.id]}: ${k==='c'?'20 Points':k==='e'?'Error':'Foul'}`;
+    const t=f.data.teams[qz.tid];
     if(!final){emitQ(tid,'quizzer',qz);emitQ(tid,'team',t);emitQ(tid,'quiz',f.data);}
   }
   function emitQ(tid,type,data){hub.forEach(c=>{if(c.room==='q:'+full[tid].qid)c.fire('sk_quiz_changed',type,JSON.parse(JSON.stringify(data)))});}
