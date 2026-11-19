@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Quiz Stats">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Midland Quiz Stats</title>
+<style>
+:root{
+  --bg:#0f1a2e; --panel:#17243d; --panel2:#1e2e4c; --line:#2b3d5f;
+  --text:#eef3fb; --dim:#9fb0cc; --faint:#6f82a3;
+  --good:#3ecf8e; --bad:#ff6b6b; --warn:#ffc04d;
+  --MS:#e6b43c; --BL:#53a8ff; --WOC:#ff7a3d;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;touch-action:manipulation;-webkit-text-size-adjust:100%}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 24px) env(safe-area-inset-left)}
+button,select,input{font:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer;-webkit-user-select:none;user-select:none}
+.wrap{max-width:760px;margin:0 auto;padding:0 12px}
+header{position:sticky;top:0;z-index:5;background:rgba(15,26,46,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:center;gap:8px;padding:8px 0 6px}
+h1{font-size:20px;margin:0;font-weight:800;flex:1}
+.sub{font-size:12px;color:var(--dim)}
+.iconb{padding:6px 10px;border-radius:10px;background:var(--panel2);font-size:13px;font-weight:700;color:var(--dim)}
+.seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;padding:8px 6px;border-radius:9px;font-weight:700;font-size:14px;color:var(--dim)}
+.seg button.on{background:var(--text);color:#0f1a2e}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:6px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--dim);white-space:nowrap}
+.chip.on{background:var(--text);color:#0f1a2e;border-color:var(--text)}
+.chip.ours.on{background:var(--good);border-color:var(--good)}
+.tools{display:flex;gap:6px;padding:0 0 8px}
+.tools select,.tools input{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:16px;min-width:0}
+.tools input{flex:1}
+.tools select{flex:0 0 auto;max-width:48%}
+.progress{margin:12px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--dim)}
+.bar{height:6px;background:var(--panel2);border-radius:99px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--BL);width:0;transition:width .2s}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:16px 2px 8px;font-weight:800}
+.leaders{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.lead{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px;min-width:0}
+.lead .k{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.lead .v{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+.lead .n{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lead .t{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 10px;margin-bottom:6px}
+.row.ours{border-left:4px solid var(--c)}
+.rk{width:26px;text-align:center;font-weight:800;color:var(--faint);font-variant-numeric:tabular-nums;font-size:14px}
+.rk.top{color:var(--warn)}
+.mid{flex:1;min-width:0}
+.mid .n{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mid .d{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mid .tm{color:var(--c,var(--dim))}
+.big{text-align:right;font-variant-numeric:tabular-nums}
+.big b{display:block;font-size:19px;font-weight:900}
+.big span{font-size:11px;color:var(--faint)}
+.detail{background:#13203a;border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;margin:-8px 0 8px;padding:12px 10px 8px;font-size:13px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:11px;color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:.4px;text-align:right;padding:4px 4px;border-bottom:1px solid var(--line)}
+td{text-align:right;padding:5px 4px;border-bottom:1px solid #22324f}
+th:first-child,td:first-child{text-align:left}
+tr:last-child td{border-bottom:0}
+.tag{font-size:10px;font-weight:800;padding:1px 5px;border-radius:5px;margin-left:4px;vertical-align:1px}
+.tag.q{background:rgba(62,207,142,.2);color:var(--good)} .tag.e{background:rgba(255,107,107,.2);color:var(--bad)}
+.empty{color:var(--dim);padding:16px;text-align:center;background:var(--panel);border-radius:12px;border:1px dashed var(--line)}
+.more{display:block;width:100%;padding:12px;border-radius:12px;background:var(--panel2);font-weight:700;color:var(--dim);margin:4px 0 0}
+footer{margin:22px 0 0;font-size:12px;color:var(--faint);text-align:center;line-height:1.6}
+footer a{color:var(--dim)}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="hrow">
+    <div style="flex:1"><h1>Quiz Stats</h1><div class="sub" id="subTxt">Midland · regular season</div></div>
+    <button class="iconb" id="refreshB">↻ Refresh</button>
+  </div>
+  <div class="seg" id="tabs"><button data-v="q" class="on">Quizzers</button><button data-v="t">Teams</button></div>
+  <div class="chips" id="meets"></div>
+  <div class="tools" id="tools">
+    <input id="search" type="search" placeholder="Search name or team" autocomplete="off">
+    <select id="sortSel" aria-label="Sort by"></select>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <div id="prog" class="progress hide"><span id="progTxt">Loading…</span><div class="bar"><i id="progBar"></i></div></div>
+  <div id="out"></div>
+  <footer>Regular-season quizzes from <a href="https://quizzing.live/scores/mm" target="_blank" rel="noopener">quizzing.live</a> · Championship quizzes are left out.<br>
+    Points: 20 per right answer, +10 for a perfect quiz-out. Accuracy = right ÷ (right + errors).<br>
+    <a href="../meet/">Meet Day</a> · <a href="../">John Quiz</a></footer>
+</main>
+
+<script>
+const ORG='mm';
+const SCHEDULE_IDS=[65541,65540,65538,65536];   // any schedule in the season returns every quiz of the season
+const OURS=[{key:'MS',name:'Master Swords'},{key:'BL',name:'Blinding Light'},{key:'WOC',name:'Warriors of Christ'}];
+const MONTHS=['aug','sep','oct','nov','dec','jan','feb','mar','apr','may','jun','jul'];
+const MONTH_NAME={aug:'Aug',sep:'Sep',oct:'Oct',nov:'Nov',dec:'Dec',jan:'Jan',feb:'Feb',mar:'Mar',apr:'Apr',may:'May',jun:'Jun',jul:'Jul'};
+const $=id=>document.getElementById(id);
+const norm=s=>(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+const ourTeam=n=>OURS.find(t=>norm(t.name)===norm(n));
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LS='stats:';
+const load=(k,d)=>{try{const v=localStorage.getItem(LS+k);return v?JSON.parse(v):d}catch(e){return d}};
+const save=(k,v)=>{try{localStorage.setItem(LS+k,JSON.stringify(v))}catch(e){}};
+const isChamp=ev=>/champ/i.test(ev||'');
+const monthOf=ev=>{const m=norm(ev).slice(0,3);return MONTHS.includes(m)?m:norm(ev);};
+
+const V={tab:load('tab','q'), meet:load('meet','all'), ours:load('ours',false), sortQ:load('sortQ','pts'), sortT:load('sortT','avg'), search:'', open:null, limit:60};
+let QUIZZES=load('quizzes',{});   // qid -> compact final quiz
+let LIST={};                      // qid -> schedule summary (all quizzes in season)
+
+/* ===== Loading ===== */
+function compact(data,db,sum){
+  const teams=Object.values(data.teams).sort((a,b)=>a.i-b.i).map(t=>({n:db.teams[t.id],s:t.s,e:t.e,id:t.id}));
+  const order=teams.map((t,i)=>i).sort((a,b)=>teams[b].s-teams[a].s);
+  teams.forEach(t=>{ const i=sum.tn?sum.tn.indexOf(t.n):-1; t.pl=i>=0&&sum.pl?sum.pl[i]:order.indexOf(teams.indexOf(t))+1; });
+  const qz=Object.values(data.quizzers).map(q=>({n:(db.quizzers||{})[q.id]||'?',t:(db.teams||{})[q.tid]||'?',sub:q.s==1?1:0,p:q.p||0,e:q.e||0,f:q.f||0}));
+  return {ev:sum.ev,n:sum.n,type:data.type,teams:teams.map(({n,s,e,pl})=>({n,s,e,pl})),qz};
+}
+function setProg(done,total,txt){
+  $('prog').classList.toggle('hide',total===0||done>=total);
+  $('progTxt').textContent=txt||`Loading quizzes ${done} of ${total}…`;
+  $('progBar').style.width=(total?100*done/total:0)+'%';
+}
+let loading=false;
+function refresh(){
+  if(loading) return; loading=true;
+  setProg(0,1,'Connecting to quizzing.live…');
+  const s=io('https://quizzing.live',{transports:['websocket'],forceNew:true});
+  let gotList=false, idx=0;
+  const giveUp=setTimeout(()=>{ if(!gotList){ try{s.close()}catch(e){}; loading=false; setProg(1,1); if(!Object.keys(QUIZZES).length) $('out').innerHTML='<div class="empty">Couldn’t reach quizzing.live. Check your connection and tap Refresh.</div>'; } },15000);
+  s.on('connect',()=>{ if(!gotList) s.emit('is_schedule_viewer',`${ORG}/schedules/${SCHEDULE_IDS[idx]}`); });
+  s.on('sk_error',()=>{ if(!gotList && ++idx<SCHEDULE_IDS.length) s.emit('is_schedule_viewer',`${ORG}/schedules/${SCHEDULE_IDS[idx]}`); });
+  s.on('sk_schedule',(t,scores)=>{
+    if(gotList) return; gotList=true; clearTimeout(giveUp);
+    LIST={}; for(const k in scores) LIST[k]=scores[k];
+    const need=Object.keys(LIST).filter(k=>{const q=LIST[k];return /^final/i.test(q.p||'') && !isChamp(q.ev) && (!QUIZZES[k]||QUIZZES[k].v!==q.v);});
+    if(!need.length){ finish(); return; }
+    let done=0, pending=new Set();
+    const total=need.length; setProg(0,total);
+    const queue=need.slice();
+    const pump=()=>{ while(pending.size<8 && queue.length){ const k=queue.shift(); pending.add(k); s.emit('is_quiz_viewer',`${ORG}/${k}`);
+        setTimeout(()=>{ if(pending.has(k)){ pending.delete(k); done++; setProg(done,total); pump(); if(done>=total) finish(); } },8000); } };
+    s.on('sk_quiz_changed',(type,data,db)=>{
+      if(type!=='load'||!data) return; const k=String(data.id);
+      if(!pending.has(k)) return; pending.delete(k);
+      try{ const c=compact(data,db,LIST[k]); c.v=LIST[k].v; QUIZZES[k]=c; }catch(e){}
+      done++; setProg(done,total);
+      if(done%10===0){ save('quizzes',QUIZZES); render(); }
+      if(done>=total) finish(); else pump();
+    });
+    pump();
+  });
+  function finish(){ try{s.close()}catch(e){}; loading=false; save('quizzes',QUIZZES); save('when',Date.now()); setProg(1,1); render(); }
+}
+$('refreshB').onclick=refresh;
+
+/* ===== Stats ===== */
+function meetsList(){
+  const m={}; for(const k in QUIZZES){ const q=QUIZZES[k]; if(isChamp(q.ev)) continue; const mo=monthOf(q.ev); (m[mo]||(m[mo]={key:mo,ev:q.ev,n:0})).n++; }
+  return Object.values(m).sort((a,b)=>MONTHS.indexOf(a.key)-MONTHS.indexOf(b.key));
+}
+function quizzesIn(meet){ return Object.entries(QUIZZES).filter(([k,q])=>!isChamp(q.ev) && q.type!==1 && (meet==='all'||monthOf(q.ev)===meet)); }
+const qPts=(p,e)=>p*20+(p>=5&&e===0?10:0);
+
+function buildQuizzers(meet){
+  const M={};
+  for(const [k,q] of quizzesIn(meet)){
+    for(const z of q.qz){
+      const key=norm(z.n)+'|'+norm(z.t);
+      const r=M[key]||(M[key]={name:z.n,team:z.t,quizzes:0,p:0,e:0,f:0,pts:0,qo:0,pqo:0,eo:0,byMeet:{},log:[]});
+      const played=!z.sub||z.p||z.e||z.f;
+      if(!played) continue;
+      const pts=qPts(z.p,z.e), err=z.e+Math.floor(z.f/2);
+      r.quizzes++; r.p+=z.p; r.e+=z.e; r.f+=z.f; r.pts+=pts;
+      if(z.p>=5){r.qo++; if(z.e===0) r.pqo++;}
+      if(err>=3) r.eo++;
+      const mo=monthOf(q.ev); const b=r.byMeet[mo]||(r.byMeet[mo]={quizzes:0,p:0,e:0,pts:0,qo:0}); b.quizzes++; b.p+=z.p; b.e+=z.e; b.pts+=pts; if(z.p>=5)b.qo++;
+      r.log.push({k:Number(k),ev:q.ev,n:q.n,p:z.p,e:z.e,f:z.f,pts});
+    }
+  }
+  return Object.values(M).filter(r=>r.quizzes>0).map(r=>({...r,avg:r.pts/r.quizzes,acc:(r.p+r.e)?r.p/(r.p+r.e):0}));
+}
+function buildTeams(meet){
+  const T={};
+  for(const [k,q] of quizzesIn(meet)){
+    for(const t of q.teams){
+      const r=T[t.n]||(T[t.n]={name:t.n,quizzes:0,pts:0,errs:0,pl:[0,0,0],plSum:0,byMeet:{},roster:{}});
+      r.quizzes++; r.pts+=t.s; r.errs+=t.e||0; if(t.pl>=1&&t.pl<=3)r.pl[t.pl-1]++; r.plSum+=t.pl||3;
+      const mo=monthOf(q.ev); const b=r.byMeet[mo]||(r.byMeet[mo]={quizzes:0,pts:0,pl:[0,0,0]}); b.quizzes++; b.pts+=t.s; if(t.pl>=1&&t.pl<=3)b.pl[t.pl-1]++;
+    }
+    for(const z of q.qz){ const r=T[z.t]; if(!r) continue; const x=r.roster[z.n]||(r.roster[z.n]={n:z.n,p:0,e:0,pts:0}); x.p+=z.p; x.e+=z.e; x.pts+=qPts(z.p,z.e); }
+  }
+  return Object.values(T).map(r=>({...r,avg:r.pts/r.quizzes,avgPl:r.plSum/r.quizzes,winPct:r.pl[0]/r.quizzes,epq:r.errs/r.quizzes}));
+}
+
+const SORTS_Q={
+  pts:{label:'Total points',f:r=>r.pts,fmt:r=>r.pts,u:'pts'},
+  avg:{label:'Points per quiz',f:r=>r.avg,fmt:r=>r.avg.toFixed(1),u:'per quiz'},
+  p:{label:'Right answers',f:r=>r.p,fmt:r=>r.p,u:'right'},
+  acc:{label:'Accuracy',f:r=>r.p+r.e>=5?r.acc:-1,fmt:r=>Math.round(r.acc*100)+'%',u:'accuracy'},
+  qo:{label:'Quiz-outs',f:r=>r.qo*100+r.pqo,fmt:r=>r.qo,u:'quiz-outs'},
+  e:{label:'Fewest errors per quiz',f:r=>-(r.e/r.quizzes),fmt:r=>(r.e/r.quizzes).toFixed(2),u:'errors/quiz'},
+};
+const SORTS_T={
+  avg:{label:'Avg score',f:r=>r.avg,fmt:r=>Math.round(r.avg),u:'avg'},
+  wins:{label:'1st places',f:r=>r.pl[0]*1000+r.pl[1],fmt:r=>r.pl[0],u:'1st'},
+  pl:{label:'Avg place',f:r=>-r.avgPl,fmt:r=>r.avgPl.toFixed(2),u:'avg place'},
+  pts:{label:'Total points',f:r=>r.pts,fmt:r=>r.pts,u:'pts'},
+  e:{label:'Fewest errors',f:r=>-r.epq,fmt:r=>r.epq.toFixed(1),u:'err/quiz'},
+};
+
+/* ===== Render ===== */
+function renderMeets(){
+  const ms=meetsList();
+  const chips=[{key:'all',label:'Season'}].concat(ms.map(m=>({key:m.key,label:MONTH_NAME[m.key]||m.ev})));
+  $('meets').innerHTML=chips.map(c=>`<button class="chip ${V.meet===c.key?'on':''}" data-m="${c.key}">${esc(c.label)}</button>`).join('')+
+    `<button class="chip ours ${V.ours?'on':''}" id="oursB">★ Our 3 teams</button>`;
+  $('meets').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{V.meet=b.dataset.m;save('meet',V.meet);V.open=null;render();});
+  $('oursB').onclick=()=>{V.ours=!V.ours;save('ours',V.ours);V.open=null;render();};
+  const n=quizzesIn(V.meet).length;
+  $('subTxt').textContent=`Midland · ${V.meet==='all'?`${ms.length} meet${ms.length===1?'':'s'}`:(MONTH_NAME[V.meet]||V.meet)+' meet'} · ${n} quizzes`;
+}
+function renderSort(){
+  const S=V.tab==='q'?SORTS_Q:SORTS_T, cur=V.tab==='q'?V.sortQ:V.sortT;
+  $('sortSel').innerHTML=Object.entries(S).map(([k,s])=>`<option value="${k}" ${k===cur?'selected':''}>${s.label}</option>`).join('');
+}
+$('sortSel').onchange=e=>{ if(V.tab==='q'){V.sortQ=e.target.value;save('sortQ',V.sortQ);} else {V.sortT=e.target.value;save('sortT',V.sortT);} V.open=null; renderList(); };
+$('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{V.tab=b.dataset.v;save('tab',V.tab);V.open=null;V.limit=60;render();});
+let sT=null; $('search').oninput=e=>{clearTimeout(sT);sT=setTimeout(()=>{V.search=norm(e.target.value);V.limit=60;renderList();},120);};
+
+function teamStyle(n){ const t=ourTeam(n); return t?`--c:var(--${t.key})`:''; }
+function leaders(rows){
+  if(!rows.length) return '';
+  const pick=(f,filter=()=>true)=>rows.filter(filter).sort((a,b)=>f(b)-f(a))[0];
+  const items=[
+    ['Most points',pick(r=>r.pts),r=>r.pts],
+    ['Most quiz-outs',pick(r=>r.qo*100+r.pqo),r=>r.qo],
+    ['Best accuracy',pick(r=>r.acc,r=>r.p+r.e>=8),r=>Math.round(r.acc*100)+'%'],
+    ['Points per quiz',pick(r=>r.avg,r=>r.quizzes>=3),r=>r.avg.toFixed(1)],
+  ].filter(x=>x[1]);
+  return `<h2>Leaders${V.ours?' · our teams':''}</h2><div class="leaders">${items.map(([k,r,f])=>`<div class="lead"><div class="k">${k}</div><div class="v">${f(r)}</div><div class="n">${esc(r.name)}</div><div class="t" style="${teamStyle(r.team)}"><span style="color:var(--c,var(--dim))">${esc(r.team)}</span></div></div>`).join('')}</div>`;
+}
+function qDetail(r){
+  const ms=meetsList().filter(m=>r.byMeet[m.key]);
+  let h=`<div class="detail"><table><tr><th>Meet</th><th>Quizzes</th><th>Right</th><th>Err</th><th>Q-outs</th><th>Pts</th><th>/quiz</th></tr>`;
+  ms.forEach(m=>{const b=r.byMeet[m.key];h+=`<tr><td>${esc(MONTH_NAME[m.key]||m.ev)}</td><td>${b.quizzes}</td><td>${b.p}</td><td>${b.e}</td><td>${b.qo}</td><td>${b.pts}</td><td>${(b.pts/b.quizzes).toFixed(1)}</td></tr>`;});
+  h+=`</table><h2 style="margin-top:12px">Quiz by quiz</h2><table><tr><th>Quiz</th><th>Right</th><th>Err</th><th>Pts</th></tr>`;
+  r.log.slice().sort((a,b)=>b.k-a.k).forEach(l=>{
+    const tag=l.p>=5?`<span class="tag q">${l.e?'OUT':'PERFECT'}</span>`:(l.e+Math.floor(l.f/2))>=3?'<span class="tag e">ERR OUT</span>':'';
+    h+=`<tr><td>${esc((MONTH_NAME[monthOf(l.ev)]||'')+' · '+l.n.replace(' - ',' · '))}${tag}</td><td>${l.p}</td><td>${l.e}${l.f?`<span style="color:var(--warn)"> +${l.f}F</span>`:''}</td><td>${l.pts}</td></tr>`;});
+  return h+`</table></div>`;
+}
+function tDetail(r){
+  const ms=meetsList().filter(m=>r.byMeet[m.key]);
+  let h=`<div class="detail"><table><tr><th>Meet</th><th>Quizzes</th><th>1st</th><th>2nd</th><th>3rd</th><th>Avg</th></tr>`;
+  ms.forEach(m=>{const b=r.byMeet[m.key];h+=`<tr><td>${esc(MONTH_NAME[m.key]||m.ev)}</td><td>${b.quizzes}</td><td>${b.pl[0]}</td><td>${b.pl[1]}</td><td>${b.pl[2]}</td><td>${Math.round(b.pts/b.quizzes)}</td></tr>`;});
+  h+=`</table><h2 style="margin-top:12px">Quizzers</h2><table><tr><th>Name</th><th>Right</th><th>Err</th><th>Pts</th></tr>`;
+  Object.values(r.roster).filter(x=>x.p||x.e).sort((a,b)=>b.pts-a.pts).forEach(x=>{h+=`<tr><td>${esc(x.n)}</td><td>${x.p}</td><td>${x.e}</td><td>${x.pts}</td></tr>`;});
+  return h+`</table></div>`;
+}
+function renderList(){
+  const out=$('out');
+  if(!Object.keys(QUIZZES).length){ out.innerHTML=loading?'':'<div class="empty">No quizzes loaded yet. Tap Refresh.</div>'; return; }
+  let h='';
+  if(V.tab==='q'){
+    let rows=buildQuizzers(V.meet);
+    if(V.ours) rows=rows.filter(r=>ourTeam(r.team));
+    const S=SORTS_Q[V.sortQ];
+    rows.sort((a,b)=>S.f(b)-S.f(a)||b.pts-a.pts);
+    rows.forEach((r,i)=>r.rank=i+1);
+    if(!V.search) h+=leaders(rows);
+    let shown=V.search?rows.filter(r=>norm(r.name).includes(V.search)||norm(r.team).includes(V.search)):rows;
+    h+=`<h2>${shown.length} quizzer${shown.length===1?'':'s'} · by ${S.label.toLowerCase()}</h2>`;
+    if(!shown.length) h+='<div class="empty">No one matches.</div>';
+    shown.slice(0,V.limit).forEach(r=>{
+      const id='q:'+r.name+'|'+r.team, open=V.open===id;
+      h+=`<button class="row ${ourTeam(r.team)?'ours':''}" style="${teamStyle(r.team)}" data-open="${esc(id)}">
+        <span class="rk ${r.rank<=3?'top':''}">${r.rank}</span>
+        <span class="mid"><div class="n">${esc(r.name)}</div><div class="d"><span class="tm">${esc(r.team)}</span> · ${r.quizzes}q · ${r.p}✓ ${r.e}✗ · ${Math.round(r.acc*100)}%${r.qo?` · ${r.qo} QO`:''}</div></span>
+        <span class="big"><b>${S.fmt(r)}</b><span>${S.u}</span></span></button>`;
+      if(open) h+=qDetail(r);
+    });
+    if(shown.length>V.limit) h+=`<button class="more" id="moreB">Show more (${shown.length-V.limit})</button>`;
+  } else {
+    let rows=buildTeams(V.meet);
+    const S=SORTS_T[V.sortT];
+    rows.sort((a,b)=>S.f(b)-S.f(a)||b.avg-a.avg);
+    rows.forEach((r,i)=>r.rank=i+1);
+    if(V.ours) rows=rows.filter(r=>ourTeam(r.name));
+    if(V.search) rows=rows.filter(r=>norm(r.name).includes(V.search));
+    h+=`<h2>${rows.length} team${rows.length===1?'':'s'} · by ${S.label.toLowerCase()}</h2>`;
+    rows.forEach(r=>{
+      const id='t:'+r.name, open=V.open===id;
+      h+=`<button class="row ${ourTeam(r.name)?'ours':''}" style="${teamStyle(r.name)}" data-open="${esc(id)}">
+        <span class="rk ${r.rank<=3?'top':''}">${r.rank}</span>
+        <span class="mid"><div class="n" style="${ourTeam(r.name)?'color:var(--c)':''}">${esc(r.name)}</div><div class="d">${r.quizzes}q · ${r.pl[0]}-${r.pl[1]}-${r.pl[2]} (1st-2nd-3rd) · avg ${Math.round(r.avg)} · ${r.epq.toFixed(1)} err</div></span>
+        <span class="big"><b>${S.fmt(r)}</b><span>${S.u}</span></span></button>`;
+      if(open) h+=tDetail(r);
+    });
+  }
+  out.innerHTML=h;
+  out.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{V.open=V.open===b.dataset.open?null:b.dataset.open;renderList();});
+  if($('moreB')) $('moreB').onclick=()=>{V.limit+=60;renderList();};
+}
+function render(){
+  $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===V.tab));
+  $('search').placeholder=V.tab==='q'?'Search name or team':'Search team';
+  renderMeets(); renderSort(); renderList();
+}
+
+/* ===== Start ===== */
+render();
+const sc=document.createElement('script');
+sc.src='https://quizzing.live/socket.io/socket.io.js';
+sc.onload=refresh;
+sc.onerror=()=>{ if(!Object.keys(QUIZZES).length) $('out').innerHTML='<div class="empty">Can’t reach quizzing.live right now.</div>'; };
+document.head.appendChild(sc);
+</script>
+</body>
+</html>
