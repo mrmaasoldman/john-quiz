@@ -28,7 +28,7 @@ header{position:sticky;top:0;z-index:5;background:rgba(15,26,46,.95);backdrop-fi
 .hrow{display:flex;align-items:center;gap:8px;padding:8px 0 6px}
 h1{font-size:20px;margin:0;font-weight:800;flex:1}
 .sub{font-size:12px;color:var(--dim)}
-.iconb{padding:6px 10px;border-radius:10px;background:var(--panel2);font-size:13px;font-weight:700;color:var(--dim)}
+.iconb{white-space:nowrap;padding:6px 9px;border-radius:10px;background:var(--panel2);font-size:13px;font-weight:700;color:var(--dim)}
 .seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
 .seg button{flex:1;padding:8px 6px;border-radius:9px;font-weight:700;font-size:14px;color:var(--dim)}
 .seg button.on{background:var(--text);color:#0f1a2e}
@@ -75,13 +75,16 @@ tr:last-child td{border-bottom:0}
 footer{margin:22px 0 0;font-size:12px;color:var(--faint);text-align:center;line-height:1.6}
 footer a{color:var(--dim)}
 .hide{display:none!important}
+@media (max-width:400px){.lg{display:none}}
+#subTxt,h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
 <header><div class="wrap">
   <div class="hrow">
-    <div style="flex:1"><h1>Quiz Stats</h1><div class="sub" id="subTxt">Midland · regular season</div></div>
-    <a class="iconb" href="../meet/" style="text-decoration:none;color:var(--text)">🏆 Meet Day</a>
+    <div style="flex:1;min-width:0"><h1>Quiz Stats</h1><div class="sub" id="subTxt">Midland · regular season</div></div>
+    <a class="iconb" href="https://mrmaasoldman.github.io/john-quiz/" style="text-decoration:none;color:var(--text)">📖 <span class="lg">John </span>Quiz</a>
+    <a class="iconb" href="../meet/" style="text-decoration:none;color:var(--text)">🏆 Meet<span class="lg"> Day</span></a>
     <button class="iconb" id="refreshB" aria-label="Refresh">↻</button>
   </div>
   <div class="seg" id="tabs"><button data-v="q" class="on">Quizzers</button><button data-v="t">Teams</button></div>
