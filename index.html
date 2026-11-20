@@ -2538,6 +2538,12 @@ function announceSongs(){ if(lsGet('ann:songxp',false)||document.querySelector('
   document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('show'));
   const done=()=>{ lsSet('ann:songxp',true); el.classList.remove('show'); setTimeout(()=>el.remove(),350); };
   el.querySelector('#anncok').onclick=done; el.querySelector('#anncgo').onclick=()=>lsSet('ann:songxp',true); }
+// one-time heads-up (per device) about the Midland Ministries quiz stats page; waits until the songs note has been seen, and never pops up during a coach quiz
+function announceStats(){ if(lsGet('ann:stats',false)||!lsGet('ann:songxp',false)||document.querySelector('.annc')||document.documentElement.classList.contains('co-mode')) return; const el=document.createElement('div'); el.className='annc'; el.setAttribute('role','status');
+  el.innerHTML=`<b>📊 New: Midland Ministries quiz stats!</b><p>See the stats from the Midland Ministries quiz meets. It's also on the <b style="font:inherit">Materials</b> page. These stats don't count excused absences, so they'll be a little off from the real standings.</p><div class="row"><button class="ghost" type="button" id="anncok">Got it</button><a href="https://mrmaasoldman.github.io/john-quiz/stats/" target="_blank" rel="noopener" id="anncgo">See the stats</a></div>`;
+  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('show'));
+  const done=()=>{ lsSet('ann:stats',true); el.classList.remove('show'); setTimeout(()=>el.remove(),350); };
+  el.querySelector('#anncok').onclick=done; el.querySelector('#anncgo').onclick=done; }
 // Verse grids: tap a verse to flip it, or press and slide your finger across several to select (or clear) them all at once.
 function paintVerses(sel,attr,commit){ const btns=[...document.querySelectorAll(sel)]; if(!btns.length) return; const grids=[...new Set(btns.map(b=>b.parentElement))]; // one grid per chapter on the Materials tab
   const grid={ contains:b=>grids.some(g=>g.contains(b)), addEventListener:(t,f,o)=>grids.forEach(g=>g.addEventListener(t,f,o)) };
@@ -2563,7 +2569,7 @@ function render(){
   if(!U.team){ app.append(teamGateView()); return; }
   if(liveJoinCode&&!live){ live={role:'menu',code:liveJoinCode,unsub:[]}; liveJoinCode=null; try{ history.replaceState(null,'',location.pathname); }catch(e){} }
   if(live){ app.append(liveView()); wireLive(); return; }
-  setTimeout(announceSongs,900);
+  setTimeout(()=>{ announceSongs(); announceStats(); },900);
   if(tab==='memory') tab='materials';
   app.append(h(`<header class="bar"><div class="bar-in">
     <div class="brand"><b>${COACH_ONLY?'John Quiz Coach':'John Quiz'}</b><span>BQF · Sept 2026 set</span></div>
