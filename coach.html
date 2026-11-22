@@ -473,6 +473,17 @@ textarea#cores{border:1px solid var(--line2);border-radius:8px;padding:10px;back
 .co-clockbar .co-cref{display:none!important}
 @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 
+/* subs (jump seats) */
+.cs-subbtn{margin-left:auto;margin-right:10px;padding:4px 10px!important;font-size:12.5px!important}
+.cs-sub{display:grid;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent) 10%,transparent);font-size:14px}
+.cs-sub.done{color:var(--good);font-weight:600}
+.cs-subrow{display:flex;flex-wrap:wrap;gap:6px}
+.cs-subrow .btn{display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px;line-height:1.15}
+.cs-subrow small{font-size:11px;font-weight:500;opacity:.75}
+.cs-sub .x{justify-self:start}
+.co-prow.bench .co-pname>span,.co-prow.bench .co-pscore{opacity:.5}
+.cs-bench{background:var(--sunk);color:var(--muted)}
+
 </style>
 </head>
 <body>
@@ -1198,13 +1209,13 @@ function coachSetupPanels(){ const by=coPool(), chs=coChapters(by), nq=chs.reduc
 function coSheet(M,liveSheet){ const R=M.rules; let num=0; const groups=coGroups(Object.keys(M.players),id=>M.players[id]);
   const best=Math.max(0,...Object.values(M.players).map(p=>p.score)), totals=groups.map(g=>{ const t=M.teams[g.key]; return g.list.reduce((a,id)=>a+M.players[id].score,0)+(t?t.bonus-t.ded:0); }), bestT=Math.max(0,...totals), teamsN=groups.filter(g=>g.key!=='~').length;
   return groups.map((g,gi)=>{ const t=M.teams[g.key], total=totals[gi], lead=teamsN>1&&g.key!=='~'&&total>0&&total===bestT&&totals.filter(x=>x===bestT).length===1;
-    return `<div class="panel co-tcard ${lead?'lead':''}" style="--tc:${CO_HUES[gi%CO_HUES.length]}"><div class="co-thead"><div><b><i class="co-tdot"></i>${esc(g.name)}${lead?' <span class="co-lead">In the lead</span>':''}</b>${g.key!=='~'&&t&&(t.errors||t.bonus)?`<small>${t.errors} team mistake${t.errors===1?'':'s'}${t.ded?` (−${t.ded})`:''}${t.bonus?` · bonus +${t.bonus}`:''}</small>`:''}</div><span class="co-tot">${total}<small>points</small></span></div>
+    return `<div class="panel co-tcard ${lead?'lead':''}" style="--tc:${CO_HUES[gi%CO_HUES.length]}"><div class="co-thead"><div><b><i class="co-tdot"></i>${esc(g.name)}${lead?' <span class="co-lead">In the lead</span>':''}</b>${g.key!=='~'&&t&&(t.errors||t.bonus)?`<small>${t.errors} team mistake${t.errors===1?'':'s'}${t.ded?` (−${t.ded})`:''}${t.bonus?` · bonus +${t.bonus}`:''}</small>`:''}</div>${seatSubHead(M,g)}<span class="co-tot">${total}<small>points</small></span></div>${seatSubPanel(M,g)}
     ${g.list.map(id=>{ const p=M.players[id]; num++; const tried=M.cur&&M.cur.tried&&M.cur.tried[id], sitOut=M.gc&&M.gc.half==='ot'&&M.gc.otTeams&&!M.gc.otTeams.includes(coTeamKey(p)), can=liveSheet&&!p.out&&!sitOut&&M.cur&&!M.cur.closed&&!tried, on=coSel===id&&can, top=p.score>0&&p.score===best;
       const status=sitOut?'<span class="co-pill f">Sits out overtime</span>':p.out==='quiz'?'<span class="co-pill q">Quizzed out</span>':p.out==='error'?'<span class="co-pill e">Done · too many wrong</span>':tried?'<span class="co-pill e">Missed this one</span>':'';
-      return `<div class="co-prow ${on?'sel':''} ${p.out?'out':''} ${p.out==='quiz'?'won':''} ${top?'top':''}" data-prow="${id}">
+      return `<div class="co-prow ${on?'sel':''} ${seatIsBench(M,id)?'bench':''} ${p.out?'out':''} ${p.out==='quiz'?'won':''} ${top?'top':''}" data-prow="${id}">
         <button class="co-pname" data-co="sel" data-id="${id}" ${can?'':'disabled'}><i class="co-av">${esc(coInit(p.name))}${top?'<u>👑</u>':''}</i><span>${esc(p.name)}</span>${window.COACH_ONLY?seatBadge(id):''}${(p.streak||0)>=2?`<s class="co-fire">🔥${p.streak}</s>`:''}${can&&!on?'<em>tap if they buzz in</em>':''}</button>
         <span class="co-pscore">${p.score}</span>
-        <div class="co-pstat"><span title="Right answers" class="${p.correct?'co-oks':''}">✓ ${p.correct}</span><span title="Wrong answers" class="${p.errors?'co-errs':''}">✗ ${p.errors}</span>${p.fouls?`<span class="co-pill f">${p.fouls} foul${p.fouls>1?'s':''}</span>`:''}${status}</div>
+        <div class="co-pstat"><span title="Right answers" class="${p.correct?'co-oks':''}">✓ ${p.correct}</span><span title="Wrong answers" class="${p.errors?'co-errs':''}">✗ ${p.errors}</span>${p.fouls?`<span class="co-pill f">${p.fouls} foul${p.fouls>1?'s':''}</span>`:''}${seatBenchPill(M,id)}${status}</div>
         ${on?`<div class="co-judge"><p>Did <b>${esc(p.name)}</b> answer right?</p><div class="co-jb"><button class="co-yes" data-co="rule" data-t="right" data-id="${id}">✓ Right</button><button class="co-no" data-co="rule" data-t="wrong" data-id="${id}">✗ Wrong</button></div>
           <div class="co-jx"><button class="x" data-co="rule" data-t="foul" data-id="${id}">Foul (jumped too early)</button><button class="x" data-co="unsel">Cancel</button></div></div>`:''}
       </div>`; }).join('')}</div>`; }).join(''); }
@@ -4123,6 +4134,7 @@ function seatPanel(){
     const opts=k=>`<option value="">—</option>${ros.map(p=>`<option value="${p.id}" ${CO.seats.map[k]===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}`;
     body=`<div class="cs-grid">${[0,1,2].map(s=>`<div class="cs-row"><span class="cs-sl">String ${s+1}</span>${[0,1,2,3,4].map(i=>{ const b=CO.seats.flip[s]?4-i:i, k=seatKey(s,b), i2=SEAT.up.indexOf(k); return `<label class="cs-seat ${i2>=0?'up':''}" data-seatk="${k}"><span class="cs-n">${i+1}<i class="cs-st"></i><em class="cs-ord">${i2>=0?i2+1:''}</em></span><select data-csmap="${k}" aria-label="${seatLabel(k)}">${opts(k)}</select></label>`; }).join('')}<button class="x" data-cs="flip" data-s="${s}" title="Seat 1 is on the other end">Flip</button></div>`).join('')}</div>
       ${SEAT.claim?`<div class="cs-claim"><b>${esc(seatName(SEAT.claim.ids[SEAT.claim.i]))}</b>, stand up now. <span class="hint">(${SEAT.claim.i+1} of ${SEAT.claim.ids.length})</span><span class="row"><button class="btn ghost small" data-cs="skip">Skip</button><button class="btn ghost small" data-cs="stop">Stop</button></span></div>`:''}
+      <p class="hint"><b>Subs:</b> leave a team's 6th and 7th quizzers off the seats. They wait on the bench, and you can press <b>⇄ Sub</b> on that team's score card to swap one in mid-game.</p>
       <p class="hint"><b>Pressed = waiting. Released = buzzed in.</b> Press a pad and its seat should say <b>sitting</b>; let go and it should say <b>up</b>.${CO.seats.sit.some(x=>x)?' <b>(Pads are flipped.)</b>':''}</p>
       <p class="cs-msg" id="csmsg" ${SEAT.msg?'':'hidden'}>${esc(SEAT.msg)}</p>
       <div class="row"><button class="btn ghost small" data-cs="claim" ${ros.length?'':'disabled'}>Set seats by jumping</button><button class="btn ghost small" data-cs="auto" ${ros.length?'':'disabled'}>Fill in team order</button><button class="btn ghost small" data-cs="pol" title="Only if pressing a pad buzzes someone in">Pads backwards? Flip</button>${Object.keys(CO.seats.map).length?'<button class="x" data-cs="clear">Clear seats</button>':''}</div>`;
@@ -4147,6 +4159,34 @@ document.addEventListener('change',e=>{ const t=e.target; if(!t||!t.dataset||!t.
 // repaint lights after every render
 const seatRender0=render; render=function(){ seatRender0(); try{ seatPaint(); }catch(e){} };
 // test hook: lets a coach try it without the box (and lets us test it)
+/* ---------- Subs: five quizzers sit on a team's seat string, the rest of the team (up to two subs) waits on the bench.
+   In the middle of a game: press "Sub" on a team, pick who comes in, then who goes out. The one coming in takes that seat. ---------- */
+let SUB=null, SUBNOTE=null; // SUB={team,inId}; SUBNOTE={team,text}
+const subKey=p=>coTeamKey(p)||'~';
+function seatTeamIds(M,key){ return Object.keys(M.players).filter(id=>subKey(M.players[id])===key); }
+function seatTeamSeated(M,key){ return seatTeamIds(M,key).some(id=>seatOf(id)); }
+function seatBench(M,key){ return seatTeamIds(M,key).filter(id=>!seatOf(id)); }
+function seatIsBench(M,id){ return seatOn()&&!seatOf(id)&&seatTeamSeated(M,subKey(M.players[id])); }
+function seatBenchPill(M,id){ return seatIsBench(M,id)?'<span class="co-pill cs-bench">Bench</span>':''; }
+function seatSubHead(M,g){ if(!seatOn()||M.done||!seatTeamSeated(M,g.key)||!seatBench(M,g.key).length) return '';
+  const open=SUB&&SUB.team===g.key; return `<button class="btn ghost small cs-subbtn" data-cs="${open?'subx':'sub'}" data-team="${esc(g.key)}">${open?'Cancel':'⇄ Sub'}</button>`; }
+function seatSubPanel(M,g){
+  if(SUBNOTE&&SUBNOTE.team===g.key&&!(SUB&&SUB.team===g.key)) return `<div class="cs-sub done">${esc(SUBNOTE.text)}</div>`;
+  if(!SUB||SUB.team!==g.key) return '';
+  const nm=id=>esc(M.players[id].name);
+  if(!SUB.inId){ const b=seatBench(M,g.key); return `<div class="cs-sub"><b>Who's coming in?</b><div class="cs-subrow">${b.map(id=>`<button class="btn small" data-cs="subin" data-id="${id}">${nm(id)}</button>`).join('')}</div></div>`; }
+  const on=seatTeamIds(M,g.key).filter(id=>seatOf(id));
+  return `<div class="cs-sub"><b>${nm(SUB.inId)} comes in for…</b><div class="cs-subrow">${on.map(id=>{ const p=M.players[id]; return `<button class="btn ghost small" data-cs="subout" data-id="${id}">${nm(id)}<small>${seatLabel(seatOf(id)).replace('String ','S').replace(', seat ',' · seat ')}${p.out==='quiz'?' · quizzed out':p.out==='error'?' · errored out':''}</small></button>`; }).join('')}</div><button class="x" data-cs="subback">← Pick someone else</button></div>`; }
+document.addEventListener('click',e=>{ const t=e.target.closest('[data-cs]'); if(!t) return; const a=t.dataset.cs, M=CO.match; if(!M) return;
+  if(a==='sub'){ SUB={team:t.dataset.team,inId:null}; SUBNOTE=null; const b=seatBench(M,SUB.team); if(b.length===1) SUB.inId=b[0]; renderKeep(); }
+  else if(a==='subx'){ SUB=null; renderKeep(); }
+  else if(a==='subback'){ if(SUB) SUB.inId=null; renderKeep(); }
+  else if(a==='subin'){ if(SUB) SUB.inId=t.dataset.id; renderKeep(); }
+  else if(a==='subout'&&SUB&&SUB.inId){ const out=t.dataset.id, k=seatOf(out); if(!k) return;
+    CO.seats.map[k]=SUB.inId; SEAT.up=SEAT.up.filter(x=>x!==k); if(typeof coSel!=='undefined'&&coSel===out) coSel=null;
+    const txt=`${M.players[SUB.inId].name} is in for ${M.players[out].name} (${seatLabel(k)}).`; SUBNOTE={team:SUB.team,text:txt}; SUB=null; coSave(); try{ sfx('chime'); }catch(e){}
+    renderKeep(); setTimeout(()=>{ if(SUBNOTE&&SUBNOTE.text===txt){ SUBNOTE=null; renderKeep(); } },6000); }
+});
 window.seatSim=function(bytes){ SEAT.sim=true; seatOnReport(bytes); };
 
 render();
