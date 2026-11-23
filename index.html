@@ -2306,6 +2306,10 @@ html.co-only .tabs,html.co-only .topsongs,html.co-only #musbtn,html.co-only .who
 .cs-chip i{width:7px;height:7px;border-radius:50%;background:var(--good)}
 .qtop .ref:empty{display:none}
 @media (max-width:760px){ .cs-row{grid-template-columns:repeat(5,minmax(0,1fr))} .cs-sl{grid-column:1/-1} .cs-row>.x{grid-column:1/-1;justify-self:start} .t-coach .co-clockbar .co-cref{display:none} }
+/* practice quote questions */
+.quotetag{align-self:flex-start;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent2,var(--accent));background:color-mix(in srgb,var(--accent2,var(--accent)) 14%,transparent);padding:3px 10px;border-radius:6px}
+#qans{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:16px;line-height:1.5;padding:10px 12px}
+.quotetext{font-family:Georgia,"Times New Roman",serif;line-height:1.6!important}
 /* subs (jump seats) */
 .cs-subbtn{margin-left:auto;margin-right:10px;padding:4px 10px!important;font-size:12.5px!important}
 .cs-sub{display:grid;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent) 10%,transparent);font-size:14px}
@@ -2897,6 +2901,7 @@ function setupView(){
       <div class="opt"><span class="label">Words of the question shown</span>${seg('words',[['1','1'],['2','2'],['3','3'],['4','4'],['5','5'],['all','Whole question']])}
         <span class="hint">Fewer words = jump practice. You finish the question, then answer it.</span></div>
       <div class="opt"><span class="label">Extras</span>
+        <label class="check"><input type="checkbox" id="quoteopt" ${o.quotes?'checked':''}> Add quote questions <span class="hint">(“Quote John 3:16.” About 15% of the time)</span></label>
         <label class="check"><input type="checkbox" id="memOnly" ${o.memOnly?'checked':''}> Only verses I've memorized</label>
         ${canSpeak?`<label class="check"><input type="checkbox" id="speakopt" ${o.speak?'checked':''}> Read questions out loud</label>`:''}
       </div>
@@ -3192,11 +3197,11 @@ if(COACH_ON){
 
 /* ---------- quiz ---------- */
 function startQuiz(){
-  const ids=buildPool(); if(!ids.length) return;
-  quiz={ids,i:0,res:[],state:'ask',last:null,label:'John '+rangeLabel(U.sel),wording:ids.map(id=>Q[id].q)};
+  const base=buildPool(); if(!base.length) return; const {ids,qt}=addQuotes(base);
+  quiz={ids,qt,i:0,res:[],state:'ask',last:null,label:'John '+rangeLabel(U.sel),wording:ids.map((id,i)=>qt[i]?'':Q[id].q)};
   render();
 }
-function spokenQ(){ if(!quiz) return ''; const q=Q[quiz.ids[quiz.i]], w=qWords(); return `According to ${q.c}, ${q.v}. `+(partial()?w.slice(0,quiz.shown).join(' '):quiz.wording[quiz.i]+'?'); }
+function spokenQ(){ if(!quiz) return ''; if(isQuote()){ const [c,v]=isQuote().split(':'); return `Quote John ${c}, ${v}.`; } const q=Q[quiz.ids[quiz.i]], w=qWords(); return `According to ${q.c}, ${q.v}. `+(partial()?w.slice(0,quiz.shown).join(' '):quiz.wording[quiz.i]+'?'); }
 function startWords(){return U.opts.words==='all'?Infinity:+U.opts.words}
 function qWords(){return quiz.wording[quiz.i].split(/\s+/).filter(Boolean)}
 function partial(){return quiz.shown<qWords().length}
@@ -3204,6 +3209,7 @@ function qClock(){ if(quiz.state!=='ask') return; if(!quiz.t0) quiz.t0=Date.now(
 const qElapsed=()=>quiz&&quiz.t0?Math.min(600000,Date.now()-quiz.t0):null;
 function quizView(){
   qClock();
+  if(isQuote()) return quoteView();
   if(U.opts.answer==='think') return thinkView();
   const id=quiz.ids[quiz.i], q=Q[id], n=quiz.ids.length;
   if(quiz.shown==null){quiz.shown=startWords();quiz.dq='';quiz.da='';}
@@ -3267,7 +3273,7 @@ ${ask&&U.opts.timer==='20'?(()=>{if(!quiz.deadline)quiz.deadline=Date.now()+2000
     <div class="row" style="justify-content:space-between"><span></span><button class="btn ghost small" id="quit">End session</button></div>
   </section>`);
 }
-function thinkReveal(timeout){ if(!quiz||quiz.state!=='ask')return; quiz.deadline=null; quiz.last={part:partial(),words:quiz.shown,marked:false,timeout:!!timeout,ms:qElapsed()}; quiz.state='fb'; render(); }
+function thinkReveal(timeout){ if(!quiz||quiz.state!=='ask')return; if(isQuote()) return quoteReveal(); quiz.deadline=null; quiz.last={part:partial(),words:quiz.shown,marked:false,timeout:!!timeout,ms:qElapsed()}; quiz.state='fb'; render(); }
 function timeUp(){ if(!quiz||quiz.state!=='ask') return; quiz.deadline=null;
   if(U.opts.answer==='think') thinkReveal(true);
   else { const a=$('#ans'), r=$('#restq'); quiz.timeoutFlag=true; submitAnswer(a?a.value:(quiz.da||''), r?r.value:(quiz.dq||'')); } }
@@ -3276,8 +3282,60 @@ setInterval(()=>{ if(tab!=='practice'||!quiz||quiz.done||quiz.state!=='ask'||!qu
   if(bar) bar.style.width=Math.max(0,left/200)+'%'; if(sec) sec.textContent=Math.max(0,Math.ceil(left/1000)); if(box) box.classList.toggle('warn',left<=5000);
   const s5=Math.ceil(left/1000); if(left<=5000&&left>0&&quiz.lastTick!==s5){quiz.lastTick=s5;sfx('tick')}
   if(left<=0) timeUp(); },100);
-function thinkMark(ok){ if(!quiz||quiz.state!=='fb'||quiz.last.marked)return; const id=quiz.ids[quiz.i];
+function thinkMark(ok){ if(!quiz||quiz.state!=='fb'||quiz.last.marked)return; if(isQuote()) return quoteMark(ok); const id=quiz.ids[quiz.i];
   quiz.streak=ok?(quiz.streak||0)+1:0; quiz.last.marked=true; quiz.last.ok=ok; quiz.last.msg=ok?rightMsg(quiz.streak,false):wrongMsg(); quiz.res.push({id,ok,typed:'',words:quiz.last.part?quiz.last.words:null,ms:quiz.last.ms}); studyMs(quiz.last.ms); record(id,ok); save(); render(); react(ok,quiz.streak); }
+/* ---------- quote questions in practice ("Quote John 3:16."), mixed in about 15% of the time when turned on ---------- */
+function addQuotes(ids){ if(!U.opts.quotes) return {ids,qt:{}};
+  const keys=[...new Set(ids.map(id=>Q[id].c+':'+Q[id].v))].filter(k=>{ const [c,v]=k.split(':'); return !!vText(c,v); });
+  if(!keys.length) return {ids,qt:{}};
+  shuffle(keys); let ki=0; const out=[], qt={};
+  ids.forEach((id,n)=>{ if(ki<keys.length&&(Math.random()<0.15/0.85)){ const k=keys[ki++]; qt[out.length]=k; out.push(byVerse[k][0]); } out.push(id); });
+  if(!ki&&ids.length>=5){ const k=keys[0], at=1+Math.floor(Math.random()*(out.length-1)); out.splice(at,0,byVerse[k][0]); qt[at]=k; }
+  return {ids:out,qt}; }
+const isQuote=()=>!!(quiz&&quiz.qt&&!quiz.done&&quiz.qt[quiz.i])&&quiz.qt[quiz.i];
+function quoteRecord(k,ok,ms,self){ bumpDay(); const map=U.vstats||(U.vstats={}); const st=map[k]||[0,0,0,0]; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); map[k]=st;
+  const C=U.counts||(U.counts={}); if(ok) C.vright=(C.vright||0)+1; lastEv={ok,sessionStreak:quiz.streak||0};
+  const g=xpGuard('v'+k,ok,ms,self); xpNote=g.why; const [n,parts]=fairXP(ok?15:1, ok?[['quote','Quoted it word for word',15]]:[['try','For trying',1]],g); if(n) gainXP(n,parts); else if(g.why) xpZero(g.why); save(); }
+function quoteCheck(typed){ if(!quiz||quiz.state!=='ask') return; const k=isQuote(), [c,v]=k.split(':'), id=quiz.ids[quiz.i], ms=qElapsed();
+  typed=(typed||'').trim(); const exp=wordsOf(vText(c,v)), got=wordsOf(typed), diff=diffWords(exp,got), errs=diff.miss+diff.extra;
+  const result=!got.length?'wrong':errs===0?'right':(errs===1&&exp.length>=8)?'close':'wrong', ok=result!=='wrong';
+  quiz.streak=ok?(quiz.streak||0)+1:0;
+  quiz.last={quote:true,typed,diff:got.length?diff:null,result,ok,marked:true,msg:ok?rightMsg(quiz.streak,result==='close'):(typed?wrongMsg():'No worries. Here it is, word for word.')};
+  quiz.deadline=null; quiz.res.push({id,ok,typed,words:null,ms,quote:k}); studyMs(ms); quoteRecord(k,ok,ms,false); quiz.state='fb'; render(); react(ok,quiz.streak); }
+function quoteReveal(){ if(!quiz||quiz.state!=='ask') return; quiz.deadline=null; quiz.last={quote:true,marked:false,ms:qElapsed()}; quiz.state='fb'; render(); }
+function quoteMark(ok){ if(!quiz||quiz.state!=='fb'||quiz.last.marked) return; const k=isQuote(), id=quiz.ids[quiz.i];
+  quiz.streak=ok?(quiz.streak||0)+1:0; Object.assign(quiz.last,{marked:true,ok,result:ok?'right':'wrong',msg:ok?rightMsg(quiz.streak,false):wrongMsg()});
+  quiz.res.push({id,ok,typed:'',words:null,ms:quiz.last.ms,quote:k}); studyMs(quiz.last.ms); quoteRecord(k,ok,quiz.last.ms,true); render(); react(ok,quiz.streak); }
+function quoteView(){
+  const k=isQuote(), [c,v]=k.split(':').map(Number), id=quiz.ids[quiz.i], n=quiz.ids.length, ask=quiz.state==='ask', think=U.opts.answer==='think', L=quiz.last;
+  const right=quiz.res.filter(r=>r.ok).length, wrong=quiz.res.length-right, txt=vText(c,v)||'', st=(U.vstats||{})[k];
+  const verse=L&&L.diff?L.diff.out.map(x=>x.t==='ok'?esc(x.w):x.t==='miss'?`<span class="wmiss">${esc(x.w)}</span>`:`<s class="wextra">${esc(x.w)}</s>`).join(' '):esc(txt);
+  const done=!ask&&L.marked;
+  return h(`<section>
+    <div class="qtop"><span class="ref">John ${c}:${v}</span>
+      <div class="tally">${streakTag(quiz.streak||0)}<span>${quiz.i+1} / ${n}</span><span class="g">✓ ${right}</span><span class="b">✗ ${wrong}</span></div></div>
+    <div class="prog"><i style="width:${pct(quiz.i,n)}%"></i></div>
+    <div class="qcard is-quote ${done?(L.ok?'is-right':'is-wrong'):''}">
+      <span class="quotetag">📜 Quote question</span>
+      <div class="qtext">Quote John ${c}:${v}.</div>
+      ${ask?`<div class="row">${sayBtn('sayq','Read it to me')}</div>`:''}
+      ${ask&&!think?`<form id="quotef" autocomplete="off" style="display:grid;gap:10px">
+          <textarea id="qans" rows="4" placeholder="Type the whole verse, word for word" autocapitalize="off" spellcheck="false">${esc(quiz.qdraft||'')}</textarea>
+          <div class="row" style="justify-content:space-between"><span class="hint">Press <kbd>Enter</kbd> to check. Punctuation and capitals don't matter.</span><button class="btn" type="submit">Check</button></div>
+        </form>`:''}
+      ${ask&&think?`<span class="hint">Say the whole verse, word for word, in your head (or out loud).</span>
+        <div class="row"><button class="btn" id="showans">Show the verse</button><span class="hint"><kbd>Enter</kbd> shows the verse</span></div>`:''}
+      ${ask?`<span class="hint">${st?`Your record quoting this verse: ${st[1]}/${st[0]}`:'First time quoting this verse here'}</span>`:''}
+      ${!ask?`<div class="fb" style="background:var(--sunk);gap:8px"><div class="ans quotetext">${verse}</div><div class="row">${sayBtn('sayqv','Hear the verse')}</div>
+          ${L.diff&&(L.diff.miss+L.diff.extra)?`<span class="hint"><span class="wmiss">Underlined</span> = words you left out or changed · <s class="wextra">struck</s> = words you typed that aren't in the verse.</span>`:''}</div>
+        ${!L.marked?`<div class="row"><button class="btn" id="selfright" style="background:var(--good);color:#fff">I got it</button><button class="btn" id="selfwrong" style="background:var(--bad);color:#fff">I missed it</button><span class="hint"><kbd>Y</kbd> got it · <kbd>N</kbd> missed it</span></div>`
+        :`<div class="fb ${L.ok?(L.result==='close'?'close':'good'):'bad'}"><div class="hype">${esc(L.msg)}</div>${L.result==='close'?'<span class="hint">One word off. Counted right, but check it.</span>':''}</div>${verseQs(Q[id])}${nextBtn('nextq',quiz.i===quiz.ids.length-1,'question')}`}`:''}
+    </div>
+    <div class="row" style="justify-content:space-between">
+      <button class="btn ghost small" id="qgive" ${ask&&!think?'':'hidden'}>I don't know — show me</button>
+      <button class="btn ghost small" id="quit">End session</button>
+    </div>
+  </section>`); }
 function feedback(q){
   const L=quiz.last; const answers=q.a.map(a=>`<div class="ans">${fmtQ(a)}</div>`).join('<div class="hint">or</div>');
   const qline = L.part ? `<div class="qres ${L.qres==='wrong'?'bad':'good'}">Question ${L.qres==='wrong'?'✗':'✓'} <span class="hint">· jumped after ${L.words} word${L.words===1?'':'s'}</span>${L.qres==='wrong'&&L.rest?`<div class="yours">You finished it: <s>${esc(L.wordsText+' '+L.rest)}</s></div>`:''}</div>` : '';
@@ -3354,7 +3412,7 @@ function wireVerseQs(){ document.querySelectorAll('[data-vq]').forEach(b=>b.oncl
   document.querySelectorAll('[data-vr]').forEach(b=>b.onclick=()=>{ const k=b.dataset.vr; if(vrOpen&&vrOpen.base===k) vrOpen=null; else { const [c,v]=k.split(':').map(Number); vrOpen={base:k,c,v}; } renderKeep(); });
   document.querySelectorAll('[data-vrgo]').forEach(b=>b.onclick=()=>{ if(!vrOpen) return; const [c,v]=b.dataset.vrgo.split(':').map(Number); vrOpen.c=c; vrOpen.v=v; renderKeep(); }); }
 function nextQ(){
-  quiz.i++; quiz.state='ask'; quiz.last=null; quiz.shown=null; quiz.deadline=null; quiz.t0=null; quiz.away=null; vqOpen=null; vrOpen=null;
+  quiz.i++; quiz.state='ask'; quiz.last=null; quiz.qdraft=''; quiz.shown=null; quiz.deadline=null; quiz.t0=null; quiz.away=null; vqOpen=null; vrOpen=null;
   if(quiz.i>=quiz.ids.length) finishQuiz(); else render();
 }
 function finishQuiz(){
@@ -3405,8 +3463,8 @@ function resultsView(){
       ${miss.length?`<button class="btn" id="retry">Retry the ${miss.length} I missed</button>`:''}
       <button class="btn ${miss.length?'ghost':''}" id="again">Back to setup</button>
     </div>
-    ${timeBreakdown(quiz.res.map(x=>{const q=Q[x.id];return {ok:x.ok,ms:x.ms,ref:q.c+':'+q.v,text:fmtQ(quiz.wording&&quiz.ids.indexOf(x.id)>=0?quiz.wording[quiz.ids.indexOf(x.id)]:q.q)+'?'}}),'question')}
-    ${miss.length?`<div class="panel"><div class="label" style="margin-bottom:6px">Review what you missed</div><ul class="missed">${miss.map(m=>{const q=Q[m.id];return `<li><span class="r">${q.c}:${q.v}</span><span class="qq">${fmtQ(q.q)}?</span><span class="aa">${q.a.map(fmtQ).join(' <span class="muted">or</span> ')}</span></li>`}).join('')}</ul></div>`:''}
+    ${timeBreakdown(quiz.res.map(x=>{const q=Q[x.id];if(x.quote) return {ok:x.ok,ms:x.ms,ref:x.quote,text:'📜 Quote John '+x.quote};return {ok:x.ok,ms:x.ms,ref:q.c+':'+q.v,text:fmtQ(quiz.wording&&quiz.ids.indexOf(x.id)>=0?quiz.wording[quiz.ids.indexOf(x.id)]:q.q)+'?'}}),'question')}
+    ${miss.length?`<div class="panel"><div class="label" style="margin-bottom:6px">Review what you missed</div><ul class="missed">${miss.map(m=>{const q=Q[m.id];if(m.quote){ const [c,v]=m.quote.split(':'); return `<li><span class="r">${m.quote}</span><span class="qq">📜 Quote John ${m.quote}.</span><span class="aa">${esc(vText(c,v)||'')}</span></li>`; }return `<li><span class="r">${q.c}:${q.v}</span><span class="qq">${fmtQ(q.q)}?</span><span class="aa">${q.a.map(fmtQ).join(' <span class="muted">or</span> ')}</span></li>`}).join('')}</ul></div>`:''}
   </section>`);
 }
 
@@ -5825,6 +5883,7 @@ function wire(){
     U.sel=[...out];openCh=null;save();render()};
   document.querySelectorAll('[data-opt]').forEach(b=>b.onclick=()=>{U.opts[b.dataset.opt]=b.dataset.val;save();render()});
   const mo=$('#memOnly'); if(mo) mo.onchange=()=>{U.opts.memOnly=mo.checked;save();render()};
+  const qo=$('#quoteopt'); if(qo) qo.onchange=()=>{U.opts.quotes=qo.checked;save();render()};
   const so=$('#speakopt'); if(so) so.onchange=()=>{U.opts.speak=so.checked;save(); if(so.checked) speak('Questions will be read out loud.')};
   on('#start',startQuiz);
   // quiz
@@ -5839,6 +5898,10 @@ function wire(){
     });
     (quiz.state==='ask' && ri ? ri : ai).focus();
   }
+  const qf=$('#quotef'); if(qf){ const qa=$('#qans'); qf.onsubmit=e=>{ e.preventDefault(); quoteCheck(qa.value); };
+    qa.oninput=()=>{ quiz.qdraft=qa.value; }; qa.onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); quoteCheck(qa.value); } }; qa.focus(); }
+  on('#qgive',()=>quoteCheck(''));
+  on('#sayqv',()=>{ const k=isQuote(); if(k){ const [c,v]=k.split(':'); speak(vText(c,v)); } });
   on('#addword',()=>{addWord(); const r=$('#restq'); (r||$('#ans')).focus()});
   on('#nextq',nextQ); const nb=$('#nextq'); if(nb && !$('#ans')) nb.focus();
   on('#sayq',()=>speak(spokenQ()));
@@ -5848,7 +5911,7 @@ function wire(){
   on('#reveal',()=>submitAnswer('',''));
   on('#override',overrideRight);
   on('#quit',()=>finishQuiz());
-  on('#retry',()=>{const ids=quiz.res.filter(x=>!x.ok).map(x=>x.id);const label=quiz.label+' (missed)';quiz={ids,i:0,res:[],state:'ask',last:null,label,wording:ids.map(id=>Q[id].q)};render()});
+  on('#retry',()=>{const miss=quiz.res.filter(x=>!x.ok), ids=miss.map(x=>x.id), qt={}; miss.forEach((x,i)=>{ if(x.quote) qt[i]=x.quote; });const label=quiz.label+' (missed)';quiz={ids,qt,i:0,res:[],state:'ask',last:null,label,wording:ids.map((id,i)=>qt[i]?'':Q[id].q)};render()});
   on('#again',()=>{quiz=null;render()});
   // progress
   document.querySelectorAll('[data-themeid]').forEach(b=>b.onclick=()=>{ if(b.dataset.themeid===U.theme) return; U.theme=b.dataset.themeid;save(); themeWipe(()=>{applyTheme();renderKeep();}); });
