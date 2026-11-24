@@ -4408,7 +4408,7 @@ const AV_DETAIL={
 const AV_DETAILS={cat:['whisk'],blackcat:['whisk'],tiger:['whisk'],mouse:['whisk','teeth'],fox:['whisk'],raccoon:['whisk'],bunny:['whisk','teeth'],dog:['tongue'],spots:['tongue'],
   dragon:['dragon','fangs'],owl:['owl'],lion:['lion','whisk'],unicorn:['uni'],koala:['teeth'],bear:['tongue']};
 function avMix(hex,to,a){ const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)); if(!/^#[0-9a-f]{6}$/i.test(hex)) return hex; const A=p(hex),B=p(to); return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*a).toString(16).padStart(2,'0')).join(''); }
-// Weekly limited-time avatars (meet the daily goal 6 of 7 days that week)
+// Weekly limited-time avatars (earn 7,000 XP that week; the early ones asked for the daily goal 6 of 7 days)
 const AV_SCARECROW=["................", ".....OOOOOO.....", "....OHHHHHHO....", "....OHHHHHHO....", "....OBBBBBBO....", ".OOOOHHHHHHOOOO.", "OHHHHHHHHHHHHHHO", "SOOOOFFFFFFOOOOS", ".SSOFFFFFFFFOSS.", "S.OFFKFFFFKFFO.S", ".SOFKEKFFKEKFOS.", "S.OFFKFNNFKFFO.S", "..OPPFFNNFFFFO..", "..OPPKFKFKFKFO..", "...OFFKFKFKFO...", "..S.OOOOOOOO.S.."];
 const AV_EAGLE=["................", "................", ".....OOOOOO.....", "....OWWWWWWO....", "...OWWWWWWWWO...", "..OWWWWWWWWWWO..", "..OWOOWWWWOOWO..", "..OWYEOWWOEYWO..", "..OWWWWYYYWWWO..", "..OWWWYYYYYWWO..", "..OGWWWOYYAWGO..", "..OGWWWWOAAWGO..", ".ODOWWWWWWWWODO.", "ODDDOWWWWWWODDDO", "ODDDDOOOOOODDDDO", "ODDDDDDDDDDDDDDO"];
 const AV_TURKEY=["...OO.OOOO.OO...", "..ORROAAAAORRO..", ".ORRAOYYYYOARRO.", ".ORAYOGGGGOYARO.", "ORAYGOOOOOOGYARO", "ORAYOFFFFFFOYARO", "ORAOFFFFFFFFOARO", "ORAOFWEFFWEFOARO", ".OAOFEEFFEEFOAO.", "..OOFFFBBFFFOO..", "...OFFFRBFFFO...", "..ODFFFRRFFFDO..", "..ODDFFRFFFDDO..", "...ODDDDDDDDO...", "....OYO..OYO....", "...OYYO..OYYO..."];
@@ -4593,12 +4593,12 @@ const AV_EVENTS={luther:{name:'Martin Luther',need:1200,start:'2026-10-18',end:'
  scarecrow:{name:"the Scarecrow",kind:'goal',need:6,start:'2026-11-02',end:'2026-11-08',endLabel:'Sunday, Nov 8',startLabel:'Monday, Nov 2'},
  harvest:{name:"the Harvest Feast theme",theme:'harvest',need:6000,start:'2026-11-09',end:'2026-11-15',endLabel:'Sunday, Nov 15',startLabel:'Monday, Nov 9'},
  turkey:{name:"the Turkey",kind:'goal',need:6,start:'2026-11-16',end:'2026-11-22',endLabel:'Sunday, Nov 22',startLabel:'Monday, Nov 16'},
- pilgrim:{name:"the Pilgrim",kind:'goal',need:6,start:'2026-11-23',end:'2026-11-29',endLabel:'Sunday, Nov 29',startLabel:'Monday, Nov 23'},
- nicholas:{name:"St. Nicholas",kind:'goal',need:6,start:'2026-11-30',end:'2026-12-06',endLabel:'Sunday, Dec 6',startLabel:'Monday, Nov 30'},
- snowman:{name:"the Snowman",kind:'goal',need:6,start:'2026-12-07',end:'2026-12-13',endLabel:'Sunday, Dec 13',startLabel:'Monday, Dec 7'},
- angel:{name:"the Angel",kind:'goal',need:6,start:'2026-12-14',end:'2026-12-20',endLabel:'Sunday, Dec 20',startLabel:'Monday, Dec 14'},
- santa:{name:"Santa",kind:'goal',need:6,start:'2026-12-21',end:'2026-12-27',endLabel:'Sunday, Dec 27',startLabel:'Monday, Dec 21'},
- partypenguin:{name:"the Party Penguin",kind:'goal',need:6,start:'2026-12-28',end:'2027-01-03',endLabel:'Sunday, Jan 3',startLabel:'Monday, Dec 28'}};
+ pilgrim:{name:"the Pilgrim",need:7000,start:'2026-11-23',end:'2026-11-29',endLabel:'Sunday, Nov 29',startLabel:'Monday, Nov 23'},
+ nicholas:{name:"St. Nicholas",need:7000,start:'2026-11-30',end:'2026-12-06',endLabel:'Sunday, Dec 6',startLabel:'Monday, Nov 30'},
+ snowman:{name:"the Snowman",need:7000,start:'2026-12-07',end:'2026-12-13',endLabel:'Sunday, Dec 13',startLabel:'Monday, Dec 7'},
+ angel:{name:"the Angel",need:7000,start:'2026-12-14',end:'2026-12-20',endLabel:'Sunday, Dec 20',startLabel:'Monday, Dec 14'},
+ santa:{name:"Santa",need:7000,start:'2026-12-21',end:'2026-12-27',endLabel:'Sunday, Dec 27',startLabel:'Monday, Dec 21'},
+ partypenguin:{name:"the Party Penguin",need:7000,start:'2026-12-28',end:'2027-01-03',endLabel:'Sunday, Jan 3',startLabel:'Monday, Dec 28'}};
 const avOwned=id=>!!(U&&U.unlocks&&U.unlocks[id]);
 function avEventActive(id){ const e=AV_EVENTS[id]; if(!e) return false; const d=dayKey(); return d>=e.start&&d<=e.end; }
 function avEventXP(id){ const e=AV_EVENTS[id]; if(!e||!U) return 0; const x=U.xpDays||{}; let t=0; for(const k in x) if(k>=e.start&&k<=e.end) t+=x[k]||0; return t; }
