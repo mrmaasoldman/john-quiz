@@ -2306,6 +2306,106 @@ html.co-only .tabs,html.co-only .topsongs,html.co-only #musbtn,html.co-only .who
 .cs-chip i{width:7px;height:7px;border-radius:50%;background:var(--good)}
 .qtop .ref:empty{display:none}
 @media (max-width:760px){ .cs-row{grid-template-columns:repeat(5,minmax(0,1fr))} .cs-sl{grid-column:1/-1} .cs-row>.x{grid-column:1/-1;justify-self:start} .t-coach .co-clockbar .co-cref{display:none} }
+/* screen time + monthly Wrapped list */
+.scrpanel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,240px);gap:16px;align-items:end}
+.scrbig{font-family:var(--f-num);font-size:34px;font-weight:800;line-height:1.05}
+.scrbig small{font-size:13px;font-weight:600;margin-left:6px;opacity:.7}
+.scrbars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:96px;align-items:end}
+.scrbars>div{display:grid;grid-template-rows:1fr auto;height:100%;gap:4px;justify-items:center;font-size:10.5px;opacity:.85}
+.scrbars>div i{align-self:end;width:100%;max-width:22px;border-radius:5px 5px 2px 2px!important;background:linear-gradient(180deg,var(--accent2,var(--accent)),var(--accent))}
+.scrbars>div.today{font-weight:800;opacity:1}
+@media (max-width:560px){ .scrpanel{grid-template-columns:1fr} }
+.wrappanel{display:grid;gap:12px}
+.wrapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.wrapcard{display:grid;gap:2px;justify-items:start;text-align:left;padding:14px 14px 12px;border:0;border-radius:16px!important;color:#fff;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.25);transition:transform .15s}
+.wrapcard:hover{transform:translateY(-2px) rotate(-.6deg)}
+.wrapcard.wc0{background:linear-gradient(135deg,#1ed760,#0d7a3a)}
+.wrapcard.wc1{background:linear-gradient(135deg,#ff4f8b,#7a1fd6)}
+.wrapcard.wc2{background:linear-gradient(135deg,#ffb020,#ff4d2e)}
+.wrapcard.wc3{background:linear-gradient(135deg,#2f7bff,#18c3c3)}
+.wrapcard::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%!important;background:rgba(255,255,255,.14)}
+.wrapcard .wcm{font-weight:800;font-size:15px;letter-spacing:-.01em}
+.wrapcard b{font:900 40px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.04em}
+.wrapcard .wct{font-weight:700;font-size:13px}
+.wrapcard .wcs{font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+
+/* the Wrapped story */
+html.wr-open,html.wr-open body{overflow:hidden}
+#wrapped{position:fixed;inset:0;z-index:200;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:grid;place-items:center;overflow:hidden;user-select:none;-webkit-user-select:none;
+  padding:calc(44px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));background:#111;transition:background .5s}
+#wrapped::before,#wrapped::after{content:"";position:absolute;border-radius:50%!important;filter:blur(2px);opacity:.55;pointer-events:none;animation:wrBlob 9s ease-in-out infinite alternate}
+#wrapped::before{width:70vmax;height:70vmax;left:-25vmax;top:-30vmax;background:var(--wb1,#fff3)}
+#wrapped::after{width:60vmax;height:60vmax;right:-25vmax;bottom:-28vmax;background:var(--wb2,#0003);animation-delay:-4s}
+@keyframes wrBlob{to{transform:translate(6vmax,4vmax) scale(1.08)}}
+#wrapped.w-intro{background:linear-gradient(160deg,#7a1fd6,#ff4f8b);--wb1:#ffd23f55;--wb2:#1ed76044}
+#wrapped.w-listen{background:linear-gradient(160deg,#0b5f2c,#1ed760);--wb1:#c6ff6b55;--wb2:#00000033}
+#wrapped.w-songs{background:linear-gradient(160deg,#ff4d2e,#ffb020);--wb1:#ffe8a355;--wb2:#7a1fd644}
+#wrapped.w-quiz{background:linear-gradient(160deg,#0a2a8a,#2f7bff);--wb1:#18c3c355;--wb2:#ff4f8b33}
+#wrapped.w-ch{background:linear-gradient(160deg,#b0125b,#ff4f8b);--wb1:#ffb02055;--wb2:#2f7bff33}
+#wrapped.w-vs{background:linear-gradient(160deg,#055e63,#18c3c3);--wb1:#c6ff6b44;--wb2:#0a2a8a44}
+#wrapped.w-screen{background:linear-gradient(160deg,#2a1a6e,#7a5cff);--wb1:#ff4f8b44;--wb2:#18c3c344}
+#wrapped.w-score{background:radial-gradient(120% 90% at 50% 20%,#3a2a00,#0d0a00);--wb1:#ffd23f44;--wb2:#ff4d2e33}
+#wrapped.w-card{background:linear-gradient(160deg,#141414,#2b2b2b);--wb1:#1ed76033;--wb2:#ff4f8b33}
+.wr-bars{position:absolute;left:max(14px,env(safe-area-inset-left,0px));right:max(60px,calc(env(safe-area-inset-right,0px) + 60px));top:calc(14px + env(safe-area-inset-top,0px));display:flex;gap:4px;z-index:3}
+.wr-bars i{flex:1;height:4px;border-radius:2px!important;background:rgba(255,255,255,.3);overflow:hidden}
+.wr-bars i b{display:block;height:100%;width:0;background:#fff}
+.wr-bars i.done b{width:100%}
+.wr-bars i.now b{animation:wrBar 7s linear forwards}
+#wrapped.last .wr-bars i.now b{animation:none;width:100%}
+#wrapped.held .wr-bars i.now b{animation-play-state:paused}
+@keyframes wrBar{to{width:100%}}
+.wr-x{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:calc(4px + env(safe-area-inset-top,0px));z-index:4;width:40px;height:40px;border:0!important;border-radius:50%!important;background:rgba(0,0,0,.25)!important;box-shadow:none!important;color:#fff!important;font-size:18px;cursor:pointer;padding:0}
+.wr-tap{position:absolute;top:0;bottom:0;z-index:2;border:0!important;background:none!important;box-shadow:none!important;border-radius:0!important;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;animation:none!important;transform:none!important}
+.wr-tap.prev{left:0;width:30%}.wr-tap.next{right:0;width:70%}
+.wr-tap:focus-visible{outline:3px solid #fff;outline-offset:-6px}
+.wr-stage{position:relative;z-index:1;width:min(560px,100%);pointer-events:none}
+.wr-slide{display:grid;gap:14px;justify-items:center;text-align:center}
+.wr-pop{animation:wrPop .6s cubic-bezier(.2,1.4,.4,1) backwards;animation-delay:calc(var(--d,0)*.12s + var(--o,0s))}
+.wr-slide>.wr-pop:nth-child(2){--o:.15s}.wr-slide>.wr-pop:nth-child(3){--o:.3s}.wr-slide>.wr-pop:nth-child(4){--o:.45s}.wr-slide>.wr-pop:nth-child(5){--o:.6s}.wr-slide>.wr-pop:nth-child(6){--o:.75s}
+@keyframes wrPop{from{opacity:0;transform:translateY(22px) scale(.92)}}
+.wr-kick{font-size:clamp(20px,4.6vw,28px);font-weight:800;letter-spacing:-.01em;text-wrap:balance}
+.wr-huge{font-size:clamp(64px,17vw,124px);font-weight:900;line-height:.95;letter-spacing:-.05em;text-shadow:0 6px 30px rgba(0,0,0,.25)}
+.wr-sub{font-size:clamp(15px,3.6vw,19px);font-weight:600;opacity:.92;max-width:34ch;text-wrap:balance}
+.wr-tag{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;background:rgba(0,0,0,.25);padding:6px 12px;border-radius:99px!important}
+.wr-hint{font-size:13px;font-weight:600;opacity:.8;margin-top:10px}
+.wr-chip{font-size:14px;font-weight:700;background:rgba(0,0,0,.22);padding:8px 14px;border-radius:99px!important}
+.wr-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:6px}
+.wr-stat{display:grid;gap:2px;min-width:110px;padding:12px 14px;border-radius:16px!important;background:rgba(0,0,0,.22)}
+.wr-stat b{font-size:30px;font-weight:900;letter-spacing:-.03em}
+.wr-stat span{font-size:12.5px;font-weight:700;opacity:.85}
+.wr-list{list-style:none;margin:0;padding:0;display:grid;gap:10px;width:100%;text-align:left}
+.wr-list li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center;padding:10px 14px;border-radius:16px!important;background:rgba(0,0,0,.2)}
+.wr-list .n{font-size:34px;font-weight:900;width:34px;text-align:center;opacity:.9}
+.wr-list .t{display:grid;gap:3px;min-width:0}
+.wr-list .t b{font-size:19px;font-weight:800}
+.wr-list .t small{font-size:13px;font-weight:600;opacity:.85}
+.wr-list .t em{font-style:normal;font-family:Georgia,serif;font-size:13.5px;line-height:1.35;opacity:.92}
+.wr-meter{display:block;height:7px;border-radius:4px!important;background:rgba(255,255,255,.25);overflow:hidden}
+.wr-meter u{display:block;height:100%;border-radius:4px!important;background:#fff;transform-origin:left;animation:wrGrow 1s .5s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes wrGrow{from{transform:scaleX(0)}}
+.wr-ring{position:relative;width:min(190px,48vw);aspect-ratio:1}
+.wr-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.wr-ring circle{fill:none;stroke-width:11}
+.wr-ring .bg{stroke:rgba(255,255,255,.15)}
+.wr-ring .fg{stroke:#ffd23f;stroke-linecap:round;stroke-dashoffset:var(--off);animation:wrRing 1.6s .3s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes wrRing{from{stroke-dashoffset:339.3}}
+.wr-ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(52px,13vw,72px);font-weight:900;letter-spacing:-.04em;color:#ffd23f}
+.wr-title{font-size:clamp(24px,6vw,34px);font-weight:900;color:#ffd23f}
+.wr-parts{display:grid;gap:9px;width:100%;text-align:left}
+.wr-parts>div{display:grid;gap:3px}
+.wr-parts span{font-weight:800;font-size:14px;display:flex;justify-content:space-between}
+.wr-parts small{font-size:12px;opacity:.75;font-weight:600}
+.wr-parts .wr-meter u{background:#ffd23f}
+.wr-cardbox{width:100%;border-radius:22px!important;padding:18px;background:linear-gradient(150deg,#1ed760,#7a1fd6 55%,#ff4f8b);box-shadow:0 20px 50px rgba(0,0,0,.45);text-align:left;display:grid;gap:14px}
+.wr-ch{display:grid;gap:0}
+.wr-ch span{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;opacity:.85}
+.wr-ch b{font-size:34px;font-weight:900;letter-spacing:-.03em;line-height:1.05}
+.wr-cg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wr-cg>div{display:grid;gap:1px;padding:10px 12px;border-radius:14px!important;background:rgba(0,0,0,.25);min-width:0}
+.wr-cg small{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;opacity:.8}
+.wr-cg b{font-size:22px;font-weight:900;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wr-cg span{font-size:12px;font-weight:600;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (prefers-reduced-motion:reduce){ #wrapped .wr-pop,#wrapped .wr-meter u,#wrapped .wr-ring .fg,#wrapped::before,#wrapped::after{animation-duration:.01s!important} }
 /* practice quote questions */
 .quotetag{align-self:flex-start;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent2,var(--accent));background:color-mix(in srgb,var(--accent2,var(--accent)) 14%,transparent);padding:3px 10px;border-radius:6px}
 #qans{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:16px;line-height:1.5;padding:10px 12px}
@@ -2415,7 +2515,7 @@ function lsGet(k,d){try{const v=localStorage.getItem(K+k); if(!v) return d; cons
   return o}catch(e){return d}}
 // song listening stats (u.ss) keep one tally per device; whenever two copies of a profile meet, each device keeps its newest tally
 function mergeSS(a,b){ if(!(a&&a.d)&&!(b&&b.d)) return a||b; const d={}; [a,b].forEach(x=>{ const m=x&&x.d||{}; for(const k in m){ const e=m[k]; if(!e||typeof e!=='object') continue; if(!d[k]||(e.t||0)>(d[k].t||0)) d[k]=e; } });
-  const ks=Object.keys(d).sort((x,y)=>(d[y].t||0)-(d[x].t||0)); ks.slice(8).forEach(k=>delete d[k]); return {v:1,d}; }
+  const ks=Object.keys(d).sort((x,y)=>(d[y].t||0)-(d[x].t||0)); ks.slice(16).forEach(k=>delete d[k]); return {v:1,d}; }
 function lsSet(k,v){try{ if(k.slice(0,2)==='u:'){ try{ const cur=JSON.parse(localStorage.getItem(K+k)||'null'); if(cur&&cur.ss&&v&&typeof v==='object') v.ss=mergeSS(v.ss,cur.ss); }catch(e){} jqStore(K,k.slice(2),v); sealSeen.delete(k.slice(2)); } else localStorage.setItem(K+k,JSON.stringify(v)); return true}catch(e){return false}}
 // seal everyone already saved on this device, then from now on an unsealed save means it was edited
 try{ if(!localStorage.getItem(K+'sigv')){ (JSON.parse(localStorage.getItem(K+'users')||'[]')||[]).forEach(n=>{ const v=localStorage.getItem(K+'u:'+n); if(v&&!localStorage.getItem(K+'s:'+n)&&!localStorage.getItem(K+'g:'+n)){ try{ jqStore(K,n,JSON.parse(v)); }catch(e){} } }); localStorage.setItem(K+'sigv','1'); } }catch(e){}
@@ -2423,7 +2523,7 @@ const ownKey=()=>U&&U.saveCode?jqSig('own:'+scNorm(U.saveCode)).slice(0,24):'';
 function blankUser(){return {stats:{},mem:{},sessions:[],sel:['1:'+qVerses[1].join(',1:')].join('').split(','),opts:{order:'order',limit:'all',pool:'all',memOnly:false,mix:false,words:'all',answer:'think',timer:'off'},vopts:{from:'goal',order:'shuffle',limit:'25',mode:'type',vsel:[],kind:'ref',timer:'off'},vstats:{},rstats:{},counts:{},badges:{}}}
 let users = lsGet('users',[]);
 let me = null, U = null;
-function loadUser(name){ me=name; U=Object.assign(blankUser(),lsGet('u:'+name,{})); U.opts=Object.assign(blankUser().opts,U.opts||{}); if(!U.migThink){ U.opts.answer='think'; U.migThink=1; } U.vopts=Object.assign(blankUser().vopts,U.vopts||{});if(U.vopts.chs){U.vopts.vsel=[...new Set([...(U.vopts.vsel||[]),...U.vopts.chs.flatMap(c=>allVerses(c).map(v=>c+':'+v))])];delete U.vopts.chs} U.vstats=U.vstats||{};U.rstats=U.rstats||{};U.counts=U.counts||{};U.badges=U.badges||{}; if(!users.includes(name)){users.push(name);lsSet('users',users)} lsSet('last',name); pullCloud(); applyTheme(); if(mus.playing) musicStart(); setTimeout(applyFreezes,300); setTimeout(checkEvents,500); sheetLast=''; scheduleSheet(); ensureSaveCode(); cloudPull();  tamperToast(); setTimeout(()=>{ if(me===name&&U&&planRoll(U)){ save(); if(tab==='materials') renderKeep(); } },0); setTimeout(()=>{ if(me===name) mpPrompt(); },1600); }
+function loadUser(name){ if(typeof scrFlush==='function'&&me&&me!==name){ try{ scrTick(); scrFlush(); }catch(e){} } me=name; U=Object.assign(blankUser(),lsGet('u:'+name,{})); U.opts=Object.assign(blankUser().opts,U.opts||{}); if(!U.migThink){ U.opts.answer='think'; U.migThink=1; } U.vopts=Object.assign(blankUser().vopts,U.vopts||{});if(U.vopts.chs){U.vopts.vsel=[...new Set([...(U.vopts.vsel||[]),...U.vopts.chs.flatMap(c=>allVerses(c).map(v=>c+':'+v))])];delete U.vopts.chs} U.vstats=U.vstats||{};U.rstats=U.rstats||{};U.counts=U.counts||{};U.badges=U.badges||{}; if(!users.includes(name)){users.push(name);lsSet('users',users)} lsSet('last',name); pullCloud(); applyTheme(); if(mus.playing) musicStart(); setTimeout(applyFreezes,300); setTimeout(checkEvents,500); sheetLast=''; scheduleSheet(); ensureSaveCode(); cloudPull();  tamperToast(); setTimeout(()=>{ if(me===name&&U&&planRoll(U)){ save(); if(tab==='materials') renderKeep(); } },0); setTimeout(()=>{ if(me===name) mpPrompt(); },1600); }
 function tamperToast(){ if(!tamperNote) return; tamperNote=0; setTimeout(()=>{ try{ toast('<b>Your progress was put back</b><span>Someone changed this save outside the app, so the extra XP and unlocks were removed.</span>'); }catch(e){} },1200); }
 function save(){ if(!me) return; U.saved=Date.now(); lsSet('u:'+me,U); scheduleSync(); scheduleSheet(); scheduleCloudSave(); }
 
@@ -2704,7 +2804,7 @@ function render(){
   if(!U.team){ app.append(teamGateView()); return; }
   if(liveJoinCode&&!live){ live={role:'menu',code:liveJoinCode,unsub:[]}; liveJoinCode=null; try{ history.replaceState(null,'',location.pathname); }catch(e){} }
   if(live){ app.append(liveView()); wireLive(); return; }
-  setTimeout(()=>{ announceSongs(); announceStats(); },900);
+  setTimeout(()=>{ mqSeed(); announceWrap(); announceSongs(); announceStats(); },900);
   if(tab==='memory') tab='materials';
   app.append(h(`<header class="bar"><div class="bar-in">
     <div class="brand"><b>${COACH_ONLY?'John Quiz Coach':'John Quiz'}</b><span>BQF · Sept 2026 set</span></div>
@@ -3293,7 +3393,7 @@ function addQuotes(ids){ if(!U.opts.quotes) return {ids,qt:{}};
   if(!ki&&ids.length>=5){ const k=keys[0], at=1+Math.floor(Math.random()*(out.length-1)); out.splice(at,0,byVerse[k][0]); qt[at]=k; }
   return {ids:out,qt}; }
 const isQuote=()=>!!(quiz&&quiz.qt&&!quiz.done&&quiz.qt[quiz.i])&&quiz.qt[quiz.i];
-function quoteRecord(k,ok,ms,self){ bumpDay(); const map=U.vstats||(U.vstats={}); const st=map[k]||[0,0,0,0]; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); map[k]=st;
+function quoteRecord(k,ok,ms,self){ bumpDay(); { const [c,v]=k.split(':').map(Number); monthTrack(c,v,ok); } const map=U.vstats||(U.vstats={}); const st=map[k]||[0,0,0,0]; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); map[k]=st;
   const C=U.counts||(U.counts={}); if(ok) C.vright=(C.vright||0)+1; lastEv={ok,sessionStreak:quiz.streak||0};
   const g=xpGuard('v'+k,ok,ms,self); xpNote=g.why; const [n,parts]=fairXP(ok?15:1, ok?[['quote','Quoted it word for word',15]]:[['try','For trying',1]],g); if(n) gainXP(n,parts); else if(g.why) xpZero(g.why); save(); }
 function quoteCheck(typed){ if(!quiz||quiz.state!=='ask') return; const k=isQuote(), [c,v]=k.split(':'), id=quiz.ids[quiz.i], ms=qElapsed();
@@ -3358,7 +3458,7 @@ function xpGuard(key,ok,ms,self,paced){ const now=Date.now();
   return {m:1,why:''}; }
 function fairXP(full,parts,g){ if(g.m>=1) return [full,parts]; const n=Math.max(0,Math.round(full*g.m)); if(!n) return [0,[]]; return [n,[['right',g.why||'Reduced XP',n]]]; }
 let xpNote='';
-function record(id,ok,ctx){ bumpDay(); const st=U.stats[id]||[0,0,0,0,0]; const was=st[0]?st[2]:null; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); st[4]=ok?(st[4]||0)+1:0; U.stats[id]=st;
+function record(id,ok,ctx){ bumpDay(); if(Q[id]) monthTrack(Q[id].c,Q[id].v,ok); const st=U.stats[id]||[0,0,0,0,0]; const was=st[0]?st[2]:null; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); st[4]=ok?(st[4]||0)+1:0; U.stats[id]=st;
   const C=U.counts||(U.counts={}); if(ok&&was===0) C.comeback=(C.comeback||0)+1; if(ok&&U.opts.timer==='20') C.timed=(C.timed||0)+1;
   const words=ctx?ctx.words:((ok&&quiz&&quiz.last&&quiz.last.part)?quiz.last.words:null), stk=ctx?ctx.streak:(quiz?quiz.streak||0:0);
   lastEv={ok, words, sessionStreak:stk};
@@ -3537,6 +3637,125 @@ function badgesPanel(){
 
 /* ---------- progress ---------- */
 function meterColor(p){return p>=85?'var(--good)':p>=65?'var(--warn)':'var(--bad)'}
+/* ---------- screen time: real seconds the app is open on screen and being used (touched in the last 2 minutes).
+   Each device keeps its own tally inside the profile's u.ss, next to the song listening, so every device and the cloud save add up to the same total. ---------- */
+const QDEV=(()=>{ let d=lsGet('dev',null); if(!d){ d=Date.now().toString(36)+Math.random().toString(36).slice(2,8); lsSet('dev',d); } return d; })();
+const SCRQ={act:Date.now(),t0:performance.now(),day:{},n:0};
+['pointerdown','pointermove','keydown','wheel','touchstart','scroll'].forEach(ev=>addEventListener(ev,()=>{ SCRQ.act=Date.now(); },{passive:true,capture:true}));
+function scrTick(){ const now=performance.now(), d=(now-SCRQ.t0)/1000; SCRQ.t0=now; if(!U||!me||document.hidden||!(d>0)||d>5) return; if(Date.now()-SCRQ.act>120000) return;
+  const k=dayKey(); SCRQ.day[k]=(SCRQ.day[k]||0)+d; if(++SCRQ.n>=30) scrFlush(); }
+setInterval(scrTick,1000);
+function scrFlush(){ SCRQ.n=0; const add=SCRQ.day; SCRQ.day={}; if(!U||!me) return; let tot=0; for(const k in add) tot+=add[k]; if(tot<0.05) return;
+  U.ss=U.ss&&U.ss.d?U.ss:{v:1,d:{}}; const key=QDEV+'.q', e=U.ss.d[key]||{kind:'scr',since:Date.now(),sec:0,days:{}};
+  for(const k in add) e.days[k]=Math.round(((e.days[k]||0)+add[k])*10)/10; e.sec=Math.round(((e.sec||0)+tot)*10)/10; e.t=Date.now();
+  const ks=Object.keys(e.days); if(ks.length>400) ks.sort().slice(0,ks.length-400).forEach(k=>delete e.days[k]); U.ss.d[key]=e; lsSet('u:'+me,U); }
+document.addEventListener('visibilitychange',()=>{ if(document.hidden){ scrTick(); scrFlush(); if(me&&U) save(); } else SCRQ.t0=performance.now(); });
+addEventListener('pagehide',()=>{ scrTick(); scrFlush(); });
+// the profile's u.ss as it is right now (the Songs page may have just added to it in another tab)
+function ssFresh(){ let S=U&&U.ss; try{ const cur=JSON.parse(localStorage.getItem(K+'u:'+me)||'null'); if(cur&&cur.ss) S=mergeSS(S,cur.ss); }catch(e){} return S&&S.d?S:{v:1,d:{}}; }
+// screen time on every device added up (quiz site and Songs): {sec, days}
+function scrAllQ(){ scrFlush(); const A={sec:0,days:{}}, d=ssFresh().d; for(const key in d){ const e=d[key]; if(!e||e.kind!=='scr') continue; A.sec+=e.sec||0; for(const k in e.days||{}) A.days[k]=(A.days[k]||0)+(e.days[k]||0); } return A; }
+const fmtHM=t=>{ t=Math.round(t||0); const m=Math.floor(t/60), h=Math.floor(m/60); return h?`${h}h ${m%60}m`:m?`${m}m`:`${t}s`; };
+function screenPanel(){ const A=scrAllQ(), today=dayKey(), last=[...Array(7)].map((_,i)=>shiftDay(today,i-6)), v=last.map(k=>A.days[k]||0), mx=Math.max(300,...v), wk=v.reduce((a,b)=>a+b,0);
+  const wd=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  return `<div class="panel scrpanel"><div style="display:grid;gap:4px;min-width:0"><span class="label">📱 Time in the app · all your devices</span>
+      <div class="scrbig">${fmtHM(A.sec)}<small>total</small></div>
+      <span class="hint">Today <b>${fmtHM(A.days[today]||0)}</b> · last 7 days <b>${fmtHM(wk)}</b>. Counts real time with the quiz site or Songs open and in use, on every device you've signed in on.</span></div>
+    <div class="scrbars" aria-label="Last 7 days">${last.map((k,i)=>{ const [y,m,dd]=k.split('-').map(Number), w=wd[new Date(Date.UTC(y,m-1,dd)).getUTCDay()]; return `<div class="${k===today?'today':''}" title="${k}: ${fmtHM(v[i])}"><i style="height:${Math.max(3,100*v[i]/mx).toFixed(1)}%"></i><span>${k===today?'Today':w}</span></div>`; }).join('')}</div></div>`; }
+
+/* ---------- monthly tallies for the Wrapped: right and wrong by chapter and verse, each month ---------- */
+const monthOf=k=>(k||dayKey()).slice(0,7);
+function monthTrack(c,v,ok){ if(!U||!c) return; const m=U.mq||(U.mq={}), mk=monthOf(), M=m[mk]||(m[mk]={q:0,r:0,ch:{},v:{}}); M.q++; if(ok) M.r++;
+  const a=M.ch[c]||(M.ch[c]=[0,0]); a[0]++; if(ok) a[1]++; const vk=c+':'+v, b=M.v[vk]||(M.v[vk]=[0,0]); b[0]++; if(ok) b[1]++;
+  const ks=Object.keys(m); if(ks.length>13) ks.sort().slice(0,ks.length-13).forEach(k=>delete m[k]); }
+// the month this started in (Nov 2026) is filled in from answers already made that month, using each question's all-time tally (marked est)
+function mqSeed(){ if(!U||U.mqSeed) return; U.mqSeed=1; const mk=monthOf(), m=U.mq||(U.mq={}), M=m[mk]||(m[mk]={q:0,r:0,ch:{},v:{}}); let any=false;
+  const add=(c,v,n,r)=>{ if(!c||!n) return; any=true; const a=M.ch[c]||(M.ch[c]=[0,0]); a[0]+=n; a[1]+=r; const b=M.v[c+':'+v]||(M.v[c+':'+v]=[0,0]); b[0]+=n; b[1]+=r; };
+  for(const id in U.stats||{}){ const st=U.stats[id], q=Q[id]; if(q&&st&&st[3]&&monthOf(dayKey(new Date(st[3])))===mk) add(q.c,q.v,st[0]||0,st[1]||0); }
+  for(const k in U.vstats||{}){ const st=U.vstats[k]; if(st&&st[3]&&monthOf(dayKey(new Date(st[3])))===mk){ const [c,v]=k.split(':').map(Number); add(c,v,st[0]||0,st[1]||0); } }
+  if(any) M.est=1; }
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const monthName=mk=>{ const [y,m]=mk.split('-').map(Number); return MONTHS[m-1]+(y!==+dayKey().slice(0,4)?' '+y:''); };
+function monthSpan(mk){ const [y,m]=mk.split('-').map(Number), all=new Date(Date.UTC(y,m,0)).getUTCDate(); return mk===monthOf()?Math.max(1,+dayKey().slice(8,10)):all; }
+const songTitle=id=>{ const m=/^john(\d+)-(\d+)-(\d+)$/.exec(id); return m?`John ${m[1]}:${m[2]}–${m[3]}`:id; };
+function wrapMonths(){ const set=new Set(); Object.keys(U.days||{}).forEach(k=>set.add(monthOf(k))); Object.keys(U.mq||{}).forEach(k=>{ const M=U.mq[k]; if(M&&Object.keys(M.ch||{}).length) set.add(k); });
+  const d=ssFresh().d; for(const key in d){ const e=d[key]; if(e&&e.days) Object.keys(e.days).forEach(k=>{ if((e.days[k]||0)>=30) set.add(monthOf(k)); }); }
+  return [...set].filter(k=>/^\d{4}-\d{2}$/.test(k)&&k<=monthOf()).sort().reverse().slice(0,12); }
+function wrapData(mk){ const d=ssFresh().d, inM=k=>k.slice(0,7)===mk; let lsec=0, ssec=0, est=false; const ld={}, sd={}, songs={};
+  for(const key in d){ const e=d[key]; if(!e||typeof e!=='object') continue;
+    if(e.kind==='scr'){ for(const k in e.days||{}) if(inM(k)){ ssec+=e.days[k]; sd[k]=(sd[k]||0)+e.days[k]; } }
+    else if(e.songs){ for(const k in e.days||{}) if(inM(k)){ lsec+=e.days[k]; ld[k]=(ld[k]||0)+e.days[k]; }
+      const m=e.mo&&e.mo[mk]; if(m){ if(e.moEst===mk) est=true; for(const id in m){ const r=songs[id]||(songs[id]=[0,0]); r[0]+=m[id][0]||0; r[1]+=m[id][1]||0; } } } }
+  const top=Object.keys(songs).map(id=>({id,n:songs[id][0],s:songs[id][1]})).filter(x=>x.n||x.s>=30).sort((a,b)=>b.n-a.n||b.s-a.s);
+  const qd={}; let qn=0; for(const k in U.days||{}) if(inM(k)){ qd[k]=U.days[k]; qn+=U.days[k]; }
+  const M=(U.mq||{})[mk]||{q:0,r:0,ch:{},v:{}}; qn=Math.max(qn,M.q||0); if(M.est) est=true;
+  let an=0, ar=0; for(const c in M.ch){ an+=M.ch[c][0]; ar+=M.ch[c][1]; } const acc=an?ar/an:null;
+  const rank=(obj,min)=>Object.keys(obj).map(k=>({k,n:obj[k][0],r:obj[k][1],a:obj[k][1]/obj[k][0]})).filter(x=>x.n>=min).sort((a,b)=>b.a-a.a||b.n-a.n);
+  let chs=rank(M.ch,8); if(!chs.length) chs=rank(M.ch,3); let vs=rank(M.v,3); if(!vs.length) vs=rank(M.v,2);
+  const span=monthSpan(mk), active=new Set([...Object.keys(qd).filter(k=>qd[k]>=10),...Object.keys(ld).filter(k=>ld[k]>=600)]);
+  const best=o=>{ let bk=null; for(const k in o) if(!bk||o[k]>o[bk]) bk=k; return bk; };
+  const pc=Math.min(1,active.size/span), pa=acc==null?0:acc*Math.min(1,an/20), pq=Math.min(1,qn/(DAILY*span)), pl=Math.min(1,lsec/(1200*span));
+  const parts=[['Consistency',30,pc,`${active.size} of ${span} days practiced`],['Accuracy',25,pa,acc==null?'No answers yet':`${Math.round(acc*100)}% right`],['Questions',25,pq,`${qn.toLocaleString()} answered · full marks at ${(DAILY*span).toLocaleString()} (a daily goal every day)`],['Listening',20,pl,`${fmtHM(lsec)} · full marks at ${fmtHM(1200*span)} (20 min a day)`]];
+  const score=Math.round(parts.reduce((a,p)=>a+p[1]*p[2],0));
+  const title=score>=95?['Legendary','👑']:score>=85?['On Fire','🔥']:score>=70?['Locked In','🎯']:score>=55?['Strong Month','💪']:score>=40?['Steady','🌱']:score>=20?['Warming Up','☀️']:['Fresh Start','🐣'];
+  return {mk,name:monthName(mk),cur:mk===monthOf(),span,lsec,ld,top,songsN:top.length,listens:top.reduce((a,x)=>a+x.n,0),bestL:best(ld),qn,qd,bestQ:best(qd),acc,an,chs,vs,ssec,sd,sdays:Object.keys(sd).filter(k=>sd[k]>=60).length,active:active.size,score,parts,title,est}; }
+const fmtDay=k=>{ const [y,m,d]=k.split('-').map(Number); return new Date(Date.UTC(y,m-1,d)).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'}); };
+function wrapPanel(){ const ms=wrapMonths(); if(!ms.length) return '';
+  return `<div class="panel wrappanel"><div class="row" style="justify-content:space-between"><span class="label">📼 Monthly Wrapped</span><span class="hint">Your month in John, story style</span></div>
+    <div class="wrapgrid">${ms.map((mk,i)=>{ const D=wrapData(mk); return `<button class="wrapcard wc${i%4}" data-wrap="${mk}"><span class="wcm">${esc(D.name)}</span><b>${D.score}</b><span class="wct">${D.title[1]} ${esc(D.title[0])}</span><span class="wcs">${D.cur?'So far this month':'Final'}</span></button>`; }).join('')}</div></div>`; }
+
+/* ---------- the Wrapped story: full screen slides, tap to move on ---------- */
+let WR=null;
+function wrapSlides(D){ const S=[], nm=esc(me||'');
+  S.push(['w-intro',`<div class="wr-pop wr-kick">${nm?nm+', this':'This'} was your</div><div class="wr-pop wr-huge">${esc(D.name)}</div><div class="wr-pop wr-kick">in John</div><div class="wr-pop wr-tag">${D.cur?'So far · the month isn\'t over yet':'Wrapped'}</div><div class="wr-pop wr-hint">Tap to start →</div>`]);
+  S.push(['w-listen',D.lsec>=60?`<div class="wr-pop wr-kick">You spent</div><div class="wr-pop wr-huge">${fmtHM(D.lsec)}</div><div class="wr-pop wr-kick">listening to the John songs</div>
+    <div class="wr-pop wr-sub">${D.listens?`${D.listens} listen${D.listens===1?'':'s'} across ${D.songsN} song${D.songsN===1?'':'s'}`:''}</div>
+    ${D.bestL?`<div class="wr-pop wr-chip">Biggest day: ${fmtDay(D.bestL)} · ${fmtHM(D.ld[D.bestL])}</div>`:''}`
+    :`<div class="wr-pop wr-kick">Listening</div><div class="wr-pop wr-huge">0m</div><div class="wr-pop wr-sub">No songs this month. The John Songs are waiting for you. Listening over and over is the easiest way to memorize.</div>`]);
+  if(D.top.length) S.push(['w-songs',`<div class="wr-pop wr-kick">Your top songs</div><ol class="wr-list">${D.top.slice(0,5).map((x,i)=>`<li class="wr-pop" style="--d:${i}"><span class="n">${i+1}</span><span class="t"><b>${songTitle(x.id)}</b><small>${x.n} listen${x.n===1?'':'s'} · ${fmtHM(x.s)}</small></span></li>`).join('')}</ol>`]);
+  S.push(['w-quiz',`<div class="wr-pop wr-kick">You answered</div><div class="wr-pop wr-huge">${D.qn.toLocaleString()}</div><div class="wr-pop wr-kick">questions and verses</div>
+    <div class="wr-row">${D.acc!=null?`<div class="wr-pop wr-stat"><b>${Math.round(D.acc*100)}%</b><span>right</span></div>`:''}<div class="wr-pop wr-stat"><b>${D.active}</b><span>day${D.active===1?'':'s'} practiced</span></div>${D.bestQ?`<div class="wr-pop wr-stat"><b>${D.qd[D.bestQ]}</b><span>on ${fmtDay(D.bestQ)}</span></div>`:''}</div>`]);
+  if(D.chs.length) S.push(['w-ch',`<div class="wr-pop wr-kick">Your most consistent chapters</div><ol class="wr-list">${D.chs.slice(0,3).map((x,i)=>`<li class="wr-pop" style="--d:${i}"><span class="n">${i+1}</span><span class="t"><b>John ${x.k}</b><small>${Math.round(x.a*100)}% right · ${x.n} answers</small><i class="wr-meter"><u style="width:${Math.round(x.a*100)}%"></u></i></span></li>`).join('')}</ol>
+    ${D.chs.length>3?`<div class="wr-pop wr-sub">Needs the most love: <b>John ${D.chs[D.chs.length-1].k}</b> (${Math.round(D.chs[D.chs.length-1].a*100)}%)</div>`:''}`]);
+  if(D.vs.length) S.push(['w-vs',`<div class="wr-pop wr-kick">Verses you've got down</div><ol class="wr-list">${D.vs.slice(0,4).map((x,i)=>{ const [c,v]=x.k.split(':'), t=vText(c,v)||''; return `<li class="wr-pop" style="--d:${i}"><span class="n">${i+1}</span><span class="t"><b>John ${x.k}</b><small>${x.r}/${x.n} right</small><em>${esc(t.length>90?t.slice(0,88)+'…':t)}</em></span></li>`; }).join('')}</ol>`]);
+  if(D.ssec>=60) S.push(['w-screen',`<div class="wr-pop wr-kick">Time in the app</div><div class="wr-pop wr-huge">${fmtHM(D.ssec)}</div><div class="wr-pop wr-sub">on ${D.sdays} day${D.sdays===1?'':'s'}, about ${fmtHM(D.ssec/Math.max(1,D.sdays))} each time you came</div>`]);
+  const R=54, C=2*Math.PI*R;
+  S.push(['w-score',`<div class="wr-pop wr-kick">Your ${esc(D.name)} score</div>
+    <div class="wr-pop wr-ring"><svg viewBox="0 0 128 128"><circle cx="64" cy="64" r="${R}" class="bg"/><circle cx="64" cy="64" r="${R}" class="fg" stroke-dasharray="${C.toFixed(1)}" style="--off:${(C*(1-D.score/100)).toFixed(1)}"/></svg><b>${D.score}</b></div>
+    <div class="wr-pop wr-title">${D.title[1]} ${esc(D.title[0])}</div>
+    <div class="wr-parts">${D.parts.map((p,i)=>`<div class="wr-pop" style="--d:${i}"><span>${p[0]} <small>${Math.round(p[1]*p[2])}/${p[1]}</small></span><i class="wr-meter"><u style="width:${Math.round(p[2]*100)}%"></u></i><small>${esc(p[3])}</small></div>`).join('')}</div>`]);
+  S.push(['w-card',`<div class="wr-pop wr-cardbox"><div class="wr-ch"><span>John Quiz Wrapped</span><b>${esc(D.name)}</b>${nm?`<span>${nm}</span>`:''}</div>
+    <div class="wr-cg"><div><small>Score</small><b>${D.score}</b><span>${D.title[1]} ${esc(D.title[0])}</span></div><div><small>Listening</small><b>${fmtHM(D.lsec)}</b><span>${D.top[0]?'Top: '+songTitle(D.top[0].id):'—'}</span></div>
+    <div><small>Answered</small><b>${D.qn.toLocaleString()}</b><span>${D.acc!=null?Math.round(D.acc*100)+'% right':'—'}</span></div><div><small>Best chapter</small><b>${D.chs[0]?'John '+D.chs[0].k:'—'}</b><span>${D.vs[0]?'Top verse: '+D.vs[0].k:''}</span></div>
+    <div><small>Days practiced</small><b>${D.active}</b><span>of ${D.span}</span></div><div><small>Time in app</small><b>${fmtHM(D.ssec)}</b><span>all devices</span></div></div></div>
+    <div class="wr-pop wr-hint">Take a screenshot to share it.${D.est?' <br>Some of this month was counted before Wrapped started, from your all-time tallies.':''}</div>`]);
+  return S; }
+function openWrapped(mk){ if(!U) return; const D=wrapData(mk); const slides=wrapSlides(D); closeWrapped(); WR={mk,i:0,slides,t:null,held:false,el:null};
+  const el=document.createElement('div'); el.id='wrapped'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true'); el.setAttribute('aria-label',D.name+' Wrapped');
+  el.innerHTML=`<div class="wr-bars">${slides.map(()=>'<i><b></b></i>').join('')}</div><button class="wr-x" type="button" aria-label="Close">✕</button><div class="wr-stage" aria-live="polite"></div><button class="wr-tap prev" type="button" aria-label="Back"></button><button class="wr-tap next" type="button" aria-label="Next"></button>`;
+  document.body.append(el); WR.el=el; document.documentElement.classList.add('wr-open');
+  el.querySelector('.wr-x').onclick=closeWrapped; el.querySelector('.prev').onclick=()=>wrGo(WR.i-1); el.querySelector('.next').onclick=()=>wrGo(WR.i+1);
+  const hold=on=>{ if(!WR) return; WR.held=on; el.classList.toggle('held',on); }; el.addEventListener('pointerdown',()=>{ WR.hd=setTimeout(()=>hold(true),220); }); el.addEventListener('pointerup',()=>{ clearTimeout(WR&&WR.hd); setTimeout(()=>hold(false),0); }); el.addEventListener('pointercancel',()=>hold(false));
+  try{ sfx('chime'); }catch(e){} wrGo(0); }
+function wrGo(i){ if(!WR) return; if(i<0) i=0; if(i>=WR.slides.length){ closeWrapped(); return; } WR.i=i; const [cls,html]=WR.slides[i], el=WR.el;
+  el.className='w-slide '+cls; el.querySelector('.wr-stage').innerHTML=`<div class="wr-slide">${html}</div>`;
+  el.querySelectorAll('.wr-bars i').forEach((b,k)=>{ b.className=k<i?'done':k===i?'now':''; });
+  const last=i===WR.slides.length-1; el.classList.toggle('last',last); }
+function closeWrapped(){ if(!WR) return; WR.el&&WR.el.remove(); WR=null; document.documentElement.classList.remove('wr-open'); }
+document.addEventListener('animationend',e=>{ if(WR&&!WR.held&&e.target.matches&&e.target.matches('#wrapped .wr-bars i.now b')) wrGo(WR.i+1); });
+document.addEventListener('keydown',e=>{ if(!WR) return; if(e.key==='Escape'){ e.preventDefault(); closeWrapped(); } else if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); wrGo(WR.i+1); } else if(e.key==='ArrowLeft'){ e.preventDefault(); wrGo(WR.i-1); } },true);
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-wrap]'); if(b) openWrapped(b.dataset.wrap); });
+// once a month: last month's Wrapped is ready (and the Songs page's link opens it with #wrapped)
+function announceWrap(){ if(!U||!me) return;
+  if(location.hash==='#wrapped'){ try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} tab='progress'; progSub='overview'; quiz=null; render(); setTimeout(()=>openWrapped(monthOf()),60); return; }
+  if(WR||document.querySelector('.annc')||document.documentElement.classList.contains('co-mode')) return;
+  const [y,m]=monthOf().split('-').map(Number), pm=m===1?`${y-1}-12`:`${y}-${String(m-1).padStart(2,'0')}`; if(lsGet('ann:wrap:'+pm,false)||!wrapMonths().includes(pm)) return;
+  const D=wrapData(pm), el=document.createElement('div'); el.className='annc'; el.setAttribute('role','status');
+  el.innerHTML=`<b>📼 Your ${esc(D.name)} Wrapped is ready!</b><p>See your listening time, top songs, questions answered, most consistent chapters and verses, and your score for the month.</p><div class="row"><button class="ghost" type="button" id="anncok">Later</button><button type="button" id="anncgo">Open it</button></div>`;
+  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('show'));
+  const done=()=>{ lsSet('ann:wrap:'+pm,true); el.classList.remove('show'); setTimeout(()=>el.remove(),350); };
+  el.querySelector('#anncok').onclick=done; el.querySelector('#anncgo').onclick=()=>{ done(); openWrapped(pm); }; }
+
 let progSub='overview';
 function progressView(){
   const ids=Object.keys(U.stats); let att=0,rt=0; ids.forEach(k=>{att+=U.stats[k][0];rt+=U.stats[k][1]});
@@ -3566,6 +3785,7 @@ function progressView(){
           <span class="hint">Last 14 days</span>
         </div></div>`})()}
 `:''}
+    ${progSub==='overview'?wrapPanel()+screenPanel():''}
     ${progSub==='overview'||progSub==='avatars'?eventBanners():''}
     ${progSub==='avatars'?avatarPanel():''}
     ${progSub==='overview'?`<div class="stats">
@@ -4111,7 +4331,7 @@ function vCheck(){
   const ok=result!=='wrong'; vc.streak=ok?(vc.streak||0)+1:0;
   vc.last={diff,result,ok,ms,marked:true,overridden:false,msg:ok?rightMsg(vc.streak,result==='close'):(vc.timeout?"Time's up! ":'')+wrongMsg()}; vc.timeout=false; vc.deadline=null; vRecord(k,ok); vc.state='fb'; render(); react(ok,vc.streak);
 }
-function vRecord(k,ok){ bumpDay(); const map=vc.kind==='rev'?(U.rstats||(U.rstats={})):U.vstats; const st=map[k]||[0,0,0,0]; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); map[k]=st; vc.res.push({k,ok,ms:vc.last&&vc.last.ms}); studyMs(vc.last&&vc.last.ms);
+function vRecord(k,ok){ bumpDay(); { const [c,v]=k.split(':').map(Number); monthTrack(c,v,ok); } const map=vc.kind==='rev'?(U.rstats||(U.rstats={})):U.vstats; const st=map[k]||[0,0,0,0]; st[0]++; if(ok)st[1]++; st[2]=ok?1:0; st[3]=Date.now(); map[k]=st; vc.res.push({k,ok,ms:vc.last&&vc.last.ms}); studyMs(vc.last&&vc.last.ms);
   const C=U.counts||(U.counts={}); if(ok){ if(vc.kind==='rev') C.rright=(C.rright||0)+1; else C.vright=(C.vright||0)+1; } lastEv={ok,sessionStreak:vc.streak||0}; const vs=vc.streak||0, vsb=Math.min(10,2*Math.max(0,vs-1)); { const g=xpGuard((vc.kind==='rev'?'r':'v')+k,ok,vc.last&&vc.last.ms,vc.mode==='think'); xpNote=g.why; const [n,parts]=fairXP(ok?10+vsb:1, ok?[['right','Right answer',10]].concat(vsb?[['streak',`${vs} in a row`,vsb]]:[]):[['try','For trying',1]],g); if(n) gainXP(n,parts); else if(g.why) xpZero(g.why); } save(); }
 function vReveal(){ if(!vc||vc.state!=='ask')return; vc.last={marked:false,timeout:!!vc.timeout,ms:vElapsed()}; vc.timeout=false; vc.deadline=null; vc.state='fb'; render(); }
 function vMark(ok){ if(!vc||vc.state!=='fb'||vc.last.marked)return; vc.streak=ok?(vc.streak||0)+1:0; vc.last.marked=true; vc.last.ok=ok; vc.last.msg=ok?rightMsg(vc.streak,false):wrongMsg(); vRecord(vc.keys[vc.i],ok); render(); react(ok,vc.streak); }

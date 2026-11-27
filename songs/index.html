@@ -694,6 +694,9 @@ body.npopen .toast{bottom:calc(150px + var(--sab));z-index:50}
 .st-tile b small{font-size:15px;color:var(--sub);font-weight:700;letter-spacing:0}
 .st-tile .l{display:block;font-size:12.5px;color:var(--sub);font-weight:700;margin-top:5px}
 .st-week{border-radius:22px;padding:16px 16px 12px;margin-bottom:6px}
+.st-app .st-appg{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin-top:10px;font-size:13px;color:var(--sub)}
+.st-app .st-appg b{color:var(--fg);font-weight:800;margin-left:4px}
+.st-wraplink{margin-left:auto;font-weight:800;color:var(--accent);text-decoration:none;white-space:nowrap}
 .st-week .hd{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
 .st-week .lbl{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)}
 .st-week .hd b{display:block;font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
@@ -994,6 +997,16 @@ const DEV=(()=>{ let d=lsGet('dev',null); if(!d){ d=Date.now().toString(36)+Math
 const blankStats=()=>({since:Date.now(),sec:0,n:0,full:0,songs:{},days:{},t:0});
 let STATS=lsGet('stats',null); if(!STATS||!STATS.songs) STATS=blankStats();
 let STOTH={}, STALL=null;
+/* songs heard each month, for the monthly Wrapped on the quiz page: mo['2026-11'][songId]=[listens,seconds].
+   Counted from Nov 26, 2026 on; the month it started in is filled from the song tallies that were last played that month (marked moEst). */
+if(!STATS.mo){ STATS.mo={}; const mk=dayKey().slice(0,7), m={}; for(const id in STATS.songs){ const r=STATS.songs[id]; if(r&&r.last&&dayKey(new Date(r.last)).slice(0,7)===mk&&(r.n||r.s)) m[id]=[r.n||0,Math.round(r.s||0)]; } if(Object.keys(m).length){ STATS.mo[mk]=m; STATS.moEst=mk; } }
+function moAdd(id,n,sec){ const mo=STATS.mo||(STATS.mo={}), mk=dayKey().slice(0,7), m=mo[mk]||(mo[mk]={}), r=m[id]||(m[id]=[0,0]); r[0]+=n; r[1]=Math.round((r[1]+sec)*10)/10;
+  const ks=Object.keys(mo); if(ks.length>14) ks.sort().slice(0,ks.length-14).forEach(k=>delete mo[k]); }
+/* screen time: real seconds this page is open on screen and being used (touched in the last 2 minutes, or a song playing while it's on screen).
+   Like the listening tally, each device keeps its own count inside the quiz profile, so every device adds up to the same total. */
+let SCR=lsGet('scr',null); if(!SCR||!SCR.days) SCR={kind:'scr',since:Date.now(),sec:0,days:{},t:0};
+let SCROTH={};
+const SCRT={act:Date.now(),t0:performance.now(),dirty:0};
 
 /* ---------- lyric lines ---------- */
 // the recognizer marks each word a beat after it starts; pull everything forward so highlights land on the word
@@ -2149,11 +2162,22 @@ let statDirty=0, statSaveT=null;
 function statSave(){ clearTimeout(statSaveT); statSaveT=null; statDirty=0; STATS.t=Date.now(); lsSet('stats',STATS); ssStore(); STALL=null; statPaint(); }
 // put this device's tally into the quiz profile (sealed the same way the quiz page seals it)
 function ssStore(){ try{ const n=qzName(); if(!n) return; const raw=localStorage.getItem(QK+'u:'+n); if(!raw) return; if(jqCheck(QK,n,raw)==='bad') return; const u=JSON.parse(raw); if(!u||typeof u!=='object') return;
-  u.ss=u.ss&&u.ss.d?u.ss:{v:1,d:{}}; u.ss.d[DEV]=STATS; u.saved=Date.now(); jqStore(QK,n,u); }catch(e){} }
+  u.ss=u.ss&&u.ss.d?u.ss:{v:1,d:{}}; u.ss.d[DEV]=STATS; if(SCR.sec>=1) u.ss.d[DEV+'.s']=SCR; u.saved=Date.now(); jqStore(QK,n,u); }catch(e){} }
 // read the other devices' tallies from the profile (and this device's, if the profile has a newer one)
 function ssLoad(){ try{ const n=qzName(); if(!n) return; const u=qzGet('u:'+n,null); const d=u&&u.ss&&u.ss.d; if(!d) { ssStore(); return; }
   const mine=d[DEV]; if(mine&&mine.songs&&(mine.t||0)>(STATS.t||0)){ STATS=mine; lsSet('stats',STATS); } else if(!mine) ssStore();
-  STOTH={}; for(const k in d) if(k!==DEV&&d[k]&&d[k].songs) STOTH[k]=d[k]; STALL=null; }catch(e){} }
+  STOTH={}; for(const k in d) if(k!==DEV&&d[k]&&d[k].songs) STOTH[k]=d[k]; STALL=null;
+  const ms=d[DEV+'.s']; if(ms&&ms.days&&(ms.t||0)>(SCR.t||0)){ SCR=ms; lsSet('scr',SCR); }
+  SCROTH={}; for(const k in d) if(k!==DEV+'.s'&&d[k]&&d[k].kind==='scr') SCROTH[k]=d[k]; }catch(e){} }
+// screen time on every device added up: {sec, days}
+function scrAll(){ const A={sec:SCR.sec||0,days:Object.assign({},SCR.days)}; for(const k in SCROTH){ const o=SCROTH[k]; A.sec+=o.sec||0; for(const dk in o.days||{}) A.days[dk]=(A.days[dk]||0)+(o.days[dk]||0); } return A; }
+function scrSave(){ SCRT.dirty=0; SCR.t=Date.now(); for(const k in SCR.days) SCR.days[k]=Math.round(SCR.days[k]*10)/10; SCR.sec=Math.round(SCR.sec*10)/10;
+  const ks=Object.keys(SCR.days); if(ks.length>400) ks.sort().slice(0,ks.length-400).forEach(k=>delete SCR.days[k]); lsSet('scr',SCR); ssStore(); }
+['pointerdown','pointermove','keydown','wheel','touchstart','scroll'].forEach(ev=>addEventListener(ev,()=>{ SCRT.act=Date.now(); },{passive:true,capture:true}));
+setInterval(()=>{ const now=performance.now(), d=(now-SCRT.t0)/1000; SCRT.t0=now; if(document.hidden||!(d>0)||d>5) return; if(Date.now()-SCRT.act>120000&&audio.paused) return;
+  const k=dayKey(); SCR.days[k]=(SCR.days[k]||0)+d; SCR.sec+=d; if(++SCRT.dirty>=30) scrSave(); },1000);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&SCRT.dirty) scrSave(); });
+addEventListener('pagehide',()=>{ if(SCRT.dirty) scrSave(); });
 // everything added up: this device plus the others
 function statAll(){ if(STALL) return STALL; const A={since:STATS.since,sec:STATS.sec||0,n:STATS.n||0,full:STATS.full||0,songs:{},days:Object.assign({},STATS.days)}; for(const id in STATS.songs) A.songs[id]=Object.assign({},STATS.songs[id]);
   for(const k in STOTH){ const o=STOTH[k]; A.since=Math.min(A.since,o.since||A.since); A.sec+=o.sec||0; A.n+=o.n||0; A.full+=o.full||0;
@@ -2162,9 +2186,9 @@ function statAll(){ if(STALL) return STALL; const A={since:STATS.since,sec:STATS
   return STALL=A; }
 function statSoon(){ if(++statDirty>=20) statSave(); else if(!statSaveT) statSaveT=setTimeout(statSave,8000); }
 function statRec(id){ return STATS.songs[id]||(STATS.songs[id]={n:0,s:0,last:0}); }
-function statTime(id,d){ statTouched.add(id); const r=statRec(id); r.s+=d; STATS.sec+=d; const dk=dayKey(); STATS.days[dk]=(STATS.days[dk]||0)+d; STALL=null;
-  const keys=Object.keys(STATS.days); if(keys.length>150) keys.sort().slice(0,keys.length-150).forEach(k=>delete STATS.days[k]); statSoon(); }
-function statListen(id){ statTouched.add(id); const r=statRec(id); r.n++; r.last=Date.now(); STATS.n++; STALL=null; statSave(); }
+function statTime(id,d){ statTouched.add(id); const r=statRec(id); r.s+=d; STATS.sec+=d; const dk=dayKey(); STATS.days[dk]=(STATS.days[dk]||0)+d; moAdd(id,0,d); STALL=null;
+  const keys=Object.keys(STATS.days); if(keys.length>400) keys.sort().slice(0,keys.length-400).forEach(k=>delete STATS.days[k]); statSoon(); }
+function statListen(id){ statTouched.add(id); const r=statRec(id); r.n++; r.last=Date.now(); STATS.n++; moAdd(id,1,0); STALL=null; statSave(); }
 function statFull(id){ STATS.full=(STATS.full||0)+1; statRec(id).f=(statRec(id).f||0)+1; statSave(); }
 addEventListener('pagehide',statSave); document.addEventListener('visibilitychange',()=>{ if(document.hidden) statSave(); });
 audio.addEventListener('pause',()=>{ if(statDirty) statSave(); });
@@ -2196,6 +2220,9 @@ function renderStats(){ const S=statAll(), sec=S.sec, mins=Math.floor(sec/60), H
   const bars=days.map((x,k)=>{ const m=Math.round(x.v/60); const h=Math.max(3,x.v/mx*100); return `<div class="bar ${x.v<30?'zero':''} ${k===6?'today':''}" style="--k:${k};--h:${h}%"><div class="col"><i></i><em>${m?fmtShort(x.v):''}</em></div><span>${k===6?'Today':x.d.toLocaleDateString(undefined,{weekday:'short'}).slice(0,2)}</span></div>`; }).join('');
   const week=`<div class="st-week glass"><div class="hd"><div><div class="lbl">Last 7 days</div><b>${fmtShort(wk)}</b></div>${cmp}</div>
     <div class="chart">${avg>=30?`<div class="bars">${bars}<div class="avg" style="--a:${(avg/mx).toFixed(4)}"><span>avg ${fmtShort(avg)}</span></div></div>`:`<div class="bars">${bars}</div>`}</div></div>`;
+  const SA=scrAll(); let swk=0; for(let k=6;k>=0;k--){ const d=new Date(); d.setDate(d.getDate()-k); swk+=SA.days[dayKey(d)]||0; }
+  const app=`<div class="st-week glass st-app"><div class="hd"><div><div class="lbl">Time in the app · all your devices</div><b>${fmtShort(SA.sec)}</b></div><span class="cmp up">Today ${fmtShort(SA.days[dayKey()]||0)}</span></div>
+    <div class="st-appg"><span>Last 7 days <b>${fmtShort(swk)}</b></span><span>Listening share <b>${SA.sec>=60?Math.min(100,Math.round(100*wk/Math.max(1,swk)))+'%':'—'}</b></span><a href="../#wrapped" class="st-wraplink">Your monthly Wrapped →</a></div></div>`;
   const medal=['#ffcc4d','#d7dde8','#e0a46a'];
   const pod=top.length?`<div class="sect st-sect"><h2>Top songs</h2><small>by listens</small></div><div class="st-pod">${[1,0,2].map(k=>{ const x=top[k]; if(!x) return '<div class="pc empty"></div>';
     return `<button type="button" class="pc p${k+1}" data-pod="${x.s.i}"><div class="cv"><img src="${ART[x.s.ch]||THUMB[x.s.ch]}" data-art="${x.s.ch}" alt="" loading="lazy"><span class="md" style="--m:${medal[k]}">${k+1}</span></div><b>${esc(x.s.title)}</b><small>${x.r.n} listen${x.r.n>1?'s':''} · ${fmtShort(x.r.s)}</small></button>`; }).join('')}</div>`:'';
@@ -2204,7 +2231,7 @@ function renderStats(){ const S=statAll(), sec=S.sec, mins=Math.floor(sec/60), H
   const chap=chs.length>1?`<div class="sect st-sect"><h2>By chapter</h2><small>${chs.length} chapters</small></div><div class="st-chs glass">${chs.slice(0,8).map((c,k)=>{ const col=(COL[c]&&COL[c].c)||[]; return `<button type="button" class="ch" data-stch="${c}" style="--k:${k};--a:${col[0]||'#ff5c8a'};--b:${col[1]||'#8b7cff'}"><span class="nm">${esc(chName(c))}</span><span class="tr"><i style="width:${Math.max(3,byCh[c].s/cmx*100)}%"></i></span><span class="v">${fmtShort(byCh[c].s)}</span></button>`; }).join('')}</div>`:'';
   const tmx=top.length?top[0].r.n:1;
   const list=`<div class="sect st-sect"><h2>Every song</h2><small>${heardN} played</small></div><div id="statlist">${top.length?top.map((x,k)=>rowHTML(x.s,{i:k,nostat:1,sub:`<span class="lstat"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>${x.r.n}<i></i>${fmtShort(x.r.s)}</span><span class="st-meter"><i style="width:${Math.max(4,x.r.n/tmx*100)}%"></i></span>`})).join(''):'<div class="st-empty glass"><svg viewBox="0 0 24 24"><path d="M12 3v10.6A4 4 0 1 0 14 17V7h4V3z"/></svg><b>Nothing yet</b><span>Play a song and your listens and time will show up here.</span></div>'}</div>`;
-  $('#statbody').innerHTML=hero+tiles+week+pod+chap+list;
+  $('#statbody').innerHTML=hero+tiles+week+app+pod+chap+list;
   $('#statbody').querySelectorAll('[data-pod]').forEach(b=>b.onclick=()=>{ haptic&&haptic('soft'); playIdx(+b.dataset.pod); });
   $('#statbody').querySelectorAll('[data-stch]').forEach(b=>b.onclick=()=>{ setTab('home'); showChapter(+b.dataset.stch); });
   wireRows($('#statlist')); if(song) document.querySelectorAll('#statlist [data-song]').forEach(b=>b.setAttribute('aria-current',+b.dataset.song===song.i)); }
