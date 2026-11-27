@@ -998,14 +998,26 @@ const blankStats=()=>({since:Date.now(),sec:0,n:0,full:0,songs:{},days:{},t:0});
 let STATS=lsGet('stats',null); if(!STATS||!STATS.songs) STATS=blankStats();
 let STOTH={}, STALL=null;
 /* songs heard each month, for the monthly Wrapped on the quiz page: mo['2026-11'][songId]=[listens,seconds].
-   Counted from Nov 26, 2026 on; the month it started in is filled from the song tallies that were last played that month (marked moEst). */
-if(!STATS.mo){ STATS.mo={}; const mk=dayKey().slice(0,7), m={}; for(const id in STATS.songs){ const r=STATS.songs[id]; if(r&&r.last&&dayKey(new Date(r.last)).slice(0,7)===mk&&(r.n||r.s)) m[id]=[r.n||0,Math.round(r.s||0)]; } if(Object.keys(m).length){ STATS.mo[mk]=m; STATS.moEst=mk; } }
+   Only counted as it happens (from moSince on) - nothing is filled in by guessing. */
+function moInit(){ if(STATS.moEst){ if(STATS.mo) delete STATS.mo[STATS.moEst]; delete STATS.moEst; STATS.moSince=Date.now(); } if(!STATS.mo) STATS.mo={}; if(!STATS.moSince) STATS.moSince=Date.now(); }
+moInit();
 function moAdd(id,n,sec){ const mo=STATS.mo||(STATS.mo={}), mk=dayKey().slice(0,7), m=mo[mk]||(mo[mk]={}), r=m[id]||(m[id]=[0,0]); r[0]+=n; r[1]=Math.round((r[1]+sec)*10)/10;
   const ks=Object.keys(mo); if(ks.length>14) ks.sort().slice(0,ks.length-14).forEach(k=>delete mo[k]); }
 /* screen time: real seconds this page is open on screen and being used (touched in the last 2 minutes, or a song playing while it's on screen).
    Like the listening tally, each device keeps its own count inside the quiz profile, so every device adds up to the same total. */
 let SCR=lsGet('scr',null); if(!SCR||!SCR.days) SCR={kind:'scr',since:Date.now(),sec:0,days:{},t:0};
 let SCROTH={};
+/* every quiz account keeps its own listening and screen-time tally on this device (two quizzers sharing a laptop don't add to each other).
+   The old shared tally from before this goes to the first account that opens Songs here. */
+let STACCT=null;
+const scrBlank=()=>({kind:'scr',since:Date.now(),sec:0,days:{},t:0});
+function acctSync(){ let n=null; try{ n=qzName()||''; }catch(e){ return; } if(n===STACCT) return;
+  if(STACCT!==null){ lsSet('stats:'+STACCT,STATS); lsSet('scr:'+STACCT,SCR); }
+  STACCT=n; let a=lsGet('stats:'+n,null), c=lsGet('scr:'+n,null);
+  if(!a&&n&&!lsGet('statsOwner',null)){ const o=lsGet('stats',null), oc=lsGet('scr',null); lsSet('statsOwner',n); if(o&&o.songs) a=o; if(oc&&oc.days) c=oc; }
+  STATS=a&&a.songs?a:blankStats(); SCR=c&&c.days?c:scrBlank(); STATS.acct=n; SCR.acct=n; moInit(); STOTH={}; SCROTH={}; STALL=null; }
+// a tally in the profile belongs to this account if it says so (older ones without a name belong to the account that inherited the old shared tally)
+const ownTally=e=>!!e&&(e.acct===STACCT||(e.acct==null&&STACCT===lsGet('statsOwner',null)));
 const SCRT={act:Date.now(),t0:performance.now(),dirty:0};
 
 /* ---------- lyric lines ---------- */
@@ -2159,20 +2171,20 @@ function hotChapters(pc){ pc=pc||playCounts(); const by={}; SONGS.forEach(s=>{ c
 const heardDur=()=>(audio.duration&&isFinite(audio.duration)&&audio.duration>0?audio.duration:(heardSong&&heardSong.dur||0));
 
 let statDirty=0, statSaveT=null;
-function statSave(){ clearTimeout(statSaveT); statSaveT=null; statDirty=0; STATS.t=Date.now(); lsSet('stats',STATS); ssStore(); STALL=null; statPaint(); }
+function statSave(){ clearTimeout(statSaveT); statSaveT=null; statDirty=0; acctSync(); STATS.t=Date.now(); lsSet('stats:'+(STACCT||''),STATS); ssStore(); STALL=null; statPaint(); }
 // put this device's tally into the quiz profile (sealed the same way the quiz page seals it)
-function ssStore(){ try{ const n=qzName(); if(!n) return; const raw=localStorage.getItem(QK+'u:'+n); if(!raw) return; if(jqCheck(QK,n,raw)==='bad') return; const u=JSON.parse(raw); if(!u||typeof u!=='object') return;
+function ssStore(){ try{ acctSync(); const n=qzName(); if(!n) return; const raw=localStorage.getItem(QK+'u:'+n); if(!raw) return; if(jqCheck(QK,n,raw)==='bad') return; const u=JSON.parse(raw); if(!u||typeof u!=='object') return;
   u.ss=u.ss&&u.ss.d?u.ss:{v:1,d:{}}; u.ss.d[DEV]=STATS; if(SCR.sec>=1) u.ss.d[DEV+'.s']=SCR; u.saved=Date.now(); jqStore(QK,n,u); }catch(e){} }
 // read the other devices' tallies from the profile (and this device's, if the profile has a newer one)
-function ssLoad(){ try{ const n=qzName(); if(!n) return; const u=qzGet('u:'+n,null); const d=u&&u.ss&&u.ss.d; if(!d) { ssStore(); return; }
-  const mine=d[DEV]; if(mine&&mine.songs&&(mine.t||0)>(STATS.t||0)){ STATS=mine; lsSet('stats',STATS); } else if(!mine) ssStore();
+function ssLoad(){ try{ acctSync(); const n=qzName(); if(!n) return; const u=qzGet('u:'+n,null); const d=u&&u.ss&&u.ss.d; if(!d) { ssStore(); return; }
+  const mine=d[DEV]; if(mine&&mine.songs&&ownTally(mine)&&(mine.t||0)>(STATS.t||0)){ STATS=mine; STATS.acct=STACCT; moInit(); lsSet('stats:'+(STACCT||''),STATS); } else if(!mine||!ownTally(mine)) ssStore();
   STOTH={}; for(const k in d) if(k!==DEV&&d[k]&&d[k].songs) STOTH[k]=d[k]; STALL=null;
-  const ms=d[DEV+'.s']; if(ms&&ms.days&&(ms.t||0)>(SCR.t||0)){ SCR=ms; lsSet('scr',SCR); }
+  const ms=d[DEV+'.s']; if(ms&&ms.days&&ownTally(ms)&&(ms.t||0)>(SCR.t||0)){ SCR=ms; lsSet('scr:'+(STACCT||''),SCR); }
   SCROTH={}; for(const k in d) if(k!==DEV+'.s'&&d[k]&&d[k].kind==='scr') SCROTH[k]=d[k]; }catch(e){} }
 // screen time on every device added up: {sec, days}
 function scrAll(){ const A={sec:SCR.sec||0,days:Object.assign({},SCR.days)}; for(const k in SCROTH){ const o=SCROTH[k]; A.sec+=o.sec||0; for(const dk in o.days||{}) A.days[dk]=(A.days[dk]||0)+(o.days[dk]||0); } return A; }
-function scrSave(){ SCRT.dirty=0; SCR.t=Date.now(); for(const k in SCR.days) SCR.days[k]=Math.round(SCR.days[k]*10)/10; SCR.sec=Math.round(SCR.sec*10)/10;
-  const ks=Object.keys(SCR.days); if(ks.length>400) ks.sort().slice(0,ks.length-400).forEach(k=>delete SCR.days[k]); lsSet('scr',SCR); ssStore(); }
+function scrSave(){ SCRT.dirty=0; acctSync(); SCR.t=Date.now(); for(const k in SCR.days) SCR.days[k]=Math.round(SCR.days[k]*10)/10; SCR.sec=Math.round(SCR.sec*10)/10;
+  const ks=Object.keys(SCR.days); if(ks.length>400) ks.sort().slice(0,ks.length-400).forEach(k=>delete SCR.days[k]); lsSet('scr:'+(STACCT||''),SCR); ssStore(); }
 ['pointerdown','pointermove','keydown','wheel','touchstart','scroll'].forEach(ev=>addEventListener(ev,()=>{ SCRT.act=Date.now(); },{passive:true,capture:true}));
 setInterval(()=>{ const now=performance.now(), d=(now-SCRT.t0)/1000; SCRT.t0=now; if(document.hidden||!(d>0)||d>5) return; if(Date.now()-SCRT.act>120000&&audio.paused) return;
   const k=dayKey(); SCR.days[k]=(SCR.days[k]||0)+d; SCR.sec+=d; if(++SCRT.dirty>=30) scrSave(); },1000);
@@ -2196,7 +2208,7 @@ function statStreak(){ const D=statAll().days; let k=0; const d=new Date(); if(!
 function renderStats(){ const S=statAll(), sec=S.sec, mins=Math.floor(sec/60), H=Math.floor(mins/60), M=mins%60;
   const heardN=SONGS.filter(s=>(S.songs[s.id]||{}).n>0).length, streak=statStreak(), full=S.full||0;
   const since=new Date(S.since).toLocaleDateString(undefined,{month:'short',day:'numeric',year:new Date(S.since).getFullYear()!==new Date().getFullYear()?'numeric':undefined});
-  $('#statmeta').textContent=S.n?`Since ${since} · on this device`:'Your listening shows up here.';
+  $('#statmeta').textContent=S.n?`Since ${since} · all your devices`:'Your listening shows up here.';
   const top=SONGS.map(s=>({s,r:S.songs[s.id]})).filter(x=>x.r&&x.r.n>0).sort((a,b)=>b.r.n-a.r.n||b.r.s-a.r.s);
   const avgDur=SONGS.reduce((a,x)=>a+(x.dur||0),0)/SONGS.length||120, worth=Math.round(sec/avgDur);
   const heroCh=top.length?top[0].s.ch:(song?song.ch:SONGS[0].ch);
@@ -2222,7 +2234,7 @@ function renderStats(){ const S=statAll(), sec=S.sec, mins=Math.floor(sec/60), H
     <div class="chart">${avg>=30?`<div class="bars">${bars}<div class="avg" style="--a:${(avg/mx).toFixed(4)}"><span>avg ${fmtShort(avg)}</span></div></div>`:`<div class="bars">${bars}</div>`}</div></div>`;
   const SA=scrAll(); let swk=0; for(let k=6;k>=0;k--){ const d=new Date(); d.setDate(d.getDate()-k); swk+=SA.days[dayKey(d)]||0; }
   const app=`<div class="st-week glass st-app"><div class="hd"><div><div class="lbl">Time in the app · all your devices</div><b>${fmtShort(SA.sec)}</b></div><span class="cmp up">Today ${fmtShort(SA.days[dayKey()]||0)}</span></div>
-    <div class="st-appg"><span>Last 7 days <b>${fmtShort(swk)}</b></span><span>Listening share <b>${SA.sec>=60?Math.min(100,Math.round(100*wk/Math.max(1,swk)))+'%':'—'}</b></span><a href="../#wrapped" class="st-wraplink">Your monthly Wrapped →</a></div></div>`;
+    <div class="st-appg"><span>Last 7 days <b>${fmtShort(swk)}</b></span><span>Daily average <b>${fmtShort(swk/7)}</b></span><a href="../#wrapped" class="st-wraplink">Your monthly Wrapped →</a></div></div>`;
   const medal=['#ffcc4d','#d7dde8','#e0a46a'];
   const pod=top.length?`<div class="sect st-sect"><h2>Top songs</h2><small>by listens</small></div><div class="st-pod">${[1,0,2].map(k=>{ const x=top[k]; if(!x) return '<div class="pc empty"></div>';
     return `<button type="button" class="pc p${k+1}" data-pod="${x.s.i}"><div class="cv"><img src="${ART[x.s.ch]||THUMB[x.s.ch]}" data-art="${x.s.ch}" alt="" loading="lazy"><span class="md" style="--m:${medal[k]}">${k+1}</span></div><b>${esc(x.s.title)}</b><small>${x.r.n} listen${x.r.n>1?'s':''} · ${fmtShort(x.r.s)}</small></button>`; }).join('')}</div>`:'';

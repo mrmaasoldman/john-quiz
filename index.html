@@ -2368,6 +2368,7 @@ html.wr-open,html.wr-open body{overflow:hidden}
 .wr-sub{font-size:clamp(15px,3.6vw,19px);font-weight:600;opacity:.92;max-width:34ch;text-wrap:balance}
 .wr-tag{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;background:rgba(0,0,0,.25);padding:6px 12px;border-radius:99px!important}
 .wr-hint{font-size:13px;font-weight:600;opacity:.8;margin-top:10px}
+.wr-note{display:inline-block;margin-top:6px;font-size:12px;max-width:40ch}
 .wr-chip{font-size:14px;font-weight:700;background:rgba(0,0,0,.22);padding:8px 14px;border-radius:99px!important}
 .wr-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:6px}
 .wr-stat{display:grid;gap:2px;min-width:110px;padding:12px 14px;border-radius:16px!important;background:rgba(0,0,0,.22)}
@@ -2752,7 +2753,7 @@ let goalJustHit=false;
 function studyMs(ms){ if(!U||!(ms>0)) return; U.msDays=U.msDays||{}; const k=dayKey(); U.msDays[k]=(U.msDays[k]||0)+Math.min(ms,120000);
   const ks=Object.keys(U.msDays).sort(); if(ks.length>40) ks.slice(0,ks.length-40).forEach(x=>delete U.msDays[x]); }
 function bumpDay(){ U.days=U.days||{}; const k=dayKey(), before=U.days[k]||0; U.days[k]=before+1; if(before+1===DAILY) goalJustHit=true;
-  const keys=Object.keys(U.days).sort(); if(keys.length>120) keys.slice(0,keys.length-120).forEach(x=>delete U.days[x]); }
+  const keys=Object.keys(U.days).sort(); if(keys.length>400) keys.slice(0,keys.length-400).forEach(x=>delete U.days[x]); }
 const toastQ=[]; let toastBusy=false;
 function toast(html){ toastQ.push(html); if(!toastBusy) nextToast(); }
 function nextToast(){ const html=toastQ.shift(); if(!html){toastBusy=false;return} toastBusy=true; const t=document.createElement('div'); t.className='toast'; t.innerHTML=html; document.body.appendChild(t); setTimeout(()=>{t.remove();nextToast()},3400); }
@@ -3665,15 +3666,11 @@ function screenPanel(){ const A=scrAllQ(), today=dayKey(), last=[...Array(7)].ma
 
 /* ---------- monthly tallies for the Wrapped: right and wrong by chapter and verse, each month ---------- */
 const monthOf=k=>(k||dayKey()).slice(0,7);
-function monthTrack(c,v,ok){ if(!U||!c) return; const m=U.mq||(U.mq={}), mk=monthOf(), M=m[mk]||(m[mk]={q:0,r:0,ch:{},v:{}}); M.q++; if(ok) M.r++;
+function monthTrack(c,v,ok){ if(!U||!c) return; if(!U.mqSince) U.mqSince=Date.now(); const m=U.mq||(U.mq={}), mk=monthOf(), M=m[mk]||(m[mk]={q:0,r:0,ch:{},v:{}}); M.q++; if(ok) M.r++;
   const a=M.ch[c]||(M.ch[c]=[0,0]); a[0]++; if(ok) a[1]++; const vk=c+':'+v, b=M.v[vk]||(M.v[vk]=[0,0]); b[0]++; if(ok) b[1]++;
   const ks=Object.keys(m); if(ks.length>13) ks.sort().slice(0,ks.length-13).forEach(k=>delete m[k]); }
-// the month this started in (Nov 2026) is filled in from answers already made that month, using each question's all-time tally (marked est)
-function mqSeed(){ if(!U||U.mqSeed) return; U.mqSeed=1; const mk=monthOf(), m=U.mq||(U.mq={}), M=m[mk]||(m[mk]={q:0,r:0,ch:{},v:{}}); let any=false;
-  const add=(c,v,n,r)=>{ if(!c||!n) return; any=true; const a=M.ch[c]||(M.ch[c]=[0,0]); a[0]+=n; a[1]+=r; const b=M.v[c+':'+v]||(M.v[c+':'+v]=[0,0]); b[0]+=n; b[1]+=r; };
-  for(const id in U.stats||{}){ const st=U.stats[id], q=Q[id]; if(q&&st&&st[3]&&monthOf(dayKey(new Date(st[3])))===mk) add(q.c,q.v,st[0]||0,st[1]||0); }
-  for(const k in U.vstats||{}){ const st=U.vstats[k]; if(st&&st[3]&&monthOf(dayKey(new Date(st[3])))===mk){ const [c,v]=k.split(':').map(Number); add(c,v,st[0]||0,st[1]||0); } }
-  if(any) M.est=1; }
+// only what actually happened is counted, from mqSince on (an early version filled in the first month from all-time tallies; that guess is thrown out)
+function mqSeed(){ if(!U) return; if(!U.mqV2){ const m=U.mq||{}; for(const k in m) if(m[k]&&m[k].est) delete m[k]; U.mqV2=1; delete U.mqSeed; if(!U.mqSince) U.mqSince=Date.now(); save(); } else if(!U.mqSince){ U.mqSince=Date.now(); save(); } }
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const monthName=mk=>{ const [y,m]=mk.split('-').map(Number); return MONTHS[m-1]+(y!==+dayKey().slice(0,4)?' '+y:''); };
 function monthSpan(mk){ const [y,m]=mk.split('-').map(Number), all=new Date(Date.UTC(y,m,0)).getUTCDate(); return mk===monthOf()?Math.max(1,+dayKey().slice(8,10)):all; }
@@ -3681,21 +3678,27 @@ const songTitle=id=>{ const m=/^john(\d+)-(\d+)-(\d+)$/.exec(id); return m?`John
 function wrapMonths(){ const set=new Set(); Object.keys(U.days||{}).forEach(k=>set.add(monthOf(k))); Object.keys(U.mq||{}).forEach(k=>{ const M=U.mq[k]; if(M&&Object.keys(M.ch||{}).length) set.add(k); });
   const d=ssFresh().d; for(const key in d){ const e=d[key]; if(e&&e.days) Object.keys(e.days).forEach(k=>{ if((e.days[k]||0)>=30) set.add(monthOf(k)); }); }
   return [...set].filter(k=>/^\d{4}-\d{2}$/.test(k)&&k<=monthOf()).sort().reverse().slice(0,12); }
-function wrapData(mk){ const d=ssFresh().d, inM=k=>k.slice(0,7)===mk; let lsec=0, ssec=0, est=false; const ld={}, sd={}, songs={};
+function wrapData(mk){ const d=ssFresh().d, inM=k=>k.slice(0,7)===mk; let lsec=0, ssec=0, songSince=0, scrSince=0; const ld={}, sd={}, songs={};
   for(const key in d){ const e=d[key]; if(!e||typeof e!=='object') continue;
-    if(e.kind==='scr'){ for(const k in e.days||{}) if(inM(k)){ ssec+=e.days[k]; sd[k]=(sd[k]||0)+e.days[k]; } }
+    if(e.kind==='scr'){ if(e.since) scrSince=scrSince?Math.min(scrSince,e.since):e.since; for(const k in e.days||{}) if(inM(k)){ ssec+=e.days[k]; sd[k]=(sd[k]||0)+e.days[k]; } }
     else if(e.songs){ for(const k in e.days||{}) if(inM(k)){ lsec+=e.days[k]; ld[k]=(ld[k]||0)+e.days[k]; }
-      const m=e.mo&&e.mo[mk]; if(m){ if(e.moEst===mk) est=true; for(const id in m){ const r=songs[id]||(songs[id]=[0,0]); r[0]+=m[id][0]||0; r[1]+=m[id][1]||0; } } } }
+      if(e.moSince&&!e.moEst) songSince=songSince?Math.min(songSince,e.moSince):e.moSince;
+      const m=e.mo&&e.mo[mk]&&e.moEst!==mk?e.mo[mk]:null; if(m){ for(const id in m){ const r=songs[id]||(songs[id]=[0,0]); r[0]+=m[id][0]||0; r[1]+=m[id][1]||0; } } } }
   const top=Object.keys(songs).map(id=>({id,n:songs[id][0],s:songs[id][1]})).filter(x=>x.n||x.s>=30).sort((a,b)=>b.n-a.n||b.s-a.s);
   const qd={}; let qn=0; for(const k in U.days||{}) if(inM(k)){ qd[k]=U.days[k]; qn+=U.days[k]; }
-  const M=(U.mq||{})[mk]||{q:0,r:0,ch:{},v:{}}; qn=Math.max(qn,M.q||0); if(M.est) est=true;
+  const M0=(U.mq||{})[mk], M=M0&&!M0.est?M0:{q:0,r:0,ch:{},v:{}}; qn=Math.max(qn,M.q||0);
+  // which parts only started counting partway through this month
+  const mStart=mk+'-01', late=t=>t&&dayKey(new Date(t))>mStart?fmtDay(dayKey(new Date(t))):null;
+  const notes=[]; const qs=late(U.mqSince||Date.now()), ss2=late(songSince||Date.now()), sc=late(scrSince||Date.now());
+  if(qs) notes.push(`Accuracy, chapters and verses count from ${qs}`); if(ss2) notes.push(`top songs from ${ss2}`); if(sc) notes.push(`time in the app from ${sc}`);
+  const est=notes.length?notes.join(', ')+', when this tracking began. Questions answered and listening time cover the whole month.':'';
   let an=0, ar=0; for(const c in M.ch){ an+=M.ch[c][0]; ar+=M.ch[c][1]; } const acc=an?ar/an:null;
   const rank=(obj,min)=>Object.keys(obj).map(k=>({k,n:obj[k][0],r:obj[k][1],a:obj[k][1]/obj[k][0]})).filter(x=>x.n>=min).sort((a,b)=>b.a-a.a||b.n-a.n);
   let chs=rank(M.ch,8); if(!chs.length) chs=rank(M.ch,3); let vs=rank(M.v,3); if(!vs.length) vs=rank(M.v,2);
   const span=monthSpan(mk), active=new Set([...Object.keys(qd).filter(k=>qd[k]>=10),...Object.keys(ld).filter(k=>ld[k]>=600)]);
   const best=o=>{ let bk=null; for(const k in o) if(!bk||o[k]>o[bk]) bk=k; return bk; };
   const pc=Math.min(1,active.size/span), pa=acc==null?0:acc*Math.min(1,an/20), pq=Math.min(1,qn/(DAILY*span)), pl=Math.min(1,lsec/(1200*span));
-  const parts=[['Consistency',30,pc,`${active.size} of ${span} days practiced`],['Accuracy',25,pa,acc==null?'No answers yet':`${Math.round(acc*100)}% right`],['Questions',25,pq,`${qn.toLocaleString()} answered · full marks at ${(DAILY*span).toLocaleString()} (a daily goal every day)`],['Listening',20,pl,`${fmtHM(lsec)} · full marks at ${fmtHM(1200*span)} (20 min a day)`]];
+  const parts=[['Consistency',30,pc,`${active.size} of ${span} days practiced (10+ answers or 10+ min of songs)`],['Accuracy',25,pa,acc==null?'No answers yet':`${Math.round(acc*100)}% right`],['Questions',25,pq,`${qn.toLocaleString()} answered · full marks at ${(DAILY*span).toLocaleString()} (a daily goal every day)`],['Listening',20,pl,`${fmtHM(lsec)} · full marks at ${fmtHM(1200*span)} (20 min a day)`]];
   const score=Math.round(parts.reduce((a,p)=>a+p[1]*p[2],0));
   const title=score>=95?['Legendary','👑']:score>=85?['On Fire','🔥']:score>=70?['Locked In','🎯']:score>=55?['Strong Month','💪']:score>=40?['Steady','🌱']:score>=20?['Warming Up','☀️']:['Fresh Start','🐣'];
   return {mk,name:monthName(mk),cur:mk===monthOf(),span,lsec,ld,top,songsN:top.length,listens:top.reduce((a,x)=>a+x.n,0),bestL:best(ld),qn,qd,bestQ:best(qd),acc,an,chs,vs,ssec,sd,sdays:Object.keys(sd).filter(k=>sd[k]>=60).length,active:active.size,score,parts,title,est}; }
@@ -3728,7 +3731,7 @@ function wrapSlides(D){ const S=[], nm=esc(me||'');
     <div class="wr-cg"><div><small>Score</small><b>${D.score}</b><span>${D.title[1]} ${esc(D.title[0])}</span></div><div><small>Listening</small><b>${fmtHM(D.lsec)}</b><span>${D.top[0]?'Top: '+songTitle(D.top[0].id):'—'}</span></div>
     <div><small>Answered</small><b>${D.qn.toLocaleString()}</b><span>${D.acc!=null?Math.round(D.acc*100)+'% right':'—'}</span></div><div><small>Best chapter</small><b>${D.chs[0]?'John '+D.chs[0].k:'—'}</b><span>${D.vs[0]?'Top verse: '+D.vs[0].k:''}</span></div>
     <div><small>Days practiced</small><b>${D.active}</b><span>of ${D.span}</span></div><div><small>Time in app</small><b>${fmtHM(D.ssec)}</b><span>all devices</span></div></div></div>
-    <div class="wr-pop wr-hint">Take a screenshot to share it.${D.est?' <br>Some of this month was counted before Wrapped started, from your all-time tallies.':''}</div>`]);
+    <div class="wr-pop wr-hint">Take a screenshot to share it.${D.est?`<br><span class="wr-note">${esc(D.est)}</span>`:''}</div>`]);
   return S; }
 function openWrapped(mk){ if(!U) return; const D=wrapData(mk); const slides=wrapSlides(D); closeWrapped(); WR={mk,i:0,slides,t:null,held:false,el:null};
   const el=document.createElement('div'); el.id='wrapped'; el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true'); el.setAttribute('aria-label',D.name+' Wrapped');
