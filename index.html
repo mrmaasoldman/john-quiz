@@ -718,7 +718,8 @@ button.lch{cursor:pointer;width:100%}button.lch:active{transform:translate(3px,3
 .lbsub{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
 .crowns{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .matseg{margin-bottom:4px}
-.progseg{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.progseg{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+@media (max-width:560px){ .progseg{grid-template-columns:repeat(3,minmax(0,1fr))} }
 .progseg button{display:flex!important;flex-direction:column;align-items:center;gap:2px;padding:7px 2px!important;font-size:13px!important;white-space:nowrap;min-width:0}
 .progseg button span{font-size:18px;line-height:1}
 .teampick select{width:100%}
@@ -2306,6 +2307,38 @@ html.co-only .tabs,html.co-only .topsongs,html.co-only #musbtn,html.co-only .who
 .cs-chip i{width:7px;height:7px;border-radius:50%;background:var(--good)}
 .qtop .ref:empty{display:none}
 @media (max-width:760px){ .cs-row{grid-template-columns:repeat(5,minmax(0,1fr))} .cs-sl{grid-column:1/-1} .cs-row>.x{grid-column:1/-1;justify-self:start} .t-coach .co-clockbar .co-cref{display:none} }
+/* ---- tidier layout (Nov 2026): less on screen at once, grouped, easy to find ---- */
+.evchip{display:flex;align-items:center;gap:10px;width:100%;padding:9px 14px;border:2px solid var(--gold);background:var(--win);color:var(--win-ink);font:inherit;font-size:14px;cursor:pointer;text-align:left}
+.evchip b{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.evchip .evc-p{margin-left:auto;font-family:var(--f-num);font-size:12.5px;color:var(--gold);white-space:nowrap}
+.evchip .evc-d{font-size:12px;color:var(--win-muted);white-space:nowrap}
+.evchip .evc-g{color:var(--gold);font-weight:800}
+@media (max-width:520px){ .evchip .evc-d{display:none} }
+.pgrid2{display:grid;gap:16px}
+.pgrid2>.panel{margin:0}
+.pgrid2>.xpdetails{grid-column:1/-1}
+.pmore{justify-self:start}
+.moreopts{border-top:1px dashed var(--win-line,var(--line));padding-top:10px}
+.moreopts>summary{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;cursor:pointer;list-style:none;padding:4px 0}
+.moreopts>summary::-webkit-details-marker{display:none}
+.moreopts>summary::before{content:"▸";color:var(--win-label,var(--muted));transition:transform .15s}
+.moreopts[open]>summary::before{transform:rotate(90deg)}
+.moreopts .mo-on{display:flex;flex-wrap:wrap;gap:5px}
+.moreopts .mo-on i{font-style:normal;font-size:11.5px;font-weight:700;padding:2px 8px;background:var(--accent);color:var(--accent-text,#fff)}
+.moreopts-in{margin-top:10px}
+.opts label.check{display:flex;align-items:flex-start;gap:8px;line-height:1.35}
+.opts label.check input{margin-top:3px;flex:none}
+.opts label.check>span{display:grid;gap:1px}
+details.memch>summary{list-style:none;cursor:pointer}
+details.memch>summary::-webkit-details-marker{display:none}
+details.memch>summary h3::before{content:"▸";display:inline-block;width:16px;transition:transform .15s}
+details.memch[open]>summary h3::before{transform:rotate(90deg)}
+details.memch:not([open]){padding-bottom:0}
+details.memch:not([open]) .memhead{margin-bottom:0}
+.memhead{display:flex;align-items:center;gap:12px}
+.memhead .memmeter{flex:1;max-width:220px;height:8px;background:var(--tile,rgba(0,0,0,.2));overflow:hidden}
+.memhead .memmeter i{display:block;height:100%;background:var(--accent)}
+.memhead .row{margin-left:auto}
 /* screen time + monthly Wrapped list */
 .scrpanel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,240px);gap:16px;align-items:end}
 .scrbig{font-family:var(--f-num);font-size:34px;font-weight:800;line-height:1.05}
@@ -2969,7 +3002,7 @@ function setupView(){
   const o=U.opts;
   const seg=(key,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-opt="${key}" data-val="${v}" aria-pressed="${o[key]===v}">${l}</button>`).join('')}</div>`;
   const f=h(`<section class="${COACH_ON&&CO.on?'co-on':''}">
-    ${(COACH_ON&&CO.on)?`<div class="co-hello"><h2>Quiz your team</h2><p>You read the questions out loud. The app shows you the answer and keeps score. <b>3 easy steps.</b></p></div><div class="panel co-laptop" role="note"><b>💻 Use a laptop for Coach mode.</b> It's made for a laptop or computer screen, and the jump seats only work on a computer in Chrome or Edge.</div>`:qotdBanner()+eventBanners()}
+    ${(COACH_ON&&CO.on)?`<div class="co-hello"><h2>Quiz your team</h2><p>You read the questions out loud. The app shows you the answer and keeps score. <b>3 easy steps.</b></p></div><div class="panel co-laptop" role="note"><b>💻 Use a laptop for Coach mode.</b> It's made for a laptop or computer screen, and the jump seats only work on a computer in Chrome or Edge.</div>`:qotdBanner()+eventChips()}
     ${(COACH_ON&&CO.on)?`<div class="co-step s1 ${coChapters().length?'ok':''}"><span class="co-num">${coChapters().length?'✓':'1'}</span><div><h3>Pick the chapters</h3><p>Tap a chapter to add it. Tap it again to take it away.</p></div></div>`:`<div><div class="label">Practice</div><h2 style="font-size:28px;font-weight:800">Choose chapters and verses</h2></div>`}
     <div class="panel" style="display:grid;gap:14px">
       <div class="row" style="justify-content:space-between">
@@ -2990,22 +3023,25 @@ function setupView(){
       <div class="hint" id="rangemsg">Selected: <span class="mono">John ${esc(rangeLabel(U.sel))}</span></div>
     </div>
     ${COACH_ON&&CO.on?coachSetupPanels():`    <div class="panel opts">
+      <div class="opt"><span class="label">How many</span>${seg('limit',[['10','10'],['25','25'],['50','50'],['all','All']])}</div>
+      <div class="opt"><span class="label">How to answer</span>${seg('answer',[['type','Type it'],['think','Say it in my head']])}
+        <span class="hint">${o.answer==='think'?'Think the answer, reveal it, then mark yourself right or wrong.':'Type the answer and the app checks it.'}</span></div>
       <div class="opt"><span class="label">Questions</span>${seg('pool',[['review','Smart review'],['all','All'],['new','Not tried yet'],['missed','Ever missed'],['last','Missed last time']])}
         ${o.pool==='review'?(()=>{const all=[];selSet().forEach(k=>{if(o.memOnly&&!U.mem[k])return;(byVerse[k]||[]).forEach(id=>all.push(id))});const g=reviewGroups(all);
           return `<span class="hint">Missed last time first (<b>${g.missed.length}</b>), then ones due for a refresher (<b>${g.due.length}</b>), then new ones (<b>${g.fresh.length}</b>). Questions you know well wait longer before coming back.</span>`})():''}</div>
+      <details class="moreopts" ${moreOpts?'open':''}><summary><span class="label">More options</span>${(()=>{ const on=[o.order==='shuffle'&&'Shuffled',o.timer==='20'&&'20s timer',o.words!=='all'&&(o.words+' word'+(o.words==='1'?'':'s')),o.quotes&&'Quotes',o.memOnly&&'Memorized only',o.speak&&'Read aloud'].filter(Boolean); return on.length?`<span class="mo-on">${on.map(x=>`<i>${x}</i>`).join('')}</span>`:'<span class="hint">order, timer, jump practice, quotes</span>'; })()}</summary>
+      <div class="opts moreopts-in">
       <div class="opt"><span class="label">Order</span>${seg('order',[['order','In order'],['shuffle','Shuffled']])}</div>
-      <div class="opt"><span class="label">How many</span>${seg('limit',[['10','10'],['25','25'],['50','50'],['all','All']])}</div>
       <div class="opt"><span class="label">Timer</span>${seg('timer',[['off','Off'],['20','20 seconds']])}
         <span class="hint">Like a real quiz: answer before the clock runs out.</span></div>
-      <div class="opt"><span class="label">How to answer</span>${seg('answer',[['type','Type it'],['think','Say it in my head']])}
-        <span class="hint">“In my head”: think the answer, reveal it, then mark yourself right or wrong.</span></div>
       <div class="opt"><span class="label">Words of the question shown</span>${seg('words',[['1','1'],['2','2'],['3','3'],['4','4'],['5','5'],['all','Whole question']])}
         <span class="hint">Fewer words = jump practice. You finish the question, then answer it.</span></div>
       <div class="opt"><span class="label">Extras</span>
-        <label class="check"><input type="checkbox" id="quoteopt" ${o.quotes?'checked':''}> Add quote questions <span class="hint">(“Quote John 3:16.” About 15% of the time)</span></label>
+        <label class="check"><input type="checkbox" id="quoteopt" ${o.quotes?'checked':''}><span>Add quote questions <span class="hint">“Quote John 3:16.” About 15% of the time</span></span></label>
         <label class="check"><input type="checkbox" id="memOnly" ${o.memOnly?'checked':''}> Only verses I've memorized</label>
         ${canSpeak?`<label class="check"><input type="checkbox" id="speakopt" ${o.speak?'checked':''}> Read questions out loud</label>`:''}
       </div>
+      </div></details>
     </div>
     <div class="startbar">
       <div class="count"><b>${pool.length}</b> question${pool.length===1?'':'s'} ready</div>
@@ -3759,7 +3795,7 @@ function announceWrap(){ if(!U||!me) return;
   const done=()=>{ lsSet('ann:wrap:'+pm,true); el.classList.remove('show'); setTimeout(()=>el.remove(),350); };
   el.querySelector('#anncok').onclick=done; el.querySelector('#anncgo').onclick=()=>{ done(); openWrapped(pm); }; }
 
-let progSub='overview';
+let progSub='overview', moreOpts=false, memOpen={};
 function progressView(){
   const ids=Object.keys(U.stats); let att=0,rt=0; ids.forEach(k=>{att+=U.stats[k][0];rt+=U.stats[k][1]});
   const solid=ids.filter(k=>U.stats[k][2]===1).length;
@@ -3769,8 +3805,8 @@ function progressView(){
   const memCount=Object.keys(U.mem).length;
   return h(`<section>
     <div><div class="label">Progress</div><h2 style="font-size:28px;font-weight:800">How ${esc(me)} is doing</h2></div>
-    ${(()=>{const tabs=[['overview','📊','Overview'],['avatars','🙂','Avatars'],['themes','🎨','Themes'],['badges','🏅','Badges']];return `<div class="seg matseg progseg" role="tablist">${tabs.map(([k,i,l])=>`<button data-progsub="${k}" aria-pressed="${progSub===k}"><span aria-hidden="true">${i}</span> ${l}</button>`).join('')}</div>`})()}
-    ${progSub==='overview'?`${teamPanel()}
+    ${(()=>{const tabs=[['overview','📊','Overview'],['chapters','📖','Chapters'],['avatars','🙂','Avatars'],['themes','🎨','Themes'],['badges','🏅','Badges'],['account','☁️','Account']];return `<div class="seg matseg progseg" role="tablist">${tabs.map(([k,i,l])=>`<button data-progsub="${k}" aria-pressed="${progSub===k}"><span aria-hidden="true">${i}</span> ${l}</button>`).join('')}</div>`})()}
+    ${progSub==='overview'?`<div class="pgrid2">
     ${(()=>{const l=levelOf(U.xp);return `<div class="panel lvlpanel"><div class="lvlbig">${l.level}<small>level</small></div>
       <div style="display:grid;gap:6px;min-width:0"><b style="font-family:var(--f-display);font-size:19px">${esc(l.title)}</b>
         <div class="goldbar"><i style="width:${(100*l.into/l.span).toFixed(1)}%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></i></div>
@@ -3786,17 +3822,19 @@ function progressView(){
           <div class="goldbar"><i style="width:${Math.min(100,100*t/DAILY)}%;${t>=DAILY?'background:linear-gradient(90deg,var(--accent),var(--accent2))':''}"></i></div>
           <div class="days14" title="Last 14 days">${last.map(k=>`<i class="${U.frozen&&U.frozen[k]?'frz':set.has(k)?'hit':(U.days&&U.days[k]?'some':'')} ${k===dayKey()?'today':''}" title="${k}: ${(U.days&&U.days[k])||0}"></i>`).join('')}</div>
           <span class="hint">Last 14 days</span>
-        </div></div>`})()}
+        </div></div>`})()}</div>
 `:''}
-    ${progSub==='overview'?wrapPanel()+screenPanel():''}
     ${progSub==='overview'||progSub==='avatars'?eventBanners():''}
+    ${progSub==='overview'?wrapPanel()+screenPanel():''}
     ${progSub==='avatars'?avatarPanel():''}
     ${progSub==='overview'?`<div class="stats">
       <div class="stat"><span class="label">Questions tried</span><b>${ids.length}</b><span class="hint">of ${Q.length}</span></div>
       <div class="stat"><span class="label">Accuracy</span><b>${att?pct(rt,att)+'%':'—'}</b><span class="hint">${rt} right of ${att} answers</span></div>
       <div class="stat"><span class="label">Got right last time</span><b>${solid}</b><span class="hint">${pct(solid,Q.length)}% of the set</span></div>
     </div>
-    <div class="panel"><div class="tbl-wrap"><table>
+    <button class="btn ghost small pmore" data-progsub="chapters">See every chapter and what to work on →</button>
+`:''}
+    ${progSub==='chapters'?`<div class="panel"><div class="tbl-wrap"><table>
       <thead><tr><th>Ch.</th><th>Tried</th><th style="width:38%">Right last time</th><th style="text-align:right">Accuracy</th></tr></thead>
       <tbody>${rows.map(r=>{const p=pct(r.solid,r.total);return `<tr>
         <td class="mono"><b>${r.c}</b></td>
@@ -3812,9 +3850,11 @@ function progressView(){
       <div class="themes">${THEMES.filter(t=>!t.need||!t.need.event||avOwned(t.need.event)||avEventActive(t.need.event)).map(t=>{const open=themeOpen(t),cur=(THEMES.find(x=>x.id===U.theme&&themeOpen(x))||THEMES[0]).id===t.id;return `<button class="themebtn ${cur?'cur':''}" data-themeid="${t.id}" ${t.v['--f-display']?`style="--tf:${esc(t.v['--f-display'])}"`:''} ${open?'':'disabled'}>${themeSwatch(t)}<b>${esc(t.name)}</b><small>${open?(cur?'▶ In use':esc(t.hint)):'🔒 '+themeNeedText(t)}</small></button>`}).join('')}</div></div>
     ${musicPanel()}
 `:''}
-    ${progSub==='overview'?`<div class="panel" style="display:grid;gap:8px"><span class="label">Recent sessions</span>
+    ${progSub==='chapters'?`<div class="panel" style="display:grid;gap:8px"><span class="label">Recent sessions</span>
       ${U.sessions.length?`<div class="tbl-wrap"><table><tbody>${U.sessions.slice(0,12).map(s=>`<tr><td class="mono" style="white-space:nowrap">${new Date(s.d).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</td><td>${esc(s.label)}</td><td class="n">${s.r}/${s.n}</td><td class="n"><span class="pill ${pct(s.r,s.n)>=85?'g':pct(s.r,s.n)>=65?'w':'b'}">${pct(s.r,s.n)}%</span></td></tr>`).join('')}</tbody></table></div>`:'<span class="muted">Finish a practice session and it shows up here.</span>'}
     </div>
+`:''}
+    ${progSub==='account'?`${teamPanel()}
     <div class="panel" style="display:grid;gap:10px">
       <span class="label">Cloud save</span>
       ${U.saveCode?`<div class="scbox"><span class="hint">Your save code</span><span class="sccode big">${esc(U.saveCode)}</span><span class="hint" id="scstat">${saveStatus()}</span></div>
@@ -3922,9 +3962,11 @@ function memoryView(){
       ${gk?`<button class="x" id="memscope">${showAllMem?'Show only my goal':'Show all 21 chapters'}</button>`:''}</div>
     <div>${chapters.map(c=>{const n=VERSES_IN_JOHN[c-1]; const vs=[...Array(n)].map((_,k)=>k+1); const tgt=vs.filter(v=>inGoal(c+':'+v)); const t=tgt.length?tgt:vs;
       const m=t.filter(v=>U.mem[c+':'+v]).length;
-      return `<div class="memch"><div class="memhead"><h3>Chapter ${c} <span class="muted mono" style="font-size:13px;font-weight:500">${m}/${t.length}</span></h3>
-        <div class="row"><button class="btn ghost small" data-memall="${c}">${m===t.length?'Unmark all':'Mark all'}</button></div></div>
-        <div class="vgrid">${vs.map(v=>`<button class="mv ${U.mem[c+':'+v]?'on':''} ${inGoal(c+':'+v)?'':'out'}" data-mem="${c}:${v}" aria-pressed="${!!U.mem[c+':'+v]}">${v}</button>`).join('')}</div></div>`}).join('')}</div>
+      const open=c in memOpen?memOpen[c]:(m>0&&m<t.length);
+      return `<details class="memch" data-memch="${c}" ${open?'open':''}><summary class="memhead"><h3>Chapter ${c} <span class="muted mono" style="font-size:13px;font-weight:500">${m}/${t.length}</span></h3>
+        <span class="memmeter" aria-hidden="true"><i style="width:${pct(m,t.length)}%"></i></span>
+        <div class="row"><button class="btn ghost small" data-memall="${c}">${m===t.length?'Unmark all':'Mark all'}</button></div></summary>
+        <div class="vgrid">${vs.map(v=>`<button class="mv ${U.mem[c+':'+v]?'on':''} ${inGoal(c+':'+v)?'':'out'}" data-mem="${c}:${v}" aria-pressed="${!!U.mem[c+':'+v]}">${v}</button>`).join('')}</div></details>`}).join('')}</div>
   </section>`);
 }
 // the setup questions, as a pop-up the next time they open the app
@@ -4535,6 +4577,9 @@ function eventProgress(id){ const e=AV_EVENTS[id];
   if(e.kind==='goal'){ const days=eventDays(e), today=dayKey(), hit=days.filter(k=>((U.days&&U.days[k])||0)>=DAILY).length, left=days.filter(k=>k>today).length+(((U.days&&U.days[today])||0)>=DAILY||today<e.start?0:(today>=e.start&&today<=e.end?1:0));
     return {have:hit,need:e.need,possible:hit+left>=e.need,days}; }
   const xp=avEventXP(id); return {have:xp,need:e.need,possible:true}; }
+function eventChips(){ if(!U) return ''; return Object.keys(AV_EVENTS).filter(id=>avEventActive(id)&&!avOwned(id)).map(id=>{ const e=AV_EVENTS[id], pr=eventProgress(id), dl=daysLeft(e.end);
+  const prog=e.kind==='goal'?`${pr.have}/${e.need} days`:`${Math.min(pr.have,e.need).toLocaleString()} / ${e.need.toLocaleString()} XP`;
+  return `<button class="evchip" data-progsub="overview" data-gotab="progress"><span aria-hidden="true">⏳</span><b>Unlock ${esc(e.name.replace(/^the /,''))}</b><span class="evc-p">${prog}</span><span class="evc-d">${dl<=1?'last day':dl+' days left'}</span><span class="evc-g" aria-hidden="true">→</span></button>`; }).join(''); }
 function eventBanners(){ if(!U) return ''; return Object.keys(AV_EVENTS).filter(id=>avEventActive(id)).map(id=>{ const e=AV_EVENTS[id], an=AV_ANIMALS.find(a=>a.event===id), th=e.theme&&THEMES.find(t=>t.id===e.theme);
   if(!an&&!th) return '';
   const what=th?'theme':'avatar', pic=th?themePic(th):avSvg(avCode(Object.assign(avParse(myAv(),me),{a:an.id,h:'none',f:'none'})),56,me), pr=eventProgress(id), dl=daysLeft(e.end);
@@ -5228,7 +5273,7 @@ function gamesView(){
   const seg=(key,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-opt="${key}" data-val="${v}" aria-pressed="${U.opts[key]===v}">${l}</button>`).join('')}</div>`;
   return h(`<section>
     ${qotdBanner()}
-    ${eventBanners()}
+    ${eventChips()}
     <div><div class="label">Games</div><h2>Pick your challenge</h2></div>
     <div class="panel" style="display:grid;gap:12px">
       <div class="row" style="justify-content:space-between"><span class="label">Answer by</span>${seg('answer',[['type','Typing'],['think','Saying it in my head']])}</div>
@@ -6150,7 +6195,9 @@ function wire(){
   document.querySelectorAll('.xpdetails').forEach(d=>d.ontoggle=()=>{xpOpen=d.open});
   document.querySelectorAll('[data-tbsort]').forEach(b=>b.onclick=()=>{tbSort=b.dataset.tbsort;renderKeep()});
   document.querySelectorAll('[data-matsub]').forEach(b=>b.onclick=()=>{matSub=b.dataset.matsub;render()});
-  document.querySelectorAll('[data-progsub]').forEach(b=>b.onclick=()=>{progSub=b.dataset.progsub;render()});
+  document.querySelectorAll('[data-progsub]').forEach(b=>b.onclick=()=>{progSub=b.dataset.progsub; if(b.dataset.gotab){ tab=b.dataset.gotab; quiz=null; } render(); scrollTo(0,0); });
+  const moD=document.querySelector('details.moreopts'); if(moD) moD.ontoggle=()=>{ moreOpts=moD.open; };
+  document.querySelectorAll('details.memch').forEach(d=>d.ontoggle=()=>{ memOpen[d.dataset.memch]=d.open; });
   on('#showimport',()=>{$('#importbox').hidden=false;$('#code').focus()});
   { const f=document.getElementById('codefile'); if(f) f.onchange=async()=>{ const file=f.files&&f.files[0]; if(!file) return; const txt=await file.text(); $('#code').value=txt; $('#doimport').click(); }; }
   on('#doimport',async()=>{ const msg=$('#importmsg'); if(scLooks($('#code').value)){ try{ const n=await restoreFromCode($('#code').value); render(); toast(`<b>Welcome back, ${esc(n)}!</b><span>Your progress came back from the cloud.</span>`); }catch(e){ if(msg) msg.textContent=e.message; } return; } try{ const d=await unpackCode($('#code').value);
@@ -6170,7 +6217,7 @@ function wire(){
   // memory
   // memory verses: tap one, or press and slide across a bunch to mark (or clear) them all at once
   paintVerses('[data-mem]','mem',keys=>{ const on=keys.mode; keys.forEach(k=>{ if(on){ if(!U.mem[k]) U.mem[k]=Date.now(); } else delete U.mem[k]; const b=document.querySelector(`[data-mem="${k}"]`); if(b){ b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); } }); save(); checkBadges(); refreshMemHead(); });
-  document.querySelectorAll('[data-memall]').forEach(b=>b.onclick=()=>{const c=+b.dataset.memall,n=VERSES_IN_JOHN[c-1],gk=goalKeys(U);
+  document.querySelectorAll('[data-memall]').forEach(b=>b.onclick=e=>{e.preventDefault();const c=+b.dataset.memall,n=VERSES_IN_JOHN[c-1],gk=goalKeys(U);
     let t=[...Array(n)].map((_,k)=>k+1); const tg=gk?t.filter(v=>gk.has(c+':'+v)):t; if(tg.length)t=tg;
     const all=t.every(v=>U.mem[c+':'+v]); const now=Date.now(); t.forEach(v=>{if(all)delete U.mem[c+':'+v];else if(!U.mem[c+':'+v]) U.mem[c+':'+v]=now}); save();checkBadges();renderKeep()});
   on('#memscope',()=>{showAllMem=!showAllMem;renderKeep()});
